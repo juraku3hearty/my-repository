@@ -1,0 +1,16 @@
+{
+  "name": "my-repository",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel Express LINE webhook endpoint",
+  "main": "api/webhook.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
