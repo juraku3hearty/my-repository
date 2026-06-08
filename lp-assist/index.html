@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LP相棒 — ブロック構成＆配色アシスト</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --panel: #ffffff;
+    --ink: #2b2b2e;
+    --sub: #6b6b73;
+    --line: #e6e4df;
+    --accent: #2f6f6a;
+    --accent-soft: #e6f0ef;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  header.app {
+    padding: 22px 20px 14px;
+    text-align: center;
+  }
+  header.app h1 { margin: 0; font-size: 22px; letter-spacing: .02em; }
+  header.app p { margin: 6px 0 0; color: var(--sub); font-size: 13px; }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 8px 16px 60px;
+    display: grid;
+    gap: 18px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+  .panel h2 {
+    margin: 0 0 14px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel h2 .badge {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 2px 9px;
+    font-weight: 700;
+  }
+  label.field { display: block; margin-bottom: 14px; }
+  label.field > span {
+    display: block;
+    font-size: 12.5px;
+    color: var(--sub);
+    margin-bottom: 5px;
+  }
+  input[type=text], textarea, select {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--sub);
+    transition: .12s;
+    user-select: none;
+  }
+  .chip[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .12s;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.ghost {
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font-weight: 600;
+    padding: 8px 14px;
+  }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .hint { font-size: 12px; color: var(--sub); }
+
+  /* output */
+  #output { display: none; }
+  #output.show { display: grid; gap: 18px; }
+
+  .blocks { display: grid; gap: 12px; }
+  .block {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fff;
+  }
+  .block .top { display: flex; align-items: baseline; gap: 10px; }
+  .block .num {
+    font-weight: 800;
+    color: var(--accent);
+    font-size: 13px;
+    min-width: 26px;
+  }
+  .block .name { font-weight: 700; font-size: 15px; }
+  .block .goal { font-size: 12.5px; color: var(--sub); margin: 4px 0 8px 36px; }
+  .block ul { margin: 0 0 0 36px; padding-left: 18px; }
+  .block ul li { font-size: 13px; margin-bottom: 2px; }
+  .block .head-ex {
+    margin: 8px 0 0 36px;
+    font-size: 13px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: inline-block;
+  }
+  .block .meta-row {
+    margin: 8px 0 0 36px;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .block .meta-row .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sub);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1px 7px;
+    margin-right: 6px;
+  }
+  .block .prompt {
+    margin: 10px 0 0 36px;
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .block .prompt-label { font-size: 11.5px; font-weight: 700; color: var(--sub); margin-bottom: 5px; }
+  .block .prompt-text { font-size: 12.5px; color: var(--ink); margin-bottom: 8px; }
+  .block .prompt-copy { padding: 5px 12px; font-size: 12px; }
+
+  /* palette */
+  .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 620px) { .palette { grid-template-columns: 1fr 1fr; } }
+  .swatch {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #fff;
+  }
+  .swatch .chipcolor { height: 74px; }
+  .swatch .meta { padding: 8px 10px; }
+  .swatch .role { font-size: 12px; color: var(--sub); }
+  .swatch .hex { font-weight: 700; font-size: 13px; letter-spacing: .03em; }
+  .swatch .use { font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .usage-note {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--sub);
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .ratio { display: flex; height: 16px; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1px solid var(--line); }
+
+  .summary textarea { min-height: 220px; font-size: 12.5px; line-height: 1.6; }
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px;
+    font-size: 13px; opacity: 0; transition: .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  footer { text-align: center; color: var(--sub); font-size: 11.5px; padding: 10px; }
+
+  /* 横に細く置いて使うとき（LPツールズの隣など）窮屈にならないように */
+  @media (max-width: 560px) {
+    .wrap { padding: 6px 10px 48px; gap: 12px; }
+    .panel { padding: 14px; border-radius: 12px; }
+    header.app { padding: 16px 14px 8px; }
+    header.app h1 { font-size: 19px; }
+    .block .goal,
+    .block .head-ex,
+    .block .meta-row,
+    .block .prompt { margin-left: 0; }
+    .block ul { margin-left: 0; padding-left: 18px; }
+    .block .head-ex { display: block; }
+    .palette { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 380px) {
+    .palette { grid-template-columns: 1fr; }
+    .chip { padding: 6px 11px; font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <h1>🧩 LP相棒</h1>
+  <p>「何を・どの順で並べる？」と「どの色がきれい？」を、ブロック単位でサクッと提案</p>
+</header>
+
+<div class="wrap">
+  <!-- 入力 -->
+  <section class="panel">
+    <h2><span class="badge">STEP 1</span>つくるLPのことを教えて</h2>
+    <div class="grid2">
+      <label class="field">
+        <span>商材・サービス（何を売る／届ける？）</span>
+        <input type="text" id="product" placeholder="例：ハンドメイドの革財布 / オンライン英会話" />
+      </label>
+      <label class="field">
+        <span>ターゲット（誰に？）</span>
+        <input type="text" id="target" placeholder="例：30代の働く女性 / 個人事業主" />
+      </label>
+    </div>
+    <label class="field">
+      <span>いちばん伝えたいこと（任意）</span>
+      <textarea id="message" placeholder="例：素材が良くて長く使える。価格以上の上質さ。"></textarea>
+    </label>
+
+    <label class="field">
+      <span>このLPのゴール（クリックで選択）</span>
+      <div class="chips" id="goalChips">
+        <span class="chip" data-goal="purchase" aria-pressed="true">商品を買ってもらう</span>
+        <span class="chip" data-goal="contact" aria-pressed="false">問い合わせ・相談</span>
+        <span class="chip" data-goal="reserve" aria-pressed="false">予約してもらう</span>
+        <span class="chip" data-goal="signup" aria-pressed="false">登録・リスト取得</span>
+      </div>
+    </label>
+
+    <label class="field">
+      <span>出したい雰囲気（色のベースになる・クリックで選択）</span>
+      <div class="chips" id="moodChips">
+        <span class="chip" data-mood="trust" aria-pressed="true">信頼・誠実</span>
+        <span class="chip" data-mood="luxury" aria-pressed="false">高級・上質</span>
+        <span class="chip" data-mood="friendly" aria-pressed="false">元気・親しみ</span>
+        <span class="chip" data-mood="natural" aria-pressed="false">ナチュラル・やさしい</span>
+        <span class="chip" data-mood="cool" aria-pressed="false">クール・先進的</span>
+      </div>
+    </label>
+
+    <div class="actions">
+      <button class="btn" id="generateBtn">この内容で提案する →</button>
+      <span class="hint">※ 入力は保存されません（あなたのブラウザ内だけで動きます）</span>
+    </div>
+  </section>
+
+  <!-- 出力 -->
+  <div id="output">
+    <section class="panel">
+      <h2><span class="badge">STEP 2</span>ブロック構成（上から順に積む）</h2>
+      <div class="blocks" id="blocks"></div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="badge">STEP 3</span>配色パレット（クリックでHEXコピー）</h2>
+      <div class="palette" id="palette"></div>
+      <div class="ratio" id="ratioBar"></div>
+      <div class="usage-note" id="usageNote"></div>
+    </section>
+
+    <section class="panel summary">
+      <h2><span class="badge">STEP 4</span>まとめ（コピーしてメモやLPツールズへ）</h2>
+      <textarea id="summaryText" readonly></textarea>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn ghost" id="copySummary">まとめを全部コピー</button>
+      </div>
+    </section>
+  </div>
+
+  <footer>LP相棒 — 私用ツール / ブロック式LP作成のお供に</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   ブロックの部品（どんなLPでも使う共通ブロック）
+   ========================================================================= */
+const BLOCK = {
+  fv: {
+    name: "ファーストビュー（最初の画面）",
+    goal: "3秒で「自分ゴト」と思わせる。ここで離脱の半分が決まる。",
+    items: ["ひと言キャッチコピー（だれの・なにが・どう良くなる）", "サブコピーで補足を1行", "目立つボタン（CTA）を1つ"],
+    headEx: "（例）「{product}」で、{target}の毎日がもっとラクに。",
+    vol: "キャッチ 15〜25字 ＋ サブコピー 30〜50字。長文NG、一瞬で読める量に。",
+    img: "主役がひと目で伝わる大きなメイン画像（横長）。{product}が映える明るい写真。",
+    prompt: "{product}を主役にした横長のヒーロー画像。{target}が憧れる明るく清潔感のある雰囲気、自然光、余白多め（テキストを乗せる空きスペースあり）、高解像度、実写風、広告クオリティ"
+  },
+  empathy: {
+    name: "共感・お悩み",
+    goal: "「そうそう、それ!」と相手の悩みを先に言ってあげる。",
+    items: ["ありがちな悩みを3つ箇条書き", "「こんな経験ありませんか？」の問いかけ"],
+    headEx: "（例）こんなお悩み、ありませんか？",
+    vol: "リード文 30〜40字 ＋ 悩み 各15〜25字 ×3。",
+    img: "ちょっと困り顔の人物カット、または悩みを表す小さなアイコン3つ。",
+    prompt: "{target}が日常のちょっとした悩みで困っている自然な表情のカット、やわらかい光、生活感のある実写風、横長、共感を誘う温かいトーン"
+  },
+  solution: {
+    name: "解決策の提示",
+    goal: "悩みに対して「これで解決できます」とつなぐ橋。",
+    items: ["商材が悩みをどう解決するかを一文で", "ビフォーアフターのイメージ"],
+    headEx: "（例）その悩み、{product}が解決します。",
+    vol: "見出し 15〜20字 ＋ 説明 40〜60字。",
+    img: "ビフォー→アフターの2枚並び、または解決後の明るい表情。",
+    prompt: "{product}を使った後の満足げな{target}、すっきりと解決した明るい雰囲気、ビフォーアフターを感じさせる構図、実写風、清潔感のある背景"
+  },
+  benefit: {
+    name: "ベネフィット3つ",
+    goal: "機能ではなく「手に入る良い未来」を3つ。アイコン付きが見やすい。",
+    items: ["メリットを3つ、見出し＋一言で", "それぞれにアイコンか小さい画像"],
+    headEx: "（例）選ばれる3つの理由",
+    vol: "各メリット 見出し10字前後 ＋ 説明30〜40字。3つで揃える。",
+    img: "シンプルなアイコン3つ（線画・同じテイストで統一）。",
+    prompt: "ミニマルな線画アイコン3点セット、同じ太さ・同じテイストで統一、{product}の魅力を表す、白背景、フラットデザイン、ベクター調"
+  },
+  feature: {
+    name: "特徴・選ばれる理由",
+    goal: "他とどう違うのか。納得の裏付けを置く。",
+    items: ["こだわり・素材・実績などの根拠", "数字があれば数字で（◯年・◯人・◯%）"],
+    headEx: "（例）{product}が選ばれるワケ",
+    vol: "各特徴 見出し10〜15字 ＋ 説明40〜60字。2〜3個。",
+    img: "こだわりが伝わるアップ写真（素材・製造工程・ディテール）。",
+    prompt: "{product}のこだわりが伝わるクローズアップ写真、素材やディテールの質感がわかるマクロ撮影、上質な光、実写風、高解像度"
+  },
+  voice: {
+    name: "お客様の声・実績",
+    goal: "他人の言葉で信頼を上げる。自分で言うより効く。",
+    items: ["お客様の声を2〜3件（顔写真や名前があれば強い）", "導入数・販売数・受賞などの実績"],
+    headEx: "（例）お客様の声",
+    vol: "各レビュー 60〜100字。実名・年代があると信頼度UP。",
+    img: "お客様の顔写真（円形トリミング）。なければ似た属性の人物カット。",
+    prompt: "笑顔の{target}の自然なポートレート、好印象で親しみやすい、円形に切り抜きやすい正面寄り構図、やわらかい光、実写風"
+  },
+  menu: {
+    name: "メニュー・プラン",
+    goal: "何が・いくらで手に入るかを迷わせない。",
+    items: ["プラン／メニューを表で", "おすすめに「人気」など目印"],
+    headEx: "（例）メニュー・料金",
+    vol: "各項目 名称＋価格＋一言説明20字程度。表組みで簡潔に。",
+    img: "メニュー写真、またはプランを表すシンプルなアイコン。",
+    prompt: "{product}のメニューやプランを表現する清潔感のある俯瞰写真、整然と並んだ構図、明るい背景、実写風、メニュー表に映える"
+  },
+  price: {
+    name: "料金・お申し込み",
+    goal: "価格の不安をやわらげて背中を押す。",
+    items: ["価格をはっきり提示", "特典・送料・支払い方法", "ここにもCTAボタン"],
+    headEx: "（例）価格・お申し込み",
+    vol: "価格は大きく1行。補足（特典・支払い）は各15〜25字。",
+    img: "商品＋特典が一緒に写った「お得感」のある画像。",
+    prompt: "{product}と特典が一緒に並んだお得感のある商品写真、贈り物のような魅力的な配置、明るく清潔な背景、実写風、広告クオリティ"
+  },
+  gift: {
+    name: "無料特典の中身",
+    goal: "登録すると何がもらえるかを具体的に見せる。",
+    items: ["特典の中身を箇条書き", "「今だけ」「先着」など限定感"],
+    headEx: "（例）今すぐ受け取れる無料特典",
+    vol: "特典名 各10〜20字 ＋ 全体リード30字。限定感を一言。",
+    img: "特典を束ねたパッケージ風イメージ（eBook表紙・ギフトボックス等）。",
+    prompt: "無料プレゼントを表現する魅力的なギフトパッケージ風イメージ、{product}に関連した特典が複数まとまった構図、わくわくする明るいトーン、実写風またはモック"
+  },
+  flow: {
+    name: "ご利用の流れ",
+    goal: "申し込み後の不安をなくす。3〜4ステップで。",
+    items: ["ステップ1→2→3を矢印で", "所要時間や必要なものも添える"],
+    headEx: "（例）かんたん3ステップ",
+    vol: "各ステップ 見出し10字 ＋ 説明20〜30字。3〜4個。",
+    img: "番号付きのステップアイコン（1・2・3）を矢印でつなぐ図。",
+    prompt: "番号付きのステップを表すシンプルな線画アイコン（1から3）、矢印でつながる流れ図、統一されたテイスト、白背景、フラットデザイン"
+  },
+  faq: {
+    name: "よくある質問（FAQ）",
+    goal: "最後の不安をつぶす。買わない理由を先回りで消す。",
+    items: ["想定質問を5つ前後", "返品・キャンセル・サポートの不安に答える"],
+    headEx: "（例）よくあるご質問",
+    vol: "Q 15〜25字 ／ A 40〜80字。アコーディオン形式が読みやすい。",
+    img: "基本は不要（テキスト中心）。入れるなら吹き出し/?アイコン。",
+    prompt: "（画像なしでOK。使うなら）吹き出しとクエスチョンマークのシンプルな線画アイコン、白背景、フラットデザイン、やさしい印象"
+  },
+  trust: {
+    name: "運営者・ストーリー",
+    goal: "「誰がやってるか」で安心感を足す。",
+    items: ["想い・はじめたきっかけ", "顔写真・プロフィール"],
+    headEx: "（例）{product}に込めた想い",
+    vol: "ストーリー本文 150〜300字。長めOK、想いを語る。",
+    img: "運営者の自然な人物写真（仕事中の様子だと信頼感UP）。",
+    prompt: "誠実そうな作り手・運営者が仕事に向き合っている自然なドキュメンタリー風ポートレート、温かい光、信頼感のある雰囲気、実写風、横長"
+  },
+  access: {
+    name: "アクセス・店舗情報",
+    goal: "予約前に「行ける場所か」を確認させる。",
+    items: ["住所・地図・営業時間", "最寄り駅からの行き方"],
+    headEx: "（例）アクセス",
+    vol: "住所・時間は箇条書きで簡潔。行き方は40字程度。",
+    img: "地図のスクショ＋外観写真（目印になる入口）。",
+    prompt: "店舗の入口・外観がわかる明るい実写風写真、目印になりやすい構図、清潔感、昼間の自然光、横長"
+  },
+  guarantee: {
+    name: "保証・安心材料",
+    goal: "「失敗したらどうしよう」を消す最後のひと押し。",
+    items: ["返金保証・品質保証など", "サポート体制"],
+    headEx: "（例）安心の保証",
+    vol: "保証内容 見出し10字 ＋ 説明30〜50字。",
+    img: "保証バッジ・シールのアイコン（盾やチェックマーク）。",
+    prompt: "安心保証を表す盾とチェックマークのバッジアイコン、信頼感のある配色、シンプルでフラット、白背景、エンブレム調"
+  },
+  form: {
+    name: "登録フォーム",
+    goal: "入力の手間を最小に。項目は少ないほど登録率が上がる。",
+    items: ["入力はメールだけなど最小限に", "ボタンの文言は得することを書く"],
+    headEx: "（例）無料で受け取る",
+    vol: "フォーム上の一言 20〜30字 ＋ ボタン文言 8〜12字。",
+    img: "基本は不要。入れるなら登録後の良い未来を示す小さな画像。",
+    prompt: "（画像なしでOK。使うなら）登録後の満足した{target}を示す小さく明るいカット、ポジティブな雰囲気、実写風"
+  },
+  cta: {
+    name: "最後のひと押し＋CTA",
+    goal: "もう一度ベネフィットを思い出させてボタンへ。",
+    items: ["「あなたもこうなれる」を一文", "大きめのCTAボタン", "限定感（今だけ・残りわずか）"],
+    headEx: "（例）さあ、はじめましょう。",
+    vol: "ひと押しコピー 30〜50字 ＋ ボタン文言 8〜12字。",
+    img: "FVと同系統の明るい主役画像（背景に敷くと統一感が出る）。",
+    prompt: "{product}を主役にした明るくポジティブな横長イメージ、行動を後押しする前向きな雰囲気、余白多め（ボタンを乗せる空き）、実写風、広告クオリティ"
+  }
+};
+
+/* ゴール別のブロックの並び順 */
+const FLOWS = {
+  purchase: ["fv","empathy","benefit","feature","voice","price","guarantee","faq","cta"],
+  contact:  ["fv","empathy","solution","feature","voice","flow","trust","faq","cta"],
+  reserve:  ["fv","benefit","menu","voice","flow","access","faq","cta"],
+  signup:   ["fv","empathy","gift","benefit","voice","trust","form","cta"]
+};
+
+const GOAL_LABEL = {
+  purchase: "商品を買ってもらう",
+  contact: "問い合わせ・相談",
+  reserve: "予約してもらう",
+  signup: "登録・リスト取得"
+};
+
+/* =========================================================================
+   配色パレット（雰囲気ごとに「きれいに見える」組み合わせを厳選）
+   main=主役 / accent=ボタンなど目立たせる / base=背景 / ink=文字
+   ========================================================================= */
+const PALETTES = {
+  trust: {
+    label: "信頼・誠実",
+    colors: [
+      { role: "メインカラー", hex: "#1F5C8B", use: "見出し・帯・ロゴまわり" },
+      { role: "アクセント", hex: "#E8913A", use: "ボタン・強調（ここだけ目立たせる）" },
+      { role: "ベース（背景）", hex: "#F4F7FA", use: "ページ全体の下地" },
+      { role: "文字色", hex: "#23303A", use: "本文テキスト" }
+    ]
+  },
+  luxury: {
+    label: "高級・上質",
+    colors: [
+      { role: "メインカラー", hex: "#1C1C22", use: "見出し・帯・背景の締め" },
+      { role: "アクセント", hex: "#B8975A", use: "ボタン・ライン（ゴールド）" },
+      { role: "ベース（背景）", hex: "#F6F4EF", use: "ページ全体の下地" },
+      { role: "文字色", hex: "#2A2A2E", use: "本文テキスト" }
+    ]
+  },
+  friendly: {
+    label: "元気・親しみ",
+    colors: [
+      { role: "メインカラー", hex: "#FF7A59", use: "見出し・帯" },
+      { role: "アクセント", hex: "#3BB0A6", use: "ボタン・サブ強調" },
+      { role: "ベース（背景）", hex: "#FFF8F2", use: "ページ全体の下地" },
+      { role: "文字色", hex: "#3A3236", use: "本文テキスト" }
+    ]
+  },
+  natural: {
+    label: "ナチュラル・やさしい",
+    colors: [
+      { role: "メインカラー", hex: "#7A8B5A", use: "見出し・帯" },
+      { role: "アクセント", hex: "#D98E5A", use: "ボタン・強調（テラコッタ）" },
+      { role: "ベース（背景）", hex: "#F7F4EC", use: "ページ全体の下地" },
+      { role: "文字色", hex: "#3D3A33", use: "本文テキスト" }
+    ]
+  },
+  cool: {
+    label: "クール・先進的",
+    colors: [
+      { role: "メインカラー", hex: "#16202B", use: "見出し・帯・背景の締め" },
+      { role: "アクセント", hex: "#2FD0C6", use: "ボタン・ライン（ネオン寄り）" },
+      { role: "ベース（背景）", hex: "#F2F5F7", use: "ページ全体の下地" },
+      { role: "文字色", hex: "#1E2A33", use: "本文テキスト" }
+    ]
+  }
+};
+
+/* =========================================================================
+   状態
+   ========================================================================= */
+let goal = "purchase";
+let mood = "trust";
+
+function setupChips(containerId, attr, onSelect) {
+  const box = document.getElementById(containerId);
+  box.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      box.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+      chip.setAttribute("aria-pressed", "true");
+      onSelect(chip.dataset[attr]);
+    });
+  });
+}
+setupChips("goalChips", "goal", v => goal = v);
+setupChips("moodChips", "mood", v => mood = v);
+
+/* =========================================================================
+   提案を生成
+   ========================================================================= */
+function fillTemplate(str, product, target) {
+  const p = product || "この商品";
+  const t = target || "お客さま";
+  return str.replace(/\{product\}/g, p).replace(/\{target\}/g, t);
+}
+
+function generate() {
+  const product = document.getElementById("product").value.trim();
+  const target = document.getElementById("target").value.trim();
+  const message = document.getElementById("message").value.trim();
+
+  // --- ブロック構成 ---
+  const flow = FLOWS[goal];
+  const blocksEl = document.getElementById("blocks");
+  blocksEl.innerHTML = "";
+  flow.forEach((key, i) => {
+    const b = BLOCK[key];
+    const promptText = fillTemplate(b.prompt, product, target);
+    const el = document.createElement("div");
+    el.className = "block";
+    el.innerHTML = `
+      <div class="top">
+        <div class="num">${String(i + 1).padStart(2, "0")}</div>
+        <div class="name">${b.name}</div>
+      </div>
+      <div class="goal">🎯 ${b.goal}</div>
+      <ul>${b.items.map(x => `<li>${x}</li>`).join("")}</ul>
+      <div class="head-ex">見出し案：${fillTemplate(b.headEx, product, target)}</div>
+      <div class="meta-row"><span class="tag">✍️ 文字量</span>${b.vol}</div>
+      <div class="meta-row"><span class="tag">🖼 画像</span>${fillTemplate(b.img, product, target)}</div>
+      <div class="prompt">
+        <div class="prompt-label">🎨 画像生成プロンプト（AI画像ツールに貼る用）</div>
+        <div class="prompt-text">${promptText}</div>
+        <button class="btn ghost prompt-copy" type="button">プロンプトをコピー</button>
+      </div>
+    `;
+    el.querySelector(".prompt-copy").addEventListener("click", () => copyText(promptText, "プロンプトをコピーしました"));
+    blocksEl.appendChild(el);
+  });
+
+  // --- 配色 ---
+  const pal = PALETTES[mood];
+  const palEl = document.getElementById("palette");
+  palEl.innerHTML = "";
+  pal.colors.forEach(c => {
+    const sw = document.createElement("div");
+    sw.className = "swatch";
+    sw.innerHTML = `
+      <div class="chipcolor" style="background:${c.hex}"></div>
+      <div class="meta">
+        <div class="role">${c.role}</div>
+        <div class="hex">${c.hex}</div>
+        <div class="use">${c.use}</div>
+      </div>`;
+    sw.addEventListener("click", () => copyText(c.hex, `${c.hex} をコピーしました`));
+    palEl.appendChild(sw);
+  });
+
+  // 70/25/5 の比率バー（ベース→メイン→アクセント）
+  const [main, accent, base] = [pal.colors[0].hex, pal.colors[1].hex, pal.colors[2].hex];
+  document.getElementById("ratioBar").innerHTML =
+    `<div style="background:${base};flex:70"></div>` +
+    `<div style="background:${main};flex:25"></div>` +
+    `<div style="background:${accent};flex:5"></div>`;
+  document.getElementById("usageNote").innerHTML =
+    "🎨 <b>色の黄金比 70:25:5</b> ＝ ベース(背景)70% ／ メインカラー25% ／ アクセント5%。" +
+    "<br>アクセントは「ボタン」「いちばん押してほしい所」だけに使うと、グッと締まってきれいに見えます。";
+
+  // --- まとめテキスト ---
+  buildSummary(product, target, message, flow, pal);
+
+  document.getElementById("output").classList.add("show");
+  document.getElementById("output").scrollIntoView({ behavior: "smooth" });
+}
+
+function buildSummary(product, target, message, flow, pal) {
+  const lines = [];
+  lines.push("=== LP相棒 提案メモ ===");
+  lines.push(`商材：${product || "(未入力)"}`);
+  lines.push(`ターゲット：${target || "(未入力)"}`);
+  if (message) lines.push(`伝えたいこと：${message}`);
+  lines.push(`ゴール：${GOAL_LABEL[goal]}`);
+  lines.push(`雰囲気：${pal.label}`);
+  lines.push("");
+  lines.push("--- ブロック構成（上から順に並べる）---");
+  flow.forEach((key, i) => {
+    const b = BLOCK[key];
+    lines.push(`${String(i + 1).padStart(2, "0")}. ${b.name}`);
+    lines.push(`    目的: ${b.goal}`);
+    lines.push(`    中身: ${b.items.join(" / ")}`);
+    lines.push(`    見出し案: ${fillTemplate(b.headEx, product, target)}`);
+    lines.push(`    文字量: ${b.vol}`);
+    lines.push(`    画像: ${fillTemplate(b.img, product, target)}`);
+    lines.push(`    画像プロンプト: ${fillTemplate(b.prompt, product, target)}`);
+  });
+  lines.push("");
+  lines.push("--- 配色（コピペ用）---");
+  pal.colors.forEach(c => lines.push(`${c.role}: ${c.hex}（${c.use}）`));
+  lines.push("使い方の比率 → ベース70% : メイン25% : アクセント5%");
+  document.getElementById("summaryText").value = lines.join("\n");
+}
+
+/* =========================================================================
+   ユーティリティ
+   ========================================================================= */
+function copyText(text, msg) {
+  navigator.clipboard.writeText(text).then(() => toast(msg || "コピーしました"))
+    .catch(() => {
+      // フォールバック
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast(msg || "コピーしました"); } catch (e) {}
+      document.body.removeChild(ta);
+    });
+}
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+document.getElementById("generateBtn").addEventListener("click", generate);
+document.getElementById("copySummary").addEventListener("click", () => {
+  copyText(document.getElementById("summaryText").value, "まとめをコピーしました");
+});
+</script>
+</body>
+</html>
