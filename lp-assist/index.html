@@ -229,6 +229,73 @@
     .palette { grid-template-columns: 1fr; }
     .chip { padding: 6px 11px; font-size: 12.5px; }
   }
+
+  /* design rules */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 620px) { .rules-grid { grid-template-columns: 1fr; } }
+  .rule-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fff;
+  }
+  .rule-card--wide { grid-column: 1 / -1; }
+  .rule-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+  .rule-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-row strong { margin-left: auto; font-weight: 700; color: var(--ink); padding-left: 8px; }
+  .rule-note {
+    font-size: 12px;
+    color: var(--sub);
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: var(--bg);
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+  .cm-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: .1s;
+  }
+  .cm-row:hover { background: var(--bg); border-radius: 6px; padding-left: 4px; }
+  .cm-row:last-child { border-bottom: none; }
+  .cm-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,.10);
+  }
+  .cm-elem { flex: 1; color: var(--ink); font-size: 12.5px; }
+  .cm-label { font-size: 11px; color: var(--sub); display: block; }
+  .cm-hex { font-weight: 700; font-size: 12px; font-family: monospace; color: var(--ink); }
+  .font-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--line);
+    gap: 8px;
+  }
+  .font-row:last-child { border-bottom: none; }
+  .font-size-val { font-weight: 700; font-size: 12px; color: var(--accent); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -297,8 +364,14 @@
       <div class="usage-note" id="usageNote"></div>
     </section>
 
+    <section class="panel">
+      <h2><span class="badge">STEP 4</span>統一デザインルール（全ブロックに同じ設定を使う）</h2>
+      <p class="hint" style="margin:0 0 14px">ブロックごとに色や角がバラバラになるのを防ぐ設定表です。<br>ここに書いたルールを、<strong>すべてのブロックに同じ数値・同じ色で統一して</strong>適用してください。</p>
+      <div class="rules-grid" id="designRules"></div>
+    </section>
+
     <section class="panel summary">
-      <h2><span class="badge">STEP 4</span>まとめ（コピーしてメモやLPツールズへ）</h2>
+      <h2><span class="badge">STEP 5</span>まとめ（コピーしてメモやLPツールズへ）</h2>
       <textarea id="summaryText" readonly></textarea>
       <div class="actions" style="margin-top:12px">
         <button class="btn ghost" id="copySummary">まとめを全部コピー</button>
@@ -530,6 +603,147 @@ const PALETTES = {
 };
 
 /* =========================================================================
+   統一デザインルール（雰囲気ごとに「全ブロックに統一する設定」を定義）
+   ========================================================================= */
+const DESIGN_RULES = {
+  trust: {
+    radius: {
+      card: "12px",
+      button: "8px",
+      image: "8px",
+      note: "ほどよく丸めて統一。信頼感を保ちつつ、親しみやすく見える丸みです。"
+    },
+    colorMap: [
+      { elem: "ページ背景・全ブロックの下地", color: "#F4F7FA", label: "ベースカラー" },
+      { elem: "見出し帯・アイコン・ロゴ周り", color: "#1F5C8B", label: "メインカラー" },
+      { elem: "CTAボタン・ここだけ目立たせる箇所", color: "#E8913A", label: "アクセント（ここだけ）" },
+      { elem: "本文テキスト・説明文", color: "#23303A", label: "文字色" },
+      { elem: "罫線・カード枠線・区切り", color: "#D9E4EE", label: "ベース濃いめ" }
+    ],
+    fontScale: [
+      { label: "大見出し（FV・セクションタイトル）", val: "28〜32px / 太字" },
+      { label: "中見出し（ブロック内H2相当）", val: "20〜22px / 太字" },
+      { label: "小見出し（項目タイトル）", val: "16〜17px / 太字" },
+      { label: "本文・説明文（行間 1.8）", val: "15px / 標準" },
+      { label: "注記・キャプション", val: "12px / 標準" }
+    ],
+    button: {
+      style: "角丸 border-radius: 8px",
+      note: "ピル型（丸すぎ）はNG。誠実さが薄れます。全ボタンこの丸みに統一。"
+    },
+    spacing: "ブロック間の余白: 60〜80px ／ ブロック内の上下余白: 40〜60px ／ テキスト周りのpadding: 16〜20px"
+  },
+  luxury: {
+    radius: {
+      card: "0px（四角）",
+      button: "0px または 999px（ピル）の2択",
+      image: "0px（四角）",
+      note: "「完全シャープ」か「完全ピル」に振り切ること。中途半端な10pxは安っぽく見えます。"
+    },
+    colorMap: [
+      { elem: "ページ背景・全ブロックの下地", color: "#F6F4EF", label: "ベースカラー（アイボリー）" },
+      { elem: "見出し帯・ダーク背景のセクション", color: "#1C1C22", label: "メインカラー（ほぼ黒）" },
+      { elem: "CTAボタン・ラインのゴールド装飾", color: "#B8975A", label: "アクセント（ゴールド）" },
+      { elem: "本文テキスト・説明文", color: "#2A2A2E", label: "文字色" },
+      { elem: "罫線・カード枠線・区切り", color: "#E2DDD4", label: "ベース濃いめ" }
+    ],
+    fontScale: [
+      { label: "大見出し（FV・セクションタイトル）", val: "32〜40px / 細め（300〜400）" },
+      { label: "中見出し", val: "22〜24px / 標準（400）" },
+      { label: "小見出し", val: "15〜16px / 中（500）" },
+      { label: "本文（行間 2.0、ゆとり重視）", val: "15px / 標準" },
+      { label: "注記・キャプション", val: "11〜12px / 標準" }
+    ],
+    button: {
+      style: "四角（0px）またはピル（999px）の2択",
+      note: "中途半端な角丸は安っぽく見える。ボタンスタイルはLPを通じて1種類に統一。"
+    },
+    spacing: "ブロック間の余白: 80〜120px（余白多めが高級感） ／ ブロック内: 60〜80px ／ テキスト周り: 20〜24px"
+  },
+  friendly: {
+    radius: {
+      card: "16〜20px",
+      button: "999px（ピル型）",
+      image: "12〜16px",
+      note: "全部たっぷり丸める！丸ければ丸いほど親しみやすい。全ブロックこれで統一。"
+    },
+    colorMap: [
+      { elem: "ページ背景・全ブロックの下地", color: "#FFF8F2", label: "ベースカラー（あたたかいホワイト）" },
+      { elem: "見出し帯・アイコン・主役カラー", color: "#FF7A59", label: "メインカラー（オレンジ）" },
+      { elem: "CTAボタン・サブ強調（2色目）", color: "#3BB0A6", label: "アクセント（ティール）" },
+      { elem: "本文テキスト・説明文", color: "#3A3236", label: "文字色" },
+      { elem: "罫線・カード枠線・区切り", color: "#FDEADE", label: "ベース濃いめ" }
+    ],
+    fontScale: [
+      { label: "大見出し（FV・セクションタイトル）", val: "26〜30px / 極太（800）" },
+      { label: "中見出し", val: "19〜21px / 太字（700）" },
+      { label: "小見出し", val: "15〜16px / 太字（700）" },
+      { label: "本文（行間 1.8）", val: "15px / 標準" },
+      { label: "注記・キャプション", val: "12px / 標準" }
+    ],
+    button: {
+      style: "ピル型 border-radius: 999px",
+      note: "全ボタンをピルに統一。一部だけ角丸にすると一貫性が崩れます。"
+    },
+    spacing: "ブロック間の余白: 50〜70px ／ ブロック内の上下余白: 36〜50px ／ テキスト周り: 14〜18px"
+  },
+  natural: {
+    radius: {
+      card: "14〜18px",
+      button: "12px",
+      image: "10〜14px",
+      note: "自然体のほどよい丸め。大きすぎず、角張りすぎず、やさしい印象に統一。"
+    },
+    colorMap: [
+      { elem: "ページ背景・全ブロックの下地", color: "#F7F4EC", label: "ベースカラー（クリーム）" },
+      { elem: "見出し帯・アイコン・主役カラー", color: "#7A8B5A", label: "メインカラー（グリーン）" },
+      { elem: "CTAボタン・強調（テラコッタ）", color: "#D98E5A", label: "アクセント" },
+      { elem: "本文テキスト・説明文", color: "#3D3A33", label: "文字色" },
+      { elem: "罫線・カード枠線・区切り", color: "#E8E4D8", label: "ベース濃いめ" }
+    ],
+    fontScale: [
+      { label: "大見出し（FV・セクションタイトル）", val: "26〜30px / 太字（700）" },
+      { label: "中見出し", val: "20〜22px / 太字（700）" },
+      { label: "小見出し", val: "15〜17px / 中太（600）" },
+      { label: "本文（行間 1.9、読みやすさ重視）", val: "15px / 標準" },
+      { label: "注記・キャプション", val: "12px / 標準" }
+    ],
+    button: {
+      style: "角丸 border-radius: 12px",
+      note: "植物や自然を思わせる穏やかな丸み。ピル型より控えめで、ナチュラルな雰囲気に合います。"
+    },
+    spacing: "ブロック間の余白: 60〜80px ／ ブロック内の上下余白: 44〜60px ／ テキスト周り: 16〜20px"
+  },
+  cool: {
+    radius: {
+      card: "0〜6px",
+      button: "4px",
+      image: "0px（四角）",
+      note: "基本はシャープな直線（0px）。わずかな丸み（4〜6px）も◎。丸すぎはNGです。"
+    },
+    colorMap: [
+      { elem: "ページ背景・全ブロックの下地", color: "#F2F5F7", label: "ベースカラー" },
+      { elem: "見出し帯・ダーク背景のセクション", color: "#16202B", label: "メインカラー（ダークネイビー）" },
+      { elem: "CTAボタン・ラインのアクセント", color: "#2FD0C6", label: "アクセント（シアン）" },
+      { elem: "本文テキスト・説明文", color: "#1E2A33", label: "文字色" },
+      { elem: "罫線・カード枠線・区切り", color: "#D6DDE2", label: "ベース濃いめ" }
+    ],
+    fontScale: [
+      { label: "大見出し（FV・セクションタイトル）", val: "30〜36px / 細め〜中（300〜500）" },
+      { label: "中見出し", val: "20〜22px / 中（500）" },
+      { label: "小見出し", val: "14〜15px / 中（500）" },
+      { label: "本文（行間 1.8）", val: "14〜15px / 標準" },
+      { label: "注記・キャプション", val: "11〜12px / 標準" }
+    ],
+    button: {
+      style: "ほぼ四角 border-radius: 4px",
+      note: "シャープな直線が先進感を演出します。ピル型や大きな角丸は先進的な雰囲気を壊すので避けて。"
+    },
+    spacing: "ブロック間の余白: 70〜100px（余白が洗練感を作る） ／ ブロック内: 50〜70px ／ テキスト周り: 18〜24px"
+  }
+};
+
+/* =========================================================================
    状態
    ========================================================================= */
 let goal = "purchase";
@@ -555,6 +769,78 @@ function fillTemplate(str, product, target) {
   const p = product || "この商品";
   const t = target || "お客さま";
   return str.replace(/\{product\}/g, p).replace(/\{target\}/g, t);
+}
+
+function buildDesignRules() {
+  const rules = DESIGN_RULES[mood];
+  const container = document.getElementById("designRules");
+  container.innerHTML = "";
+
+  // 角丸ルール
+  const cardRadius = document.createElement("div");
+  cardRadius.className = "rule-card";
+  cardRadius.innerHTML = `
+    <div class="rule-title">◻ 角丸ルール（border-radius）</div>
+    <div class="rule-row">カード・ブロック枠<strong>${rules.radius.card}</strong></div>
+    <div class="rule-row">ボタン<strong>${rules.radius.button}</strong></div>
+    <div class="rule-row">画像・写真の角<strong>${rules.radius.image}</strong></div>
+    <div class="rule-note">${rules.radius.note}</div>
+  `;
+  container.appendChild(cardRadius);
+
+  // ボタンスタイル
+  const cardBtn = document.createElement("div");
+  cardBtn.className = "rule-card";
+  cardBtn.innerHTML = `
+    <div class="rule-title">🔲 ボタンスタイル</div>
+    <div style="font-size:14px;font-weight:700;padding:8px 4px;color:var(--ink)">${rules.button.style}</div>
+    <div class="rule-note">${rules.button.note}</div>
+  `;
+  container.appendChild(cardBtn);
+
+  // 色の使い道（wide）
+  const cardColor = document.createElement("div");
+  cardColor.className = "rule-card rule-card--wide";
+  const cmRows = rules.colorMap.map(cm => `
+    <div class="cm-row" title="${cm.color} をコピー">
+      <div class="cm-dot" style="background:${cm.color}"></div>
+      <div class="cm-elem">${cm.elem}<span class="cm-label">${cm.label}</span></div>
+      <div class="cm-hex">${cm.color}</div>
+    </div>
+  `).join("");
+  cardColor.innerHTML = `
+    <div class="rule-title">🎨 色の使い道チートシート（クリックでHEXコピー）</div>
+    ${cmRows}
+  `;
+  cardColor.querySelectorAll(".cm-row").forEach((row, i) => {
+    row.addEventListener("click", () => copyText(rules.colorMap[i].color, `${rules.colorMap[i].color} をコピーしました`));
+  });
+  container.appendChild(cardColor);
+
+  // 文字サイズ
+  const cardFont = document.createElement("div");
+  cardFont.className = "rule-card";
+  const fontRows = rules.fontScale.map(f => `
+    <div class="font-row">
+      <span>${f.label}</span>
+      <span class="font-size-val">${f.val}</span>
+    </div>
+  `).join("");
+  cardFont.innerHTML = `
+    <div class="rule-title">✏️ 文字サイズ設定</div>
+    ${fontRows}
+  `;
+  container.appendChild(cardFont);
+
+  // 余白ルール
+  const cardSpace = document.createElement("div");
+  cardSpace.className = "rule-card";
+  cardSpace.innerHTML = `
+    <div class="rule-title">↕ 余白ルール</div>
+    <div style="font-size:13px;line-height:1.9;color:var(--ink)">${rules.spacing.replace(/／/g, "<br>")}</div>
+    <div class="rule-note">「多すぎるかな？」くらいがちょうどいいです。余白をケチると一気に読みにくくなります。</div>
+  `;
+  container.appendChild(cardSpace);
 }
 
 function generate() {
@@ -619,6 +905,9 @@ function generate() {
     "🎨 <b>色の黄金比 70:25:5</b> ＝ ベース(背景)70% ／ メインカラー25% ／ アクセント5%。" +
     "<br>アクセントは「ボタン」「いちばん押してほしい所」だけに使うと、グッと締まってきれいに見えます。";
 
+  // --- デザインルール ---
+  buildDesignRules();
+
   // --- まとめテキスト ---
   buildSummary(product, target, message, flow, pal);
 
@@ -650,6 +939,18 @@ function buildSummary(product, target, message, flow, pal) {
   lines.push("--- 配色（コピペ用）---");
   pal.colors.forEach(c => lines.push(`${c.role}: ${c.hex}（${c.use}）`));
   lines.push("使い方の比率 → ベース70% : メイン25% : アクセント5%");
+
+  const dr = DESIGN_RULES[mood];
+  lines.push("");
+  lines.push("--- 統一デザインルール（全ブロック共通設定）---");
+  lines.push(`【角丸】カード枠: ${dr.radius.card} ／ ボタン: ${dr.radius.button} ／ 画像: ${dr.radius.image}`);
+  lines.push(`【ボタンスタイル】${dr.button.style}`);
+  lines.push("【色の使い道】");
+  dr.colorMap.forEach(cm => lines.push(`  ${cm.elem}: ${cm.color}（${cm.label}）`));
+  lines.push("【文字サイズ】");
+  dr.fontScale.forEach(f => lines.push(`  ${f.label}: ${f.val}`));
+  lines.push(`【余白】${dr.spacing}`);
+
   document.getElementById("summaryText").value = lines.join("\n");
 }
 
