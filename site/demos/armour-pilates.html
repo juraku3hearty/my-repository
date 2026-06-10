@@ -7,16 +7,16 @@
 ============================================================ -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#f7f8f6; --green:#5f7d6e; --green2:#43594d; --charcoal:#272e2a;
-  --ink:#3a423d; --gray:#8a948e; --line:#e3e8e4; --mist:#edf1ee; --gold:#c9a86a;
+:root{ /* トンマナ: @pilates.armour.jp のフィード準拠(ベージュ×ブラウン×淡ピンク・2026-06-10) */
+  --bg:#f6f1e8; --green:#9d7b62; --green2:#6e573f; --charcoal:#3f352a;
+  --ink:#4a4034; --gray:#9a8d7d; --line:#e6ddcf; --mist:#efe8db; --gold:#b9986a; --pinkac:#c98a96;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 .lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:64px}
 .lh-demo a{color:inherit;text-decoration:none!important}
 .lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
 .lh-demo .sec{padding:64px 0}
-.lh-demo .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:var(--gold);margin-bottom:34px;text-transform:uppercase}
+.lh-demo .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:var(--pinkac);margin-bottom:34px;text-transform:uppercase}
 
 /* SWELLテーマ装飾の打ち消し */
 .lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
@@ -32,8 +32,8 @@
 
 /* hero: 写真主役の全画面風 */
 .lh-demo .hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
-  background:linear-gradient(rgba(28,38,33,.55),rgba(28,38,33,.62)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/img_2026-06-10T16-01-25.jpg') center 35%/cover no-repeat}
-/* TODO: 背景はピラティス(リフォーマー)素材が来たら差し替え。現在はイメージ素材 */
+  background:linear-gradient(rgba(58,46,34,.5),rgba(58,46,34,.58)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/img_2026-06-10T16-01-25.jpg') center 35%/cover no-repeat}
+/* TODO: 背景はスタジオ実写(木目リフォーマー×自然光)が理想。現在はイメージ素材 */
 .lh-demo .hero .inner{position:relative;padding:90px 20px}
 .lh-demo .hero .logo-en{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.5em;color:var(--gold);margin-bottom:18px}
 .lh-demo .hero .catch{color:rgba(255,255,255,.92);font-size:15px;margin:0 0 30px;text-shadow:0 1px 12px rgba(0,0,0,.4)}
@@ -119,11 +119,11 @@
 </section>
 
 <section class="trial fade">
-  <h2>まずは体験レッスンから</h2>
-  <p>マシンピラティスがはじめての方も大丈夫。<br>あなたの体に合わせて、インストラクターがマンツーマンでサポートします。</p>
+  <h2>新規募集のお知らせ</h2>
+  <p>当スタジオは定員制のため、新規会員様の募集は不定期です(直近の募集は限定10名様)。<br>最新の募集状況・キャンセル待ちのご相談は、お気軽にご連絡ください。</p>
   <div class="btns">
-    <a class="btn" href="tel:0123294610">📞 電話で申し込む</a>
-    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで申し込む</a>
+    <a class="btn" href="tel:0123294610">📞 電話で問い合わせる</a>
+    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで問い合わせる</a>
   </div>
 </section>
 
@@ -143,10 +143,14 @@
   <div class="wrap">
     <h2>料金プラン</h2>
     <span class="en">Price</span>
-    <!-- TODO: 実際の料金に差し替え(通っているので正確な金額を記入できます) -->
-    <div class="item"><div><b>月額プラン</b><small>通い方に合わせて選べます</small></div><div class="pr">体験時にご案内</div></div>
-    <div class="item"><div><b>都度払い</b><small>マイペースに通いたい方に</small></div><div class="pr">体験時にご案内</div></div>
-    <p class="note">※ 料金プランの詳細はお気軽にお問い合わせください。</p>
+    <!-- 出典: Instagramの料金表投稿(2026-06-10時点)。左端が見切れていたためプラン名は要確認 -->
+    <div class="item"><div><b>月2回 パーソナル&セルフ4回</b><small>月額プラン</small></div><div class="pr">¥17,000</div></div>
+    <div class="item"><div><b>月4回 パーソナル&セルフ2回</b><small>月額プラン</small></div><div class="pr">¥25,000</div></div>
+    <div class="item"><div><b>3回チケット</b><small>有効期限1ヶ月</small></div><div class="pr">¥21,000</div></div>
+    <div class="item"><div><b>5回チケット</b><small>有効期限2ヶ月</small></div><div class="pr">¥30,000</div></div>
+    <div class="item"><div><b>8回チケット</b><small>有効期限2ヶ月</small></div><div class="pr">¥40,000</div></div>
+    <div class="item"><div><b>12回チケット</b><small>有効期限2ヶ月</small></div><div class="pr">¥58,000</div></div>
+    <p class="note">お支払い方法: 現金・電子決済可 ※ 最新の料金・プランはInstagramをご確認ください。</p>
   </div>
 </section>
 
@@ -164,6 +168,7 @@
   <div class="wrap">
     <h2>よくある質問</h2>
     <span class="en">FAQ</span>
+    <div class="q"><b>今すぐ入会できますか?</b><p>定員制のため、新規募集は不定期です。最新の募集状況はInstagramでお知らせしています。キャンセル待ちのご相談もどうぞ。</p></div>
     <div class="q"><b>運動が苦手・初心者でも大丈夫ですか?</b><p>マシンが体を支えてくれるので、運動経験がない方こそ始めやすいのがマシンピラティスです。</p></div>
     <div class="q"><b>託児はありますか?</b><p>あります(要予約)。小さなお子様連れの方もご相談ください。</p></div>
     <div class="q"><b>予約はどうすればいいですか?</b><p>お電話(0123-29-4610)または Instagram のDMからご連絡ください。</p></div>
@@ -205,11 +210,11 @@
 </section>
 
 <section class="ctaband fade">
-  <h2>体験レッスン、はじめませんか?</h2>
+  <h2>募集状況・キャンセル待ちのご相談</h2>
   <p>「ホームページを見た」とお伝えいただくとスムーズです。</p>
   <div class="btns">
-    <a class="btn" href="tel:0123294610">📞 電話で申し込む</a>
-    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで申し込む</a>
+    <a class="btn" href="tel:0123294610">📞 電話で問い合わせる</a>
+    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで問い合わせる</a>
   </div>
 </section>
 
