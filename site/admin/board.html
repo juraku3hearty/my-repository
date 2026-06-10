@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Link Hokkaido 営業管理ボード(内部用)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   営業管理ボード(内部用・単一ファイル)
+   - データはブラウザのlocalStorageに保存(このPC内だけ)
+   - 「書き出し」でJSONをダウンロード → リポジトリにコミットすればバックアップ兼共有
+   - タブ1: パイプライン(候補→送付→閲覧→無料試用→契約→解約)
+   - タブ2: 紹介マップ(どこからどこが紹介か+割引の適用状況)
+   ============================================================ */
+:root{--bg:#f4f5f7;--navy:#18263c;--orange:#d97a2e;--line:#e3e6eb;--gray:#7a8190}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#2b2f36;font-size:13.5px;line-height:1.7}
+.top{background:var(--navy);color:#fff;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.top h1{font-size:15px;letter-spacing:.1em}
+.top .io button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;margin-left:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 22px;font-size:13px;cursor:pointer;font-weight:500}
+.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* summary */
+.sum{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px}
+.sum div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center}
+.sum b{font-size:22px;display:block}
+.sum small{color:var(--gray);font-size:11px}
+/* table */
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;white-space:nowrap}
+th{background:#fafbfc;font-size:11.5px;color:var(--gray);letter-spacing:.05em;position:sticky;top:0}
+td input,td select{border:1px solid transparent;background:transparent;font:inherit;padding:4px 6px;border-radius:5px;width:100%;min-width:90px}
+td input:hover,td select:hover{border-color:var(--line)}
+td input:focus,td select:focus{border-color:var(--orange);outline:none;background:#fff}
+td .memo{min-width:200px}
+.st{font-weight:700;border-radius:6px}
+.st.s0{color:#7a8190}.st.s1{color:#2563ab}.st.s2{color:#8a5fbf}.st.s3{color:#d97a2e}.st.s4{color:#2e8b57}.st.s5{color:#c0392b}
+.del{color:#c0392b;background:none;border:none;cursor:pointer;font-size:15px}
+.add{margin:14px 0;background:var(--orange);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:13px}
+.hint{color:var(--gray);font-size:12px;margin:10px 2px}
+/* referral tab */
+.ref .tree{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+.ref .src{margin-bottom:18px}
+.ref .src>b{display:block;font-size:14px;margin-bottom:8px}
+.ref .src>b .cnt{display:inline-block;background:#fdf0e4;color:var(--orange);border-radius:99px;font-size:11px;padding:2px 12px;margin-left:10px}
+.ref .child{display:flex;align-items:center;gap:10px;padding:7px 0 7px 22px;border-left:2px solid var(--line);margin-left:8px;font-size:13px}
+.ref .child .arrow{color:var(--orange)}
+.ref .child .tag{font-size:11px;border-radius:99px;padding:1px 10px;background:#eef3ec;color:#2e8b57}
+.ref .child .tag.gray{background:#f0f1f3;color:var(--gray)}
+.ref .none{color:var(--gray);padding:30px;text-align:center}
+.rule{background:#fff;border:1px dashed var(--orange);border-radius:12px;padding:16px 20px;margin-bottom:16px;font-size:12.5px;color:#5a4a3a}
+@media(max-width:760px){.sum{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>LINK HOKKAIDO ｜ 営業管理ボード</h1>
+  <div class="io">
+    <button onclick="exportJson()">書き出し(JSON)</button>
+    <button onclick="document.getElementById('imp').click()">読み込み</button>
+    <input type="file" id="imp" accept=".json" style="display:none" onchange="importJson(event)">
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="on" id="tabP" onclick="show('pipe')">📋 パイプライン</button>
+    <button id="tabR" onclick="show('ref')">🤝 紹介マップ</button>
+  </div>
+
+  <!-- ==== タブ1: パイプライン ==== -->
+  <div id="pipe">
+    <div class="sum" id="sum"></div>
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th>店名</th><th>業種</th><th>チャネル</th><th>ステータス</th>
+          <th>送付日</th><th>無料開始</th><th>契約日</th><th>月額</th><th>紹介元</th><th>メモ</th><th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <button class="add" onclick="addRow()">＋ 店舗を追加</button>
+    <p class="hint">セルはそのまま編集できます(自動保存)。「紹介元」に他店舗の店名を入れると紹介マップに反映されます。<br>
+    データはこのブラウザ内に保存されます。定期的に「書き出し」でJSONを保存し、リポジトリの data/ にコミットしておくと安全です。</p>
+  </div>
+
+  <!-- ==== タブ2: 紹介マップ ==== -->
+  <div id="ref" class="ref" style="display:none">
+    <div class="rule">
+      <b>紹介割引ルール(LP非掲載・個別案内)</b>: 1店舗紹介 = 月額▲¥500 / 3店舗 = 月額▲¥1,000 / 5店舗 = 管理費6ヶ月無料
+      <span style="color:var(--gray)">※ 仮のルール。確定したらここを書き換える</span>
+    </div>
+    <div class="tree" id="tree"></div>
+  </div>
+</div>
+
+<script>
+const STATUSES = ["候補","送付済","閲覧確認","無料試用中","契約","解約/見送り"];
+const KEY = "lh_board_v1";
+let data = load();
+
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem(KEY)); if(Array.isArray(d)) return d; }catch(e){}
+  // 初期サンプル(自由に消してOK)
+  return [
+    {name:"Salon Lien(サンプル)", biz:"美容室", ch:"Instagram", st:1, sent:"2026-06-12", trial:"", signed:"", fee:"1980", refBy:"", memo:"デモURL送付済・パスワード lien2026"},
+    {name:"サンプル食堂", biz:"飲食", ch:"食べログ", st:0, sent:"", trial:"", signed:"", fee:"1980", refBy:"", memo:"Googleマップのウェブサイト欄が空欄"},
+  ];
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); renderSum(); }
+
+function render(){
+  const tb = document.getElementById('rows'); tb.innerHTML = "";
+  data.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input value="${esc(r.name)}" onchange="up(${i},'name',this.value)"></td>
+      <td><input value="${esc(r.biz)}" onchange="up(${i},'biz',this.value)"></td>
+      <td><input value="${esc(r.ch)}" onchange="up(${i},'ch',this.value)"></td>
+      <td><select class="st s${r.st}" onchange="up(${i},'st',+this.value);render()">
+        ${STATUSES.map((s,j)=>`<option value="${j}" ${j===r.st?'selected':''}>${s}</option>`).join('')}
+      </select></td>
+      <td><input type="date" value="${esc(r.sent)}" onchange="up(${i},'sent',this.value)"></td>
+      <td><input type="date" value="${esc(r.trial)}" onchange="up(${i},'trial',this.value)"></td>
+      <td><input type="date" value="${esc(r.signed)}" onchange="up(${i},'signed',this.value)"></td>
+      <td><input value="${esc(r.fee)}" style="min-width:60px" onchange="up(${i},'fee',this.value)"></td>
+      <td><input value="${esc(r.refBy)}" placeholder="紹介元の店名" onchange="up(${i},'refBy',this.value);renderTree()"></td>
+      <td><input class="memo" value="${esc(r.memo)}" onchange="up(${i},'memo',this.value)"></td>
+      <td><button class="del" onclick="delRow(${i})">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  renderSum(); renderTree();
+}
+function up(i,k,v){ data[i][k]=v; save(); }
+function addRow(){ data.push({name:"",biz:"",ch:"",st:0,sent:"",trial:"",signed:"",fee:"1980",refBy:"",memo:""}); save(); render(); }
+function delRow(i){ if(confirm(`「${data[i].name||'(無名)'}」を削除しますか?`)){ data.splice(i,1); save(); render(); } }
+function esc(s){ return String(s??"").replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function renderSum(){
+  const el = document.getElementById('sum');
+  el.innerHTML = STATUSES.map((s,j)=>{
+    const n = data.filter(r=>r.st===j).length;
+    return `<div><b class="st s${j}">${n}</b><small>${s}</small></div>`;
+  }).join('');
+}
+
+function renderTree(){
+  const el = document.getElementById('tree');
+  const sources = {};
+  data.forEach(r=>{ if(r.refBy && r.refBy.trim()){ (sources[r.refBy.trim()] ||= []).push(r); } });
+  const keys = Object.keys(sources);
+  if(!keys.length){ el.innerHTML = `<div class="none">紹介関係はまだありません。パイプラインの「紹介元」列に店名を入れると、ここに紹介ツリーが表示されます。</div>`; return; }
+  el.innerHTML = keys.map(src=>{
+    const kids = sources[src];
+    const signed = kids.filter(k=>k.st===4).length;
+    return `<div class="src">
+      <b>🏪 ${esc(src)} <span class="cnt">紹介 ${kids.length}件 / 契約 ${signed}件 ${discount(signed)}</span></b>
+      ${kids.map(k=>`<div class="child"><span class="arrow">└→</span> ${esc(k.name)}
+        <span class="tag ${k.st===4?'':'gray'}">${STATUSES[k.st]}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+function discount(n){
+  if(n>=5) return "→ 管理費6ヶ月無料";
+  if(n>=3) return "→ 月額▲¥1,000";
+  if(n>=1) return "→ 月額▲¥500";
+  return "";
+}
+
+function exportJson(){
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lh_board_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function importJson(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{ try{ data = JSON.parse(fr.result); save(); render(); }catch(e){ alert("JSONの読み込みに失敗しました"); } };
+  fr.readAsText(f);
+}
+
+function show(id){
+  document.getElementById('pipe').style.display = id==='pipe'?'':'none';
+  document.getElementById('ref').style.display = id==='ref'?'':'none';
+  document.getElementById('tabP').classList.toggle('on', id==='pipe');
+  document.getElementById('tabR').classList.toggle('on', id==='ref');
+}
+render();
+</script>
+</body>
+</html>
