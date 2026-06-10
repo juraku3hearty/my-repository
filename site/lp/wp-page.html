@@ -21,11 +21,11 @@ h2{font-size:clamp(24px,4vw,32px);line-height:1.6;font-weight:600;margin-bottom:
 .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);box-shadow:none}
 .center{text-align:center}
 
-/* header */
-header{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:rgba(24,38,60,.85);backdrop-filter:blur(8px)}
-header .logo{color:#fff;font-family:'Shippori Mincho',serif;letter-spacing:.3em;font-size:15px}
-header .logo span{color:var(--orange)}
-header .btn{padding:9px 22px;font-size:13px}
+/* header(.lh-lp 配下に限定: テーマのheader要素を巻き込まない) */
+.lh-lp > header{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:rgba(24,38,60,.85);backdrop-filter:blur(8px)}
+.lh-lp > header .logo{color:#fff;font-family:'Shippori Mincho',serif;letter-spacing:.3em;font-size:15px}
+.lh-lp > header .logo span{color:var(--orange)}
+.lh-lp > header .btn{padding:9px 22px;font-size:13px}
 
 /* hero */
 .hero{position:relative;background:linear-gradient(160deg,#1c2c47 0%,#18263c 55%,#241f2e 100%);color:#fff;padding:150px 0 0;overflow:hidden}
@@ -130,8 +130,8 @@ header .btn{padding:9px 22px;font-size:13px}
 .cta p{color:rgba(255,255,255,.75);font-size:14px;margin:18px 0 34px}
 .cta .mini{font-size:12px;color:rgba(255,255,255,.55);margin-top:22px;line-height:2}
 
-footer{background:#0d1624;color:rgba(255,255,255,.6);text-align:center;padding:46px 0;font-size:12px}
-footer .logo{font-family:'Shippori Mincho',serif;letter-spacing:.3em;color:var(--orange);font-size:15px;margin-bottom:10px}
+.lh-lp > footer{background:#0d1624;color:rgba(255,255,255,.6);text-align:center;padding:46px 0;font-size:12px}
+.lh-lp > footer .logo{font-family:'Shippori Mincho',serif;letter-spacing:.3em;color:var(--orange);font-size:15px;margin-bottom:10px}
 
 @media(max-width:760px){
   .sec{padding:64px 0}
@@ -141,6 +141,22 @@ footer .logo{font-family:'Shippori Mincho',serif;letter-spacing:.3em;color:var(-
   .avatar{max-width:240px}
   .darkbox{padding:32px 24px}
 }
+
+/* ===== WordPressテーマ(SWELL)の本文装飾の打ち消し =====
+   テーマは .post_content h2 等に青背景・吹き出し・下線などを当てるため、
+   LP内の見出し・リンク・リストを明示的にリセットして自前のデザインに戻す */
+.lh-lp :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Shippori Mincho',serif!important}
+.lh-lp :is(h1,h2,h3,h4)::before,.lh-lp :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
+.lh-lp h1{font-size:clamp(30px,5.5vw,46px)!important;line-height:1.75!important;font-weight:600!important;margin:0 0 22px!important}
+.lh-lp h2{font-size:clamp(24px,4vw,32px)!important;line-height:1.6!important;font-weight:600!important;margin:0 0 18px!important}
+.lh-lp .cta h2{font-size:clamp(24px,4vw,34px)!important}
+.lh-lp .vol h2{font-size:22px!important}
+.lh-lp .darkbox h3{font-size:21px!important;margin:0 0 16px!important}
+.lh-lp .why h3{font-size:18px!important;margin:0 0 18px!important;text-align:center!important}
+.lh-lp a{text-decoration:none!important;color:inherit}
+.lh-lp .btn{color:#fff!important}
+.lh-lp .nayami ul{list-style:none!important;padding-left:0!important}
+.lh-lp figure{margin:0!important}
 </style>
 <div class="lh-lp">
 
