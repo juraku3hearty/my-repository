@@ -125,7 +125,7 @@
   プレビュー: https://link-hokkaido.com/wp-admin/post.php?post=186&action=edit から確認。
   表示崩れ(SWELLのヘッダー/サイドバー干渉)があればSWELLの全幅・本文のみ設定に切替えて調整する
 - **LPの無料相談ボタン → LINE公式アカウント設定済み**(2026-06-10)。
-  友だち追加URL: **https://lin.ee/o9lqkbQ**(アカウント名: Link Hokkaido)。
+  友だち追加URL: **https://lin.ee/o9IqkbQ**(アカウント名: Link Hokkaido)。
   ヘッダー/ヒーロー/最下部CTAの3ヶ所に設定済み。最下部は文言を「LINEで無料相談する」に変更
 - **生HTMLの投稿ルール(2026-06-10 確定)**: LP等の生HTMLをWPに入れるときは
   **必ず `--html-block` を付けて投稿する**(wp_post.mjs)。付けないとwpautopが
