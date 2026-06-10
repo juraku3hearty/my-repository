@@ -1,39 +1,57 @@
 <!-- ============================================================
-  ARMOUR.GYM × pilates studio ご提案デモ(WordPress固定ページ用)
-  運用ルール: WP標準パスワード保護+推測されないslugで設置。
-  写真はInstagram公式埋め込みのみ(著作権対応)。テキストは事実情報のみ。
-  TODO箇所: 料金(平井さんが通っているので正確に記入可能)/ Instagram投稿URL / 地図iframe
+  ARMOUR.GYM × pilates studio ご提案デモ v2(WordPress固定ページ用)
+  CTW雛形5本の解析を反映: 写真主役ヒーロー/体験申込ボックス/VOICE/FAQ/CTA帯の繰り返し
+  運用ルール: WP標準パスワード保護+推測されないslug。写真はフリー素材(※イメージ注記)+
+  Instagram公式埋め込み。テキストは事実情報のみ、声はサンプル明記。
+  TODO: ピラティス素材写真 / 実際の料金 / Instagram投稿URL / 地図iframe / 平井さんの実体験の声
 ============================================================ -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f7f8f6; --green:#5f7d6e; --green2:#4a6557; --charcoal:#2e3531;
-  --ink:#3a423d; --gray:#8a948e; --line:#e3e8e4; --mist:#edf1ee;
+  --bg:#f7f8f6; --green:#5f7d6e; --green2:#43594d; --charcoal:#272e2a;
+  --ink:#3a423d; --gray:#8a948e; --line:#e3e8e4; --mist:#edf1ee; --gold:#c9a86a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:70px}
+.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:64px}
 .lh-demo a{color:inherit;text-decoration:none!important}
 .lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
-.lh-demo .sec{padding:60px 0}
-.lh-demo .en{display:block;text-align:center;font-size:10px;letter-spacing:.3em;color:var(--green);margin-bottom:34px;text-transform:uppercase}
+.lh-demo .sec{padding:64px 0}
+.lh-demo .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:var(--gold);margin-bottom:34px;text-transform:uppercase}
 
 /* SWELLテーマ装飾の打ち消し */
 .lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
 .lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
-.lh-demo h1{font-size:clamp(24px,6.5vw,32px)!important;line-height:1.5!important;color:var(--charcoal)!important;letter-spacing:.06em!important;margin:0 0 6px!important}
-.lh-demo h2{font-size:21px!important;color:var(--green2)!important;text-align:center!important;margin:0 0 8px!important;font-weight:700!important}
+.lh-demo h1{font-size:clamp(26px,7vw,38px)!important;line-height:1.5!important;color:#fff!important;letter-spacing:.06em!important;margin:0 0 10px!important;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.lh-demo h2{font-size:22px!important;color:var(--green2)!important;text-align:center!important;margin:0 0 6px!important;font-weight:700!important}
 .lh-demo figure{margin:0!important}
 .lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
 
-/* hero */
-.lh-demo .hero{background:linear-gradient(170deg,#e6ece8,#f7f8f6 70%);text-align:center;padding:74px 20px 50px}
-.lh-demo .hero .badge{display:inline-block;background:#fff;border:1px solid var(--line);color:var(--green);font-size:11px;padding:4px 16px;border-radius:99px;margin-bottom:18px;letter-spacing:.15em}
-.lh-demo .hero .catch{font-size:14px;margin:14px 0 28px}
-.lh-demo .heroimg{max-width:640px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;background:linear-gradient(135deg,#c6d4cb,#90a899);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em}
-.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px;max-width:640px;margin-left:auto;margin-right:auto}
-.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 12px;text-align:center}
-.lh-demo .points .ic{font-size:22px}
-.lh-demo .points b{display:block;font-size:12.5px;color:var(--charcoal);margin-top:6px;line-height:1.5}
+/* スクロールふわっと表示 */
+.lh-demo .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.lh-demo .fade.on{opacity:1;transform:none}
+
+/* hero: 写真主役の全画面風 */
+.lh-demo .hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
+  background:linear-gradient(rgba(28,38,33,.55),rgba(28,38,33,.62)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/img_2026-06-10T16-01-25.jpg') center 35%/cover no-repeat}
+/* TODO: 背景はピラティス(リフォーマー)素材が来たら差し替え。現在はイメージ素材 */
+.lh-demo .hero .inner{position:relative;padding:90px 20px}
+.lh-demo .hero .logo-en{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.5em;color:var(--gold);margin-bottom:18px}
+.lh-demo .hero .catch{color:rgba(255,255,255,.92);font-size:15px;margin:0 0 30px;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+.lh-demo .hero .btn{font-size:15px;padding:16px 50px}
+.lh-demo .hero .note{margin-top:16px;font-size:10.5px;color:rgba(255,255,255,.55)}
+
+/* 体験申込ボックス(ヒーロー直下) */
+.lh-demo .trial{background:var(--charcoal);color:#fff;text-align:center;padding:46px 20px}
+.lh-demo .trial h2{color:#fff!important}
+.lh-demo .trial p{color:rgba(255,255,255,.8);font-size:13px;margin:10px 0 24px}
+.lh-demo .trial .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lh-demo .trial .btns a{min-width:220px}
+
+/* point cards */
+.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
+.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 12px;text-align:center}
+.lh-demo .points .ic{font-size:24px}
+.lh-demo .points b{display:block;font-size:12.5px;color:var(--charcoal);margin-top:8px;line-height:1.5}
 
 /* menu */
 .lh-demo .menu .item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:14px}
@@ -42,8 +60,21 @@
 .lh-demo .menu .item .pr{color:var(--green2);font-weight:700;font-size:15px;white-space:nowrap}
 .lh-demo .menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
 
+/* voice */
+.lh-demo .voice{background:var(--mist)}
+.lh-demo .voice .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-bottom:14px}
+.lh-demo .voice .card b{display:block;color:var(--green2);font-size:14px;margin-bottom:8px}
+.lh-demo .voice .card p{font-size:13px}
+.lh-demo .voice .card small{display:block;color:var(--gray);font-size:11px;margin-top:10px;text-align:right}
+
+/* faq */
+.lh-demo .faq .q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:12px}
+.lh-demo .faq .q b{display:block;color:var(--charcoal);font-size:14px;margin-bottom:6px}
+.lh-demo .faq .q b::before{content:"Q. ";color:var(--gold);font-weight:700}
+.lh-demo .faq .q p{font-size:13px;color:var(--ink)}
+.lh-demo .faq .q p::before{content:"A. ";color:var(--green);font-weight:700}
+
 /* instagram */
-.lh-demo .insta{background:var(--mist)}
 .lh-demo .insta .embed{background:#fff;border:1px dashed var(--green);border-radius:14px;padding:40px 20px;text-align:center;color:var(--gray);font-size:12.5px;line-height:2}
 .lh-demo .insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
 .lh-demo .insta .center{text-align:center}
@@ -54,11 +85,16 @@
 .lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
 .lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#f2f5f3}
 .lh-demo .map{margin-top:14px;aspect-ratio:16/9;border-radius:14px;background:#dde4df;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+.lh-demo .mapbtn{display:block;text-align:center;margin-top:12px}
+.lh-demo .mapbtn a{display:inline-block;background:var(--charcoal);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
 
-/* cta */
-.lh-demo .ctabox{background:linear-gradient(170deg,#e6ece8,#d8e2db);text-align:center;border-radius:24px;margin:0 20px;padding:50px 24px}
-.lh-demo .ctabox p{font-size:13px;margin-bottom:26px}
-.lh-demo .btn{display:inline-block;background:var(--green);color:#fff!important;font-weight:700;padding:15px 44px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(95,125,110,.4)}
+/* cta帯(強色・電話+DMの2択) */
+.lh-demo .ctaband{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .ctaband h2{color:#fff!important}
+.lh-demo .ctaband p{color:rgba(255,255,255,.85);font-size:13px;margin:10px 0 26px}
+.lh-demo .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lh-demo .btn{display:inline-block;background:var(--gold);color:#fff!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.lh-demo .btn.line2{background:#fff;color:var(--green2)!important}
 
 /* sticky bar */
 .lh-demo .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
@@ -73,18 +109,37 @@
 <div class="lh-demo">
 
 <section class="hero">
-  <span class="badge">千歳市 / マシンピラティススタジオ</span>
-  <h1>ARMOUR.GYM × pilates studio</h1>
-  <p class="catch">千歳近郊初のマシンピラティス。<br>ジム併設だから、しなやかさも強さも、ここひとつで。</p>
-  <div class="heroimg">スタジオ写真(ご契約後に差し替え)</div>
-  <div class="points">
-    <div><div class="ic">🩰</div><b>マシン<br>ピラティス</b></div>
-    <div><div class="ic">🏋️</div><b>トレーニング<br>ジム併設</b></div>
-    <div><div class="ic">👶</div><b>託児サービス<br>(要予約)</b></div>
+  <div class="inner">
+    <p class="logo-en">CHITOSE — MACHINE PILATES</p>
+    <h1>ARMOUR.GYM × pilates studio</h1>
+    <p class="catch">千歳近郊初のマシンピラティス。<br>ジム併設だから、しなやかさも強さも、ここひとつで。</p>
+    <a class="btn" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">体験レッスンに申し込む</a>
+    <p class="note">※ 写真はイメージです(ご契約後に実際のスタジオ写真へ差し替え)</p>
   </div>
 </section>
 
-<section class="sec menu">
+<section class="trial fade">
+  <h2>まずは体験レッスンから</h2>
+  <p>マシンピラティスがはじめての方も大丈夫。<br>あなたの体に合わせて、インストラクターがマンツーマンでサポートします。</p>
+  <div class="btns">
+    <a class="btn" href="tel:0123294610">📞 電話で申し込む</a>
+    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで申し込む</a>
+  </div>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <h2>このスタジオの特徴</h2>
+    <span class="en">Features</span>
+    <div class="points">
+      <div><div class="ic">🩰</div><b>千歳近郊初の<br>マシンピラティス</b></div>
+      <div><div class="ic">🏋️</div><b>トレーニング<br>ジム併設</b></div>
+      <div><div class="ic">👶</div><b>託児サービス<br>(要予約)</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec menu fade" style="background:#fff">
   <div class="wrap">
     <h2>料金プラン</h2>
     <span class="en">Price</span>
@@ -95,7 +150,28 @@
   </div>
 </section>
 
-<section class="sec insta">
+<section class="sec voice fade">
+  <div class="wrap">
+    <h2>通っている方の声</h2>
+    <span class="en">Voice</span>
+    <!-- TODO: 1件目は平井さんの実体験で書ける(実名/イニシャルは要相談)。サンプルは掲載時に実際の声へ差し替え -->
+    <div class="card"><b>姿勢が変わったと言われるようになりました</b><p>デスクワークで固まった体が、マシンピラティスを始めてから少しずつ変わっていくのが分かります。マンツーマンで見てもらえるので、自己流にならないのが一番の安心です。</p><small>30代女性(サンプル・掲載時に実際のお声に差し替え)</small></div>
+    <div class="card"><b>ジムと両方使えるのが決め手でした</b><p>ピラティスでしなやかさを、ジムで筋力を。同じ場所で両方できるのはここだけでした。託児があるので子連れでも通えています。</p><small>40代女性(サンプル・掲載時に実際のお声に差し替え)</small></div>
+  </div>
+</section>
+
+<section class="sec faq fade">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <span class="en">FAQ</span>
+    <div class="q"><b>運動が苦手・初心者でも大丈夫ですか?</b><p>マシンが体を支えてくれるので、運動経験がない方こそ始めやすいのがマシンピラティスです。</p></div>
+    <div class="q"><b>託児はありますか?</b><p>あります(要予約)。小さなお子様連れの方もご相談ください。</p></div>
+    <div class="q"><b>予約はどうすればいいですか?</b><p>お電話(0123-29-4610)または Instagram のDMからご連絡ください。</p></div>
+    <!-- TODO: 持ち物・服装・駐車場など、通っているからこそ分かるQ&Aを追加 -->
+  </div>
+</section>
+
+<section class="sec insta fade" style="background:#fff">
   <div class="wrap">
     <h2>スタジオの様子・最新情報</h2>
     <span class="en">Instagram</span>
@@ -109,7 +185,7 @@
   </div>
 </section>
 
-<section class="sec info">
+<section class="sec info fade">
   <div class="wrap">
     <h2>スタジオ情報・アクセス</h2>
     <span class="en">Information</span>
@@ -124,14 +200,16 @@
     </table>
     <!-- TODO: Googleマップの「共有 > 地図を埋め込む」のiframeに差し替え -->
     <div class="map">Googleマップ埋め込み</div>
+    <div class="mapbtn"><a href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%B9%B8%E7%94%BA3%E4%B8%81%E7%9B%AE15+%E3%82%A8%E3%83%AC%E3%82%AC%E3%83%B3%E3%82%B9%E3%83%93%E3%83%AB" target="_blank" rel="noopener">▶ 行き方をGoogleマップで開く</a></div>
   </div>
 </section>
 
-<section class="sec">
-  <div class="ctabox">
-    <h2>ご予約・体験のお問い合わせ</h2>
-    <p>ご予約・体験のご相談は、お電話または Instagram DM から。<br>「ホームページを見た」とお伝えいただくとスムーズです。</p>
-    <a class="btn" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">Instagramで問い合わせる</a>
+<section class="ctaband fade">
+  <h2>体験レッスン、はじめませんか?</h2>
+  <p>「ホームページを見た」とお伝えいただくとスムーズです。</p>
+  <div class="btns">
+    <a class="btn" href="tel:0123294610">📞 電話で申し込む</a>
+    <a class="btn line2" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">📷 Instagram DMで申し込む</a>
   </div>
 </section>
 
@@ -149,3 +227,12 @@
 </div>
 
 </div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.lh-demo .fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
