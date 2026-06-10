@@ -1,0 +1,345 @@
+<!-- Link Hokkaido 自社LP (WordPress固定ページ用 / slug: partner) -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#f7f3ec; --navy:#18263c; --navy2:#121d2e; --orange:#d97a2e; --orange2:#c2671f;
+  --ink:#2b2b2b; --gray:#6b6f76; --line:#e5ded2; --green:#eef3ec;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--cream);line-height:1.9;font-size:15px}
+h1,h2,h3,.serif{font-family:'Shippori Mincho',serif}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.label{display:inline-block;font-size:11px;letter-spacing:.25em;color:var(--orange);border:1px solid var(--orange);padding:3px 14px;border-radius:99px;margin-bottom:22px}
+h2{font-size:clamp(24px,4vw,32px);line-height:1.6;font-weight:600;margin-bottom:18px}
+.sec{padding:90px 0}
+.lead{color:var(--gray);max-width:620px}
+.btn{display:inline-block;background:var(--orange);color:#fff;font-weight:700;padding:15px 42px;border-radius:4px;letter-spacing:.1em;transition:.2s;box-shadow:0 6px 18px rgba(217,122,46,.35)}
+.btn:hover{background:var(--orange2);transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);box-shadow:none}
+.center{text-align:center}
+
+/* header */
+header{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:rgba(24,38,60,.85);backdrop-filter:blur(8px)}
+header .logo{color:#fff;font-family:'Shippori Mincho',serif;letter-spacing:.3em;font-size:15px}
+header .logo span{color:var(--orange)}
+header .btn{padding:9px 22px;font-size:13px}
+
+/* hero */
+.hero{position:relative;background:linear-gradient(160deg,#1c2c47 0%,#18263c 55%,#241f2e 100%);color:#fff;padding:150px 0 0;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(ellipse 600px 300px at 85% 20%, rgba(217,122,46,.18), transparent),
+  radial-gradient(ellipse 500px 260px at 10% 80%, rgba(217,122,46,.10), transparent)}
+.hero .wrap{position:relative}
+.hero .en{font-size:11px;letter-spacing:.45em;color:var(--orange);margin-bottom:24px}
+.hero h1{font-size:clamp(30px,5.5vw,46px);line-height:1.75;font-weight:600;margin-bottom:22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero p.sub{color:rgba(255,255,255,.78);max-width:520px;margin-bottom:34px;font-size:14px}
+.hero .btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:64px}
+/* FV写真ストリップ: 飲食だけでなく美容・小売も想起させる4枚構成
+   TODO: assets内の実写真(横長 800x600 程度)に差し替え。altは業種が伝わる文言に */
+.fvgrid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;transform:translateY(34px)}
+.fvgrid figure{aspect-ratio:3/4;border-radius:6px 6px 0 0;overflow:hidden;position:relative;background:#0e1726}
+.fvgrid figure:nth-child(even){transform:translateY(-22px)}
+.fvgrid .ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff;font-size:12px;letter-spacing:.15em}
+.fvgrid .ph small{opacity:.55;font-size:10px;letter-spacing:.05em}
+.ph1{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#7a4a2b,#3a2a1c)}
+.ph2{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#9d8770,#5e5044)}
+.ph3{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#5a6c5d,#2e3c33)}
+.ph4{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#6b5a73,#352d3d)}
+
+/* story */
+.story .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:46px;align-items:center}
+.story .imgph{aspect-ratio:4/3;border-radius:6px;background:linear-gradient(135deg,#cdbfa8,#9d8a6c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em}
+.story h2 em{font-style:normal;color:var(--orange)}
+
+/* profile */
+.profile{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.profile .grid{display:grid;grid-template-columns:300px 1fr;gap:50px;align-items:start}
+.avatar{width:100%;aspect-ratio:1/1;border-radius:6px;background:linear-gradient(160deg,#b9a98f,#8a7a60);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em;text-align:center;line-height:2}
+.profile .name{font-size:22px;font-weight:600;margin:10px 0 2px}
+.profile .name small{font-size:12px;color:var(--gray);font-family:'Noto Sans JP';margin-left:12px;letter-spacing:.1em}
+.profile .role{font-size:12px;color:var(--orange);letter-spacing:.2em;margin-bottom:18px}
+.profile p{color:#444;margin-bottom:16px;font-size:14.5px}
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px}
+.trust div{background:var(--cream);border:1px solid var(--line);border-radius:6px;padding:16px 14px;font-size:12.5px;line-height:1.7}
+.trust b{display:block;font-size:13.5px;margin-bottom:4px;color:var(--navy)}
+
+/* nayami */
+.nayami{background:#f1ece1}
+.nayami ul{max-width:640px;margin:0 auto}
+.nayami li{list-style:none;background:#fff;border:1px solid var(--line);border-radius:4px;padding:16px 22px;margin-bottom:10px;font-size:14px;display:flex;gap:14px;align-items:center}
+.nayami li::before{content:"✓";color:var(--orange);font-weight:700}
+
+/* features */
+.features .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:36px 0 46px}
+.features .cards div{background:#fff;padding:26px 20px;text-align:center}
+.features .cards .ic{font-size:22px;margin-bottom:8px}
+.features .cards b{display:block;font-size:14px;margin-bottom:4px}
+.features .cards small{color:var(--gray);font-size:12px;line-height:1.6;display:block}
+.note-hp{background:var(--green);border-left:3px solid var(--orange);padding:18px 22px;border-radius:0 6px 6px 0;font-size:14px;max-width:640px}
+.darkbox{background:var(--navy);color:#fff;border-radius:8px;padding:46px 40px;margin-top:46px}
+.darkbox h3{font-size:21px;margin-bottom:16px}
+.darkbox p{color:rgba(255,255,255,.75);font-size:14px;margin-bottom:26px}
+.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.flow span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);padding:10px 18px;border-radius:99px;font-size:13px}
+.flow i{color:var(--orange);font-style:normal}
+
+/* price */
+.price .card{background:var(--navy);color:#fff;border-radius:8px;overflow:hidden;max-width:680px;margin:36px auto 0}
+.price .card .head{display:flex;justify-content:space-between;align-items:center;padding:26px 34px;border-bottom:1px solid rgba(255,255,255,.12)}
+.price .card .head .t b{font-size:17px;display:block}
+.price .card .head .t small{color:rgba(255,255,255,.6);font-size:12px}
+.price .card .head .p{text-align:right}
+.price .card .head .p .now{font-size:30px;color:var(--orange);font-weight:700}
+.price .card .head .p .now small{font-size:13px;color:rgba(255,255,255,.8)}
+.price .card .head .p .was{font-size:12px;color:rgba(255,255,255,.55);text-decoration:line-through;display:block}
+.price .card .head .p .cap{font-size:11px;color:var(--orange);display:block}
+.zeros{display:grid;grid-template-columns:repeat(3,1fr);padding:30px 34px;gap:10px;text-align:center}
+.zeros .z{font-size:30px;color:var(--orange);font-family:'Shippori Mincho',serif}
+.zeros small{display:block;color:rgba(255,255,255,.7);font-size:12px;margin-top:4px}
+.why{max-width:680px;margin:46px auto 0}
+.why h3{font-size:18px;margin-bottom:18px;text-align:center}
+.why .r{display:flex;gap:18px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 24px;margin-bottom:12px;align-items:flex-start}
+.why .r .no{font-family:'Shippori Mincho',serif;color:var(--orange);font-size:22px;line-height:1.2;min-width:30px}
+.why .r b{display:block;font-size:14.5px;margin-bottom:4px}
+.why .r p{font-size:13px;color:var(--gray);line-height:1.8}
+
+/* volunteer */
+.vol{background:var(--green)}
+.vol .box{background:#fff;border-radius:6px;padding:36px 40px;max-width:680px}
+.vol .tag{display:inline-block;background:#3c6e47;color:#fff;font-size:11px;padding:3px 12px;border-radius:3px;margin-bottom:14px;letter-spacing:.1em}
+
+/* place */
+.place{background:var(--navy);color:#fff}
+.place .lead{color:rgba(255,255,255,.7)}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:36px;max-width:680px}
+.chips span{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:16px;font-size:13px;text-align:center}
+
+/* vision */
+.vision .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:46px;align-items:center}
+.vision .imgph{aspect-ratio:4/3;border-radius:6px;background:linear-gradient(135deg,#d9c9ad,#a8906a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em}
+.vision strong{color:var(--navy)}
+
+/* cta */
+.cta{background:linear-gradient(160deg,#1c2c47,#121d2e);color:#fff;text-align:center;padding:110px 0}
+.cta .en{font-size:11px;letter-spacing:.4em;color:rgba(255,255,255,.5);margin-bottom:22px}
+.cta h2{font-size:clamp(24px,4vw,34px)}
+.cta p{color:rgba(255,255,255,.75);font-size:14px;margin:18px 0 34px}
+.cta .mini{font-size:12px;color:rgba(255,255,255,.55);margin-top:22px;line-height:2}
+
+footer{background:#0d1624;color:rgba(255,255,255,.6);text-align:center;padding:46px 0;font-size:12px}
+footer .logo{font-family:'Shippori Mincho',serif;letter-spacing:.3em;color:var(--orange);font-size:15px;margin-bottom:10px}
+
+@media(max-width:760px){
+  .sec{padding:64px 0}
+  .fvgrid{grid-template-columns:repeat(2,1fr)}
+  .story .grid,.vision .grid,.profile .grid{grid-template-columns:1fr}
+  .trust,.features .cards,.chips,.zeros{grid-template-columns:1fr 1fr}
+  .avatar{max-width:240px}
+  .darkbox{padding:32px 24px}
+}
+</style>
+<div class="lh-lp">
+
+<header>
+  <div class="logo">LINK <span>HOKKAIDO</span></div>
+  <a class="btn" href="#contact">無料相談はこちら</a>
+</header>
+
+<!-- ===== FV: 飲食店以外も想起できる4業種の写真構成(フィードバック反映) ===== -->
+<section class="hero">
+  <div class="wrap">
+    <p class="en">LOCAL PLATFORM — HOKKAIDO</p>
+    <h1>地域の魅力を、<br>もっと<em>伝わる形</em>に。</h1>
+    <p class="sub">北海道の地域情報プラットフォーム。カフェも、美容室も、整体院も、パン屋さんも。あなたのお店のホームページを、まず無料でお作りします。</p>
+    <div class="btns">
+      <a class="btn" href="#contact">無料相談はこちら</a>
+      <a class="btn ghost" href="#service">できることを見る</a>
+    </div>
+    <div class="fvgrid">
+      <!-- TODO: 実写真に差し替え(縦3:4)。業種が一目で混在して見えることが目的 -->
+      <figure><div class="ph ph1">カフェ・飲食<br><small>※写真差し替え</small></div></figure>
+      <figure><div class="ph ph2">美容室・ネイル<br><small>※写真差し替え</small></div></figure>
+      <figure><div class="ph ph3">整体・サロン<br><small>※写真差し替え</small></div></figure>
+      <figure><div class="ph ph4">雑貨・小売<br><small>※写真差し替え</small></div></figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec story">
+  <div class="wrap grid">
+    <div class="imgph">店内写真(差し替え)</div>
+    <div>
+      <span class="label">想い</span>
+      <h2>知られていない、<br>それが一番<em>もったいない</em>。</h2>
+      <p class="lead">いいお店なのに、検索しても出てこない。InstagramやホットペッパーのページはあってもInstagramを開かない人には届かない。そんなお店を、この地域でたくさん見てきました。技術や味は十分なのに「知られていない」だけで選ばれない。それが一番もったいないと思っています。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <span class="label">プラットフォーム</span>
+    <h2>地域で頑張る人のための<br>情報発信プラットフォーム</h2>
+    <p class="lead">Link Hokkaidoは、新規オープン・地域のお店・イベント・地域活動の情報を一つに集めて発信する、北海道の地域サイトです。お店のホームページもこのプラットフォームの中でお作りするので、地域の検索力をそのまま味方にできます。</p>
+  </div>
+</section>
+
+<!-- ===== プロフィール: しっかりめに(フィードバック反映) ===== -->
+<section class="sec profile">
+  <div class="wrap grid">
+    <div>
+      <!-- TODO: ご自身の写真に差し替え(正方形・顔がしっかり写っているもの推奨) -->
+      <div class="avatar">運営者の写真<br>(差し替え)</div>
+    </div>
+    <div>
+      <span class="label">運営者プロフィール</span>
+      <h2>移住してきて、<br>お店を探せなかった一人です。</h2>
+      <!-- TODO: 名前・経歴は実際のものに差し替え -->
+      <p class="name">【お名前】<small>Link Hokkaido 運営</small></p>
+      <p class="role">北海道千歳市在住(移住組)</p>
+      <p>はじめまして。Link Hokkaidoを運営している【お名前】です。私はこの街に移住してきた、いわば「よそから来た組」です。</p>
+      <p>移住して最初に困ったのが、お店探しでした。検索しても出てこない。ホームページがないから、営業しているのかどうかもわからない。たまたまInstagramをフォローしていなければ、たどり着けない。あとになって「こんないいお店があったのか」と知ることばかりでした。</p>
+      <p>探せなかった側だからこそ、「知られていないだけで選ばれないお店」をなくしたい。そう思ってこのプラットフォームを始めました。正直に言うと、半分は自分の楽しみのためでもあります。この街の知らなかったお店をひとつ見つけるたび、ここに来てよかったと思えるからです。</p>
+      <p>やり取りはLINEやメールで完結するので、お忙しい営業中にお時間をいただくこともありません。同じ街に暮らす一人の人間として、長くお付き合いさせてください。</p>
+      <div class="trust">
+        <div><b>移住者の目線</b>「お店を探せない側」の実体験からサイトを設計しています</div>
+        <div><b>顔の見える運営</b>制作も連絡も本人が対応します</div>
+        <div><b>作り逃げしません</b>作った後の更新・相談まで月額の中で対応</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec nayami">
+  <div class="wrap">
+    <div class="center"><span class="label">こんなお悩み</span></div>
+    <h2 class="center">こんなお悩み、<br>ありませんか?</h2>
+    <ul style="margin-top:36px">
+      <li>Instagramだけで集客している</li>
+      <li>ホームページを持ちたいと思って何年も経っている</li>
+      <li>業者に頼むと高そうで、相場もよくわからない</li>
+      <li>ホットペッパーの掲載料が負担になってきた</li>
+      <li>お店の良さがネット上で伝わっていない気がする</li>
+      <li>オープンしたばかりで、まず認知を広げたい</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 「ページ」ではなく「ホームページ」と明記(フィードバック反映) ===== -->
+<section class="sec features" id="service">
+  <div class="wrap">
+    <span class="label">サービス</span>
+    <h2>お店の<em style="font-style:normal;color:var(--orange)">ホームページ</em>を<br>お作りします</h2>
+    <p class="lead">InstagramやホットペッパーのURLを送っていただくだけで、お店のホームページを制作します。地域サイト内の「ページ」ではありません。メニューもアクセスも問い合わせもそろった、お店の顔になる独立したホームページです。</p>
+    <div class="cards">
+      <div><div class="ic">📱</div><b>スマホ対応</b><small>お客様の9割はスマホ。見やすさ最優先で設計</small></div>
+      <div><div class="ic">📷</div><b>写真・Instagram連携</b><small>普段の投稿がそのままホームページに載ります</small></div>
+      <div><div class="ic">📋</div><b>メニュー・料金掲載</b><small>行く前に知りたい情報をきちんと整理</small></div>
+      <div><div class="ic">📍</div><b>アクセス・地図</b><small>Googleマップ連動で迷わせない</small></div>
+      <div><div class="ic">💬</div><b>お問い合わせ・予約導線</b><small>電話・LINEへワンタップ(予約システム連携はオプション)</small></div>
+      <div><div class="ic">🔎</div><b>Google検索対応</b><small>「千歳 ◯◯」の検索で見つかる状態に</small></div>
+    </div>
+    <div class="note-hp"><b>「お店専用ページ」ではなく、ホームページです。</b><br>独自のURLを持ち、Google検索に載り、名刺やInstagramのプロフィールに堂々と貼れる、お店の公式ホームページとしてお作りします。</div>
+
+    <div class="darkbox">
+      <h3 class="serif">完成してから、判断してください。</h3>
+      <p>私たちはまず作ります。費用はいただきません。完成したホームページを見ていただいて、<b style="color:#fff">気に入った方だけ公開します。</b>気に入らなければそのまま削除します。それだけです。</p>
+      <div class="flow">
+        <span>URLを送る</span><i>→</i><span>デモ制作(無料)</span><i>→</i><span>内容を確認</span><i>→</i><span>気に入った方だけ公開</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 料金: 「なぜこの金額か」の理由を追加(フィードバック反映) ===== -->
+<section class="sec price">
+  <div class="wrap">
+    <div class="center"><span class="label">料金</span></div>
+    <h2 class="center">制作費は無料。<br>管理費だけです。</h2>
+    <div class="card">
+      <div class="head">
+        <div class="t"><b>ホームページ管理プラン</b><small>制作・公開・更新対応・相談 すべて込み</small></div>
+        <div class="p">
+          <span class="was">通常 ¥5,000/月</span>
+          <span class="now">¥1,980<small>/月(税込)</small></span>
+          <span class="cap">先着30店舗・創業記念価格(ずっとこの価格)</span>
+        </div>
+      </div>
+      <div class="zeros">
+        <div><span class="z">¥0</span><small>制作費</small></div>
+        <div><span class="z">¥0</span><small>初期費用</small></div>
+        <div><span class="z">¥0</span><small>解約金</small></div>
+      </div>
+    </div>
+
+    <div class="why">
+      <h3 class="serif">なぜ、この金額でできるのか</h3>
+      <div class="r"><div class="no">一</div><div><b>地域サイトの中でお作りするから</b><p>サーバー代やドメイン代といった固定費を、Link Hokkaido全体で共有しています。お店ごとに一から契約する無駄がないぶん、そのまま価格に反映しています。</p></div></div>
+      <div class="r"><div class="no">二</div><div><b>制作を仕組み化しているから</b><p>地域のお店に本当に必要な構成を磨き込んだ専用の型をもとに制作するため、一件ごとに外注したり、何十時間もかけたりしません。手を抜くのではなく、無駄を抜いています。</p></div></div>
+      <div class="r"><div class="no">三</div><div><b>広告費も訪問営業もゼロだから</b><p>広告を出さず、訪問営業もしません。やり取りはLINEとメールで完結します。大手のように営業マンの人件費・交通費・広告費が価格に上乗せされることがありません。</p></div></div>
+      <p style="text-align:center;color:var(--gray);font-size:13px;margin-top:18px">儲けを削っているのではなく、かからないコストを最初から価格に乗せていない。それだけの理由です。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec vol">
+  <div class="wrap">
+    <div class="box">
+      <span class="tag">無料制作</span>
+      <h2 style="font-size:22px">ボランティア団体・<br>地域活動は無料制作</h2>
+      <p class="lead" style="margin-top:10px">子ども食堂をはじめ、地域のために活動している団体のホームページは無料でお作りしています。私自身も「地域のために何かしたい」と思ってこの活動を始めました。活動を知ってもらうきっかけとして、お気軽にご相談ください。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec place">
+  <div class="wrap">
+    <span class="label" style="border-color:rgba(255,255,255,.4);color:#fff">この先の構想</span>
+    <h2>地域の情報が<br>集まる場所へ</h2>
+    <p class="lead">お店のホームページだけで終わらせません。地域で頑張る人と情報が集まる場所を目指しています。</p>
+    <div class="chips">
+      <span>🏪 新規オープン情報</span>
+      <span>🎪 イベント情報</span>
+      <span>🤝 地域活動</span>
+      <span>💼 求人情報</span>
+      <span>📣 お店の最新情報</span>
+      <span>🗺 英語・観光客向け発信</span>
+    </div>
+  </div>
+</section>
+
+<section class="sec vision">
+  <div class="wrap grid">
+    <div class="imgph">地域の写真(差し替え)</div>
+    <div>
+      <span class="label">目指す姿</span>
+      <h2>オープンしたら、<br>まず相談したくなる存在へ。</h2>
+      <p class="lead">新しくお店を始める。活動を始める。イベントを開く。そんなとき「とりあえずLink Hokkaidoに相談しよう」と思ってもらえる存在になりたい。<strong>千歳から始まり、恵庭へ、苫小牧へ。</strong>北海道の地域の魅力を、一つひとつ丁寧に発信していきます。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 紹介割引セクションはフィードバックにより削除(制度自体は営業時に個別案内) -->
+
+<section class="cta" id="contact">
+  <div class="wrap">
+    <p class="en">FREE CONSULTATION</p>
+    <h2>あなたのお店のホームページ、<br>作ってみませんか?</h2>
+    <p>まずは無料で制作します。完成したホームページをご覧いただき、<br>気に入った方だけ公開します。やり取りはLINE・メールで完結します。</p>
+    <!-- TODO: hrefをLINE公式アカウント or 問い合わせフォームURLに差し替え -->
+    <a class="btn" href="#" style="font-size:16px;padding:18px 56px">無料相談はこちら</a>
+    <p class="mini">InstagramやホットペッパーのURLを送っていただくだけでOKです。<br>まずはお気軽にご相談ください。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">LINK HOKKAIDO</div>
+  <p>千歳・恵庭・苫小牧の地域情報プラットフォーム</p>
+  <p style="margin-top:8px;opacity:.6">© Link Hokkaido. All rights reserved.</p>
+</footer>
+
+</div>
