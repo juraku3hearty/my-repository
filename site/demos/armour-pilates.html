@@ -1,0 +1,151 @@
+<!-- ============================================================
+  ARMOUR.GYM × pilates studio ご提案デモ(WordPress固定ページ用)
+  運用ルール: WP標準パスワード保護+推測されないslugで設置。
+  写真はInstagram公式埋め込みのみ(著作権対応)。テキストは事実情報のみ。
+  TODO箇所: 料金(平井さんが通っているので正確に記入可能)/ Instagram投稿URL / 地図iframe
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f8f6; --green:#5f7d6e; --green2:#4a6557; --charcoal:#2e3531;
+  --ink:#3a423d; --gray:#8a948e; --line:#e3e8e4; --mist:#edf1ee;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:70px}
+.lh-demo a{color:inherit;text-decoration:none!important}
+.lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+.lh-demo .sec{padding:60px 0}
+.lh-demo .en{display:block;text-align:center;font-size:10px;letter-spacing:.3em;color:var(--green);margin-bottom:34px;text-transform:uppercase}
+
+/* SWELLテーマ装飾の打ち消し */
+.lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
+.lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
+.lh-demo h1{font-size:clamp(24px,6.5vw,32px)!important;line-height:1.5!important;color:var(--charcoal)!important;letter-spacing:.06em!important;margin:0 0 6px!important}
+.lh-demo h2{font-size:21px!important;color:var(--green2)!important;text-align:center!important;margin:0 0 8px!important;font-weight:700!important}
+.lh-demo figure{margin:0!important}
+.lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
+
+/* hero */
+.lh-demo .hero{background:linear-gradient(170deg,#e6ece8,#f7f8f6 70%);text-align:center;padding:74px 20px 50px}
+.lh-demo .hero .badge{display:inline-block;background:#fff;border:1px solid var(--line);color:var(--green);font-size:11px;padding:4px 16px;border-radius:99px;margin-bottom:18px;letter-spacing:.15em}
+.lh-demo .hero .catch{font-size:14px;margin:14px 0 28px}
+.lh-demo .heroimg{max-width:640px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;background:linear-gradient(135deg,#c6d4cb,#90a899);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em}
+.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px;max-width:640px;margin-left:auto;margin-right:auto}
+.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 12px;text-align:center}
+.lh-demo .points .ic{font-size:22px}
+.lh-demo .points b{display:block;font-size:12.5px;color:var(--charcoal);margin-top:6px;line-height:1.5}
+
+/* menu */
+.lh-demo .menu .item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.lh-demo .menu .item div b{display:block;font-size:14.5px;color:var(--charcoal)}
+.lh-demo .menu .item div small{color:var(--gray);font-size:12px}
+.lh-demo .menu .item .pr{color:var(--green2);font-weight:700;font-size:15px;white-space:nowrap}
+.lh-demo .menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
+
+/* instagram */
+.lh-demo .insta{background:var(--mist)}
+.lh-demo .insta .embed{background:#fff;border:1px dashed var(--green);border-radius:14px;padding:40px 20px;text-align:center;color:var(--gray);font-size:12.5px;line-height:2}
+.lh-demo .insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
+.lh-demo .insta .center{text-align:center}
+
+/* info */
+.lh-demo .info table{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.lh-demo .info th,.lh-demo .info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid var(--line)}
+.lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
+.lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#f2f5f3}
+.lh-demo .map{margin-top:14px;aspect-ratio:16/9;border-radius:14px;background:#dde4df;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+
+/* cta */
+.lh-demo .ctabox{background:linear-gradient(170deg,#e6ece8,#d8e2db);text-align:center;border-radius:24px;margin:0 20px;padding:50px 24px}
+.lh-demo .ctabox p{font-size:13px;margin-bottom:26px}
+.lh-demo .btn{display:inline-block;background:var(--green);color:#fff!important;font-weight:700;padding:15px 44px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(95,125,110,.4)}
+
+/* sticky bar */
+.lh-demo .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+.lh-demo .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--charcoal);font-weight:700}
+.lh-demo .bar a span{display:block;font-size:16px}
+.lh-demo .bar a.main{background:var(--green);color:#fff}
+
+.lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
+.lh-demo .demofoot .demo{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 18px;margin-top:14px;line-height:1.8}
+</style>
+
+<div class="lh-demo">
+
+<section class="hero">
+  <span class="badge">千歳市 / マシンピラティススタジオ</span>
+  <h1>ARMOUR.GYM × pilates studio</h1>
+  <p class="catch">千歳近郊初のマシンピラティス。<br>ジム併設だから、しなやかさも強さも、ここひとつで。</p>
+  <div class="heroimg">スタジオ写真(ご契約後に差し替え)</div>
+  <div class="points">
+    <div><div class="ic">🩰</div><b>マシン<br>ピラティス</b></div>
+    <div><div class="ic">🏋️</div><b>トレーニング<br>ジム併設</b></div>
+    <div><div class="ic">👶</div><b>託児サービス<br>(要予約)</b></div>
+  </div>
+</section>
+
+<section class="sec menu">
+  <div class="wrap">
+    <h2>料金プラン</h2>
+    <span class="en">Price</span>
+    <!-- TODO: 実際の料金に差し替え(通っているので正確な金額を記入できます) -->
+    <div class="item"><div><b>月額プラン</b><small>通い方に合わせて選べます</small></div><div class="pr">体験時にご案内</div></div>
+    <div class="item"><div><b>都度払い</b><small>マイペースに通いたい方に</small></div><div class="pr">体験時にご案内</div></div>
+    <p class="note">※ 料金プランの詳細はお気軽にお問い合わせください。</p>
+  </div>
+</section>
+
+<section class="sec insta">
+  <div class="wrap">
+    <h2>スタジオの様子・最新情報</h2>
+    <span class="en">Instagram</span>
+    <!-- TODO: @pilates.armour.jp の投稿URL(2〜3件)を公式埋め込みに差し替え -->
+    <div class="embed">
+      ここにスタジオのInstagram投稿が<br>そのまま埋め込みで表示されます<br>(公式の埋め込み機能を使用)
+    </div>
+    <div class="center">
+      <a class="ig-btn" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">Instagramを見る</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec info">
+  <div class="wrap">
+    <h2>スタジオ情報・アクセス</h2>
+    <span class="en">Information</span>
+    <table>
+      <tr><th>名称</th><td>ARMOUR.GYM × pilates studio</td></tr>
+      <tr><th>住所</th><td>北海道千歳市幸町3丁目15 エレガンスビル2F</td></tr>
+      <tr><th>営業時間</th><td>平日 10:00 - 21:00 / 土日祝 10:00 - 20:00</td></tr>
+      <tr><th>電話</th><td><a href="tel:0123294610">0123-29-4610</a></td></tr>
+      <tr><th>ご予約</th><td>Instagram DM または お電話</td></tr>
+      <tr><th>託児</th><td>あり(要予約)</td></tr>
+      <tr><th>併設</th><td>ARMOUR.GYM(トレーニングジム)</td></tr>
+    </table>
+    <!-- TODO: Googleマップの「共有 > 地図を埋め込む」のiframeに差し替え -->
+    <div class="map">Googleマップ埋め込み</div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="ctabox">
+    <h2>ご予約・体験のお問い合わせ</h2>
+    <p>ご予約・体験のご相談は、お電話または Instagram DM から。<br>「ホームページを見た」とお伝えいただくとスムーズです。</p>
+    <a class="btn" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener">Instagramで問い合わせる</a>
+  </div>
+</section>
+
+<div class="demofoot">
+  <p>ARMOUR.GYM × pilates studio — 北海道千歳市</p>
+  <p style="margin-top:6px">Produced by <b>Link Hokkaido</b>(千歳・恵庭・苫小牧の地域情報プラットフォーム)</p>
+  <div class="demo">
+    このページはご提案用のデモです。掲載をご希望されない場合は<br>即日削除いたしますので、お気軽にお申し付けください。
+  </div>
+</div>
+
+<div class="bar">
+  <a href="tel:0123294610"><span>📞</span>電話する</a>
+  <a class="main" href="https://www.instagram.com/pilates.armour.jp/" target="_blank" rel="noopener"><span>📷</span>Instagram DMで予約</a>
+</div>
+
+</div>

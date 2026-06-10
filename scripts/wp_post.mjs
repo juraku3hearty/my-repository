@@ -20,6 +20,7 @@
  *   --slug     スラッグ(pageのURL指定などに)
  *   --parent   親ページのID(pageを /chitose/ 配下に置く場合など)
  *   --id       既存投稿/ページのID(指定すると新規作成でなく更新)
+ *   --password ページの閲覧パスワード(WP標準の保護ページ機能。デモ用)
  *   --html-block 本文を <!-- wp:html --> で包む。生HTML(LP等)はこれを付けないと
  *               wpautopが<p>/<br>を挿入してCSSとレイアウトが壊れる
  */
@@ -64,6 +65,7 @@ const payload = {
 };
 if (args.slug) payload.slug = args.slug;
 if (args.parent) payload.parent = Number(args.parent);
+if (args.password) payload.password = args.password;
 
 const endpoint = args.type === 'page' ? '/pages' : '/posts';
 if (args.type !== 'page') {
