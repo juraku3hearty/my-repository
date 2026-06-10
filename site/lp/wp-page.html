@@ -38,17 +38,12 @@ h2{font-size:clamp(24px,4vw,32px);line-height:1.6;font-weight:600;margin-bottom:
 .hero h1 em{font-style:normal;color:var(--orange)}
 .hero p.sub{color:rgba(255,255,255,.78);max-width:520px;margin-bottom:34px;font-size:14px}
 .hero .btns{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:64px}
-/* FV写真ストリップ: 飲食だけでなく美容・小売も想起させる4枚構成
-   TODO: assets内の実写真(横長 800x600 程度)に差し替え。altは業種が伝わる文言に */
+/* FV写真ストリップ: 千歳で実際に撮ってきた写真4枚(美容系の写真が入り次第差し替え) */
 .fvgrid{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;transform:translateY(34px)}
 .fvgrid figure{aspect-ratio:3/4;border-radius:6px 6px 0 0;overflow:hidden;position:relative;background:#0e1726}
 .fvgrid figure:nth-child(even){transform:translateY(-22px)}
-.fvgrid .ph{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;color:#fff;font-size:12px;letter-spacing:.15em}
-.fvgrid .ph small{opacity:.55;font-size:10px;letter-spacing:.05em}
-.ph1{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#7a4a2b,#3a2a1c)}
-.ph2{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#9d8770,#5e5044)}
-.ph3{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#5a6c5d,#2e3c33)}
-.ph4{background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55)),linear-gradient(135deg,#6b5a73,#352d3d)}
+.fvgrid img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.story .imgph img,.vision .imgph img{width:100%;height:100%;object-fit:cover;border-radius:6px}
 
 /* story */
 .story .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:46px;align-items:center}
@@ -176,18 +171,18 @@ h2{font-size:clamp(24px,4vw,32px);line-height:1.6;font-weight:600;margin-bottom:
       <a class="btn ghost" href="#service">できることを見る</a>
     </div>
     <div class="fvgrid">
-      <!-- TODO: 実写真に差し替え(縦3:4)。業種が一目で混在して見えることが目的 -->
-      <figure><div class="ph ph1">カフェ・飲食<br><small>※写真差し替え</small></div></figure>
-      <figure><div class="ph ph2">美容室・ネイル<br><small>※写真差し替え</small></div></figure>
-      <figure><div class="ph ph3">整体・サロン<br><small>※写真差し替え</small></div></figure>
-      <figure><div class="ph ph4">雑貨・小売<br><small>※写真差し替え</small></div></figure>
+      <!-- 既存記事の取材写真を仮使用中。美容室・サロン系の写真が入り次第2枚差し替える -->
+      <figure><img src="https://link-hokkaido.com/wp-content/uploads/2024/10/7E5D609E-391F-4AE6-9E77-86C43A360F56-768x1024.jpg" alt="千歳のジンギスカン" loading="lazy"></figure>
+      <figure><img src="https://link-hokkaido.com/wp-content/uploads/2024/04/B84F324C-8457-4D69-BF82-638E6CCD09F9-768x1024.jpg" alt="木のぬくもりのある店内" loading="lazy"></figure>
+      <figure><img src="https://link-hokkaido.com/wp-content/uploads/2024/04/B1591605-9A25-461A-8C27-B530AD571A3C-768x1024.jpg" alt="千歳のスープカレー" loading="lazy"></figure>
+      <figure><img src="https://link-hokkaido.com/wp-content/uploads/2024/01/AC9B90A4-7084-406A-8481-2BC6FAB3C0A8-768x1024.jpg" alt="地元の定食" loading="lazy"></figure>
     </div>
   </div>
 </section>
 
 <section class="sec story">
   <div class="wrap grid">
-    <div class="imgph">店内写真(差し替え)</div>
+    <div class="imgph"><img src="https://link-hokkaido.com/wp-content/uploads/2024/10/E4EB1033-03B6-4114-8AD6-A0D4188F5FAA-1024x768.jpg" alt="千歳のお店の店内" loading="lazy"></div>
     <div>
       <span class="label">想い</span>
       <h2>知られていない、<br>それが一番<em>もったいない</em>。</h2>
@@ -330,7 +325,7 @@ h2{font-size:clamp(24px,4vw,32px);line-height:1.6;font-weight:600;margin-bottom:
 
 <section class="sec vision">
   <div class="wrap grid">
-    <div class="imgph">地域の写真(差し替え)</div>
+    <div class="imgph"><img src="https://link-hokkaido.com/wp-content/uploads/2024/04/E7DB9C07-F3FD-4C8F-8C89-761D70F80FA3-1024x768.jpg" alt="千歳の青空とお店" loading="lazy"></div>
     <div>
       <span class="label">目指す姿</span>
       <h2>オープンしたら、<br>まず相談したくなる存在へ。</h2>
