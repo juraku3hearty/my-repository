@@ -8,17 +8,10 @@
  * 使い方: node scripts/wp_inventory.mjs
  */
 import { writeFileSync } from 'node:fs';
-
-const env = (k) => {
-  const v = process.env[k];
-  if (!v) { console.error(`環境変数 ${k} が未設定です`); process.exit(1); }
-  return v;
-};
-const BASE = env('WP_URL').replace(/\/+$/, '') + '/wp-json';
-const AUTH = 'Basic ' + Buffer.from(`${env('WP_USER')}:${env('WP_APP_PASS')}`).toString('base64');
+import { env, wpFetch } from './wp_client.mjs';
 
 async function api(path) {
-  const res = await fetch(BASE + path, { headers: { Authorization: AUTH } });
+  const res = await wpFetch(path);
   if (!res.ok) return { __error: `${res.status} ${(await res.text()).slice(0, 120)}` };
   return res.json();
 }

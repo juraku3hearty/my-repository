@@ -21,12 +21,7 @@
  *   --parent   親ページのID(pageを /chitose/ 配下に置く場合など)
  */
 import { readFileSync } from 'node:fs';
-
-const env = (k) => {
-  const v = process.env[k];
-  if (!v) { console.error(`環境変数 ${k} が未設定です`); process.exit(1); }
-  return v;
-};
+import { env, wpFetch } from './wp_client.mjs';
 const args = {};
 for (let i = 2; i < process.argv.length; i += 2) {
   args[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
@@ -36,13 +31,10 @@ if (!args.title || (!args.file && !args.content)) {
   process.exit(1);
 }
 
-const BASE = env('WP_URL').replace(/\/+$/, '') + '/wp-json/wp/v2';
-const AUTH = 'Basic ' + Buffer.from(`${env('WP_USER')}:${env('WP_APP_PASS')}`).toString('base64');
-
 async function api(path, method = 'GET', body) {
-  const res = await fetch(BASE + path, {
+  const res = await wpFetch('/wp/v2' + path, {
     method,
-    headers: { Authorization: AUTH, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
