@@ -1,231 +1,247 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- 仮サイト運用ルール: noindex必須・パスワード必須・写真はInstagram公式埋め込みのみ -->
-<meta name="robots" content="noindex, nofollow">
-<title>Salon Lien | 千歳市の小さなプライベートサロン(サンプル)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<!-- ============================================================
+  店舗雛形v2(美容サロン/ネイル/まつげ用・WordPress固定ページ形式)
+  CTW雛形10本の解析を反映(2026-06-10):
+    写真主役ヒーロー / 予約ボックス即出し / GALLERY(Instagram埋め込み) /
+    VOICE / FAQ / WEB+電話ダブルCTA / スクロールフェードイン
+  デプロイ: node scripts/wp_post.mjs --title "..." --file このファイル --type page \
+    --slug demo-店名-ランダム --status publish --password 店ごとのPW --html-block
+  (WP標準パスワード保護でゲート。旧版のJSゲートは廃止)
+  運用3原則: 非公開URL+PW / 写真はInstagram公式埋め込み(+フリー素材は※イメージ注記) / 事実情報のみ
+  {{ }} を店舗の実データに差し替えてから投稿する
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
 <style>
-/* ============================================================
-   店舗雛形(美容サロン版) — HPB/Instagramに合わせたトンマナ
-   白ベース・丸み・余白広め・ローズベージュのアクセント
-   差し替え箇所は {{ }} と TODO コメントで明示
-   ============================================================ */
 :root{
   --bg:#fdfaf8; --rose:#c98a7d; --rose2:#b06f61; --brown:#5c4a42;
-  --ink:#4a3f3a; --gray:#9a8d86; --line:#f0e6e1; --pink:#f9efe9;
+  --ink:#4a3f3a; --gray:#9a8d86; --line:#f0e6e1; --pink:#f9efe9; --gold:#c9a86a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:70px}
-h1,h2,h3{font-family:'Zen Maru Gothic',sans-serif}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:680px;margin:0 auto;padding:0 20px}
-.sec{padding:60px 0}
-h2{font-size:21px;color:var(--brown);text-align:center;margin-bottom:8px}
-.en{display:block;text-align:center;font-size:10px;letter-spacing:.3em;color:var(--rose);margin-bottom:34px;text-transform:uppercase}
+.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:64px}
+.lh-demo a{color:inherit;text-decoration:none!important}
+.lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+.lh-demo .sec{padding:64px 0}
+.lh-demo .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:var(--gold);margin-bottom:34px;text-transform:uppercase}
 
-/* password gate(簡易): 仮サイト段階の閲覧制限。本公開時はこのblockとscript内のgate処理を削除 */
-#gate{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
-#gate .box{max-width:340px}
-#gate h1{font-size:18px;color:var(--brown);margin-bottom:8px}
-#gate p{font-size:12px;color:var(--gray);margin-bottom:20px}
-#gate input{width:100%;padding:13px;border:1px solid var(--line);border-radius:99px;text-align:center;font-size:15px;margin-bottom:10px;background:#fff;outline-color:var(--rose)}
-#gate button{width:100%;padding:13px;border:none;border-radius:99px;background:var(--rose);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
-#gate .err{color:#c0392b;font-size:12px;height:18px;margin-top:8px}
+/* SWELLテーマ装飾の打ち消し */
+.lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
+.lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
+.lh-demo h1{font-size:clamp(26px,7vw,36px)!important;line-height:1.5!important;color:#fff!important;letter-spacing:.08em!important;margin:0 0 10px!important;text-shadow:0 2px 18px rgba(0,0,0,.4)}
+.lh-demo h2{font-size:22px!important;color:var(--brown)!important;text-align:center!important;margin:0 0 6px!important;font-weight:700!important}
+.lh-demo figure{margin:0!important}
+.lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
+
+/* スクロールふわっと表示 */
+.lh-demo .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.lh-demo .fade.on{opacity:1;transform:none}
 
 /* hero */
-.hero{background:linear-gradient(170deg,#f6e9e2,#fdfaf8 70%);text-align:center;padding:74px 20px 50px}
-.hero .badge{display:inline-block;background:#fff;border:1px solid var(--line);color:var(--rose);font-size:11px;padding:4px 16px;border-radius:99px;margin-bottom:18px;letter-spacing:.15em}
-.hero h1{font-size:clamp(26px,7vw,34px);color:var(--brown);letter-spacing:.08em;margin-bottom:6px}
-.hero .yomi{font-size:11px;letter-spacing:.3em;color:var(--gray);margin-bottom:20px}
-.hero .catch{font-size:14px;color:var(--ink);margin-bottom:28px}
-/* TODO: ヒーロー写真 → 契約後に店舗提供写真へ。仮段階はInstagram埋め込み or プレースホルダ */
-.heroimg{max-width:640px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;background:linear-gradient(135deg,#e8d3c9,#cfae9f);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.2em}
+.lh-demo .hero{position:relative;min-height:74vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
+  /* TODO: {{ヒーロー写真URL}} フリー素材(※イメージ注記必須) or 店のInstagram写真の雰囲気に合うもの */
+  background:linear-gradient(rgba(60,40,35,.45),rgba(60,40,35,.55)),url('{{ヒーロー写真URL}}') center/cover no-repeat}
+.lh-demo .hero .inner{position:relative;padding:90px 20px}
+.lh-demo .hero .logo-en{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.5em;color:var(--gold);margin-bottom:18px}
+.lh-demo .hero .catch{color:rgba(255,255,255,.94);font-size:15px;margin:0 0 30px;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+.lh-demo .hero .note{margin-top:16px;font-size:10.5px;color:rgba(255,255,255,.55)}
 
-/* point cards */
-.points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px}
-.points div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 12px;text-align:center}
-.points .ic{font-size:22px}
-.points b{display:block;font-size:12.5px;color:var(--brown);margin-top:6px;line-height:1.5}
+/* 予約ボックス(ヒーロー直下) */
+.lh-demo .trial{background:var(--brown);color:#fff;text-align:center;padding:46px 20px}
+.lh-demo .trial h2{color:#fff!important}
+.lh-demo .trial p{color:rgba(255,255,255,.85);font-size:13px;margin:10px 0 24px}
+
+/* points */
+.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
+.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 12px;text-align:center}
+.lh-demo .points .ic{font-size:24px}
+.lh-demo .points b{display:block;font-size:12.5px;color:var(--brown);margin-top:8px;line-height:1.5}
+
+/* gallery(Instagram埋め込み: ネイル・まつげはここが命) */
+.lh-demo .gallery{background:var(--pink)}
+.lh-demo .gallery .embeds{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lh-demo .gallery .embed{background:#fff;border:1px dashed var(--rose);border-radius:14px;padding:34px 14px;text-align:center;color:var(--gray);font-size:12px;line-height:2}
+.lh-demo .gallery .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
+.lh-demo .gallery .center{text-align:center}
+@media(max-width:520px){.lh-demo .gallery .embeds{grid-template-columns:1fr}}
 
 /* menu */
-.menu .item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:14px}
-.menu .item div b{display:block;font-size:14.5px;color:var(--brown)}
-.menu .item div small{color:var(--gray);font-size:12px}
-.menu .item .pr{color:var(--rose2);font-weight:700;font-size:16px;white-space:nowrap}
-.menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
+.lh-demo .menu .item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.lh-demo .menu .item div b{display:block;font-size:14.5px;color:var(--brown)}
+.lh-demo .menu .item div small{color:var(--gray);font-size:12px}
+.lh-demo .menu .item .pr{color:var(--rose2);font-weight:700;font-size:15px;white-space:nowrap}
+.lh-demo .menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
 
-/* instagram */
-.insta{background:var(--pink)}
-.insta .embed{background:#fff;border:1px dashed var(--rose);border-radius:14px;padding:40px 20px;text-align:center;color:var(--gray);font-size:12.5px;line-height:2}
-.insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
-.insta .center{text-align:center}
+/* voice */
+.lh-demo .voice .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-bottom:14px}
+.lh-demo .voice .card b{display:block;color:var(--rose2);font-size:14px;margin-bottom:8px}
+.lh-demo .voice .card p{font-size:13px}
+.lh-demo .voice .card small{display:block;color:var(--gray);font-size:11px;margin-top:10px;text-align:right}
 
-/* owner */
-.owner .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px;display:flex;gap:22px;align-items:flex-start}
-.owner .face{min-width:90px;width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#e0c2b5,#c49a8a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;text-align:center}
-.owner b{display:block;color:var(--brown);font-size:15px;margin-bottom:6px}
-.owner p{font-size:13px}
+/* faq */
+.lh-demo .faq{background:var(--pink)}
+.lh-demo .faq .q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:12px}
+.lh-demo .faq .q b{display:block;color:var(--brown);font-size:14px;margin-bottom:6px}
+.lh-demo .faq .q b::before{content:"Q. ";color:var(--gold);font-weight:700}
+.lh-demo .faq .q p{font-size:13px}
+.lh-demo .faq .q p::before{content:"A. ";color:var(--rose);font-weight:700}
 
 /* info */
-.info table{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
-.info th,.info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid var(--line)}
-.info tr:last-child th,.info tr:last-child td{border-bottom:none}
-.info th{width:34%;color:var(--gray);font-weight:500;background:#fbf6f3}
-.map{margin-top:14px;aspect-ratio:16/9;border-radius:14px;background:#e9e1dc;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+.lh-demo .info table{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.lh-demo .info th,.lh-demo .info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid var(--line)}
+.lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
+.lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#fbf6f3}
+.lh-demo .map{margin-top:14px;aspect-ratio:16/9;border-radius:14px;background:#e9e1dc;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:12px}
+.lh-demo .mapbtn{display:block;text-align:center;margin-top:12px}
+.lh-demo .mapbtn a{display:inline-block;background:var(--brown);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
 
-/* cta */
-.cta{background:linear-gradient(170deg,#f6e9e2,#f1ddd3);text-align:center;border-radius:24px;margin:0 20px;padding:50px 24px}
-.cta h2{margin-bottom:14px}
-.cta p{font-size:13px;color:var(--ink);margin-bottom:26px}
-.btn{display:inline-block;background:var(--rose);color:#fff;font-weight:700;padding:15px 44px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(201,138,125,.4)}
+/* cta帯 */
+.lh-demo .ctaband{background:linear-gradient(135deg,var(--rose2),var(--rose));color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .ctaband h2{color:#fff!important}
+.lh-demo .ctaband p{color:rgba(255,255,255,.88);font-size:13px;margin:10px 0 26px}
+.lh-demo .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lh-demo .btn{display:inline-block;background:var(--gold);color:#fff!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.22)}
+.lh-demo .btn.alt{background:#fff;color:var(--rose2)!important}
 
-/* sticky bar (HPB風の固定予約バー) */
-.bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
-.bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--brown);font-weight:700}
-.bar a span{display:block;font-size:16px}
-.bar a.main{background:var(--rose);color:#fff}
+/* sticky bar */
+.lh-demo .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+.lh-demo .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--brown);font-weight:700}
+.lh-demo .bar a span{display:block;font-size:16px}
+.lh-demo .bar a.main{background:var(--rose);color:#fff}
 
-footer{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
-footer .demo{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 18px;margin-top:14px;line-height:1.8}
-
-@media(max-width:520px){.owner .card{flex-direction:column;align-items:center;text-align:center}}
+.lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
+.lh-demo .demofoot .demo{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 18px;margin-top:14px;line-height:1.8}
 </style>
-</head>
-<body>
 
-<!-- ====== 簡易パスワードゲート(仮サイト用・本公開時に削除) ====== -->
-<div id="gate">
-  <div class="box">
-    <h1>ご提案用デモサイト</h1>
-    <p>このページは店舗様向けの非公開デモです。<br>お送りしたパスワードを入力してください。</p>
-    <input type="password" id="pw" placeholder="パスワード" autocomplete="off">
-    <button onclick="check()">見る</button>
-    <div class="err" id="err"></div>
-  </div>
-</div>
-
-<!-- ====== ここから店舗サイト本体(サンプルデータ: Salon Lien) ====== -->
+<div class="lh-demo">
 
 <section class="hero">
-  <span class="badge">千歳市 / プライベートサロン</span>
-  <h1>Salon Lien</h1><!-- TODO: {{店名}} -->
-  <p class="yomi">サロン リアン</p>
-  <p class="catch">髪も気持ちも、ふっと軽くなる。<br>千歳駅から徒歩◯分、マンツーマンの小さな美容室。</p><!-- TODO: {{キャッチコピー}} -->
-  <div class="heroimg">店舗写真(契約後に差し替え)</div>
-  <div class="wrap points">
-    <div><div class="ic">🪞</div><b>完全マンツーマン<br>施術</b></div>
-    <div><div class="ic">🚃</div><b>千歳駅から<br>徒歩◯分</b></div>
-    <div><div class="ic">💬</div><b>LINEで<br>かんたん予約</b></div>
+  <div class="inner">
+    <p class="logo-en">{{英字サブタイトル 例: CHITOSE — EYELASH SALON}}</p>
+    <h1>{{店名}}</h1>
+    <p class="catch">{{キャッチコピー(2行程度。店の一番の売りを)}}</p>
+    <a class="btn" href="{{LINE予約URL or tel:}}">{{LINEで予約する / 電話で予約する}}</a>
+    <p class="note">※ 写真はイメージです(ご契約後に実際のお写真へ差し替え)</p>
   </div>
 </section>
 
-<section class="sec menu">
+<section class="trial fade">
+  <h2>ご予約はかんたんです</h2>
+  <p>{{予約の流れを1〜2行で 例: LINEで「予約希望」と送るだけ。ご希望の日時をご相談ください。}}</p>
+  <div class="btns">
+    <a class="btn" href="{{LINE予約URL}}">💬 LINEで予約する</a>
+    <a class="btn alt" href="tel:{{電話番号}}">📞 電話で予約する</a>
+  </div>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <h2>{{店名}}の特徴</h2>
+    <span class="en">Features</span>
+    <div class="points">
+      <div><div class="ic">{{絵文字1}}</div><b>{{特徴1}}</b></div>
+      <div><div class="ic">{{絵文字2}}</div><b>{{特徴2}}</b></div>
+      <div><div class="ic">{{絵文字3}}</div><b>{{特徴3}}</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec gallery fade">
+  <div class="wrap">
+    <h2>デザイン・仕上がり</h2>
+    <span class="en">Gallery</span>
+    <!-- TODO: 店舗Instagramの投稿URLを公式埋め込み(blockquote.instagram-media+embed.js)に差し替え。2〜4件 -->
+    <div class="embeds">
+      <div class="embed">Instagram投稿の埋め込み 1</div>
+      <div class="embed">Instagram投稿の埋め込み 2</div>
+      <div class="embed">Instagram投稿の埋め込み 3</div>
+      <div class="embed">Instagram投稿の埋め込み 4</div>
+    </div>
+    <div class="center">
+      <a class="ig-btn" href="{{InstagramURL}}" target="_blank" rel="noopener">Instagramでもっと見る</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec menu fade" style="background:#fff">
   <div class="wrap">
     <h2>メニュー・料金</h2>
     <span class="en">Menu</span>
-    <!-- TODO: HPB/Instagramに掲載の事実情報(メニュー名・価格)を転記。紹介文のコピペはしない -->
-    <div class="item"><div><b>カット</b><small>シャンプー・ブロー込み</small></div><div class="pr">¥4,400</div></div>
-    <div class="item"><div><b>カット + カラー</b><small>リタッチ・フルカラー対応</small></div><div class="pr">¥9,900〜</div></div>
-    <div class="item"><div><b>カット + パーマ</b><small>デジタルパーマは+¥2,200</small></div><div class="pr">¥11,000〜</div></div>
-    <div class="item"><div><b>トリートメント</b><small>髪質に合わせて選べる3種類</small></div><div class="pr">¥3,300〜</div></div>
-    <p class="note">※ 価格はすべて税込です。メニューの詳細はお気軽にお問い合わせください。</p>
+    <!-- TODO: HPB/Instagram掲載の事実情報(メニュー名・価格)のみ転記。紹介文のコピペはしない -->
+    <div class="item"><div><b>{{メニュー1}}</b><small>{{補足}}</small></div><div class="pr">{{¥0,000}}</div></div>
+    <div class="item"><div><b>{{メニュー2}}</b><small>{{補足}}</small></div><div class="pr">{{¥0,000}}</div></div>
+    <div class="item"><div><b>{{メニュー3}}</b><small>{{補足}}</small></div><div class="pr">{{¥0,000〜}}</div></div>
+    <p class="note">※ 価格はすべて税込です。最新のメニューはお問い合わせください。</p>
   </div>
 </section>
 
-<section class="sec insta">
+<section class="sec voice fade">
   <div class="wrap">
-    <h2>スタイル・最新情報</h2>
-    <span class="en">Instagram</span>
-    <!-- 仮サイト段階の写真はInstagram公式埋め込みのみ使用(著作権対応)。
-         TODO: 下のdivを店舗InstagramのURLで instagram.com/p/xxxx/embed か
-         公式埋め込みコード(blockquote.instagram-media + embed.js)に差し替え -->
-    <div class="embed">
-      ここに店舗様のInstagram投稿が<br>そのまま埋め込みで表示されます<br>(公式の埋め込み機能を使用)
-    </div>
-    <div class="center">
-      <a class="ig-btn" href="https://www.instagram.com/" target="_blank" rel="noopener">Instagramを見る</a><!-- TODO: {{InstagramURL}} -->
-    </div>
+    <h2>お客様の声</h2>
+    <span class="en">Voice</span>
+    <!-- TODO: サンプルは掲載時に実際のお声へ差し替え(サンプル明記は外さない) -->
+    <div class="card"><b>{{見出し 例: 仕上がりがきれいで通い続けています}}</b><p>{{2〜3行の感想}}</p><small>{{30代女性}}(サンプル・掲載時に実際のお声に差し替え)</small></div>
+    <div class="card"><b>{{見出し2}}</b><p>{{感想2}}</p><small>{{40代女性}}(サンプル・掲載時に実際のお声に差し替え)</small></div>
   </div>
 </section>
 
-<section class="sec owner">
+<section class="sec faq fade">
   <div class="wrap">
-    <h2>サロンについて</h2>
-    <span class="en">About</span>
-    <div class="card">
-      <div class="face">オーナー写真<br>(契約後)</div>
-      <div>
-        <b>オーナースタイリスト 【お名前】</b>
-        <p>一人ひとりとゆっくり向き合いたくて、マンツーマンの小さなサロンを開きました。骨格や髪質に合わせた「再現しやすいスタイル」が得意です。はじめての方もリラックスして過ごせる空間づくりを心がけています。</p>
-        <!-- TODO: 仮段階は当たり障りのない汎用文。契約後に本人の言葉へ差し替え -->
-      </div>
-    </div>
+    <h2>よくある質問</h2>
+    <span class="en">FAQ</span>
+    <div class="q"><b>はじめてでも大丈夫ですか?</b><p>{{回答}}</p></div>
+    <div class="q"><b>予約はどうすればいいですか?</b><p>{{LINE/電話の案内}}</p></div>
+    <div class="q"><b>駐車場はありますか?</b><p>{{回答}}</p></div>
   </div>
 </section>
 
-<section class="sec info">
+<section class="sec info fade" style="background:#fff">
   <div class="wrap">
     <h2>店舗情報・アクセス</h2>
     <span class="en">Information</span>
     <table>
-      <!-- TODO: Googleマップ掲載の事実情報を転記 -->
-      <tr><th>店名</th><td>Salon Lien(サロン リアン)</td></tr>
-      <tr><th>住所</th><td>北海道千歳市◯◯◯ ◯-◯-◯</td></tr>
-      <tr><th>営業時間</th><td>9:00 - 18:00(最終受付 17:00)</td></tr>
-      <tr><th>定休日</th><td>毎週月曜・第2火曜</td></tr>
-      <tr><th>電話</th><td><a href="tel:0123000000">0123-00-0000</a></td></tr>
-      <tr><th>支払い</th><td>現金 / クレジットカード / 電子マネー</td></tr>
-      <tr><th>駐車場</th><td>あり(2台)</td></tr>
+      <!-- Googleマップ掲載の事実情報のみ転記 -->
+      <tr><th>店名</th><td>{{店名}}</td></tr>
+      <tr><th>住所</th><td>{{住所}}</td></tr>
+      <tr><th>営業時間</th><td>{{営業時間}}</td></tr>
+      <tr><th>定休日</th><td>{{定休日}}</td></tr>
+      <tr><th>電話</th><td><a href="tel:{{電話番号}}">{{電話番号表記}}</a></td></tr>
+      <tr><th>ご予約</th><td>{{LINE / 電話 など}}</td></tr>
+      <tr><th>駐車場</th><td>{{あり/なし}}</td></tr>
     </table>
-    <!-- TODO: Googleマップ埋め込みiframeに差し替え(マップの「共有>地図を埋め込む」) -->
+    <!-- TODO: Googleマップの「共有 > 地図を埋め込む」のiframeに差し替え -->
     <div class="map">Googleマップ埋め込み</div>
+    <div class="mapbtn"><a href="https://www.google.com/maps/search/?api=1&query={{URLエンコード済み住所}}" target="_blank" rel="noopener">▶ 行き方をGoogleマップで開く</a></div>
   </div>
 </section>
 
-<section class="sec">
-  <div class="cta">
-    <h2>ご予約・お問い合わせ</h2>
-    <p>ご予約はお電話または LINE から。<br>「ホームページを見た」とお伝えいただくとスムーズです。</p>
-    <!-- TODO: LINE公式アカウント or 予約システム(Suzume等)のURLに差し替え。予約システム連携はオプション -->
-    <a class="btn" href="#">LINEで予約する</a>
+<section class="ctaband fade">
+  <h2>ご予約・お問い合わせ</h2>
+  <p>「ホームページを見た」とお伝えいただくとスムーズです。</p>
+  <div class="btns">
+    <a class="btn" href="{{LINE予約URL}}">💬 LINEで予約する</a>
+    <a class="btn alt" href="tel:{{電話番号}}">📞 電話で予約する</a>
   </div>
 </section>
 
-<footer>
-  <p>Salon Lien — 北海道千歳市</p>
+<div class="demofoot">
+  <p>{{店名}} — 北海道千歳市</p>
   <p style="margin-top:6px">Produced by <b>Link Hokkaido</b>(千歳・恵庭・苫小牧の地域情報プラットフォーム)</p>
   <div class="demo">
     このページはご提案用のデモです。掲載をご希望されない場合は<br>即日削除いたしますので、お気軽にお申し付けください。
   </div>
-</footer>
+</div>
 
-<!-- HPB風の固定予約バー -->
 <div class="bar">
-  <a href="tel:0123000000"><span>📞</span>電話する</a>
-  <a href="https://www.instagram.com/" target="_blank" rel="noopener"><span>📷</span>Instagram</a>
-  <a class="main" href="#"><span>💬</span>LINEで予約</a>
+  <a href="tel:{{電話番号}}"><span>📞</span>電話する</a>
+  <a href="{{InstagramURL}}" target="_blank" rel="noopener"><span>📷</span>Instagram</a>
+  <a class="main" href="{{LINE予約URL}}"><span>💬</span>LINEで予約</a>
+</div>
+
 </div>
 
 <script>
-// 簡易ゲート: 店舗ごとにPASSWORDを変えて送付する。
-// ※クライアント側の簡易制限(noindexと併用)。本公開時はこのscriptと#gateを削除
-const PASSWORD = "lien2026"; // TODO: 店舗ごとに変更
-function check(){
-  if(document.getElementById('pw').value === PASSWORD){
-    sessionStorage.setItem('gate_ok','1');
-    document.getElementById('gate').style.display='none';
-  }else{
-    document.getElementById('err').textContent='パスワードが違います';
-  }
-}
-document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')check()});
-if(sessionStorage.getItem('gate_ok')==='1')document.getElementById('gate').style.display='none';
+(function(){
+  var els=document.querySelectorAll('.lh-demo .fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
 </script>
-
-</body>
-</html>
