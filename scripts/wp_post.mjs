@@ -19,12 +19,17 @@
  *   --type     post | page (省略時 post)
  *   --slug     スラッグ(pageのURL指定などに)
  *   --parent   親ページのID(pageを /chitose/ 配下に置く場合など)
+ *   --id       既存投稿/ページのID(指定すると新規作成でなく更新)
+ *   --html-block 本文を <!-- wp:html --> で包む。生HTML(LP等)はこれを付けないと
+ *               wpautopが<p>/<br>を挿入してCSSとレイアウトが壊れる
  */
 import { readFileSync } from 'node:fs';
 import { env, wpFetch } from './wp_client.mjs';
 const args = {};
-for (let i = 2; i < process.argv.length; i += 2) {
-  args[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
+for (let i = 2; i < process.argv.length; i++) {
+  const key = process.argv[i].replace(/^--/, '');
+  if (key === 'html-block') { args.htmlBlock = true; continue; }
+  args[key] = process.argv[++i];
 }
 if (!args.title || (!args.file && !args.content)) {
   console.error('使い方: node scripts/wp_post.mjs --title "タイトル" --file 本文.html [--status draft|publish]');
@@ -49,9 +54,12 @@ async function resolveTerm(type, name) {
   return (await api(`/${type}`, 'POST', { name })).id;
 }
 
+let content = args.content ?? readFileSync(args.file, 'utf8');
+if (args.htmlBlock) content = `<!-- wp:html -->\n${content}\n<!-- /wp:html -->`;
+
 const payload = {
   title: args.title,
-  content: args.content ?? readFileSync(args.file, 'utf8'),
+  content,
   status: args.status === 'publish' ? 'publish' : 'draft',
 };
 if (args.slug) payload.slug = args.slug;
@@ -65,6 +73,6 @@ if (args.type !== 'page') {
   );
 }
 
-const res = await api(endpoint, 'POST', payload);
-console.log(`✅ ${payload.status === 'draft' ? '下書き' : '公開'}投稿しました: ${res.link}`);
+const res = await api(args.id ? `${endpoint}/${args.id}` : endpoint, 'POST', payload);
+console.log(`✅ ${args.id ? '更新' : payload.status === 'draft' ? '下書き投稿' : '公開投稿'}しました: ${res.link}`);
 console.log(`   ID: ${res.id} / 編集: ${env('WP_URL')}/wp-admin/post.php?post=${res.id}&action=edit`);
