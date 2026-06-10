@@ -18,6 +18,9 @@
 ## 参考資料
 
 - 見本の雛形LP: https://ctp.ctw-contents.com/lptools/lp/clp/エステサロン2/
+  (テンプレ一覧: https://ctp.ctw-contents.com/lptools/lp/lptools-template-list/)
+  **この会社の社長は友人で、見本としての借用OKをもらっている(2026-06-10)**。
+  ※ドメイン全体がボット遮断のためClaude環境からは403で見られない → スクショ共有 or HTMLファイルをリポジトリにアップしてもらう
 - 飲食店の例: 12 COFFEE(千歳/カフェ) https://tabelog.com/hokkaido/A0107/A010701/1072823/
 - フィードバック: https://catch-the-web.com/ai-tools/feedback-pin/?s=dkr1csiyjpbl
   (※ Claude Code環境からは403で閲覧不可。内容はテキストで貼り付けて共有すること)
