@@ -44,7 +44,8 @@
 .lh-demo .hero .note{margin-top:16px;font-size:10.5px;color:rgba(255,255,255,.55)}
 
 /* 予約ボックス(ヒーロー直下) */
-.lh-demo .trial{background:var(--brown);color:#fff;text-align:center;padding:46px 20px}
+/* 予約ボックス: 写真背景+暗幕がデフォルト(写真が無い場合は url(...) を外して単色でも可) */
+.lh-demo .trial{background:linear-gradient(rgba(60,45,38,.78),rgba(60,45,38,.82)),url('{{セクション写真URL1}}') center/cover no-repeat;color:#fff;text-align:center;padding:56px 20px}
 .lh-demo .trial h2{color:#fff!important}
 .lh-demo .trial p{color:rgba(255,255,255,.85);font-size:13px;margin:10px 0 24px}
 
@@ -93,7 +94,7 @@
 .lh-demo .mapbtn a{display:inline-block;background:var(--brown);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
 
 /* cta帯 */
-.lh-demo .ctaband{background:linear-gradient(135deg,var(--rose2),var(--rose));color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .ctaband{background:linear-gradient(rgba(160,95,82,.82),rgba(176,111,97,.86)),url('{{セクション写真URL2}}') center/cover no-repeat;color:#fff;text-align:center;padding:64px 20px}
 .lh-demo .ctaband h2{color:#fff!important}
 .lh-demo .ctaband p{color:rgba(255,255,255,.88);font-size:13px;margin:10px 0 26px}
 .lh-demo .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
