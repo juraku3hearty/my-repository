@@ -1,0 +1,165 @@
+<!-- ============================================================
+  子ども食堂REST 公開ページ(ボランティア無料制作の実例1号・2026-06-11)
+  ※デモではなく公開前提(運営側=平井さん本人+おば様)。公開はパスワードなし
+  TODO(運営側で確認): 開催日時(金曜16時〜? 土曜11-15時? 情報源で食い違い)/
+  料金(子ども無料・大人◯円など)/ 対象 / 写真(実際の活動写真に差し替え推奨)
+  投稿: --html-block 必須・最初はdraftで設置
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{ /* あたたかい地域活動トーン: クリーム×やまぶき×若葉 */
+  --bg:#fdf9ef; --sun:#e8a33d; --sun2:#cf8a25; --green:#7ba05b; --brown:#5b4632;
+  --ink:#4a4236; --gray:#998c77; --line:#efe4cd; --soft:#f7efdd;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px}
+.lh-demo a{color:inherit;text-decoration:none!important}
+.lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+.lh-demo .sec{padding:60px 0}
+.lh-demo .en{display:block;text-align:center;font-size:11px;letter-spacing:.3em;color:var(--sun);margin-bottom:30px;text-transform:uppercase}
+.lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
+.lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
+.lh-demo h1{font-size:clamp(26px,7vw,36px)!important;line-height:1.6!important;color:#fff!important;letter-spacing:.06em!important;margin:0 0 10px!important;text-shadow:0 2px 16px rgba(0,0,0,.35)}
+.lh-demo h2{font-size:21px!important;color:var(--brown)!important;text-align:center!important;margin:0 0 6px!important;font-weight:700!important}
+.lh-demo figure{margin:0!important}
+.lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
+.lh-demo .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.lh-demo .fade.on{opacity:1;transform:none}
+
+/* hero: 温かいグラデ(活動写真が来たら差し替え) */
+.lh-demo .hero{position:relative;min-height:64vh;display:flex;align-items:center;justify-content:center;text-align:center;
+  background:linear-gradient(160deg,#e8a33d,#d98f2b 55%,#b8762a)}
+.lh-demo .hero .inner{position:relative;padding:80px 20px}
+.lh-demo .hero .badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:11.5px;padding:5px 18px;border-radius:99px;margin-bottom:18px;letter-spacing:.15em}
+.lh-demo .hero .catch{color:rgba(255,255,255,.95);font-size:15px;margin:0 0 8px}
+
+/* 開催情報ボックス */
+.lh-demo .when{background:var(--brown);color:#fff;text-align:center;padding:44px 20px}
+.lh-demo .when h2{color:#fff!important}
+.lh-demo .when .big{font-family:'Zen Maru Gothic',sans-serif;font-size:24px;margin:10px 0 4px}
+.lh-demo .when p{color:rgba(255,255,255,.85);font-size:13px}
+
+/* points */
+.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
+.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 12px;text-align:center}
+.lh-demo .points .ic{font-size:26px}
+.lh-demo .points b{display:block;font-size:12.5px;color:var(--brown);margin-top:8px;line-height:1.5}
+
+/* 利用案内 */
+.lh-demo .guide{background:var(--soft)}
+.lh-demo .guide .row{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.lh-demo .guide .row b{min-width:90px;color:var(--green);font-size:13.5px}
+.lh-demo .guide .row p{font-size:13.5px}
+
+/* insta */
+.lh-demo .insta .center{text-align:center}
+.lh-demo .insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
+
+/* info */
+.lh-demo .info table{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.lh-demo .info th,.lh-demo .info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid var(--line)}
+.lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
+.lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#fbf5e8}
+.lh-demo .mapbtn{display:block;text-align:center;margin-top:12px}
+.lh-demo .mapbtn a{display:inline-block;background:var(--brown);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
+
+/* 支援帯 */
+.lh-demo .ctaband{background:linear-gradient(135deg,var(--green),#5f8a43);color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .ctaband h2{color:#fff!important}
+.lh-demo .ctaband p{color:rgba(255,255,255,.9);font-size:13px;margin:10px 0 26px}
+.lh-demo .btn{display:inline-block;background:#fff;color:var(--green)!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px}
+
+.lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
+</style>
+
+<div class="lh-demo">
+
+<section class="hero">
+  <div class="inner">
+    <span class="badge">千歳市住吉 / こども食堂</span>
+    <h1>子ども食堂 REST</h1>
+    <p class="catch">あったかいごはんと、ほっとできる居場所。<br>千歳のこどもたちと地域のための食堂です。</p>
+  </div>
+</section>
+
+<section class="when fade">
+  <h2>開催日</h2>
+  <!-- TODO: 開催日時を運営確認(Web上は「毎週金曜16時〜」と「毎週土曜11-15時」が混在) -->
+  <p class="big">毎週◯曜日 ◯◯:◯◯ 〜</p>
+  <p>最新の開催情報はInstagramでお知らせしています</p>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <h2>RESTってこんなところ</h2>
+    <span class="en">About</span>
+    <div class="points">
+      <div><div class="ic">🍚</div><b>あったかい<br>ごはん</b></div>
+      <div><div class="ic">🏠</div><b>こどもも大人も<br>ほっとできる居場所</b></div>
+      <div><div class="ic">🐶</div><b>ペットサロン併設の<br>あたたかい空間</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec guide fade">
+  <div class="wrap">
+    <h2>ご利用案内</h2>
+    <span class="en">Guide</span>
+    <!-- TODO: 料金・対象を運営確認(例: こども無料・大人◯◯円) -->
+    <div class="row"><b>対象</b><p>{{対象(例: どなたでも / 高校生以下のお子さまと保護者)}}</p></div>
+    <div class="row"><b>料金</b><p>{{料金(例: こども無料・おとな300円)}}</p></div>
+    <div class="row"><b>予約</b><p>{{予約の要否}}</p></div>
+    <div class="row"><b>はじめての方へ</b><p>持ち物はいりません。エレベーターで2階へどうぞ。わからないことはお気軽にお電話ください。</p></div>
+  </div>
+</section>
+
+<section class="sec insta fade">
+  <div class="wrap">
+    <h2>活動のようす</h2>
+    <span class="en">Instagram</span>
+    <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/caferest_chitose/" data-instgrm-version="14" style="margin:0 auto;max-width:540px;width:100%;background:#fff;border-radius:14px;border:1px solid var(--line)">
+      <a href="https://www.instagram.com/caferest_chitose/" target="_blank" rel="noopener">@caferest_chitose をInstagramで見る</a>
+    </blockquote>
+    <script async src="https://www.instagram.com/embed.js"></script>
+    <div class="center">
+      <a class="ig-btn" href="https://www.instagram.com/caferest_chitose/" target="_blank" rel="noopener">Instagramを見る</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec info fade" style="background:#fff">
+  <div class="wrap">
+    <h2>場所・アクセス</h2>
+    <span class="en">Access</span>
+    <table>
+      <tr><th>名称</th><td>子ども食堂 REST(レスト)</td></tr>
+      <tr><th>場所</th><td>北海道千歳市住吉4丁目3-11 ペットサロンワンニャン 2階</td></tr>
+      <tr><th>目印</th><td>千歳市立青葉中学校の前。建物内のエレベーターで2階へ</td></tr>
+      <tr><th>電話</th><td><a href="tel:0123220257" style="color:#cf8a25">0123-22-0257</a></td></tr>
+    </table>
+    <iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E4%BD%8F%E5%90%894%E4%B8%81%E7%9B%AE3-11&output=embed" style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px;margin-top:14px" loading="lazy" allowfullscreen title="子ども食堂RESTの地図"></iframe>
+    <div class="mapbtn"><a href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E4%BD%8F%E5%90%894%E4%B8%81%E7%9B%AE3-11" target="_blank" rel="noopener">▶ 行き方をGoogleマップで開く</a></div>
+  </div>
+</section>
+
+<section class="ctaband fade">
+  <h2>活動を応援してくださる方へ</h2>
+  <p>食材のご寄付・ボランティアのご参加など、地域のみなさまの応援が活動の支えです。<br>お気軽にお問い合わせください。</p>
+  <a class="btn" href="tel:0123220257">📞 お問い合わせ</a>
+</section>
+
+<div class="demofoot">
+  <p>子ども食堂 REST — 北海道千歳市住吉</p>
+  <p style="margin-top:6px">このページは <b>Link Hokkaido</b> がボランティア活動支援として無料で制作しています。</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.lh-demo .fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
