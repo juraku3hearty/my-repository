@@ -11,9 +11,9 @@
 ============================================================ -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@500;600;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
 <style>
-:root{ /* 暗背景×行灯の暖色(居酒屋デフォルト)。店のトンマナで差し替え */
-  --bg:#1c1916; --panel:#262019; --amber:#d99a3e; --amber2:#b87f2a; --red:#b3402e;
-  --ink:#ece5da; --gray:#a39884; --line:#3a322a; --paper:#f5efe4;
+:root{ /* トンマナ: 実店舗準拠(白壁×木×店内アートのオレンジ・2026-06-11平井さん撮影の実写真より) */
+  --bg:#f7f4ee; --panel:#ffffff; --amber:#c75b28; --amber2:#a8481e; --red:#b3402e;
+  --ink:#3c352c; --gray:#8d8273; --line:#e6dfd2; --paper:#fdfbf6;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 .lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:64px}
@@ -26,7 +26,7 @@
 .lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Shippori Mincho',serif!important}
 .lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
 .lh-demo h1{font-size:clamp(28px,7.5vw,40px)!important;line-height:1.5!important;color:#fff!important;letter-spacing:.1em!important;margin:0 0 10px!important;text-shadow:0 2px 18px rgba(0,0,0,.6)}
-.lh-demo h2{font-size:22px!important;color:var(--ink)!important;text-align:center!important;margin:0 0 6px!important;font-weight:600!important}
+.lh-demo h2{font-size:22px!important;color:#5b4632!important;text-align:center!important;margin:0 0 6px!important;font-weight:600!important}
 .lh-demo figure{margin:0!important}
 .lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
 
@@ -36,39 +36,39 @@
 
 /* hero: 料理写真の全画面 */
 .lh-demo .hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
-  background:linear-gradient(160deg,#23201b,#15120e 60%,#1d1409)} /* TODO: 煮干しそばの写真に差し替え */
+  background:linear-gradient(rgba(40,26,14,.42),rgba(40,26,14,.55)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/40104-1024x768.jpg') center/cover no-repeat} /* 実物の煮干しそば(平井さん撮影) */
 .lh-demo .hero .inner{position:relative;padding:90px 20px}
 .lh-demo .hero .logo-en{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.5em;color:var(--amber);margin-bottom:18px}
 .lh-demo .hero .catch{color:rgba(255,255,255,.92);font-size:15px;margin:0 0 30px;text-shadow:0 1px 12px rgba(0,0,0,.5)}
 .lh-demo .hero .note{margin-top:16px;font-size:10.5px;color:rgba(255,255,255,.5)}
 
 /* 予約/案内ボックス */
-.lh-demo .trial{background:#14110d;color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .trial{background:linear-gradient(rgba(35,30,25,.6),rgba(35,30,25,.7)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/40105-1024x768.jpg') center 60%/cover no-repeat;color:#fff;text-align:center;padding:56px 20px}
 .lh-demo .trial h2{color:#fff!important}
 .lh-demo .trial p{color:rgba(255,255,255,.82);font-size:13px;margin:10px 0 24px}
 
 /* points */
 .lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
-.lh-demo .points > div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 12px;text-align:center}
+.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px 12px;text-align:center}
 .lh-demo .points .ic{font-size:24px}
-.lh-demo .points b{display:block;font-size:12.5px;color:var(--ink);margin-top:8px;line-height:1.5}
+.lh-demo .points b{display:block;font-size:12.5px;color:#5b4632;margin-top:8px;line-height:1.5}
 
 /* menu: 写真カード型(飲食は料理写真が主役) */
 .lh-demo .dishes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px}
 .lh-demo .dishes figure{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .lh-demo .dishes img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 .lh-demo .dishes figcaption{padding:12px 14px;font-size:13px}
-.lh-demo .dishes figcaption b{color:#fff;display:block;font-size:14px}
+.lh-demo .dishes figcaption b{color:#5b4632;display:block;font-size:14px}
 .lh-demo .dishes figcaption span{color:var(--amber);font-weight:700}
 @media(max-width:520px){.lh-demo .dishes{grid-template-columns:1fr}}
 .lh-demo .menu .item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:14px}
-.lh-demo .menu .item div b{display:block;font-size:14px;color:#fff}
+.lh-demo .menu .item div b{display:block;font-size:14px;color:#5b4632}
 .lh-demo .menu .item div small{color:var(--gray);font-size:12px}
 .lh-demo .menu .item .pr{color:var(--amber);font-weight:700;font-size:15px;white-space:nowrap}
 .lh-demo .menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
 
 /* instagram */
-.lh-demo .insta{background:var(--panel)}
+.lh-demo .insta{background:#efe9dd}
 .lh-demo .insta .center{text-align:center}
 .lh-demo .insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
 
@@ -80,7 +80,7 @@
 
 /* faq */
 .lh-demo .faq .q{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 24px;margin-bottom:12px}
-.lh-demo .faq .q b{display:block;color:#fff;font-size:14px;margin-bottom:6px}
+.lh-demo .faq .q b{display:block;color:#5b4632;font-size:14px;margin-bottom:6px}
 .lh-demo .faq .q b::before{content:"Q. ";color:var(--amber);font-weight:700}
 .lh-demo .faq .q p{font-size:13px}
 .lh-demo .faq .q p::before{content:"A. ";color:var(--red);font-weight:700}
@@ -95,18 +95,18 @@
 .lh-demo .mapbtn a{display:inline-block;background:var(--amber2);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
 
 /* cta帯 */
-.lh-demo .ctaband{background:linear-gradient(135deg,#8a4a26,#b3672e);color:#fff;text-align:center;padding:64px 20px}
+.lh-demo .ctaband{background:linear-gradient(rgba(170,75,30,.78),rgba(199,91,40,.84)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/40110-1024x768.jpg') center/cover no-repeat;color:#fff;text-align:center;padding:64px 20px}
 .lh-demo .ctaband h2{color:#fff!important}
 .lh-demo .ctaband p{color:rgba(255,255,255,.88);font-size:13px;margin:10px 0 26px}
 .lh-demo .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.lh-demo .btn{display:inline-block;background:var(--amber);color:#1c1916!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.lh-demo .btn{display:inline-block;background:var(--amber);color:#fff!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
 .lh-demo .btn.alt{background:transparent;color:#fff!important;border:1px solid rgba(255,255,255,.6)}
 
 /* sticky bar */
 .lh-demo .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
-.lh-demo .bar a{background:#262019;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:700}
+.lh-demo .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:#5b4632;font-weight:700}
 .lh-demo .bar a span{display:block;font-size:16px}
-.lh-demo .bar a.main{background:var(--amber);color:#1c1916}
+.lh-demo .bar a.main{background:var(--amber);color:#fff}
 
 .lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
 .lh-demo .demofoot .demo{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 18px;margin-top:14px;line-height:1.8}
@@ -120,7 +120,7 @@
     <h1>煮干しそば おおきに</h1>
     <p class="catch">煮干しのうまみを、澄んだ一杯に。<br>朝9時からのれんを上げる、千歳の煮干しそば専門店。</p>
     <a class="btn" href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7" target="_blank" rel="noopener">📍 お店への行き方を見る</a>
-    <p class="note">※ お料理の写真は実際のお写真に差し替えできます</p>
+    <p class="note">※ 写真はすべて実際のお店・お料理です</p>
   </div>
 </section>
 
@@ -138,8 +138,8 @@
     <span class="en">Features</span>
     <div class="points">
       <div><div class="ic">🐟</div><b>煮干しだしの<br>澄んだスープ</b></div>
-      <div><div class="ic">🌅</div><b>朝9時から営業<br>朝ラーもできる</b></div>
-      <div><div class="ic">🍚</div><b>名物の牛めしと<br>お得なセット</b></div>
+      <div><div class="ic">🌾</div><b>北海道産小麦<br>100%の麺</b></div>
+      <div><div class="ic">🅿️</div><b>駐車場5台<br>車で行きやすい</b></div>
     </div>
   </div>
 </section>
@@ -148,13 +148,17 @@
   <div class="wrap">
     <h2>お品書き</h2>
     <span class="en">Menu</span>
-    <!-- TODO: 写真が来たら上位2品を写真カード(.dishes)に格上げ -->
-    <div class="item"><div><b>煮干しそば</b><small>看板の一杯。煮干しの澄んだスープ</small></div><div class="pr">¥930</div></div>
+    <div class="dishes" style="grid-template-columns:1fr">
+      <figure><img src="https://link-hokkaido.com/wp-content/uploads/2026/06/40104-1024x768.jpg" alt="煮干しそば" loading="lazy"><figcaption><b>煮干しそば</b> — 北海道産小麦100%の麺 <span>¥930</span></figcaption></figure>
+    </div>
     <div class="item"><div><b>かけ煮干しそば</b><small>シンプルに味わうなら</small></div><div class="pr">¥650</div></div>
-    <div class="item"><div><b>牛めし</b><small>名物のごはんもの</small></div><div class="pr">¥900</div></div>
+    <div class="item"><div><b>大盛り</b><small>麺増量</small></div><div class="pr">+¥180</div></div>
+    <div class="item"><div><b>牛めし</b><small>北海道産牛バラ肉100%</small></div><div class="pr">¥900</div></div>
     <div class="item"><div><b>牛めし(小盛り)</b><small>そばのお供に</small></div><div class="pr">¥550</div></div>
-    <div class="item"><div><b>おおきにセット</b><small>煮干しそば+牛めしのセット</small></div><div class="pr">¥1,380</div></div>
-    <p class="note">※ 価格は掲載時点のものです。最新のメニューは店頭・Instagramをご確認ください。</p>
+    <div class="item"><div><b>おおきにセット(おすすめ)</b><small>煮干しそば+牛めし(小盛り)</small></div><div class="pr">¥1,380</div></div>
+    <div class="item"><div><b>トッピング</b><small>海苔(4枚)¥100 / メンマ¥150 / 味付たまご¥100 / 鶏チャーシュー¥350 ほか</small></div><div class="pr">¥100〜</div></div>
+    <div class="item"><div><b>おおきにわっふる(手づくり)</b><small>プレーン¥250 / チョコ¥280・テイクアウトOK</small></div><div class="pr">¥250〜</div></div>
+    <p class="note">※ 価格はすべて税込・掲載時点のものです。お支払いは現金のみ。</p>
   </div>
 </section>
 
@@ -204,6 +208,8 @@
       
       
       <tr><th>アクセス</th><td>JR千歳駅から徒歩約15分</td></tr>
+      <tr><th>駐車場</th><td>あり(5台)</td></tr>
+      <tr><th>支払い</th><td>現金のみ</td></tr>
     </table>
     </div>
     <iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7&output=embed" style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin-top:14px" loading="lazy" allowfullscreen title="煮干しそば おおきにの地図"></iframe>
