@@ -7,9 +7,9 @@
 ============================================================ -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{ /* あたたかい地域活動トーン: クリーム×やまぶき×若葉 */
-  --bg:#fdf9ef; --sun:#e8a33d; --sun2:#cf8a25; --green:#7ba05b; --brown:#5b4632;
-  --ink:#4a4236; --gray:#998c77; --line:#efe4cd; --soft:#f7efdd;
+:root{ /* 明るく元気なこども食堂トーン(2026-06-11調整): 白×ビタミンオレンジ×若葉 */
+  --bg:#fffcf2; --sun:#ffa726; --sun2:#fb8c00; --green:#5cb85c; --brown:#e8650d;
+  --ink:#4a4236; --gray:#9b8e79; --line:#ffe9bf; --soft:#fff4d6;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 .lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px}
@@ -20,7 +20,7 @@
 .lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Zen Maru Gothic',sans-serif!important}
 .lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
 .lh-demo h1{font-size:clamp(26px,7vw,36px)!important;line-height:1.6!important;color:#fff!important;letter-spacing:.06em!important;margin:0 0 10px!important;text-shadow:0 2px 16px rgba(0,0,0,.35)}
-.lh-demo h2{font-size:21px!important;color:var(--brown)!important;text-align:center!important;margin:0 0 6px!important;font-weight:700!important}
+.lh-demo h2{font-size:21px!important;color:#e8650d!important;text-align:center!important;margin:0 0 6px!important;font-weight:700!important}
 .lh-demo figure{margin:0!important}
 .lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
 .lh-demo .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
@@ -34,21 +34,24 @@
 .lh-demo .hero .catch{color:rgba(255,255,255,.95);font-size:15px;margin:0 0 8px}
 
 /* 開催情報ボックス */
-.lh-demo .when{background:var(--brown);color:#fff;text-align:center;padding:44px 20px}
+.lh-demo .when{background:linear-gradient(135deg,#ffa726,#fb8c00);color:#fff;text-align:center;padding:48px 20px}
 .lh-demo .when h2{color:#fff!important}
 .lh-demo .when .big{font-family:'Zen Maru Gothic',sans-serif;font-size:24px;margin:10px 0 4px}
 .lh-demo .when p{color:rgba(255,255,255,.85);font-size:13px}
 
 /* points */
 .lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
-.lh-demo .points > div{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 12px;text-align:center}
+.lh-demo .points > div{border:none;border-radius:20px;padding:22px 12px;text-align:center}
+.lh-demo .points > div:nth-child(1){background:#fff3d6}
+.lh-demo .points > div:nth-child(2){background:#ffe9e0}
+.lh-demo .points > div:nth-child(3){background:#e8f5e1}
 .lh-demo .points .ic{font-size:26px}
-.lh-demo .points b{display:block;font-size:12.5px;color:var(--brown);margin-top:8px;line-height:1.5}
+.lh-demo .points b{display:block;font-size:12.5px;color:#7a5b35;margin-top:8px;line-height:1.5}
 
 /* 利用案内 */
 .lh-demo .guide{background:var(--soft)}
 .lh-demo .guide .row{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
-.lh-demo .guide .row b{min-width:90px;color:var(--green);font-size:13.5px}
+.lh-demo .guide .row b{min-width:90px;color:#fb8c00;font-size:13.5px}
 .lh-demo .guide .row p{font-size:13.5px}
 
 /* insta */
@@ -59,15 +62,15 @@
 .lh-demo .info table{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;border-collapse:separate;border-spacing:0;overflow:hidden}
 .lh-demo .info th,.lh-demo .info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid var(--line)}
 .lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
-.lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#fbf5e8}
+.lh-demo .info th{width:34%;color:var(--gray);font-weight:500;background:#fff4d6}
 .lh-demo .mapbtn{display:block;text-align:center;margin-top:12px}
-.lh-demo .mapbtn a{display:inline-block;background:var(--brown);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
+.lh-demo .mapbtn a{display:inline-block;background:#fb8c00;color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
 
 /* 支援帯 */
-.lh-demo .ctaband{background:linear-gradient(rgba(80,110,55,.82),rgba(95,138,67,.86)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/40124-1024x768.jpg') center 30%/cover no-repeat;color:#fff;text-align:center;padding:64px 20px}
+.lh-demo .ctaband{background:linear-gradient(rgba(78,160,78,.8),rgba(92,184,92,.84)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/40124-1024x768.jpg') center 30%/cover no-repeat;color:#fff;text-align:center;padding:64px 20px}
 .lh-demo .ctaband h2{color:#fff!important}
 .lh-demo .ctaband p{color:rgba(255,255,255,.9);font-size:13px;margin:10px 0 26px}
-.lh-demo .btn{display:inline-block;background:#fff;color:var(--green)!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px}
+.lh-demo .btn{display:inline-block;background:#fff;color:#43a047!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px}
 
 .lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
 </style>
