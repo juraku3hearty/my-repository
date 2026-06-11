@@ -1,0 +1,146 @@
+<!-- ============================================================
+  Link Hokkaido トップページ(2026-06-11)
+  WP設定でフロントページに指定(show_on_front=page)
+  構成: 支笏湖ヒーロー → 千歳のお店・記事 → 地域の活動(REST) → お店の方へ(partner誘導) → 運営者
+  投稿: --html-block 必須
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+.lh-home{--cream:#f7f3ec;--navy:#18263c;--orange:#d97a2e;--orange2:#c2671f;--ink:#2b2b2b;--gray:#6b6f76;--line:#e5ded2;--green:#eef3ec;
+  font-family:'Noto Sans JP',sans-serif;background:var(--cream);color:var(--ink);line-height:1.9;font-size:15px}
+.lh-home .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.lh-home .sec{padding:80px 0}
+.lh-home :is(h1,h2,h3){background:none!important;border:none!important;padding:0!important;box-shadow:none!important;color:inherit!important;font-family:'Shippori Mincho',serif!important}
+.lh-home :is(h1,h2,h3)::before,.lh-home :is(h1,h2,h3)::after{content:none!important;display:none!important}
+.lh-home h1{font-size:clamp(30px,5.5vw,48px)!important;line-height:1.7!important;color:#fff!important;font-weight:600!important;margin:0 0 18px!important;text-shadow:0 2px 20px rgba(0,0,0,.45)}
+.lh-home h2{font-size:clamp(23px,4vw,30px)!important;line-height:1.6!important;color:var(--navy)!important;font-weight:600!important;margin:0 0 16px!important}
+.lh-home figure{margin:0!important}
+.lh-home ul,.lh-home li{list-style:none!important;padding-left:0!important;margin:0!important}
+.lh-home a{text-decoration:none!important;color:inherit}
+.lh-home .label{display:inline-block;font-size:11px;letter-spacing:.25em;color:var(--orange);border:1px solid var(--orange);padding:3px 14px;border-radius:99px;margin-bottom:20px}
+.lh-home .btn{display:inline-block;background:var(--orange);color:#fff!important;font-weight:700;padding:14px 38px;border-radius:4px;letter-spacing:.08em;box-shadow:0 6px 18px rgba(217,122,46,.35)}
+.lh-home .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.7);box-shadow:none}
+.lh-home .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.lh-home .fade.on{opacity:1;transform:none}
+
+/* hero: 支笏湖 */
+.lh-home .hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;
+  background:linear-gradient(rgba(16,28,46,.42),rgba(16,28,46,.55)),url('https://link-hokkaido.com/wp-content/uploads/2026/06/img_2026-06-10T16-04-09.jpg') center 55%/cover no-repeat}
+.lh-home .hero .inner{padding:100px 20px}
+.lh-home .hero .en{font-size:11px;letter-spacing:.5em;color:var(--orange);margin-bottom:22px}
+.lh-home .hero .sub{color:rgba(255,255,255,.88);font-size:14.5px;margin-bottom:32px;text-shadow:0 1px 10px rgba(0,0,0,.4)}
+.lh-home .hero .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* カードグリッド */
+.lh-home .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+.lh-home .card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:.2s}
+.lh-home .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(24,38,60,.10)}
+.lh-home .card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.lh-home .card .pad{padding:20px 22px}
+.lh-home .card .pad b{display:block;font-size:15.5px;color:var(--navy);margin-bottom:6px}
+.lh-home .card .pad p{font-size:13px;color:var(--gray)}
+.lh-home .card .pad .more{display:inline-block;margin-top:10px;color:var(--orange);font-size:13px;font-weight:700}
+@media(max-width:640px){.lh-home .cards{grid-template-columns:1fr}}
+
+/* 記事リンク行 */
+.lh-home .links{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.lh-home .links a{background:#fff;border:1px solid var(--line);border-radius:99px;padding:11px 24px;font-size:13.5px;color:var(--navy);font-weight:500}
+.lh-home .links a:hover{border-color:var(--orange);color:var(--orange)}
+
+/* お店の方へ(オレンジバナー) */
+.lh-home .partner{background:linear-gradient(135deg,#1c2c47,#18263c);color:#fff;border-radius:12px;padding:50px 40px;display:grid;grid-template-columns:1.4fr 1fr;gap:30px;align-items:center}
+.lh-home .partner h2{color:#fff!important}
+.lh-home .partner p{color:rgba(255,255,255,.8);font-size:14px}
+.lh-home .partner .price{color:var(--orange);font-family:'Shippori Mincho',serif;font-size:26px;font-weight:700}
+.lh-home .partner .right{text-align:center}
+@media(max-width:640px){.lh-home .partner{grid-template-columns:1fr;text-align:center;padding:40px 24px}}
+
+/* footer */
+.lh-home .foot{background:#0d1624;color:rgba(255,255,255,.65);text-align:center;padding:52px 20px;font-size:12.5px}
+.lh-home .foot .logo{font-family:'Shippori Mincho',serif;letter-spacing:.3em;color:var(--orange);font-size:16px;margin-bottom:12px}
+.lh-home .foot a{color:rgba(255,255,255,.85)!important;text-decoration:underline!important}
+</style>
+
+<div class="lh-home">
+
+<section class="hero">
+  <div class="inner">
+    <p class="en">LINK HOKKAIDO</p>
+    <h1>地域の魅力を、<br>もっと伝わる形に。</h1>
+    <p class="sub">千歳・恵庭・苫小牧の地域情報プラットフォーム。<br>お店も、活動も、人も。この街の「知られていない」をなくしていきます。</p>
+    <div class="btns">
+      <a class="btn" href="#local">千歳のお店・活動をみる</a>
+      <a class="btn ghost" href="/partner/">お店の方はこちら</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="local">
+  <div class="wrap">
+    <span class="label">千歳のお店</span>
+    <h2>実際に行って、書いています</h2>
+    <p style="color:var(--gray);max-width:620px">千歳のお店に実際に足を運んで書いた紹介記事です。メニューも雰囲気も、行った人にしか書けないことを。</p>
+    <div class="links">
+      <a href="/?cat=3">🍽 グルメの記事をみる</a>
+      <a href="/?cat=4">🎬 エンタメの記事をみる</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec fade" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="label">地域の活動</span>
+    <h2>地域のために動く人を、応援しています</h2>
+    <div class="cards">
+      <a class="card" href="/chitose/kodomoshokudo-rest/">
+        <img src="https://link-hokkaido.com/wp-content/uploads/2026/06/40128-1024x767.jpg" alt="子ども食堂REST" loading="lazy">
+        <div class="pad">
+          <b>子ども食堂 REST(千歳市住吉)</b>
+          <p>毎週金曜日 15:30〜17:00。あったかいごはんと、ほっとできる居場所。中学生まで無料です。</p>
+          <span class="more">くわしく見る →</span>
+        </div>
+      </a>
+      <div class="card" style="display:flex;align-items:center;justify-content:center;background:var(--green);border-style:dashed">
+        <div class="pad" style="text-align:center">
+          <b>あなたの活動も</b>
+          <p>ボランティア団体・地域活動のページは無料でお作りしています。お気軽にご相談ください。</p>
+          <a class="more" href="https://lin.ee/o9IqkbQ" target="_blank" rel="noopener">LINEで相談する →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <div class="partner">
+      <div>
+        <span class="label" style="border-color:rgba(255,255,255,.4);color:#fff">お店の方へ</span>
+        <h2>お店のホームページ、<br>作っています</h2>
+        <p style="margin-top:10px">制作費0円・解約金0円。完成したホームページを見て、気に入った方だけ公開。<br>先着30店舗は創業記念価格 <span class="price">月1,980円</span>(ずっとこの価格)です。</p>
+      </div>
+      <div class="right">
+        <a class="btn" href="/partner/" style="font-size:15px;padding:16px 44px">くわしく見る</a>
+        <p style="font-size:11.5px;color:rgba(255,255,255,.55);margin-top:12px">ご相談はLINEで完結します</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  <p class="logo">LINK HOKKAIDO</p>
+  <p>千歳・恵庭・苫小牧の地域情報プラットフォーム</p>
+  <p style="margin-top:14px"><a href="/company/">運営会社</a> ・ <a href="https://lin.ee/o9IqkbQ" target="_blank" rel="noopener">LINE公式アカウント</a></p>
+  <p style="margin-top:10px;opacity:.6">© Link Hokkaido / 株式会社famitect</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.lh-home .fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
