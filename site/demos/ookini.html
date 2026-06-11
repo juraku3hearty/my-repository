@@ -1,0 +1,245 @@
+<!-- ============================================================
+  煮干しそば おおきに ご提案デモ(飲食店雛形v1ベース・2026-06-11)
+  事実情報: 食べログ/ホットペッパーグルメ/Web検索(千歳市北栄2丁目31-7・9:00-16:00・
+  月曜+第2第3日曜休・煮干しそば930円ほか・2024年4月オープン)
+  TODO: ラーメン系フリー素材(ヒーロー+セクション2枚) / 電話番号 / IGスクショ(トンマナ)
+  CTW雛形(ステーキ/イタリアン)の暗背景×料理写真主役の型(2026-06-11)
+  デプロイ: node scripts/wp_post.mjs --title "..." --file このファイル --type page \
+    --slug demo-店名-ランダム --status publish --password 店ごとのPW --html-block
+  運用3原則: 非公開URL+PW / 写真はInstagram公式埋め込み+フリー素材(※イメージ注記) / 事実情報のみ
+  明るい昼カフェの場合は :root を白系に差し替え(サロン雛形の配色を流用)
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@500;600;700&family=Cormorant+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{ /* 暗背景×行灯の暖色(居酒屋デフォルト)。店のトンマナで差し替え */
+  --bg:#1c1916; --panel:#262019; --amber:#d99a3e; --amber2:#b87f2a; --red:#b3402e;
+  --ink:#ece5da; --gray:#a39884; --line:#3a322a; --paper:#f5efe4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.lh-demo{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.9;font-size:14.5px;padding-bottom:64px}
+.lh-demo a{color:inherit;text-decoration:none!important}
+.lh-demo .wrap{max-width:680px;margin:0 auto;padding:0 20px}
+.lh-demo .sec{padding:64px 0}
+.lh-demo .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;letter-spacing:.35em;color:var(--amber);margin-bottom:34px;text-transform:uppercase}
+
+/* SWELLテーマ装飾の打ち消し */
+.lh-demo :is(h1,h2,h3,h4){background:none!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;color:inherit!important;font-family:'Shippori Mincho',serif!important}
+.lh-demo :is(h1,h2,h3,h4)::before,.lh-demo :is(h1,h2,h3,h4)::after{content:none!important;display:none!important}
+.lh-demo h1{font-size:clamp(28px,7.5vw,40px)!important;line-height:1.5!important;color:#fff!important;letter-spacing:.1em!important;margin:0 0 10px!important;text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.lh-demo h2{font-size:22px!important;color:var(--ink)!important;text-align:center!important;margin:0 0 6px!important;font-weight:600!important}
+.lh-demo figure{margin:0!important}
+.lh-demo ul,.lh-demo li{list-style:none!important;padding-left:0!important}
+
+/* スクロールふわっと表示 */
+.lh-demo .fade{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}
+.lh-demo .fade.on{opacity:1;transform:none}
+
+/* hero: 料理写真の全画面 */
+.lh-demo .hero{position:relative;min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;
+  background:linear-gradient(160deg,#23201b,#15120e 60%,#1d1409)} /* TODO: 煮干しそばの写真に差し替え */
+.lh-demo .hero .inner{position:relative;padding:90px 20px}
+.lh-demo .hero .logo-en{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.5em;color:var(--amber);margin-bottom:18px}
+.lh-demo .hero .catch{color:rgba(255,255,255,.92);font-size:15px;margin:0 0 30px;text-shadow:0 1px 12px rgba(0,0,0,.5)}
+.lh-demo .hero .note{margin-top:16px;font-size:10.5px;color:rgba(255,255,255,.5)}
+
+/* 予約/案内ボックス */
+.lh-demo .trial{background:#14110d;color:#fff;text-align:center;padding:56px 20px}
+.lh-demo .trial h2{color:#fff!important}
+.lh-demo .trial p{color:rgba(255,255,255,.82);font-size:13px;margin:10px 0 24px}
+
+/* points */
+.lh-demo .points{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:0 auto}
+.lh-demo .points > div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 12px;text-align:center}
+.lh-demo .points .ic{font-size:24px}
+.lh-demo .points b{display:block;font-size:12.5px;color:var(--ink);margin-top:8px;line-height:1.5}
+
+/* menu: 写真カード型(飲食は料理写真が主役) */
+.lh-demo .dishes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px}
+.lh-demo .dishes figure{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.lh-demo .dishes img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.lh-demo .dishes figcaption{padding:12px 14px;font-size:13px}
+.lh-demo .dishes figcaption b{color:#fff;display:block;font-size:14px}
+.lh-demo .dishes figcaption span{color:var(--amber);font-weight:700}
+@media(max-width:520px){.lh-demo .dishes{grid-template-columns:1fr}}
+.lh-demo .menu .item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.lh-demo .menu .item div b{display:block;font-size:14px;color:#fff}
+.lh-demo .menu .item div small{color:var(--gray);font-size:12px}
+.lh-demo .menu .item .pr{color:var(--amber);font-weight:700;font-size:15px;white-space:nowrap}
+.lh-demo .menu .note{font-size:11.5px;color:var(--gray);text-align:center;margin-top:14px}
+
+/* instagram */
+.lh-demo .insta{background:var(--panel)}
+.lh-demo .insta .center{text-align:center}
+.lh-demo .insta .ig-btn{display:inline-block;margin-top:24px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:#fff!important;font-weight:700;font-size:13px;padding:13px 34px;border-radius:99px}
+
+/* voice */
+.lh-demo .voice .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px 26px;margin-bottom:14px}
+.lh-demo .voice .card b{display:block;color:var(--amber);font-size:14px;margin-bottom:8px}
+.lh-demo .voice .card p{font-size:13px}
+.lh-demo .voice .card small{display:block;color:var(--gray);font-size:11px;margin-top:10px;text-align:right}
+
+/* faq */
+.lh-demo .faq .q{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 24px;margin-bottom:12px}
+.lh-demo .faq .q b{display:block;color:#fff;font-size:14px;margin-bottom:6px}
+.lh-demo .faq .q b::before{content:"Q. ";color:var(--amber);font-weight:700}
+.lh-demo .faq .q p{font-size:13px}
+.lh-demo .faq .q p::before{content:"A. ";color:var(--red);font-weight:700}
+
+/* info(紙風の明るいパネルで対比) */
+.lh-demo .info .paper{background:var(--paper);color:#3a322a;border-radius:12px;padding:8px 0;overflow:hidden}
+.lh-demo .info table{width:100%;border-collapse:collapse}
+.lh-demo .info th,.lh-demo .info td{padding:14px 18px;font-size:13px;text-align:left;border-bottom:1px solid #e2d8c4;color:#3a322a}
+.lh-demo .info tr:last-child th,.lh-demo .info tr:last-child td{border-bottom:none}
+.lh-demo .info th{width:34%;color:#8a7d68;font-weight:500}
+.lh-demo .mapbtn{display:block;text-align:center;margin-top:12px}
+.lh-demo .mapbtn a{display:inline-block;background:var(--amber2);color:#fff!important;font-size:12.5px;padding:12px 28px;border-radius:6px}
+
+/* cta帯 */
+.lh-demo .ctaband{background:linear-gradient(135deg,#8a4a26,#b3672e);color:#fff;text-align:center;padding:64px 20px}
+.lh-demo .ctaband h2{color:#fff!important}
+.lh-demo .ctaband p{color:rgba(255,255,255,.88);font-size:13px;margin:10px 0 26px}
+.lh-demo .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lh-demo .btn{display:inline-block;background:var(--amber);color:#1c1916!important;font-weight:700;padding:15px 40px;border-radius:99px;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.lh-demo .btn.alt{background:transparent;color:#fff!important;border:1px solid rgba(255,255,255,.6)}
+
+/* sticky bar */
+.lh-demo .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+.lh-demo .bar a{background:#262019;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:700}
+.lh-demo .bar a span{display:block;font-size:16px}
+.lh-demo .bar a.main{background:var(--amber);color:#1c1916}
+
+.lh-demo .demofoot{text-align:center;padding:40px 20px;font-size:11px;color:var(--gray)}
+.lh-demo .demofoot .demo{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 18px;margin-top:14px;line-height:1.8}
+</style>
+
+<div class="lh-demo">
+
+<section class="hero">
+  <div class="inner">
+    <p class="logo-en">CHITOSE — NIBOSHI SOBA</p>
+    <h1>煮干しそば おおきに</h1>
+    <p class="catch">煮干しのうまみを、澄んだ一杯に。<br>朝9時からのれんを上げる、千歳の煮干しそば専門店。</p>
+    <a class="btn" href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7" target="_blank" rel="noopener">📍 お店への行き方を見る</a>
+    <p class="note">※ お料理の写真は実際のお写真に差し替えできます</p>
+  </div>
+</section>
+
+<section class="trial fade">
+  <h2>本日の営業</h2>
+  <p>営業時間 9:00 - 16:00 / 定休日 月曜・第2・第3日曜<br>最新の営業情報はInstagramでお知らせしています。</p>
+  <div class="btns">
+    <a class="btn alt" href="https://www.instagram.com/niboshisoba_ookini/" target="_blank" rel="noopener">📷 Instagramを見る</a>
+  </div>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <h2>おおきにのこだわり</h2>
+    <span class="en">Features</span>
+    <div class="points">
+      <div><div class="ic">🐟</div><b>煮干しだしの<br>澄んだスープ</b></div>
+      <div><div class="ic">🌅</div><b>朝9時から営業<br>朝ラーもできる</b></div>
+      <div><div class="ic">🍚</div><b>名物の牛めしと<br>お得なセット</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec menu fade">
+  <div class="wrap">
+    <h2>お品書き</h2>
+    <span class="en">Menu</span>
+    <!-- TODO: 写真が来たら上位2品を写真カード(.dishes)に格上げ -->
+    <div class="item"><div><b>煮干しそば</b><small>看板の一杯。煮干しの澄んだスープ</small></div><div class="pr">¥930</div></div>
+    <div class="item"><div><b>かけ煮干しそば</b><small>シンプルに味わうなら</small></div><div class="pr">¥650</div></div>
+    <div class="item"><div><b>牛めし</b><small>名物のごはんもの</small></div><div class="pr">¥900</div></div>
+    <div class="item"><div><b>牛めし(小盛り)</b><small>そばのお供に</small></div><div class="pr">¥550</div></div>
+    <div class="item"><div><b>おおきにセット</b><small>煮干しそば+牛めしのセット</small></div><div class="pr">¥1,380</div></div>
+    <p class="note">※ 価格は掲載時点のものです。最新のメニューは店頭・Instagramをご確認ください。</p>
+  </div>
+</section>
+
+<section class="sec insta fade">
+  <div class="wrap">
+    <h2>今日のおすすめ・最新情報</h2>
+    <span class="en">Instagram</span>
+    <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/niboshisoba_ookini/" data-instgrm-version="14" style="margin:0 auto;max-width:540px;width:100%;background:#fff;border-radius:12px">
+      <a href="https://www.instagram.com/niboshisoba_ookini/" target="_blank" rel="noopener">@niboshisoba_ookini をInstagramで見る</a>
+    </blockquote>
+    <script async src="https://www.instagram.com/embed.js"></script>
+    <div class="center">
+      <a class="ig-btn" href="https://www.instagram.com/niboshisoba_ookini/" target="_blank" rel="noopener">Instagramを見る</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec voice fade">
+  <div class="wrap">
+    <h2>お客様の声</h2>
+    <span class="en">Voice</span>
+    <div class="card"><b>煮干しの香りがすごい、また食べたくなる一杯</b><p>澄んだスープなのに煮干しの味がしっかり。朝からやっているのもありがたくて、休みの日の朝ラーが楽しみになりました。</p><small>40代男性(サンプル・掲載時に実際のお声に差し替え)</small></div>
+    <div class="card"><b>牛めしとのセットが最高でした</b><p>そばだけでも満足なのに、牛めしが想像以上。次はかけ煮干しそばも試してみたいです。</p><small>30代女性(サンプル・掲載時に実際のお声に差し替え)</small></div>
+  </div>
+</section>
+
+<section class="sec faq fade">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <span class="en">FAQ</span>
+    <div class="q"><b>営業時間は何時から何時までですか?</b><p>朝9:00から16:00までの営業です。スープがなくなり次第終了する場合があります。</p></div>
+    <div class="q"><b>定休日はいつですか?</b><p>月曜日と、第2・第3日曜日です。最新の営業情報はInstagramをご確認ください。</p></div>
+    <div class="q"><b>場所はどこですか?</b><p>千歳市北栄2丁目31-7、JR千歳駅から徒歩約15分です。</p></div>
+  </div>
+</section>
+
+<section class="sec info fade">
+  <div class="wrap">
+    <h2>店舗情報・アクセス</h2>
+    <span class="en">Information</span>
+    <div class="paper">
+    <table>
+      <tr><th>店名</th><td>煮干しそば おおきに</td></tr>
+      <tr><th>住所</th><td>〒066-0036 北海道千歳市北栄2丁目31-7</td></tr>
+      <tr><th>営業時間</th><td>9:00 - 16:00</td></tr>
+      <tr><th>定休日</th><td>月曜・第2・第3日曜</td></tr>
+      
+      
+      <tr><th>アクセス</th><td>JR千歳駅から徒歩約15分</td></tr>
+    </table>
+    </div>
+    <iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7&output=embed" style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;margin-top:14px" loading="lazy" allowfullscreen title="煮干しそば おおきにの地図"></iframe>
+    <div class="mapbtn"><a href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7" target="_blank" rel="noopener">▶ 行き方をGoogleマップで開く</a></div>
+  </div>
+</section>
+
+<section class="ctaband fade">
+  <h2>今日の一杯に、煮干しそばを。</h2>
+  <p>朝9時から、スープがなくなるまで。</p>
+  <div class="btns">
+    <a class="btn" href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7" target="_blank" rel="noopener">📍 行き方を見る</a>
+  </div>
+</section>
+
+<div class="demofoot">
+  <p>煮干しそば おおきに — 北海道千歳市北栄</p>
+  <p style="margin-top:6px">Produced by <b>Link Hokkaido</b>(千歳・恵庭・苫小牧の地域情報プラットフォーム)</p>
+  <div class="demo">
+    このページはご提案用のデモです。掲載をご希望されない場合は<br>即日削除いたしますので、お気軽にお申し付けください。
+  </div>
+</div>
+
+<div class="bar">
+  <a href="https://tabelog.com/hokkaido/A0107/A010701/1077862/" target="_blank" rel="noopener"><span>🍽</span>食べログ</a>
+  <a href="https://www.instagram.com/niboshisoba_ookini/" target="_blank" rel="noopener"><span>📷</span>Instagram</a>
+  <a class="main" href="https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%8C%97%E6%A0%842%E4%B8%81%E7%9B%AE31-7" target="_blank" rel="noopener"><span>📍</span>行き方を見る</a>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.lh-demo .fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.12});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
