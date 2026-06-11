@@ -55,9 +55,10 @@ function handleLineWebhook(body) {
 
 /**
  * Link Hokkaido ページ管理プランの申込処理(契約の完全オンライン化)
- * 1. 契約台帳スプレッドシートに記録(同意の電子記録: 日時・規約バージョン込み)
- * 2. 運営に通知メール
- * 3. Square決済ページへ自動転送するHTMLを返す
+ * 1. 契約台帳スプレッドシートに記録(同意の電子記録: 申込番号・日時・規約バージョン・反社表明込み)
+ * 2. 申込者に「契約内容の控え」メールを自動送信(契約書代わりの電子記録)
+ * 3. 運営に通知メール
+ * 4. Square決済ページへ自動転送するHTMLを返す
  *
  * 必要なスクリプトプロパティ:
  *   SQUARE_PAY_URL : Squareサブスクリプションの申込リンク(必須)
@@ -66,8 +67,12 @@ function handleLineWebhook(body) {
  */
 function handleSignupForm(params) {
   var props = PropertiesService.getScriptProperties();
+  var now = new Date();
+  // 申込番号(控えメール・台帳・問い合わせ照合用)
+  var appNo = 'LH-' + Utilities.formatDate(now, 'Asia/Tokyo', 'yyyyMMdd-HHmmss');
+  var appDate = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy年MM月dd日 HH:mm');
 
-  // 1. 契約台帳に記録
+  // 1. 契約台帳に記録(同意の電子記録: 日時・規約バージョン・反社表明込み)
   var sheetId = props.getProperty('CONTRACT_SHEET_ID');
   var ss;
   if (sheetId) {
@@ -78,29 +83,72 @@ function handleSignupForm(params) {
   }
   var sheet = ss.getSheetByName('申込') || ss.insertSheet('申込');
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['申込日時', '店舗名', '担当者名', 'メール', 'LINE名', '同意規約バージョン', 'ステータス']);
+    sheet.appendRow(['申込番号', '申込日時', '店舗名', '担当者名', 'メール', 'LINE名', '同意規約バージョン', '反社表明', 'ステータス']);
   }
   sheet.appendRow([
-    new Date(), params.shop || '', params.name || '', params.email || '',
-    params.line_name || '', params.terms_version || '', '決済待ち',
+    appNo, now, params.shop || '', params.name || '', params.email || '',
+    params.line_name || '', params.terms_version || '',
+    params.antisocial === 'declared' ? '表明済み' : '未確認', '決済待ち',
   ]);
 
-  // 2. 運営に通知
+  // 2. 申込者に「契約内容の控え」を自動送信(同意の電子記録の控え)
+  if (params.email) {
+    var receipt =
+      (params.name || '') + ' 様\n\n' +
+      'Link Hokkaido「ページ管理プラン」へのお申し込みを受け付けました。\n' +
+      'このメールはお申し込み内容と同意の記録の控えです。大切に保管してください。\n\n' +
+      '────────────────────────\n' +
+      '■ お申し込み内容\n' +
+      '申込番号: ' + appNo + '\n' +
+      '申込日時: ' + appDate + '\n' +
+      '店舗名: ' + (params.shop || '') + '\n' +
+      'ご担当者: ' + (params.name || '') + '\n\n' +
+      '■ ご契約内容\n' +
+      'サービス: 店舗ホームページの制作・公開・管理(更新対応・相談込み)\n' +
+      '月額料金: 1,980円(税込)※先着30店舗・創業記念価格(契約継続中は変更されません)\n' +
+      '初期費用・制作費・解約金: 0円\n' +
+      '無料期間: 初月無料(無料期間中の解約は料金がかかりません)\n' +
+      'お支払い: Squareによる毎月の自動決済\n\n' +
+      '■ 解約について\n' +
+      'いつでも解約できます(LINEまたはメールで一言ご連絡ください)。\n' +
+      '解約はその課金期間の末日まで有効・日割り返金はありません。\n' +
+      '解約後のページは非公開となり、90日後に削除されます。\n\n' +
+      '■ ご同意いただいた内容\n' +
+      '・利用規約(バージョン: ' + (params.terms_version || '') + ') https://link-hokkaido.com/terms/\n' +
+      '・特定商取引法に基づく表記 https://link-hokkaido.com/tokushoho/\n' +
+      '・毎月の自動決済(継続課金)\n' +
+      '・反社会的勢力に該当しないことの表明(利用規約 第7条): ' +
+      (params.antisocial === 'declared' ? '表明済み' : '未確認') + '\n' +
+      '────────────────────────\n\n' +
+      '※ご契約は、この後のSquareでのお支払い設定が完了した時点で成立します(利用規約 第2条)。\n' +
+      '※お心当たりのない場合は、このメールに返信でお知らせください。\n\n' +
+      'Link Hokkaido(株式会社famitect)\n' +
+      '運営担当: 平井まゆみ\n' +
+      'https://link-hokkaido.com/';
+    MailApp.sendEmail(params.email,
+      '【Link Hokkaido】お申し込み内容の控え(' + appNo + ')', receipt,
+      { name: 'Link Hokkaido', replyTo: props.getProperty('NOTIFY_EMAIL') || undefined });
+  }
+
+  // 3. 運営に通知
   var notifyTo = props.getProperty('NOTIFY_EMAIL');
   if (notifyTo) {
     MailApp.sendEmail(
       notifyTo,
-      '【Link Hokkaido】新規申込: ' + (params.shop || '(店舗名なし)'),
-      '申込がありました。\n\n店舗名: ' + (params.shop || '') +
+      '【Link Hokkaido】新規申込: ' + (params.shop || '(店舗名なし)') + ' (' + appNo + ')',
+      '申込がありました。\n\n申込番号: ' + appNo +
+      '\n店舗名: ' + (params.shop || '') +
       '\n担当者: ' + (params.name || '') +
       '\nメール: ' + (params.email || '') +
       '\nLINE名: ' + (params.line_name || '') +
       '\n規約バージョン: ' + (params.terms_version || '') +
-      '\n\nこの後、Squareの決済設定に進んでいます。決済完了メールを確認してください。\n台帳: ' + ss.getUrl()
+      '\n反社表明: ' + (params.antisocial === 'declared' ? '表明済み' : '未確認') +
+      '\n\n申込者には契約内容の控えメールを自動送信済み。' +
+      '\nこの後、Squareの決済設定に進んでいます。決済完了メールを確認してください。\n台帳: ' + ss.getUrl()
     );
   }
 
-  // 3. Square決済ページへ転送
+  // 4. Square決済ページへ転送
   var payUrl = props.getProperty('SQUARE_PAY_URL') || 'https://link-hokkaido.com/partner/';
   var html = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">' +
     '<meta http-equiv="refresh" content="2;url=' + payUrl + '">' +

@@ -87,8 +87,12 @@
       <input type="checkbox" id="lh-agree" required>
       <span><a href="/terms/" target="_blank">利用規約</a>および<a href="/tokushoho/" target="_blank">特定商取引法に基づく表記</a>を確認し、毎月の自動決済(継続課金)に同意のうえ申し込みます。</span>
     </div>
+    <div class="agree">
+      <input type="checkbox" id="lh-agree2" name="antisocial" value="declared" required>
+      <span>当店(自己および役員・実質的経営者)は、暴力団等の反社会的勢力に該当せず、これらと関係を有しないことを表明します(利用規約 第7条)。</span>
+    </div>
     <button type="submit" id="lh-btn" disabled>同意して、お支払い設定へ進む</button>
-    <p class="note">送信後、Squareの安全な決済ページに移動します。<br>カード情報は当社を経由せず、Squareが直接お預かりします。</p>
+    <p class="note">送信後、Squareの安全な決済ページに移動します。<br>カード情報は当社を経由せず、Squareが直接お預かりします。<br>お申し込み内容の控え(契約内容確認書)が、ご入力のメールアドレスに自動送信されます。</p>
   </form>
 </div>
 
@@ -97,7 +101,8 @@
 
 <script>
 (function(){
-  var cb=document.getElementById('lh-agree'),btn=document.getElementById('lh-btn');
-  cb.addEventListener('change',function(){btn.disabled=!cb.checked});
+  var cb1=document.getElementById('lh-agree'),cb2=document.getElementById('lh-agree2'),btn=document.getElementById('lh-btn');
+  function sync(){btn.disabled=!(cb1.checked&&cb2.checked)}
+  cb1.addEventListener('change',sync);cb2.addEventListener('change',sync);
 })();
 </script>
