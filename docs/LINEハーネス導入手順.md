@@ -11,9 +11,12 @@
 - [x] A-2 完了: 環境変数 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID 設定済み+api.cloudflare.com許可済み
   (場所メモ: claude.ai/code → New session → 環境「Default」横の歯車アイコン → 変数とネットワークの両方ここ)
   ※環境変更は**新しいセッションから有効**(2026-06-13実測: 既存セッションでは見えない)
-- [ ] A-3 LINE Developers(進行中): manager.line.biz→Link Hokkaido→設定→Messaging API→利用する
-  →プロバイダー「Link Hokkaido」新規作成→シークレット/トークン取得→LINE Loginチャネルも作成
-  →環境変数4つ(LINE_CHANNEL_SECRET / LINE_CHANNEL_ACCESS_TOKEN / LINE_LOGIN_CHANNEL_ID / LINE_LOGIN_CHANNEL_SECRET)
+- [x] A-3 完了(2026-06-13 1:34): プロバイダー「Link Hokkaido」新規作成・Messaging APIチャネル
+  (公式アカウント管理画面から作成=既存アカウントに確実に紐付け)・LINE Loginチャネル
+  (ウェブアプリ・メール=famitect@gaea.ocn.ne.jp・プライバシーポリシー欄は空欄=任意)。
+  **環境変数4つすべて設定済み**(LINE_CHANNEL_SECRET / LINE_CHANNEL_ACCESS_TOKEN /
+  LINE_LOGIN_CHANNEL_ID / LINE_LOGIN_CHANNEL_SECRET)。
+  ※トークン再発行の懸案もこれで解消(Git履歴に漏れた旧トークンは新発行により無効化)
 - [ ] B: Claudeがデプロイ(**新セッションで実行**。/tmp/line-harness は消えている可能性が高いので
   `npx -y create-line-harness` を再実行。CLOUDFLARE_API_TOKEN があれば wrangler は非対話で通るはず。
   通らなければ CLOUDFLARE_API_TOKEN を env に export して `npx wrangler deploy` を直接)
