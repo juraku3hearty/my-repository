@@ -26,15 +26,14 @@
     Webhook URL自動設定ができない → A-5へ
   - メモ: アカウントに4月作成の旧 `line-harness` Worker・旧D1 `line-crm`・`x-bot-harness` 一式が存在。
     今回のセットアップは Worker `line-harness` を上書き、D1は新規 `line-harness` を作成(旧 `line-crm` は温存)
-- [ ] A-4 まゆみさん: **R2 Object Storage の有効化**(無料枠10GB・ダッシュボードでのみ可能)
-  https://dash.cloudflare.com → Storage & Databases → R2 Object Storage → Overview
-  → クレジットカード or PayPal と個人情報を登録(無料枠内なら請求は発生しない)
+- [x] A-4 完了🎉(2026-06-13 朝): **R2有効化成功**。解決方法=**シークレットウィンドウ+PayPal**
+  (通常ブラウザではクレカ複数枚が「拒否」・PayPalも「unexpected error」→ ブラウザのCookie/
+  フィンガープリントが不正検知に引っかかっていた模様。教訓: Cloudflare決済が連続で弾かれたら
+  シークレットウィンドウで試す)。費用は無料枠内で0円。仮押さえの200円×2は自動消滅予定
 - [x] A-5 完了(2026-06-13 2:34): api.line.me をネットワーク許可に追加済み
-- [ ] A-4 リトライ待ち: R2有効化の決済が深夜の連続試行でブロック中(カード複数+PayPalすべて
-  「unexpected error」— Cloudflare/Stripe側の不正検知と判断。200円×2は与信の仮押さえで自動消滅する)。
-  **対応: 翌日の日中に1回だけ再試行**(カード or PayPal。連打しない)。住所はローマ字・Account type=Personal・
-  「無料枠超過分の請求を許可」のチェックも必須
-- [ ] B: Claudeがデプロイ(A-4・A-5完了後に**新セッション**で「LINEハーネスのデプロイの続き」と依頼)
+- [ ] B: **準備オールクリア・実行可能**。新セッションで「LINEハーネスのデプロイの続き。
+  git fetch origin claude/inspiring-hamilton-n5wwh9 してチェックアウトし、docs/LINEハーネス導入手順.md の
+  再開メモを読んで進めて」と依頼
 - [ ] C: LINE側の仕上げ(Webhook ON・LIFF公開・Callback URL — デプロイ後にURLが決まり次第Claudeが案内)
 
 ### Claude向け再開メモ(B実行時)
