@@ -1,0 +1,134 @@
+<!-- ============================================================
+  cafe REST(ペット同伴OKカフェ・ワンニャン2階。身内=確認不要 2026-06-11)
+  ステータス: 下書き温存(同住所の身内ページ悪目立ち回避。外部実例1件公開後に解禁)
+  TODO: ①営業日時 ②メニューと料金 ③実写真(IG @caferest_chitose から提供してもらう)
+  既知: 千歳市住吉4-3-11の2階/わんちゃんネコちゃん同伴OK/毎週金曜は子ども食堂REST開催
+  投稿: --html-block 必須
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+.lh-cf{--bg:#fbf7f0;--brown:#54402e;--terra:#c96f43;--soft:#f3e7d8;--line:#eadfce;--gray:#7d7163;
+  font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#3d3328;line-height:2;font-size:14.5px}
+.lh-cf .wrap{max-width:860px;margin:0 auto;padding:0 22px}
+.lh-cf .sec{padding:70px 0}
+.lh-cf :is(h1,h2,h3){background:none!important;border:none!important;padding:0!important;box-shadow:none!important;
+  color:var(--brown)!important;font-family:'Shippori Mincho',serif!important}
+.lh-cf :is(h1,h2,h3)::before,.lh-cf :is(h1,h2,h3)::after{content:none!important;display:none!important}
+.lh-cf h2{font-size:clamp(22px,3.6vw,28px)!important;margin:0 0 8px!important}
+.lh-cf .en{font-size:11px;letter-spacing:.35em;color:var(--terra);margin-bottom:10px;font-weight:700}
+.lh-cf .lead{color:var(--gray);font-size:13.5px;margin-bottom:28px}
+.lh-cf ul,.lh-cf li{list-style:none!important;margin:0!important;padding:0!important}
+.lh-cf a{text-decoration:none!important}
+
+.lh-cf .hero{background:linear-gradient(160deg,#c96f43,#b45e36);color:#fff;text-align:center;padding:108px 20px 88px;position:relative;overflow:hidden}
+.lh-cf .hero::after{content:"☕";position:absolute;font-size:190px;opacity:.09;left:-20px;bottom:-50px;transform:rotate(12deg)}
+.lh-cf .hero .badge{display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:99px;padding:5px 18px;font-size:11.5px;letter-spacing:.2em;margin-bottom:20px}
+.lh-cf .hero h1{font-size:clamp(32px,6vw,48px)!important;color:#fff!important;margin:0 0 14px!important;letter-spacing:.06em}
+.lh-cf .hero p{color:rgba(255,255,255,.92);font-size:14px}
+
+.lh-cf .pts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.lh-cf .pt{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 22px;text-align:center}
+.lh-cf .pt .ico{font-size:34px;margin-bottom:10px}
+.lh-cf .pt b{display:block;color:var(--brown);font-size:15px;margin-bottom:6px;font-family:'Shippori Mincho',serif}
+.lh-cf .pt p{font-size:12.5px;color:var(--gray);line-height:1.9}
+@media(max-width:680px){.lh-cf .pts{grid-template-columns:1fr}}
+
+.lh-cf .todo{background:#fdf0e5;border:1px dashed var(--terra);border-radius:10px;padding:16px 18px;font-size:12.5px;color:#9a5a30;margin-top:18px}
+
+.lh-cf table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lh-cf th,.lh-cf td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--line);text-align:left}
+.lh-cf th{width:34%;color:var(--gray);font-weight:500;background:#fdfaf4}
+.lh-cf tr:last-child :is(th,td){border-bottom:none}
+.lh-cf .map{border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-top:18px}
+.lh-cf .map iframe{width:100%;height:300px;border:0;display:block}
+
+.lh-cf .kdm{background:#fff;border:2px solid #f0a04b;border-radius:14px;padding:30px 26px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.lh-cf .kdm .em{font-size:44px}
+.lh-cf .kdm b{color:#c77a1f;font-size:16px;display:block;margin-bottom:6px;font-family:'Shippori Mincho',serif}
+.lh-cf .kdm p{font-size:13px;color:var(--gray)}
+.lh-cf .kdm a{color:var(--terra)!important;font-weight:700}
+@media(max-width:600px){.lh-cf .kdm{grid-template-columns:1fr;text-align:center}}
+
+.lh-cf .ig{background:linear-gradient(160deg,#c96f43,#b45e36);border-radius:14px;color:#fff;text-align:center;padding:44px 28px}
+.lh-cf .ig h2{color:#fff!important}
+.lh-cf .ig p{color:rgba(255,255,255,.88);font-size:13px;margin-bottom:18px}
+.lh-cf .ig a{display:inline-block;background:#fff;color:var(--terra)!important;font-weight:700;padding:13px 36px;border-radius:99px}
+
+.lh-cf .foot{text-align:center;padding:38px 20px;font-size:11.5px;color:var(--gray)}
+.lh-cf .foot a{color:var(--terra)!important}
+</style>
+
+<div class="lh-cf">
+
+<section class="hero">
+  <span class="badge">PET FRIENDLY CAFE ・ 千歳市住吉</span>
+  <h1>cafe REST</h1>
+  <p>わんちゃん・ネコちゃんと一緒に、ほっとひと息。<br>ペットサロンワンニャンの2階にある、ちいさなカフェです。</p>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="en">ABOUT</p>
+    <h2>cafe RESTの過ごし方</h2>
+    <div class="pts">
+      <div class="pt"><div class="ico">🐶</div><b>ペット同伴OK</b><p>わんちゃんネコちゃんと一緒に店内へ。トリミングの待ち時間にもどうぞ。</p></div>
+      <div class="pt"><div class="ico">✂️</div><b>1階はペットサロン</b><p>30年以上続くペットサロンワンニャン・獣医科医院と同じ建物です。</p></div>
+      <div class="pt"><div class="ico">🍚</div><b>金曜は子ども食堂</b><p>毎週金曜の午後は、地域の子どもたちの居場所「子ども食堂REST」になります。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <p class="en">MENU</p>
+    <h2>メニュー</h2>
+    <p class="lead">ドリンクとフードをご用意しています。</p>
+    <div class="todo">【掲載前TODO】メニューと料金をもらってここに掲載(ドリンク/フード/わんちゃん用メニューがあればそれも)。写真もIGから2〜3枚提供してもらう。</div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="kdm">
+      <span class="em">🍱</span>
+      <div>
+        <b>毎週金曜日は「子ども食堂REST」</b>
+        <p>15:30〜17:00、このカフェが子どもたちの居場所になります。お弁当は一律300円・店内は中学生まで無料。くわしくは<a href="https://link-hokkaido.com/chitose/kodomoshokudo-rest/">子ども食堂RESTのページ</a>をご覧ください。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <p class="en">INFORMATION</p>
+    <h2>店舗情報</h2>
+    <table>
+      <tr><th>店名</th><td>cafe REST(カフェ レスト)</td></tr>
+      <tr><th>住所</th><td>北海道千歳市住吉4丁目3-11 2F(ペットサロンワンニャン2階)</td></tr>
+      <tr><th>営業日時</th><td><span style="color:#c00;font-size:12px">【TODO: 営業日・時間をもらって記載】</span></td></tr>
+      <tr><th>ペット同伴</th><td>わんちゃん・ネコちゃんOK</td></tr>
+      <tr><th>Instagram</th><td><a href="https://www.instagram.com/caferest_chitose/" target="_blank" rel="noopener" style="color:var(--terra)!important;font-weight:700">@caferest_chitose</a></td></tr>
+    </table>
+    <div class="map">
+      <iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E4%BD%8F%E5%90%894%E4%B8%81%E7%9B%AE3-11&output=embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="ig">
+      <h2>最新情報はInstagramで</h2>
+      <p>営業日やメニューのお知らせはInstagramをご覧ください。</p>
+      <a href="https://www.instagram.com/caferest_chitose/" target="_blank" rel="noopener">@caferest_chitose を見る</a>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  <p>1階: <a href="#">ペットサロン ワンニャン</a>(公開後にリンク差し込み)/ 金曜: <a href="https://link-hokkaido.com/chitose/kodomoshokudo-rest/">子ども食堂REST</a></p>
+  <p style="margin-top:8px">このページは <a href="https://link-hokkaido.com/">Link Hokkaido</a> が制作・管理しています</p>
+</div>
+
+</div>

@@ -1,0 +1,158 @@
+<!-- ============================================================
+  ペットサロンワンニャン(従兄弟さんの店・掲載OK済み 2026-06-11)
+  ステータス: 下書き温存(同住所の身内ページ悪目立ち回避。外部実例1件公開後に解禁)
+  TODO: ①電話番号の確定(0123-24-1313 と 0123-22-0257 どちらが現役か)
+        ②トリミング料金表(犬種別) ③実写真(現状はIG埋め込みのみ)
+  情報源: wannyan-salon.com(検索経由)/エキテン/ほくしん通信/EPARK(2026-06-12調査)
+  投稿: --html-block 必須
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+.lh-wn{--bg:#faf6ee;--brown:#4f4032;--accent:#dd8a4a;--green:#6f9474;--line:#e8dfd0;--gray:#7a7064;
+  font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:#3a3128;line-height:2;font-size:14.5px}
+.lh-wn .wrap{max-width:880px;margin:0 auto;padding:0 22px}
+.lh-wn .sec{padding:72px 0}
+.lh-wn :is(h1,h2,h3){background:none!important;border:none!important;padding:0!important;box-shadow:none!important;
+  color:var(--brown)!important;font-family:'Shippori Mincho',serif!important}
+.lh-wn :is(h1,h2,h3)::before,.lh-wn :is(h1,h2,h3)::after{content:none!important;display:none!important}
+.lh-wn h2{font-size:clamp(22px,3.6vw,28px)!important;margin:0 0 8px!important}
+.lh-wn .en{font-size:11px;letter-spacing:.35em;color:var(--accent);margin-bottom:10px;font-weight:700}
+.lh-wn .lead{color:var(--gray);font-size:13.5px;margin-bottom:30px}
+.lh-wn ul,.lh-wn li{list-style:none!important;margin:0!important;padding:0!important}
+.lh-wn a{text-decoration:none!important}
+
+/* hero */
+.lh-wn .hero{background:linear-gradient(160deg,#6f9474,#5d8264);color:#fff;text-align:center;padding:110px 20px 90px;position:relative;overflow:hidden}
+.lh-wn .hero::after{content:"🐾";position:absolute;font-size:200px;opacity:.08;right:-30px;bottom:-40px;transform:rotate(-15deg)}
+.lh-wn .hero .badge{display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:99px;padding:5px 18px;font-size:11.5px;letter-spacing:.2em;margin-bottom:22px}
+.lh-wn .hero h1{font-size:clamp(30px,6vw,46px)!important;color:#fff!important;margin:0 0 14px!important;line-height:1.5!important}
+.lh-wn .hero p{color:rgba(255,255,255,.9);font-size:14px}
+
+/* info cards */
+.lh-wn .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+.lh-wn .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 22px;text-align:center}
+.lh-wn .card .ico{font-size:34px;margin-bottom:10px}
+.lh-wn .card b{display:block;color:var(--brown);font-size:15px;margin-bottom:6px;font-family:'Shippori Mincho',serif}
+.lh-wn .card p{font-size:12.5px;color:var(--gray);line-height:1.9}
+@media(max-width:680px){.lh-wn .cards{grid-template-columns:1fr}}
+
+/* menu */
+.lh-wn .menu{background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px 28px;margin-top:8px}
+.lh-wn .menu li{padding:13px 0 13px 30px;border-bottom:1px dashed var(--line);position:relative;font-size:13.5px}
+.lh-wn .menu li:last-child{border-bottom:none}
+.lh-wn .menu li::before{content:"🐾";position:absolute;left:0;font-size:13px}
+.lh-wn .todo{background:#fdf3e7;border:1px dashed var(--accent);border-radius:10px;padding:16px 18px;font-size:12.5px;color:#9a6a35;margin-top:16px}
+
+/* hours table */
+.lh-wn table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lh-wn th,.lh-wn td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid var(--line);text-align:left}
+.lh-wn th{width:34%;color:var(--gray);font-weight:500;background:#fcfaf5}
+.lh-wn tr:last-child :is(th,td){border-bottom:none}
+
+/* building guide */
+.lh-wn .floor{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.lh-wn .floor .f{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px}
+.lh-wn .floor .f b{color:var(--green);font-size:13px;display:block;margin-bottom:6px;letter-spacing:.1em}
+.lh-wn .floor .f p{font-size:13px;color:var(--gray)}
+.lh-wn .floor .f a{color:var(--accent)!important;font-weight:700}
+@media(max-width:680px){.lh-wn .floor{grid-template-columns:1fr}}
+
+.lh-wn .map{border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-top:18px}
+.lh-wn .map iframe{width:100%;height:320px;border:0;display:block}
+
+/* cta */
+.lh-wn .cta{background:linear-gradient(160deg,#6f9474,#5d8264);border-radius:14px;color:#fff;text-align:center;padding:46px 28px}
+.lh-wn .cta h2{color:#fff!important}
+.lh-wn .cta p{color:rgba(255,255,255,.88);font-size:13px;margin-bottom:20px}
+.lh-wn .cta .tel{display:inline-block;background:#fff;color:var(--green)!important;font-weight:700;font-size:20px;padding:14px 40px;border-radius:99px;font-family:'Shippori Mincho',serif}
+.lh-wn .cta small{display:block;margin-top:12px;font-size:11px;color:rgba(255,255,255,.7)}
+
+.lh-wn .foot{text-align:center;padding:40px 20px;font-size:11.5px;color:var(--gray)}
+.lh-wn .foot a{color:var(--accent)!important}
+</style>
+
+<div class="lh-wn">
+
+<section class="hero">
+  <span class="badge">SINCE 1990s ・ 千歳市住吉</span>
+  <h1>ペットサロン<br>ワンニャン</h1>
+  <p>30年以上、千歳の犬と猫をきれいにしてきました。<br>獣医科医院併設・2階にはペット同伴OKのカフェも。</p>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="en">ABOUT</p>
+    <h2>ワンニャンの3つの安心</h2>
+    <div class="cards">
+      <div class="card"><div class="ico">✂️</div><b>JKC公認 A級トリマー</b><p>小型犬から大型犬、ネコちゃんまで。経験豊富なトリマーが丁寧にお手入れします。</p></div>
+      <div class="card"><div class="ico">🏥</div><b>動物病院 併設</b><p>同じ建物に獣医科医院。シニアの子や持病のある子も、安心しておまかせいただけます。</p></div>
+      <div class="card"><div class="ico">☕</div><b>2階はペット同伴カフェ</b><p>トリミングの待ち時間は、2階の「cafe REST」でわんちゃんと一緒にひと休みできます。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <p class="en">TRIMMING & HOTEL</p>
+    <h2>トリミング・ペットホテル</h2>
+    <p class="lead">どちらも完全予約制です。まずはお電話でご相談ください。</p>
+    <div class="menu">
+      <ul>
+        <li>シャンプー・カット(犬種・大きさにより料金が異なります)</li>
+        <li>ネコちゃんのお手入れもおまかせください</li>
+        <li>スペシャルコース: 炭酸泉/トリートメント/アロマセラピー</li>
+        <li>毛玉は状態により別途料金をいただきます</li>
+        <li>ペットホテル(完全予約制・GW/お盆/年末年始は割増料金)</li>
+        <li>手づくりオリジナル商品の販売もあります</li>
+      </ul>
+    </div>
+    <div class="todo">【掲載前TODO】犬種別の料金表をもらってここに掲載(例: チワワ/トイプードル/柴/大型犬…)。ホテルの1泊料金も。</div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <p class="en">FLOOR GUIDE</p>
+    <h2>この建物、ぜんぶ楽しめます</h2>
+    <div class="floor">
+      <div class="f"><b>1F</b><p>ペットサロン ワンニャン(右側)<br>獣医科医院(左側)</p></div>
+      <div class="f"><b>2F</b><p>cafe REST — わんちゃんネコちゃん同伴OKのカフェ。毎週金曜は<a href="https://link-hokkaido.com/chitose/kodomoshokudo-rest/">子ども食堂REST</a>を開催しています。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <p class="en">INFORMATION</p>
+    <h2>店舗情報</h2>
+    <table>
+      <tr><th>店名</th><td>ペットサロン ワンニャン</td></tr>
+      <tr><th>住所</th><td>北海道千歳市住吉4丁目3-11</td></tr>
+      <tr><th>電話</th><td>0123-24-1313 <span style="color:#c00;font-size:11px">※要確認(0123-22-0257の記録もあり。どちらが現役か従兄弟さんに確認)</span></td></tr>
+      <tr><th>営業時間</th><td>月・水〜土 9:00〜18:00 / 日・祝 9:00〜12:00</td></tr>
+      <tr><th>定休日</th><td>毎週火曜日</td></tr>
+      <tr><th>ご予約</th><td>トリミング・ホテルとも完全予約制(お電話にて)</td></tr>
+    </table>
+    <div class="map">
+      <iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E4%BD%8F%E5%90%894%E4%B8%81%E7%9B%AE3-11%20%E3%83%9A%E3%83%83%E3%83%88%E3%82%B5%E3%83%AD%E3%83%B3%E3%83%AF%E3%83%B3%E3%83%8B%E3%83%A3%E3%83%B3&output=embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="cta">
+      <h2>ご予約・お問い合わせ</h2>
+      <p>トリミングもホテルも完全予約制です。お気軽にお電話ください。</p>
+      <a class="tel" href="tel:0123-24-1313">0123-24-1313</a>
+      <small>受付時間: 営業時間内(火曜定休)※番号は公開前に要確認</small>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  <p>Instagram: <a href="https://www.instagram.com/caferest_chitose/" target="_blank" rel="noopener">@caferest_chitose</a>(cafe RESTと共通)</p>
+  <p style="margin-top:8px">このページは <a href="https://link-hokkaido.com/">Link Hokkaido</a> が制作・管理しています</p>
+</div>
+
+</div>
