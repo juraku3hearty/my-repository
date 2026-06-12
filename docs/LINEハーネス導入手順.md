@@ -17,10 +17,38 @@
   **環境変数4つすべて設定済み**(LINE_CHANNEL_SECRET / LINE_CHANNEL_ACCESS_TOKEN /
   LINE_LOGIN_CHANNEL_ID / LINE_LOGIN_CHANNEL_SECRET)。
   ※トークン再発行の懸案もこれで解消(Git履歴に漏れた旧トークンは新発行により無効化)
-- [ ] B: Claudeがデプロイ(**新セッションで実行**。/tmp/line-harness は消えている可能性が高いので
-  `npx -y create-line-harness` を再実行。CLOUDFLARE_API_TOKEN があれば wrangler は非対話で通るはず。
-  通らなければ CLOUDFLARE_API_TOKEN を env に export して `npx wrangler deploy` を直接)
-- [ ] C: LINE側の仕上げ(Webhook URL設定・LIFF・Callback URL — デプロイ後にURLが決まり次第)
+- [x] B-0 デプロイ前調査完了(2026-06-12・Claude実施)。結果:
+  - APIトークン権限はWorkers/D1/Pages/R2すべてOK(Pagesは作成→削除の実地テストで確認済み)
+  - Worker本体・Admin UIともビルド成功を確認済み(コード側の問題なし)
+  - **ブロッカー①: R2が未有効化**(API code 10042「Please enable R2 through the Cloudflare Dashboard」)。
+    WorkerがR2バケット(画像保存用)必須のためデプロイ不可 → A-4へ
+  - **ブロッカー②: api.line.me がネットワーク不許可**。Channel ID自動取得・LIFF自動作成・
+    Webhook URL自動設定ができない → A-5へ
+  - メモ: アカウントに4月作成の旧 `line-harness` Worker・旧D1 `line-crm`・`x-bot-harness` 一式が存在。
+    今回のセットアップは Worker `line-harness` を上書き、D1は新規 `line-harness` を作成(旧 `line-crm` は温存)
+- [ ] A-4 まゆみさん: **R2 Object Storage の有効化**(無料枠10GB・ダッシュボードでのみ可能)
+  https://dash.cloudflare.com → Storage & Databases → R2 Object Storage → Overview
+  → クレジットカード or PayPal と個人情報を登録(無料枠内なら請求は発生しない)
+- [ ] A-5 まゆみさん: **api.line.me をネットワーク許可に追加**(推奨。これでLIFF作成まで全自動化できる)
+  claude.ai/code → 環境「Default」の歯車 → Network access → Allowed domains に `api.line.me` を追加
+  ※反映は**新しいセッションから**
+- [ ] B: Claudeがデプロイ(A-4・A-5完了後に**新セッション**で「LINEハーネスのデプロイの続き」と依頼)
+- [ ] C: LINE側の仕上げ(Webhook ON・LIFF公開・Callback URL — デプロイ後にURLが決まり次第Claudeが案内)
+
+### Claude向け再開メモ(B実行時)
+- `npx -y create-line-harness` は対話式だが、`~/.line-harness/.line-harness-setup.json` に
+  state を事前生成すればプロンプトをスキップできる(キー: completedSteps[], accountId, projectName,
+  lineChannelId, lineChannelAccessToken, lineChannelSecret, lineLoginChannelId, liffId, apiKey)。
+  completedSteps に "r2billing","credentials","liffId" を入れておく。値は環境変数から(チャットに書かない)
+- lineChannelId(Messaging APIのチャネルID)は `GET https://api.line.me/oauth2/v2.1/verify?access_token=…`
+  の client_id で取得できる
+- LIFFアプリは LINE Login チャネルのトークン(POST /oauth2/v3/token, client_credentials)で
+  `POST https://api.line.me/liff/v1/apps` により作成可能(view: full, scope: openid/profile/chat_message.write,
+  botPrompt: aggressive)。デプロイ後にエンドポイントURLを `{workerUrl}?liffId={liffId}` へ更新
+- 実行はTTYが必要なので `script -qec "npx -y create-line-harness" /dev/null` で。
+  最後のMCP設定確認プロンプトだけ Enter 入力が要る
+- Webhook URLは `PUT https://api.line.me/v2/bot/channel/webhook/endpoint` で自動設定可能
+  (「Webhookの利用」ONと応答設定・Callback URL登録は手動のまま)
 
 ## A. まゆみさんの準備(20分くらい・全部無料)
 
