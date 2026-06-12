@@ -163,3 +163,93 @@ function handleSignupForm(params) {
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
+
+/**
+ * ============================================================
+ * 【1回だけ実行】Squareに「初月無料サブスク+申込リンク」を自動作成する
+ * ============================================================
+ * 管理画面では無料トライアル付きプランが作れないが、APIなら
+ * 「1ヶ月目0円 → 2ヶ月目から1,980円」の2段階プランが作れる。
+ *
+ * 使い方:
+ *  1. https://developer.squareup.com/apps でアプリを作成(無料)→
+ *     「本番(Production)」のアクセストークンをコピー
+ *  2. GASのスクリプトプロパティに SQUARE_ACCESS_TOKEN として保存
+ *  3. GASエディタでこの関数(setupSquarePlanOnce)を選んで「実行」
+ *  4. 実行ログに申込リンクURLが出る → スクリプトプロパティ SQUARE_PAY_URL に設定
+ *     (以降、申込フォーム送信後に自動でこのリンクへ転送される=完全自動化)
+ */
+function setupSquarePlanOnce() {
+  var token = PropertiesService.getScriptProperties().getProperty('SQUARE_ACCESS_TOKEN');
+  if (!token) throw new Error('スクリプトプロパティ SQUARE_ACCESS_TOKEN を設定してください');
+  var base = 'https://connect.squareup.com/v2';
+  var headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+  function call(path, method, payload) {
+    var res = UrlFetchApp.fetch(base + path, {
+      method: method, headers: headers, muteHttpExceptions: true,
+      payload: payload ? JSON.stringify(payload) : undefined,
+    });
+    var body = JSON.parse(res.getContentText() || '{}');
+    if (res.getResponseCode() >= 300) {
+      throw new Error(path + ' failed: ' + res.getContentText());
+    }
+    return body;
+  }
+
+  // 1. ロケーション「Link Hokkaido」を探す
+  var locs = call('/locations', 'get').locations || [];
+  var loc = locs.filter(function (l) { return /link\s*hokkaido/i.test(l.name || ''); })[0] || locs[0];
+  Logger.log('ロケーション: ' + loc.name + ' (' + loc.id + ')');
+
+  // 2. サブスクプラン(親)を作成
+  var plan = call('/catalog/object', 'post', {
+    idempotency_key: Utilities.getUuid(),
+    object: {
+      type: 'SUBSCRIPTION_PLAN',
+      id: '#lh-plan',
+      subscription_plan_data: { name: 'Link Hokkaido ページ管理プラン(創業記念・先着30店舗)' },
+    },
+  }).catalog_object;
+  Logger.log('プラン作成: ' + plan.id);
+
+  // 3. バリエーション: 1ヶ月目0円 → 以降 月1,980円
+  var variation = call('/catalog/object', 'post', {
+    idempotency_key: Utilities.getUuid(),
+    object: {
+      type: 'SUBSCRIPTION_PLAN_VARIATION',
+      id: '#lh-variation',
+      subscription_plan_variation_data: {
+        name: '月額1,980円(初月無料)',
+        subscription_plan_id: plan.id,
+        phases: [
+          { cadence: 'MONTHLY', periods: 1, ordinal: 0,
+            pricing: { type: 'STATIC', price_money: { amount: 0, currency: 'JPY' } } },
+          { cadence: 'MONTHLY', ordinal: 1,
+            pricing: { type: 'STATIC', price_money: { amount: 1980, currency: 'JPY' } } },
+        ],
+      },
+    },
+  }).catalog_object;
+  Logger.log('バリエーション作成: ' + variation.id);
+
+  // 4. 申込リンク(支払いリンク)を発行
+  var link = call('/online-checkout/payment-links', 'post', {
+    idempotency_key: Utilities.getUuid(),
+    quick_pay: {
+      name: 'Link Hokkaido ページ管理プラン(初月無料・以降 月1,980円)',
+      price_money: { amount: 1980, currency: 'JPY' },
+      location_id: loc.id,
+    },
+    checkout_options: {
+      subscription_plan_id: variation.id,
+      redirect_url: 'https://link-hokkaido.com/thanks/',
+    },
+  }).payment_link;
+
+  Logger.log('==============================================');
+  Logger.log('申込リンク完成!このURLを SQUARE_PAY_URL に設定:');
+  Logger.log(link.url);
+  Logger.log('==============================================');
+  return link.url;
+}
