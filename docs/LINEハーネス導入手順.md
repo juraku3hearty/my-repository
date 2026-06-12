@@ -5,9 +5,19 @@
 
 ## 進捗
 - [x] 本体ダウンロード+依存関係インストール確認(2026-06-12・Claude環境で `npx create-line-harness` 動作確認済み)
-- [ ] まゆみさんの準備(下記A)
-- [ ] Claudeがデプロイ(下記B)
-- [ ] LINE側の仕上げ(下記C)
+- [x] A-1 Cloudflare完了(2026-06-13): Googleログインの既存アカウント利用。
+  APIトークン作成済み(Edit Cloudflare Workersテンプレ+**D1:Edit追加**・Account=自分・Zone=All zones)。
+  Account ID = 87351a541f4086271e277d145ac839cf
+- [x] A-2 完了: 環境変数 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID 設定済み+api.cloudflare.com許可済み
+  (場所メモ: claude.ai/code → New session → 環境「Default」横の歯車アイコン → 変数とネットワークの両方ここ)
+  ※環境変更は**新しいセッションから有効**(2026-06-13実測: 既存セッションでは見えない)
+- [ ] A-3 LINE Developers(進行中): manager.line.biz→Link Hokkaido→設定→Messaging API→利用する
+  →プロバイダー「Link Hokkaido」新規作成→シークレット/トークン取得→LINE Loginチャネルも作成
+  →環境変数4つ(LINE_CHANNEL_SECRET / LINE_CHANNEL_ACCESS_TOKEN / LINE_LOGIN_CHANNEL_ID / LINE_LOGIN_CHANNEL_SECRET)
+- [ ] B: Claudeがデプロイ(**新セッションで実行**。/tmp/line-harness は消えている可能性が高いので
+  `npx -y create-line-harness` を再実行。CLOUDFLARE_API_TOKEN があれば wrangler は非対話で通るはず。
+  通らなければ CLOUDFLARE_API_TOKEN を env に export して `npx wrangler deploy` を直接)
+- [ ] C: LINE側の仕上げ(Webhook URL設定・LIFF・Callback URL — デプロイ後にURLが決まり次第)
 
 ## A. まゆみさんの準備(20分くらい・全部無料)
 
