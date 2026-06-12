@@ -1,0 +1,68 @@
+<!-- ============================================================
+  運営ポータル(まゆみさん専用・パスワード保護)
+  「どこで何をやるんだっけ」を一枚に集約。ブックマークはこれ1個でいい。
+  原本: docs/サービス管理一覧.md と同期(更新時は両方直す)
+  ※アカウントのパスワード・APIキー類は絶対に書かない(保管場所の案内のみ)
+  投稿: --html-block 必須
+============================================================ -->
+<style>
+.lh-ops{--navy:#18263c;--orange:#d97a2e;--cream:#f7f3ec;--line:#e5ded2;--gray:#6b6f76;
+  font-family:'Noto Sans JP',sans-serif;background:var(--cream);color:#2b2b2b;line-height:1.85;
+  max-width:720px;margin:0 auto;padding:24px 16px 80px;font-size:14px}
+.lh-ops :is(h1,h2){background:none!important;border:none!important;padding:0!important;box-shadow:none!important;color:var(--navy)!important}
+.lh-ops :is(h1,h2)::before,.lh-ops :is(h1,h2)::after{content:none!important;display:none!important}
+.lh-ops h1{font-size:21px!important;margin:0 0 4px!important}
+.lh-ops .sub{font-size:12px;color:var(--gray);margin-bottom:24px}
+.lh-ops h2{font-size:14px!important;margin:30px 0 10px!important;letter-spacing:.12em;color:var(--orange)!important}
+.lh-ops .row{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.lh-ops .row .ico{font-size:22px;line-height:1.4}
+.lh-ops .row b{display:block;font-size:14px;color:var(--navy)}
+.lh-ops .row b a{color:var(--navy)!important;text-decoration:none!important}
+.lh-ops .row p{font-size:12px;color:var(--gray);margin:2px 0 0;line-height:1.7}
+.lh-ops .row .go{margin-left:auto;flex-shrink:0;background:var(--navy);color:#fff!important;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;text-decoration:none!important;align-self:center}
+.lh-ops .pw{background:#fdf3e7;border:1px dashed var(--orange);border-radius:8px;padding:3px 10px;font-size:11.5px;color:#9a6a35;display:inline-block;margin-top:4px}
+.lh-ops .keybox{background:#eef3ec;border:1px solid #cfdccf;border-radius:10px;padding:14px 16px;font-size:12px;color:#445544;margin-top:24px}
+</style>
+
+<div class="lh-ops">
+<h1>🧭 Link Hokkaido 運営ポータル</h1>
+<p class="sub">ブックマークはこのページ1個でOK。「どこで何やるんだっけ」はぜんぶここから。(2026-06-13版)</p>
+
+<h2>📍 毎日さわるもの</h2>
+<div class="row"><span class="ico">🧵</span><div><b>Threads原稿カレンダー</b><p>毎日1本コピーして投稿。<span class="pw">PW: sns2026</span></p></div><a class="go" href="https://link-hokkaido.com/threads-genko/">開く</a></div>
+<div class="row"><span class="ico">📷</span><div><b>Instagram @link.hokkaido</b><p>信頼の置き場+DM窓口。DM通知ON。アプリで開く</p></div><a class="go" href="https://www.instagram.com/link.hokkaido/">開く</a></div>
+<div class="row"><span class="ico">💬</span><div><b>LINE公式アカウント(管理)</b><p>問い合わせ返信はここ。応答モード=チャット。アプリ「LINE公式アカウント」でも可</p></div><a class="go" href="https://manager.line.biz/">開く</a></div>
+
+<h2>💰 お金まわり</h2>
+<div class="row"><span class="ico">🟦</span><div><b>Square(売上・サブスク)</b><p>契約者一覧=「サブスクリプション」。ロケーションをLink Hokkaidoに切替えて見る。ログイン=いつものSquare</p></div><a class="go" href="https://squareup.com/dashboard/">開く</a></div>
+<div class="row"><span class="ico">📊</span><div><b>契約台帳(スプレッドシート)</b><p>申込が自動で記録される。決済完了したらステータスを手で「契約中」に</p></div><a class="go" href="https://docs.google.com/spreadsheets/d/1_n318HgBESGE78kt4HaP83WwLiECJKHqswgovZmal9A/edit">開く</a></div>
+
+<h2>🌐 サイトまわり</h2>
+<div class="row"><span class="ico">📝</span><div><b>WordPress管理画面</b><p>ページの編集・公開。だいたいの作業はClaudeに頼めばOK</p></div><a class="go" href="https://link-hokkaido.com/wp-admin/">開く</a></div>
+<div class="row"><span class="ico">🖥️</span><div><b>XSERVER(サーバー・ドメイン・メール)</b><p>年1回の更新と、ドメインメールを作るとき以外は用なし</p></div><a class="go" href="https://www.xserver.ne.jp/login_server.php">開く</a></div>
+
+<h2>⚙️ 裏方(月1も触らない)</h2>
+<div class="row"><span class="ico">🤖</span><div><b>GAS(申込フォームの頭脳)</b><p>鍵類は「プロジェクトの設定→スクリプトプロパティ」に保管。触るのはClaudeの指示があるときだけ</p></div><a class="go" href="https://script.google.com/home">開く</a></div>
+<div class="row"><span class="ico">🛠️</span><div><b>Square開発者画面</b><p>APIトークンの再発行のときだけ</p></div><a class="go" href="https://developer.squareup.com/apps">開く</a></div>
+<div class="row"><span class="ico">☁️</span><div><b>Cloudflare(LINEハーネスの住まい)</b><p>Googleでログイン。デプロイ後はほぼ用なし</p></div><a class="go" href="https://dash.cloudflare.com/">開く</a></div>
+<div class="row"><span class="ico">🔧</span><div><b>LINE Developers</b><p>Messaging API/LINE Loginチャネルの設定。ハーネス構築時のみ</p></div><a class="go" href="https://developers.line.biz/console/">開く</a></div>
+<div class="row"><span class="ico">🧠</span><div><b>GitHub(事業の記憶)</b><p>決定・メモ・コードが全部入ってる。Claudeとの共有脳。ブランチ: claude/inspiring-hamilton-n5wwh9</p></div><a class="go" href="https://github.com/juraku3hearty/my-repository">開く</a></div>
+
+<h2>🔗 公開ページ(お客さんに送るURL)</h2>
+<div class="row"><span class="ico">🏠</span><div><b>トップ</b><p>link-hokkaido.com</p></div><a class="go" href="https://link-hokkaido.com/">開く</a></div>
+<div class="row"><span class="ico">📣</span><div><b>お店向けLP</b><p>/partner/ — 営業で見せるページ</p></div><a class="go" href="https://link-hokkaido.com/partner/">開く</a></div>
+<div class="row"><span class="ico">✍️</span><div><b>申込ページ</b><p>/signup/ — <b>「やります」のお客さんに送るのはこれ</b></p></div><a class="go" href="https://link-hokkaido.com/signup/">開く</a></div>
+<div class="row"><span class="ico">🍚</span><div><b>子ども食堂REST(実例1号)</b><p>/chitose/kodomoshokudo-rest/</p></div><a class="go" href="https://link-hokkaido.com/chitose/kodomoshokudo-rest/">開く</a></div>
+
+<h2>🔒 デモページ(営業用・PW付き)</h2>
+<div class="row"><span class="ico">🧘</span><div><b>ARMOURピラティス(田中さん)</b><p>/demo-armour-x7k2p/ <span class="pw">PW: pilates2026</span></p></div><a class="go" href="https://link-hokkaido.com/demo-armour-x7k2p/">開く</a></div>
+<div class="row"><span class="ico">👁️</span><div><b>Yocchi(まつげ)</b><p>/demo-yocchi-m3p8w/ <span class="pw">PW: yocchi2026</span></p></div><a class="go" href="https://link-hokkaido.com/demo-yocchi-m3p8w/">開く</a></div>
+<div class="row"><span class="ico">💅</span><div><b>Monika Nail</b><p>/demo-monika-k4w7n/ <span class="pw">PW: monika2026</span></p></div><a class="go" href="https://link-hokkaido.com/demo-monika-k4w7n/">開く</a></div>
+<div class="row"><span class="ico">🍜</span><div><b>煮干しそば おおきに</b><p>/demo-ookini-r8t2m/ <span class="pw">PW: ookini2026</span></p></div><a class="go" href="https://link-hokkaido.com/demo-ookini-r8t2m/">開く</a></div>
+
+<div class="keybox">🔑 <b>鍵・パスワードの保管場所ルール</b><br>
+・アカウントのパスワード → 自分のパスワード管理(このページには書かない)<br>
+・APIキー/トークン類 → GASのスクリプトプロパティ or claude.ai/codeの環境変数<br>
+・新しいサービスを契約したら → Claudeに「ポータルに足して」と言えばこのページが育ちます</div>
+
+</div>
