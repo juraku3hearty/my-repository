@@ -29,9 +29,11 @@
 - [ ] A-4 まゆみさん: **R2 Object Storage の有効化**(無料枠10GB・ダッシュボードでのみ可能)
   https://dash.cloudflare.com → Storage & Databases → R2 Object Storage → Overview
   → クレジットカード or PayPal と個人情報を登録(無料枠内なら請求は発生しない)
-- [ ] A-5 まゆみさん: **api.line.me をネットワーク許可に追加**(推奨。これでLIFF作成まで全自動化できる)
-  claude.ai/code → 環境「Default」の歯車 → Network access → Allowed domains に `api.line.me` を追加
-  ※反映は**新しいセッションから**
+- [x] A-5 完了(2026-06-13 2:34): api.line.me をネットワーク許可に追加済み
+- [ ] A-4 リトライ待ち: R2有効化の決済が深夜の連続試行でブロック中(カード複数+PayPalすべて
+  「unexpected error」— Cloudflare/Stripe側の不正検知と判断。200円×2は与信の仮押さえで自動消滅する)。
+  **対応: 翌日の日中に1回だけ再試行**(カード or PayPal。連打しない)。住所はローマ字・Account type=Personal・
+  「無料枠超過分の請求を許可」のチェックも必須
 - [ ] B: Claudeがデプロイ(A-4・A-5完了後に**新セッション**で「LINEハーネスのデプロイの続き」と依頼)
 - [ ] C: LINE側の仕上げ(Webhook ON・LIFF公開・Callback URL — デプロイ後にURLが決まり次第Claudeが案内)
 
