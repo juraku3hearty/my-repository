@@ -148,16 +148,18 @@ function handleSignupForm(params) {
     );
   }
 
-  // 4. Square決済ページへ転送
-  var payUrl = props.getProperty('SQUARE_PAY_URL') || 'https://link-hokkaido.com/partner/';
+  // 4. 次のステップへ転送
+  //    SQUARE_PAY_URL が設定されていればSquare決済ページへ(自動リンク方式)、
+  //    未設定なら受付完了ページへ(手動サブスク登録方式: 公開OK後にダッシュボードから登録)
+  var payUrl = props.getProperty('SQUARE_PAY_URL') || 'https://link-hokkaido.com/signup-done/';
   var html = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">' +
     '<meta http-equiv="refresh" content="2;url=' + payUrl + '">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<style>body{font-family:sans-serif;background:#f7f3ec;color:#2b2b2b;text-align:center;padding:80px 20px;line-height:2}' +
     'a{display:inline-block;margin-top:20px;background:#d97a2e;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:700}</style></head>' +
     '<body><h2>お申し込みを受け付けました</h2>' +
-    '<p>このままお支払い設定ページ(Square)に移動します。<br>自動で移動しない場合は下のボタンを押してください。</p>' +
-    '<a href="' + payUrl + '">お支払い設定へ進む</a></body></html>';
+    '<p>このまま次のご案内ページに移動します。<br>自動で移動しない場合は下のボタンを押してください。</p>' +
+    '<a href="' + payUrl + '">次へ進む</a></body></html>';
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

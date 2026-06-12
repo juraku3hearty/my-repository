@@ -1,0 +1,41 @@
+<!-- ============================================================
+  申込受付完了ページ(/signup-done/)
+  フォーム送信後の着地点(手動サブスク登録方式)。GASのSQUARE_PAY_URL未設定時の転送先。
+  ※将来Squareの自動リンクが使えるようになったらSQUARE_PAY_URLを設定すればそちらへ転送される
+  投稿: --html-block 必須
+============================================================ -->
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+.lh-sd{--cream:#f7f3ec;--navy:#18263c;--orange:#d97a2e;--gray:#6b6f76;--line:#e5ded2;
+  font-family:'Noto Sans JP',sans-serif;background:var(--cream);color:#2b2b2b;line-height:2;font-size:14.5px;
+  min-height:70vh;padding:70px 20px 90px}
+.lh-sd .box{max-width:560px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:44px 32px;text-align:center}
+.lh-sd h1{background:none!important;border:none!important;padding:0!important;box-shadow:none!important;
+  color:var(--navy)!important;font-family:'Shippori Mincho',serif!important;font-size:24px!important;margin:0 0 6px!important}
+.lh-sd h1::before,.lh-sd h1::after{content:none!important;display:none!important}
+.lh-sd .mark{font-size:44px;line-height:1;margin-bottom:14px}
+.lh-sd .sub{color:var(--gray);font-size:12.5px;margin-bottom:26px}
+.lh-sd ol{text-align:left;margin:0 auto 24px;padding-left:0;list-style:none;max-width:430px}
+.lh-sd li{padding:12px 0 12px 44px;position:relative;border-bottom:1px dashed var(--line);font-size:13.5px}
+.lh-sd li b{color:var(--navy)}
+.lh-sd li .n{position:absolute;left:4px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+.lh-sd .note{font-size:11.5px;color:var(--gray);margin-top:16px}
+.lh-sd a.home{color:var(--orange)!important;font-size:12.5px;text-decoration:underline!important}
+</style>
+
+<div class="lh-sd">
+  <div class="box">
+    <p class="mark">📨</p>
+    <h1>お申し込みを受け付けました</h1>
+    <p class="sub">Link Hokkaido ページ管理プラン</p>
+    <p style="text-align:left;font-size:13.5px">お申し込み内容の控え(申込番号つき)をメールでお送りしました。この後の流れは:</p>
+    <ol>
+      <li><span class="n">1</span><b>運営の平井からLINEまたはメールでご連絡します</b>(1営業日以内)</li>
+      <li><span class="n">2</span>ページの最終確認(掲載内容・写真)を一緒に行います</li>
+      <li><span class="n">3</span>公開OKをいただけたら、<b>Square(決済システム)からお支払い設定のご案内メール</b>が届きます。カード情報のご登録をお願いします(初月は無料です)</li>
+      <li><span class="n">4</span>ページを<b>公開</b>します🚀</li>
+    </ol>
+    <p class="note">控えメールが届かない場合は、迷惑メールフォルダをご確認のうえ、<br>LINE公式アカウントからお知らせください。</p>
+    <p style="margin-top:20px"><a class="home" href="https://link-hokkaido.com/">Link Hokkaido トップへ戻る</a></p>
+  </div>
+</div>
