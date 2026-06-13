@@ -1,0 +1,32 @@
+{
+  "size": { "width": 2500, "height": 1686 },
+  "selected": true,
+  "name": "LINE受付ハブ メイン (2x3)",
+  "chatBarText": "メニュー",
+  "areas": [
+    {
+      "bounds": { "x": 0, "y": 0, "width": 833, "height": 843 },
+      "action": { "type": "uri", "label": "無料仮ページ", "uri": "https://liff.line.me/2010383287-Nq9MxzT7?page=form&id=579903f2-ffde-4fd8-bef4-2d192e6df556" }
+    },
+    {
+      "bounds": { "x": 833, "y": 0, "width": 834, "height": 843 },
+      "action": { "type": "uri", "label": "ページ変更", "uri": "https://liff.line.me/2010383287-Nq9MxzT7?page=form&id=a83faf36-4cc3-4ebb-99bc-4ce2b6e25e5a" }
+    },
+    {
+      "bounds": { "x": 1667, "y": 0, "width": 833, "height": 843 },
+      "action": { "type": "uri", "label": "イベント掲載", "uri": "https://liff.line.me/2010383287-Nq9MxzT7?page=form&id=38ad0a41-d252-459d-b6ed-1a92b22e7f91" }
+    },
+    {
+      "bounds": { "x": 0, "y": 843, "width": 833, "height": 843 },
+      "action": { "type": "uri", "label": "お支払い", "uri": "https://liff.line.me/2010383287-Nq9MxzT7?page=form&id=b9f5f5dd-7318-4b8a-a0a4-75ba1bf6eb33" }
+    },
+    {
+      "bounds": { "x": 833, "y": 843, "width": 834, "height": 843 },
+      "action": { "type": "uri", "label": "その他", "uri": "https://liff.line.me/2010383287-Nq9MxzT7?page=form&id=1b647178-1ea0-4034-a9f5-6dcd3e5d5c75" }
+    },
+    {
+      "bounds": { "x": 1667, "y": 843, "width": 833, "height": 843 },
+      "action": { "type": "uri", "label": "公式サイト", "uri": "https://link-hokkaido.com/" }
+    }
+  ]
+}

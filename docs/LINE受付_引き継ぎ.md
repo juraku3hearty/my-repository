@@ -3,7 +3,14 @@
 次のセッション用。**このリポジトリを開いて「`docs/LINE受付_引き継ぎ.md` に従ってリッチメニューを作って」**と言えば続きから動けます。
 設計の全体像は `docs/LINE受付_サービス設計.md` を参照。
 
-## 今すぐの依頼(新セッションの最初のタスク)
+## ✅ 完了:リッチメニュー(2026-06-13)
+**作成・画像アップロード・デフォルト設定まで完了。** 全ユーザの下部メニューに表示される。
+- `richMenuId`: `richmenu-15c6bbf27af398de8b1705048ce0803a`(デフォルト設定済 = `GET /v2/bot/user/all/richmenu` で確認済)
+- 生成物・スクリプトは `scripts/richmenu/`(`make_image.py`=画像生成 / `richmenu.json`=メニュー定義 / `deploy.sh`=一括デプロイ / `richmenu.png`=確定画像)
+- 作り直す/差し替える時は `scripts/richmenu/deploy.sh` を実行(`LINE_CHANNEL_ACCESS_TOKEN` 必須)。再実行すると**新しいIDで再作成**されるので、不要になった旧メニューは `DELETE /v2/bot/richmenu/{id}` で掃除する。
+- ハマりどころ: デフォルト設定 `POST /v2/bot/user/all/richmenu/{id}` はボディ無しのため `Content-Length: 0` を付けないと Akamai が **HTTP 411** を返す(deploy.sh は対応済)。
+
+## (旧)今すぐの依頼 — 上記で完了済み
 **LINEリッチメニュー(下部の常設ボタン)を作る。**
 - 前提:環境のネット許可ドメインに **`api-data.line.me`** が追加済みであること(リッチメニュー画像アップロード先。旧セッションでは未許可で403だった → まゆみさんが追加済み)。新セッションで `curl -s -o /dev/null -w "%{http_code}" https://api-data.line.me/v2/bot/richmenu/list -H "Authorization: Bearer $LINE_CHANNEL_ACCESS_TOKEN` が 200/関連レスポンスになるか先に確認。
 - 日本語フォントは `IPAGothic`(/usr/share/fonts/.../ipag.ttf)が利用可。画像生成はこれを使う。
@@ -41,7 +48,7 @@
 - WP(link-hokkaido.com): `/wp-json` は海外IP403 → `scripts/wp_post.mjs`(`?rest_route=`自動フォールバック)経由。運営ポータル=固定ページ id `321`。
 
 ## 今後のロードマップ(優先度順・未着手)
-1. **リッチメニュー**(上記・最優先)
+1. ~~**リッチメニュー**~~ ✅ 完了(2026-06-13)
 2. **新規申込のプッシュ通知**(今はダッシュボード記録のみ。まゆみさんのLINE等へ通知を飛ばす)
 3. **会員の自動タグ付け**(Square/契約台帳と連動 → 会員/非会員の自動出し分け)
 4. **動的ETA**(申込件数連動で受付返信の「◯日」を自動計算 → form submit ハンドラに小改修+再デプロイ)
