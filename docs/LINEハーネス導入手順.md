@@ -30,11 +30,28 @@
   Claudeがバケット `line-harness-images` も作成済み(再開時は「既に存在」でOK)
 - [x] A-5 設定済み(2026-06-13): api.line.me をネットワーク許可に追加済み。
   ※旧セッションのコンテナには反映されないことを実測再確認 → **新セッション必須**
-- [ ] B: Claudeがデプロイ。**新しいセッション**を開いて以下をそのまま貼り付ける:
-  「git fetch origin claude/sharp-davinci-imh5wg してそのブランチをチェックアウトし、
-  docs/LINEハーネス導入手順.md の『Claude向け再開メモ』に従ってLINEハーネスをデプロイして。
-  完了したら Worker URL / LIFF URL / Callback URL を報告して。」
-- [ ] C: LINE側の仕上げ(Webhook ON・LIFF公開・Callback URL — デプロイ後にURLが決まり次第Claudeが案内)
+- [x] B 完了(2026-06-13 00:10 UTC): Claudeがデプロイ。create-line-harness@0.1.24 を
+  非対話実行(state事前生成方式)。全10ステップ完了・Cloudflare API で稼働確認済み。
+  - Worker:   `line-harness` → https://line-harness.juraku-3hearty.workers.dev (workers.dev有効・デプロイ10件)
+  - Webhook:  https://line-harness.juraku-3hearty.workers.dev/webhook
+  - LIFF:     https://liff.line.me/2010383287-Nq9MxzT7 (liffId=2010383287-Nq9MxzT7)
+  - Callback: https://line-harness.juraku-3hearty.workers.dev/auth/callback
+  - 管理画面: https://line-harness-admin-17afdb62.pages.dev
+  - D1: 新規 `line-harness`(uuid ef93e18f-f5f0-4a6a-a2ab-e2e660372895)・R2: `line-harness-images`
+  - Messaging Channel ID = 2010383277 / LINE Login Channel ID = 2010383287
+  - APIで自動設定済み: ①LIFFエンドポイントURL → {worker}?liffId=2010383287-Nq9MxzT7
+    ②Messaging Webhookエンドポイント → {worker}/webhook(ただし「Webhookの利用」トグルは下記Cで手動ON)
+  - ※API Key(管理画面/MCP用)は再表示不可。setup実行コンテナはエフェメラルのため未保存
+    → 管理画面で再発行が必要になったら create-line-harness を再実行
+- [ ] C: LINE側の仕上げ(まゆみさん手動・残りはトグルとCallback登録のみ):
+  1. LINE Official Account Manager → 設定 → 応答設定:
+     チャット=オフ / あいさつメッセージ=オフ / Webhook=**オン** / 応答メッセージ=オフ
+  2. LINE Developers → Messaging API → 「Webhookの利用」を**オン**(URLは登録済み)
+  3. LINE Developers → LINE Login チャネル → LINEログイン設定:
+     「ウェブアプリでLINEログインを利用する」=オン →
+     Callback URL に `https://line-harness.juraku-3hearty.workers.dev/auth/callback` を登録
+  4. LINE Login → リンクされたLINE公式アカウント=Link Hokkaido / 友だち追加オプション=On(aggressive)
+  5. 友だち追加テスト(あいさつ→フォーム動作確認)
 
 ### Claude向け再開メモ(B実行時)
 - `npx -y create-line-harness` は対話式だが、`~/.line-harness/.line-harness-setup.json` に
