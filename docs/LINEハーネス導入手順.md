@@ -26,13 +26,14 @@
     Webhook URL自動設定ができない → A-5へ
   - メモ: アカウントに4月作成の旧 `line-harness` Worker・旧D1 `line-crm`・`x-bot-harness` 一式が存在。
     今回のセットアップは Worker `line-harness` を上書き、D1は新規 `line-harness` を作成(旧 `line-crm` は温存)
-- [ ] A-4 まゆみさん: **R2 Object Storage の有効化**(無料枠10GB・ダッシュボードでのみ可能)
-  https://dash.cloudflare.com → Storage & Databases → R2 Object Storage → Overview
-  → クレジットカード or PayPal と個人情報を登録(無料枠内なら請求は発生しない)
-- [ ] A-5 まゆみさん: **api.line.me をネットワーク許可に追加**(推奨。これでLIFF作成まで全自動化できる)
-  claude.ai/code → 環境「Default」の歯車 → Network access → Allowed domains に `api.line.me` を追加
-  ※反映は**新しいセッションから**
-- [ ] B: Claudeがデプロイ(A-4・A-5完了後に**新セッション**で「LINEハーネスのデプロイの続き」と依頼)
+- [x] A-4 完了(2026-06-13): **R2有効化済み**(カードがブロックされたがPayPal等で解決)。
+  Claudeがバケット `line-harness-images` も作成済み(再開時は「既に存在」でOK)
+- [x] A-5 設定済み(2026-06-13): api.line.me をネットワーク許可に追加済み。
+  ※旧セッションのコンテナには反映されないことを実測再確認 → **新セッション必須**
+- [ ] B: Claudeがデプロイ。**新しいセッション**を開いて以下をそのまま貼り付ける:
+  「git fetch origin claude/sharp-davinci-imh5wg してそのブランチをチェックアウトし、
+  docs/LINEハーネス導入手順.md の『Claude向け再開メモ』に従ってLINEハーネスをデプロイして。
+  完了したら Worker URL / LIFF URL / Callback URL を報告して。」
 - [ ] C: LINE側の仕上げ(Webhook ON・LIFF公開・Callback URL — デプロイ後にURLが決まり次第Claudeが案内)
 
 ### Claude向け再開メモ(B実行時)
