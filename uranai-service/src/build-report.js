@@ -37,14 +37,59 @@ function buildReport(report, outPath) {
   const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const L = doc.page.margins.left;
 
-  // ── 見出し（大）
-  doc.fillColor(COL.accent).fontSize(22).text(report.title, { align: 'left' });
-  doc.moveDown(0.2);
-  doc.fillColor(COL.sub).fontSize(11).text(report.subtitle);
-  doc.moveDown(0.4);
-  doc.strokeColor(COL.accent).lineWidth(2)
-    .moveTo(L, doc.y).lineTo(L + pageW, doc.y).stroke();
-  doc.moveDown(0.8);
+  // ── 表紙（任意）
+  function cover(rep) {
+    const pageH = doc.page.height;
+    const cx = L + pageW / 2;
+    // 上下にそっと帯を引く（落ち着いた装飾）
+    doc.save().rect(0, 0, doc.page.width, 8).fill(COL.accent).restore();
+    doc.save().rect(0, doc.page.height - 8, doc.page.width, 8).fill(COL.accent).restore();
+
+    let y = pageH * 0.30;
+    doc.fillColor(COL.sub).fontSize(12)
+      .text(rep.coverLabel || '紫微斗数 ― 人となり鑑定', L, y, { width: pageW, align: 'center' });
+    y += 34;
+    doc.fillColor(COL.accent).fontSize(34)
+      .text(rep.title, L, y, { width: pageW, align: 'center' });
+    y += 56;
+    doc.fillColor(COL.ink).fontSize(13)
+      .text(rep.coverSubtitle || '命盤からひもとく、あなたの持ち味', L, y, { width: pageW, align: 'center' });
+    y += 40;
+    // 中央の細い罫＋ひし形
+    doc.strokeColor(COL.line).lineWidth(1)
+      .moveTo(cx - pageW * 0.18, y).lineTo(cx + pageW * 0.18, y).stroke();
+    doc.fillColor(COL.accent).fontSize(10)
+      .text('◆', L, y - 6, { width: pageW, align: 'center' });
+    y += 26;
+    if (rep.coverRecipient) {
+      doc.fillColor(COL.ink).fontSize(12)
+        .text(rep.coverRecipient, L, y, { width: pageW, align: 'center' });
+      y += 22;
+    }
+    if (rep.coverDate) {
+      doc.fillColor(COL.sub).fontSize(10.5)
+        .text('鑑定日　' + rep.coverDate, L, y, { width: pageW, align: 'center' });
+    }
+    // 下部のサービス名
+    doc.fillColor(COL.sub).fontSize(10)
+      .text(rep.brand || '紫微斗数 鑑定', L, doc.page.height - 80, { width: pageW, align: 'center' });
+  }
+
+  if (report.cover) {
+    cover(report);
+    doc.addPage().font('jp');
+  }
+
+  // ── 見出し（大）※表紙がある場合は本文ページに大見出しを重ねない
+  if (!report.cover) {
+    doc.fillColor(COL.accent).fontSize(22).text(report.title, { align: 'left' });
+    doc.moveDown(0.2);
+    doc.fillColor(COL.sub).fontSize(11).text(report.subtitle);
+    doc.moveDown(0.4);
+    doc.strokeColor(COL.accent).lineWidth(2)
+      .moveTo(L, doc.y).lineTo(L + pageW, doc.y).stroke();
+    doc.moveDown(0.8);
+  }
 
   // ── 基本情報ボックス
   const boxTop = doc.y;
@@ -97,8 +142,15 @@ function buildReport(report, outPath) {
 // すべて基準書 v0（たたき台）を根拠にした文章。命宮・夫妻宮は空宮のため對宮の主星を借りて読む。
 // 命宮の輔星(陀羅)・雑曜(華蓋ほか)は基準書に項目がないため扱わない（SPEC §0）。
 const SAMPLE = {
-  title: 'あなたという人 ― 紫微斗数 人となり鑑定',
+  title: 'あなたという人',
   subtitle: 'お手本サンプル ／ 大人版（自己理解）',
+  // 表紙
+  cover: true,
+  coverLabel: '紫微斗数 ― 人となり鑑定',
+  coverSubtitle: '命盤からひもとく、あなたの持ち味',
+  coverRecipient: '1983年1月8日 生まれ　／　女性',
+  coverDate: '2026年6月14日',
+  brand: '紫微斗数 鑑定サービス',
   facts: [
     { k: '生年月日', v: '1983年1月8日　4時13分ごろ（寅の刻）' },
     { k: '性別', v: '女性' },
