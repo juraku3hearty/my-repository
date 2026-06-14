@@ -52,7 +52,7 @@ const OPP = {
   財帛: '福德', 福德: '財帛', 疾厄: '父母', 父母: '疾厄',
 };
 
-const BRIGHT = { 廟: '◎', 旺: '◎', 得: '○', 利: '○', 平: '・', 不: '△', 陷: '△' };
+const BRIGHT = { 廟: '◎', 旺: '◎', 得: '○', 利: '○', 平: '◇', 不: '△', 陷: '△' };
 
 function starLabel(s) {
   let t = s.name + (BRIGHT[s.brightness] || '');
@@ -166,7 +166,7 @@ function renderCourt(doc, astro, opts = {}) {
     doc.fillColor(C.throneInk).fontSize(10).text('凡例', x + 4, ty, { width: w - 8, align: 'center' });
     ty += 16;
     doc.fillColor(C.ink).fontSize(8).text(
-      '臣下＝主星\n◎ 強い  ○ 中  ・ 並  △ 課題\n(祿)(權)(科)(忌)＝四化\n借＝向かいの宮から拝借',
+      '臣下＝主星\n◎ 強い  ○ 中  ◇ 並  △ 課題\n(祿)(權)(科)(忌)＝四化\n借＝向かいの宮から拝借',
       x + 6, ty, { width: w - 12, align: 'left', lineGap: 2 });
   }
 
