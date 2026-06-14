@@ -1,0 +1,176 @@
+// 人となり鑑定 PDF ビルダー（Phase 0 お手本）
+// 役割：命盤データ＋「基準書」を根拠にした鑑定文を受け取り、PDF に組む。
+//
+// 重要（SPEC §0・§5）:
+//  - 解釈の文章は呼び出し側が用意する。本ファイルは「組版」だけを担当する。
+//  - 文章の根拠は基準書のみ。基準書に無い星（輔星・雑曜など）は扱わない。
+//  - 煽らない・大げさに言わない・人を勝手にプロファイルしない。
+//
+// 使い方:
+//   node src/build-report.js              # 同梱のお手本データで samples/お手本_人となり.pdf を出力
+//   const { buildReport } = require('./build-report'); buildReport(report, outPath);
+
+const fs = require('fs');
+const path = require('path');
+const PDFDocument = require('pdfkit');
+
+const JP_FONT = '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf';
+
+// 配色（落ち着いた・煽らないトーン）
+const COL = {
+  ink: '#2b2b35',
+  sub: '#6b6b7a',
+  accent: '#5b4b8a', // 紫微の"紫"
+  line: '#d9d6e6',
+  boxbg: '#f4f2fa',
+};
+
+function buildReport(report, outPath) {
+  const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } });
+  doc.registerFont('jp', JP_FONT);
+  doc.font('jp');
+
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const stream = fs.createWriteStream(outPath);
+  doc.pipe(stream);
+
+  const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const L = doc.page.margins.left;
+
+  // ── 見出し（大）
+  doc.fillColor(COL.accent).fontSize(22).text(report.title, { align: 'left' });
+  doc.moveDown(0.2);
+  doc.fillColor(COL.sub).fontSize(11).text(report.subtitle);
+  doc.moveDown(0.4);
+  doc.strokeColor(COL.accent).lineWidth(2)
+    .moveTo(L, doc.y).lineTo(L + pageW, doc.y).stroke();
+  doc.moveDown(0.8);
+
+  // ── 基本情報ボックス
+  const boxTop = doc.y;
+  const lines = report.facts;
+  doc.fontSize(10.5).fillColor(COL.ink);
+  const boxH = lines.length * 16 + 20;
+  doc.save().rect(L, boxTop, pageW, boxH).fill(COL.boxbg).restore();
+  doc.fillColor(COL.ink);
+  let fy = boxTop + 10;
+  lines.forEach((ln) => {
+    doc.fontSize(10.5).fillColor(COL.sub).text(ln.k, L + 14, fy, { continued: true, width: pageW - 28 });
+    doc.fillColor(COL.ink).text('  ' + ln.v);
+    fy += 16;
+  });
+  doc.y = boxTop + boxH + 18;
+
+  // ── セクション描画ヘルパ
+  function section(heading, paragraphs) {
+    if (doc.y > doc.page.height - 160) doc.addPage().font('jp');
+    doc.fillColor(COL.accent).fontSize(14).text(heading);
+    doc.moveDown(0.2);
+    doc.strokeColor(COL.line).lineWidth(1)
+      .moveTo(L, doc.y).lineTo(L + pageW, doc.y).stroke();
+    doc.moveDown(0.5);
+    doc.fillColor(COL.ink).fontSize(11);
+    paragraphs.forEach((p) => {
+      doc.text(p, { align: 'left', lineGap: 4 });
+      doc.moveDown(0.6);
+    });
+    doc.moveDown(0.5);
+  }
+
+  report.sections.forEach((s) => section(s.heading, s.paragraphs));
+
+  // ── フッター（倫理注記・出典）
+  if (doc.y > doc.page.height - 150) doc.addPage().font('jp');
+  doc.moveDown(0.5);
+  doc.strokeColor(COL.line).lineWidth(1)
+    .moveTo(L, doc.y).lineTo(L + pageW, doc.y).stroke();
+  doc.moveDown(0.5);
+  doc.fillColor(COL.sub).fontSize(8.5);
+  report.footnotes.forEach((f) => { doc.text(f, { lineGap: 2 }); doc.moveDown(0.2); });
+
+  doc.end();
+  return new Promise((res) => stream.on('finish', () => res(outPath)));
+}
+
+// ───────────────────────────────────────────────
+// 同梱お手本データ（オーナー本人：1983-1-8 / 女性 / 寅時）
+// すべて基準書 v0（たたき台）を根拠にした文章。命宮・夫妻宮は空宮のため對宮の主星を借りて読む。
+// 命宮の輔星(陀羅)・雑曜(華蓋ほか)は基準書に項目がないため扱わない（SPEC §0）。
+const SAMPLE = {
+  title: 'あなたという人 ― 紫微斗数 人となり鑑定',
+  subtitle: 'お手本サンプル ／ 大人版（自己理解）',
+  facts: [
+    { k: '生年月日', v: '1983年1月8日　4時13分ごろ（寅の刻）' },
+    { k: '性別', v: '女性' },
+    { k: '五行局', v: '金の四局' },
+    { k: '命宮', v: '空宮（向かいの星を借りて読みます）→ 天機・天梁（化祿）' },
+    { k: '身宮', v: '官禄宮（仕事・社会的役割に重心）／ 太陽・巨門' },
+  ],
+  sections: [
+    {
+      heading: 'はじめに',
+      paragraphs: [
+        'この鑑定は、生まれた瞬間の星の配置（命盤）をもとに、あなたの「もともとの持ち味」をお伝えするものです。星はあなたを決めつけるものではなく、追い風と向かい風の方向を示す地図のようなものです。当たっていると感じるところは活かし、ピンとこないところは「そういう見方もあるのか」と受け取ってください。',
+      ],
+    },
+    {
+      heading: 'あなたの中心にあるもの（命宮）',
+      paragraphs: [
+        'あなたの命宮はそれ自体に主役の星を持たない「空宮」でした。紫微斗数では、この場合は向かい合う宮の星を借りて人物像を読みます。あなたが借りるのは「天機」と「天梁」。この二つが、あなたの芯を形づくっています。',
+        '「天機」は知恵と機転の星。頭の回転が速く、物事を分析し、状況に合わせて柔軟に動ける人です。先を読んで段取りを組むのが得意で、まわりへの気配りも自然にできます。',
+        '「天梁」は人を庇い、筋を通す星。面倒見がよく、困っている人を放っておけない包容力と、ものごとの原則を大事にする芯の強さがあります。さらにこの天梁には「化祿」という良縁・円滑さを呼ぶ働きが重なっています。あなたの面倒見のよさや誠実さが、人とのご縁やチャンスに結びつきやすい、ということです。',
+        'まとめると、あなたは「よく考え、よく気がつき、人を支えながら、その誠実さが縁となって返ってくる人」。賢さと面倒見のよさが同居しているのが持ち味です。',
+      ],
+    },
+    {
+      heading: 'あなたの強み',
+      paragraphs: [
+        '・頭の回転と企画力。情報を集めて筋道を立て、柔軟に対応できます（天機）。',
+        '・人への気配りと包容力。相手の立場を察し、面倒を見られます（天機・天梁）。',
+        '・筋を通す誠実さと正義感。原則を大事にし、信頼されます（天梁）。',
+        '・その誠実さが「ご縁」に変わりやすいこと。尽くした分が人脈や機会となって返ってきます（天梁・化祿）。',
+      ],
+    },
+    {
+      heading: '少し気をつけたいところ',
+      paragraphs: [
+        'これは「欠点」ではなく、強みが行きすぎたときに出やすいクセです。知っておくと扱いやすくなります。',
+        '・考えすぎて動けなくなったり、心配が先に立ったりすることがあります。気が変わりやすい一面も（天機）。八割の見通しが立ったら一歩踏み出す、と決めておくと楽になります。',
+        '・人の世話を焼きすぎて、自分のことが後回しになりがちです。よかれと思った助言が「説教」に聞こえてしまうことも（天梁）。相手が求めているか一呼吸おくと、せっかくの面倒見が活きます。',
+      ],
+    },
+    {
+      heading: '仕事・社会での活かし方（官禄宮・身宮）',
+      paragraphs: [
+        'あなたは「身宮」が仕事の宮（官禄宮）に重なっています。これは、仕事や社会での役割が人生の重心になりやすいタイプ、という意味です。',
+        'その官禄宮には「太陽」と「巨門」が、どちらも強い状態で入っています。「太陽」は人を照らし、公正に人前で活躍する星。「巨門」は言葉と専門性の星で、弁舌・分析・探究を武器にします。あわせて、人前に立って、言葉と専門知識で人を照らす仕事——教育、発信、相談、専門職のような役割で力を発揮しやすい配置です。補佐の助けが評価（名声）に結びつく働き（化科）も添えられています。',
+      ],
+    },
+    {
+      heading: '恋愛・パートナーシップ（夫妻宮）',
+      paragraphs: [
+        '夫妻宮も空宮のため、向かいの官禄宮から「太陽」と「巨門」を借りて読みます。',
+        '「太陽」は、相手に明るく接し、よく尽くす恋愛。世話を焼きすぎるくらい面倒を見るタイプです。「巨門」は言葉が縁の星。本音を言葉にして語り合えると関係が深まる一方、言葉の行き違いから誤解やすれ違いが起きやすい面もあります。',
+        '気持ちを溜め込まず、ていねいに言葉にして伝えること。それがあなたのパートナーシップの鍵になります。',
+      ],
+    },
+    {
+      heading: 'おわりに',
+      paragraphs: [
+        'あなたは「賢さ」と「面倒見のよさ」を芯に持ち、その誠実さが人とのご縁になって返ってくる人です。仕事や社会の場で、言葉と知恵を使って人を照らすときに、いちばん輝きます。考えすぎて止まりそうなときは、まず一歩。その一歩が、あなたの良いご縁を運んできます。',
+      ],
+    },
+  ],
+  footnotes: [
+    '※ 本鑑定は紫微斗数の命盤にもとづく「持ち味の傾向」をお伝えするものです。未来を断定したり、優劣を決めたりするものではありません。',
+    '※ 解釈は本サービスの「基準書」のみを根拠にしています。基準書に項目のない星（命宮の輔星・雑曜など）は、今回は扱っていません。',
+    '※ 命宮・夫妻宮が空宮のため、紫微斗数の定石にしたがい向かいの宮の主星を借りて読みました。命盤計算：iztro。',
+  ],
+};
+
+if (require.main === module) {
+  const out = path.join(__dirname, '..', 'samples', 'お手本_人となり.pdf');
+  buildReport(SAMPLE, out).then((p) => console.log('PDF を出力しました: ' + p));
+}
+
+module.exports = { buildReport, SAMPLE };
