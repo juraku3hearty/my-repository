@@ -37,7 +37,7 @@ const COURT = {
   田宅: { role: '城', meaning: '家・資産' },
   官祿: { role: '朝廷', meaning: '仕事・役職' },
   僕役: { role: '家臣', meaning: '友・部下' },
-  遷移: { role: '遠つ国', meaning: '外の世界' },
+  遷移: { role: '遠征', meaning: '外の世界' },
   疾厄: { role: '御典医', meaning: '健康・体' },
   財帛: { role: '国庫', meaning: '金運・財' },
   子女: { role: '世継ぎ', meaning: '子・後進' },
