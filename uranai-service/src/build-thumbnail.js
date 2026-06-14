@@ -130,11 +130,11 @@ function buildNight() {
 
   // フック
   ctx.fillStyle = COL.cream;
-  ctx.font = '50px jp';
-  boldText(ctx, '「こうしなさい」とは、言わない。', W / 2, 386, 0.4);
+  ctx.font = '48px jp';
+  boldText(ctx, '生まれ持った “強み” と “クセ” を、', W / 2, 386, 0.4);
   ctx.fillStyle = COL.goldBright;
   ctx.font = '46px jp';
-  ctx.fillText('あなたを “そのまま” 言葉にする鑑定。', W / 2, 450);
+  ctx.fillText('やさしく、そのまま言葉にする鑑定。', W / 2, 450);
 
   // 帝の金印（放射する光線＝サンバースト）
   ctx.save();
@@ -220,8 +220,8 @@ function buildCream() {
   ctx.fillStyle = C.throneInk; ctx.font = '132px jp'; boldText(ctx, '自分のトリセツ', W / 2, 220, 1.2); ctx.restore();
   ctx.strokeStyle = C.vermilion; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2 - 70, 300); ctx.lineTo(W / 2 + 70, 300); ctx.stroke();
   ctx.fillStyle = C.vermilion; ctx.font = '22px jp'; ctx.fillText('◆', W / 2, 300);
-  ctx.fillStyle = C.ink; ctx.font = '48px jp'; ctx.fillText('「こうしなさい」とは、言いません。', W / 2, 372);
-  ctx.fillStyle = C.throneInk; ctx.font = '44px jp'; ctx.fillText('あなたを、そのまま言葉にする鑑定。', W / 2, 436);
+  ctx.fillStyle = C.ink; ctx.font = '46px jp'; ctx.fillText('生まれ持った “強み” と “クセ” を、', W / 2, 372);
+  ctx.fillStyle = C.throneInk; ctx.font = '44px jp'; ctx.fillText('やさしく、そのまま言葉にする鑑定。', W / 2, 436);
   const ex = W / 2, ey = 632, ringR = 150;
   for (let i = 0; i < 8; i++) {
     const a = -Math.PI / 2 + (i * Math.PI) / 4;
