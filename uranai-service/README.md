@@ -56,9 +56,9 @@ node src/generate-chart.js 1990-5-20 7 女 --json   # 機械処理用JSON
 - [x] iztro で命盤が出るか試す（v2.5.8・日本語出力OK・全12宮/四化/大限取得確認）
 - [x] 命盤生成スクリプト（`src/generate-chart.js`）
 - [x] プロジェクトの土台（フォルダ構成・SPEC・README）
-- [x] 基準書 v0 の**たたき台**（`基準書/人となり_基準書.md`）※オーナーが自分の言葉に書き直す
-- [x] オーナー自身の命盤で「人となり PDF」を1本通す（命盤 → 解釈 → PDF）
-      → `samples/お手本_人となり.pdf`（`src/build-report.js` で生成）
+- [x] 基準書 v0 の**たたき台**（`基準書/自分のトリセツ_基準書.md`）※オーナーが自分の言葉に書き直す
+- [x] オーナー自身の命盤で「自分のトリセツ PDF」を1本通す（命盤 → 解釈 → PDF）
+      → `samples/お手本_自分のトリセツ.pdf`（`src/build-report.js` で生成）
 
 次の一歩：①基準書をまゆみさんの言葉に書き直す → ②書き直した基準書でお手本を作り直し、
 トーン・当たり感を確認 → ③ココナラ出品用に仕上げる（Phase 1）。
@@ -66,7 +66,7 @@ node src/generate-chart.js 1990-5-20 7 女 --json   # 機械処理用JSON
 ## お手本 PDF を作り直す
 
 ```bash
-node src/build-report.js   # samples/お手本_人となり.pdf を再生成
+node src/build-report.js   # samples/お手本_自分のトリセツ.pdf を再生成
 ```
 
 鑑定文は `src/build-report.js` の `SAMPLE` に入っている。基準書を書き直したら、

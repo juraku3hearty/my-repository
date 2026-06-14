@@ -1,4 +1,4 @@
-// 人となり鑑定 PDF ビルダー（Phase 0 お手本）
+// 自分のトリセツ鑑定 PDF ビルダー（Phase 0 お手本）
 // 役割：命盤データ＋「基準書」を根拠にした鑑定文を受け取り、PDF に組む。
 //
 // 重要（SPEC §0・§5）:
@@ -7,7 +7,7 @@
 //  - 煽らない・大げさに言わない・人を勝手にプロファイルしない。
 //
 // 使い方:
-//   node src/build-report.js              # 同梱のお手本データで samples/お手本_人となり.pdf を出力
+//   node src/build-report.js              # 同梱のお手本データで samples/お手本_自分のトリセツ.pdf を出力
 //   const { buildReport } = require('./build-report'); buildReport(report, outPath);
 
 const fs = require('fs');
@@ -47,7 +47,7 @@ function buildReport(report, outPath) {
 
     let y = pageH * 0.30;
     doc.fillColor(COL.sub).fontSize(12)
-      .text(rep.coverLabel || '紫微斗数 ― 人となり鑑定', L, y, { width: pageW, align: 'center' });
+      .text(rep.coverLabel || '紫微斗数 ― 自分のトリセツ鑑定', L, y, { width: pageW, align: 'center' });
     y += 34;
     doc.fillColor(COL.accent).fontSize(34)
       .text(rep.title, L, y, { width: pageW, align: 'center' });
@@ -142,15 +142,15 @@ function buildReport(report, outPath) {
 // すべて基準書 v0（たたき台）を根拠にした文章。命宮・夫妻宮は空宮のため對宮の主星を借りて読む。
 // 命宮の輔星(陀羅)・雑曜(華蓋ほか)は基準書に項目がないため扱わない（SPEC §0）。
 const SAMPLE = {
-  title: 'あなたという人',
-  subtitle: 'お手本サンプル ／ 大人版（自己理解）',
+  title: '自分のトリセツ',
+  subtitle: 'お手本サンプル ／ 自分のトリセツ（自己理解）',
   // 表紙
   cover: true,
-  coverLabel: '紫微斗数 ― 人となり鑑定',
-  coverSubtitle: '命盤からひもとく、あなたの持ち味',
+  coverLabel: '紫微斗数 × 帝王学',
+  coverSubtitle: 'あなたという人をひもとく、自己理解の鑑定',
   coverRecipient: '1983年1月8日 生まれ　／　女性',
   coverDate: '2026年6月14日',
-  brand: '紫微斗数 鑑定サービス',
+  brand: '紫微斗数 × 帝王学 ｜ トリセツ鑑定',
   facts: [
     { k: '生年月日', v: '1983年1月8日　4時13分ごろ（寅の刻）' },
     { k: '性別', v: '女性' },
@@ -220,7 +220,7 @@ const SAMPLE = {
 };
 
 if (require.main === module) {
-  const out = path.join(__dirname, '..', 'samples', 'お手本_人となり.pdf');
+  const out = path.join(__dirname, '..', 'samples', 'お手本_自分のトリセツ.pdf');
   buildReport(SAMPLE, out).then((p) => console.log('PDF を出力しました: ' + p));
 }
 
