@@ -29,19 +29,20 @@ const C = {
 };
 
 // 十二宮 → 朝廷の役職（iztro の宮名をキーにする）
+// meaning＝平易な意味（カードの主役・大）／ role＝帝王学の役職（脇役・括弧で小さく）
 const COURT = {
   命宮: { role: '帝', meaning: 'あなた自身' },
-  父母: { role: '師父', meaning: '親・目上・後ろ盾' },
-  福德: { role: '御心', meaning: '心・楽しみ・価値観' },
-  田宅: { role: '城', meaning: '家・資産・居場所' },
+  父母: { role: '師父', meaning: '親・目上' },
+  福德: { role: '御心', meaning: '心・楽しみ' },
+  田宅: { role: '城', meaning: '家・資産' },
   官祿: { role: '朝廷', meaning: '仕事・役職' },
-  僕役: { role: '家臣', meaning: '友・部下・仲間' },
-  遷移: { role: '遠つ国', meaning: '外の世界・旅' },
+  僕役: { role: '家臣', meaning: '友・部下' },
+  遷移: { role: '遠つ国', meaning: '外の世界' },
   疾厄: { role: '御典医', meaning: '健康・体' },
   財帛: { role: '国庫', meaning: '金運・財' },
-  子女: { role: '世継ぎ', meaning: '子・後進・創造' },
+  子女: { role: '世継ぎ', meaning: '子・後進' },
   夫妻: { role: '后', meaning: '伴侶・恋愛' },
-  兄弟: { role: '義兄弟', meaning: '兄弟・同志' },
+  兄弟: { role: '義兄弟', meaning: '兄弟・仲間' },
 };
 
 // 對宮（空宮のとき星を借りる相手）
@@ -141,10 +142,13 @@ function renderCourt(doc, astro, opts = {}) {
 
     const info = COURT[name];
     let ty = y + 9;
-    doc.fillColor(C.role).fontSize(13).text(info.role, x + 4, ty, { width: w - 8, align: 'center' });
+    // 主役＝平易な意味（大）＋ 脇役＝役職を括弧で小さく
+    doc.fillColor(C.throneInk).fontSize(12).text(info.meaning, x + 4, ty, { width: w - 8, align: 'center' });
     ty += 17;
-    doc.fillColor(C.sub).fontSize(7.5).text(name + '宮 ｜ ' + info.meaning, x + 4, ty, { width: w - 8, align: 'center' });
-    ty += 13;
+    doc.fillColor(C.role).fontSize(8.5).text('（' + info.role + '）', x + 4, ty, { width: w - 8, align: 'center' });
+    ty += 12;
+    doc.fillColor(C.sub).fontSize(7).text(name + '宮', x + 4, ty, { width: w - 8, align: 'center' });
+    ty += 11;
     doc.strokeColor(C.line).lineWidth(0.5).moveTo(x + 10, ty).lineTo(x + w - 10, ty).stroke();
     ty += 5;
     doc.fillColor(C.ink).fontSize(9.5).text(retainersText(palMap, name), x + 5, ty, { width: w - 10, align: 'center', lineGap: 1 });
