@@ -13,6 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const { renderCourt } = require('./build-court');
 
 const JP_FONT = '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf';
 
@@ -77,6 +78,12 @@ function buildReport(report, outPath) {
 
   if (report.cover) {
     cover(report);
+    doc.addPage().font('jp');
+  }
+
+  // ── 朝廷図（任意。表紙の次・本文の前に綴じ込む）
+  if (report.court && report.court.astro) {
+    renderCourt(doc, report.court.astro, report.court.opts || {});
     doc.addPage().font('jp');
   }
 
@@ -221,6 +228,12 @@ const SAMPLE = {
 };
 
 if (require.main === module) {
+  const { buildChart } = require('./generate-chart');
+  // 表紙→朝廷図→本文 の3部構成にするため、命盤を添える
+  SAMPLE.court = {
+    astro: buildChart('1983-1-8', 2, '女'),
+    opts: { title: 'あなたの朝廷図', subtitle: '紫微斗数 × 帝王学　― 命宮を帝とし、十二宮を朝廷として ―' },
+  };
   const out = path.join(__dirname, '..', 'samples', 'お手本_自分のトリセツ.pdf');
   buildReport(SAMPLE, out).then((p) => console.log('PDF を出力しました: ' + p));
 }

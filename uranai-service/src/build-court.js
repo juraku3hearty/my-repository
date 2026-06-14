@@ -3,8 +3,9 @@
 // しびとくんの表は参照しない。iztro の命盤データ（astro）からゼロから組む。
 //
 // 使い方:
-//   node src/build-court.js                       # サンプル(1983-1-8/女/寅)で出力
-//   const { buildCourt } = require('./build-court'); buildCourt(astro, outPath, opts);
+//   node src/build-court.js                            # サンプル(1983-1-8/女/寅)で単体PDF出力
+//   const { buildCourt } = require('./build-court');    # 単体PDF
+//   const { renderCourt } = require('./build-court');   # 既存docに1ページとして描く（トリセツに綴じ込む用）
 
 const fs = require('fs');
 const path = require('path');
@@ -13,13 +14,14 @@ const { buildChart } = require('./generate-chart');
 
 const JP_FONT = '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf';
 
-// 温かい配色（金・生成り・墨）
+// 温かい配色（金・生成り・墨）＋和の差し色は控えめに（朱を細く一筋だけ）
 const C = {
   ink: '#3a3330',
   sub: '#8a7f76',
   role: '#9c6b3f',
   throneInk: '#7a4f1e',
   gold: '#c79a4e',
+  vermilion: '#a14a3a', // 和の差し色（ごく控えめ）
   cardBg: '#f5efe6',
   throneBg: '#f8edd7',
   line: '#e3d8c4',
@@ -29,12 +31,12 @@ const C = {
 // 十二宮 → 朝廷の役職（iztro の宮名をキーにする）
 const COURT = {
   命宮: { role: '帝', meaning: 'あなた自身' },
-  父母: { role: '師と先帝', meaning: '親・目上・後ろ盾' },
+  父母: { role: '師父', meaning: '親・目上・後ろ盾' },
   福德: { role: '御心', meaning: '心・楽しみ・価値観' },
   田宅: { role: '城', meaning: '家・資産・居場所' },
   官祿: { role: '朝廷', meaning: '仕事・役職' },
   僕役: { role: '家臣', meaning: '友・部下・仲間' },
-  遷移: { role: '外つ国', meaning: '外の世界・旅' },
+  遷移: { role: '遠つ国', meaning: '外の世界・旅' },
   疾厄: { role: '御典医', meaning: '健康・体' },
   財帛: { role: '国庫', meaning: '金運・財' },
   子女: { role: '世継ぎ', meaning: '子・後進・創造' },
@@ -70,19 +72,12 @@ function retainersText(palMap, name) {
   return '（臣下なし）';
 }
 
-function buildCourt(astro, outPath, opts = {}) {
-  const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } });
-  doc.registerFont('jp', JP_FONT);
-  doc.font('jp');
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  const stream = fs.createWriteStream(outPath);
-  doc.pipe(stream);
-
+// 既存の doc に「朝廷図」を1ページぶん描く（addPage / end はしない）
+function renderCourt(doc, astro, opts = {}) {
   const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const pageH = doc.page.height;
   const L = doc.page.margins.left;
 
-  // 宮名 → palace のマップ
   const palMap = {};
   astro.palaces.forEach((p) => { palMap[p.name] = p; });
 
@@ -94,6 +89,10 @@ function buildCourt(astro, outPath, opts = {}) {
   doc.fillColor(C.throneInk).fontSize(22).text(opts.title || 'あなたの朝廷図', L, 54, { width: pageW, align: 'center' });
   doc.fillColor(C.sub).fontSize(10)
     .text(opts.subtitle || '紫微斗数 × 帝王学　― 命宮を帝とし、十二宮を朝廷として ―', L, 84, { width: pageW, align: 'center' });
+  // 和の差し色（細い朱の一筋）
+  const cxTitle = L + pageW / 2;
+  doc.save().lineWidth(1.4).strokeColor(C.vermilion)
+    .moveTo(cxTitle - 26, 104).lineTo(cxTitle + 26, 104).stroke().restore();
 
   // 4×4 グリッド（中央2×2＝玉座、周囲12マスに11宮＋凡例）
   const gridTop = 116;
@@ -131,7 +130,6 @@ function buildCourt(astro, outPath, opts = {}) {
   });
   doc.restore();
 
-  // カード描画
   function card(r, c, name) {
     const pad = 6;
     const x = cellX(c) + pad;
@@ -202,7 +200,17 @@ function buildCourt(astro, outPath, opts = {}) {
   doc.fillColor(C.sub).fontSize(7)
     .text('※ 命宮＝あなた（帝）。星のない宮は向かいの宮から星を借りて「借」と記します。命盤計算：iztro。',
       L, pageH - 64, { width: pageW, align: 'center' });
+}
 
+// 単体PDFとして出力
+function buildCourt(astro, outPath, opts = {}) {
+  const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } });
+  doc.registerFont('jp', JP_FONT);
+  doc.font('jp');
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const stream = fs.createWriteStream(outPath);
+  doc.pipe(stream);
+  renderCourt(doc, astro, opts);
   doc.end();
   return new Promise((res) => stream.on('finish', () => res(outPath)));
 }
@@ -216,4 +224,4 @@ if (require.main === module) {
   }).then((p) => console.log('朝廷図を出力しました: ' + p));
 }
 
-module.exports = { buildCourt, COURT };
+module.exports = { buildCourt, renderCourt, COURT };
