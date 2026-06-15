@@ -147,9 +147,9 @@ function bodyContent(astro) {
   ];
 }
 
-async function renderBodies(astro, name) {
+async function renderBodies(astro, name, blocksOverride) {
   const img = await loadImage(path.join(ASSETS, 'body.png'));
-  const blocks = bodyContent(astro);
+  const blocks = blocksOverride || bodyContent(astro);
   const ML = 130 * SC, MR = W - 130 * SC, contentW = MR - ML;
   const TOP = 175 * SC, BOTTOM = H - 150 * SC;
   const pages = []; let x, c, y; let firstPage = true;
@@ -191,8 +191,8 @@ async function renderBodies(astro, name) {
   return pages;
 }
 
-async function buildPDF(astro, name, outPath) {
-  const pages = [await renderCover(astro, name), await renderCourt(astro), ...(await renderBodies(astro, name))];
+async function buildPDF(astro, name, outPath, blocksOverride) {
+  const pages = [await renderCover(astro, name), await renderCourt(astro), ...(await renderBodies(astro, name, blocksOverride))];
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
