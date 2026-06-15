@@ -138,14 +138,21 @@ function bodyContent(astro) {
   };
 
   const cs = res('命宮'); const stars = cs.stars;
+  // 命宮＋三方四正（命・遷・官・財）の六吉＝強み源／六煞＝クセ源（同じ主星でも輔煞が違えば変わる）
+  const pmap = {}; astro.palaces.forEach((p) => { pmap[p.name] = p; });
+  const triad = ['命宮', '遷移', '官祿', '財帛'];
+  const minorNames = (set) => uniq(triad.flatMap((n) => (pmap[n] ? pmap[n].minorStars : []).map((s) => s.name).filter((nm) => set[nm])));
+  const kichiAdd = minorNames(D.KICHI).map((nm) => D.KICHI[nm]);
+  const satsuAdd = minorNames(D.SATSU).map((nm) => D.SATSU[nm]);
+
   const note = cs.b ? `あなたの命宮には主役の星がなく（空宮）、向かいの宮から「${stars.map((s) => s.name).join('」「')}」を借りて読みます。` : '';
   const center = (note ? [note] : []).concat(stars.map((s) => D.PROSE[s.name]).filter(Boolean));
   const cmut = stars.filter((s) => s.mutagen).map((s) => `そしてあなたの場合、「${s.name}」に、${D.MUT[s.mutagen]}。`);
   const bodyP = astro.palaces.find((p) => p.isBodyPalace);
   const shin = (bodyP && D.SHIN[bodyP.name]) ? [`また、人生の重心（身宮）は「${D.SHIN[bodyP.name]}」に置かれやすく、ここがあなたの一生で特に大切なテーマになります。`] : [];
 
-  const cho = uniq(stars.flatMap((s) => (D.CHO[s.name] || '').split('・')));
-  const tan = uniq(stars.flatMap((s) => (D.TAN[s.name] || '').split('・')));
+  const cho = uniq(stars.flatMap((s) => (D.CHO[s.name] || '').split('・'))).concat(kichiAdd);
+  const tan = uniq(stars.flatMap((s) => (D.TAN[s.name] || '').split('・'))).concat(satsuAdd);
   const kanT = sec('官祿', 'あなたが力を発揮しやすいのは、こんな場です。', D.KAN, 'こうした場で持ち味を活かすほど、まわりからの信頼や評価につながっていきます。気負わず、得意なところから動いてみてください。');
   const fuuT = sec('夫妻', '人との関わりでは、こんな傾向があります。', D.FUU, '気持ちを溜め込まず、短くていいから言葉にしてみること。それだけで、すれ違いが減り、ご縁がぐっと深まります。');
   const zaiT = sec('財帛', 'お金とは、こんな付き合い方が向いています。', D.ZAI, '自分に合ったお金のリズムを知っておくと、無理なく豊かさを育てていけます。');
