@@ -113,7 +113,7 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
 .cover .ttl{top:13.5%;font-family:var(--serif);font-weight:800;font-size:50pt;letter-spacing:.05em;color:#FFFDF8;text-shadow:0 2px 16px rgba(0,0,0,.5);}
 .cover .sub{top:24%;font-family:var(--serif);font-size:13pt;letter-spacing:.16em;color:var(--ivory);text-shadow:0 1px 8px rgba(0,0,0,.55);}
 .cover .name{top:29.5%;font-family:var(--serif);font-weight:600;font-size:16pt;letter-spacing:.1em;color:#F1DDAE;text-shadow:0 1px 8px rgba(0,0,0,.55);}
-.cover .ti{top:42%;font-family:var(--serif);font-weight:800;font-size:34pt;color:var(--navy);}
+.cover .ti{top:44.5%;font-family:var(--serif);font-weight:800;font-size:34pt;color:var(--navy);}
 .cover .msg{top:58%;font-family:var(--serif);font-weight:700;font-size:30pt;letter-spacing:.12em;color:#3a2410;text-shadow:0 1px 12px rgba(255,245,210,.65);}
 .cover .pill{top:69%;}
 .cover .pill span{display:inline-block;font-size:11pt;letter-spacing:.12em;color:var(--navy);
