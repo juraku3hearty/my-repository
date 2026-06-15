@@ -55,11 +55,31 @@ function drawSegsCentered(x, cx, cy, segs, font, maxw, lh) {
     for (const [t, c] of ln) { x.fillStyle = c; x.fillText(t, sx, yy); sx += x.measureText(t).width; } yy += lh; }
   x.textAlign = 'center';
 }
+// 行頭に置けない文字（句読点・閉じ括弧・小書きなど）＝行頭禁則。来そうなら前行末にぶら下げる。
+const NO_LINE_START = '、。，．・：；！？」』）】〕》〉”’ーぁぃぅぇぉっゃゅょゎ々';
+// 各行を {t:文字列, full:両端揃え対象か} で返す。full行は枠幅に揃える、最終行/改行/ぶら下げ行は自然な左揃え。
 function wrap(x, text, maxw, font) {
   x.font = font; const out = []; let line = '';
-  for (const ch of text) { if (ch === '\n') { out.push(line); line = ''; continue; }
-    if (x.measureText(line + ch).width > maxw && line) { out.push(line); line = ch; } else line += ch; }
-  if (line) out.push(line); return out;
+  for (const ch of text) {
+    if (ch === '\n') { out.push({ t: line, full: false }); line = ''; continue; }
+    if (line && x.measureText(line + ch).width > maxw) {
+      if (NO_LINE_START.includes(ch)) { line += ch; out.push({ t: line, full: false }); line = ''; } // ぶら下げ
+      else { out.push({ t: line, full: true }); line = ch; }
+    } else line += ch;
+  }
+  if (line) out.push({ t: line, full: false });
+  return out;
+}
+// 両端揃え描画（fullのときは字間を均等に広げて枠幅に揃える）。textAlign='left'前提。
+function drawLine(x, L, ML, y, maxw) {
+  const chars = [...L.t];
+  if (!L.full || chars.length < 2) { x.fillText(L.t, ML, y); return; }
+  const extra = maxw - x.measureText(L.t).width;
+  const gap = extra / (chars.length - 1);
+  const cap = (parseFloat(x.font) || 20) * 0.8;
+  if (gap < 0 || gap > cap) { x.fillText(L.t, ML, y); return; } // 間延びしすぎる時は左揃え
+  let cx = ML;
+  for (const ch of chars) { x.fillText(ch, cx, y); cx += x.measureText(ch).width + gap; }
 }
 
 async function renderCover(astro, name, transparent = false) {
@@ -176,7 +196,7 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
       y += 30 * SC;
     } else if (b.type === 'p') {
       const lh = 44 * SC; const lines = wrap(x, b.t, contentW, `${23 * SC}px ${SERIF}`);
-      for (const ln of lines) { ensure(lh); x.fillStyle = COL.ink; x.font = `${23 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
+      for (const L of lines) { ensure(lh); x.fillStyle = COL.ink; x.font = `${23 * SC}px ${SERIF}`; drawLine(x, L, ML, y, contentW); y += lh; }
       y += 14 * SC;
     } else if (b.type === 'ul') {
       const lh = 40 * SC;
@@ -186,7 +206,7 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
     } else if (b.type === 'note') {
       y += 22 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke(); y += 28 * SC;
       const lh = 30 * SC; const lines = wrap(x, b.t, contentW, `${15 * SC}px ${SERIF}`);
-      for (const ln of lines) { ensure(lh); x.fillStyle = COL.soft; x.font = `${15 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
+      for (const L of lines) { ensure(lh); x.fillStyle = COL.soft; x.font = `${15 * SC}px ${SERIF}`; drawLine(x, L, ML, y, contentW); y += lh; }
     }
   }
   return pages;
