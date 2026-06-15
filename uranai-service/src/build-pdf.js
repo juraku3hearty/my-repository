@@ -62,9 +62,9 @@ function wrap(x, text, maxw, font) {
   if (line) out.push(line); return out;
 }
 
-async function renderCover(astro, name) {
-  const img = await loadImage(path.join(ASSETS, 'cover.png'));
-  const c = createCanvas(W, H); const x = c.getContext('2d'); x.drawImage(img, 0, 0, W, H);
+async function renderCover(astro, name, transparent = false) {
+  const c = createCanvas(W, H); const x = c.getContext('2d');
+  if (!transparent) { const img = await loadImage(path.join(ASSETS, 'cover.png')); x.drawImage(img, 0, 0, W, H); }
   x.textAlign = 'center'; x.textBaseline = 'middle'; const cx = W / 2;
   const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * SC; };
   sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * SC}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, Y(7));
@@ -85,9 +85,10 @@ async function renderCover(astro, name) {
   return c;
 }
 
-async function renderCourt(astro) {
-  const img = await loadImage(path.join(ASSETS, 'court.png'));
-  const c = createCanvas(W, H); const x = c.getContext('2d'); x.drawImage(img, 0, 0, W, H); x.textBaseline = 'middle';
+async function renderCourt(astro, transparent = false) {
+  const c = createCanvas(W, H); const x = c.getContext('2d');
+  if (!transparent) { const img = await loadImage(path.join(ASSETS, 'court.png')); x.drawImage(img, 0, 0, W, H); }
+  x.textBaseline = 'middle';
   const res = resolver(astro);
   for (const [n, [lx, ly]] of Object.entries(D.COURT_COORDS)) {
     const px = X(lx), py = Y(ly); const info = D.COURT[n]; const r = res(n);
@@ -147,14 +148,14 @@ function bodyContent(astro) {
   ];
 }
 
-async function renderBodies(astro, name, blocksOverride) {
-  const img = await loadImage(path.join(ASSETS, 'body.png'));
+async function renderBodies(astro, name, blocksOverride, transparent = false) {
+  const img = transparent ? null : await loadImage(path.join(ASSETS, 'body.png'));
   const blocks = blocksOverride || bodyContent(astro);
   const ML = 130 * SC, MR = W - 130 * SC, contentW = MR - ML;
   const TOP = 175 * SC, BOTTOM = H - 150 * SC;
   const pages = []; let x, c, y; let firstPage = true;
   const newPage = () => {
-    c = createCanvas(W, H); x = c.getContext('2d'); x.drawImage(img, 0, 0, W, H);
+    c = createCanvas(W, H); x = c.getContext('2d'); if (img) x.drawImage(img, 0, 0, W, H);
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; y = TOP;
     if (firstPage) {
       x.textAlign = 'center'; x.fillStyle = COL.gold; x.font = `${15 * SC}px ${SERIF}`;
@@ -192,12 +193,20 @@ async function renderBodies(astro, name, blocksOverride) {
 }
 
 async function buildPDF(astro, name, outPath, blocksOverride) {
-  const pages = [await renderCover(astro, name), await renderCourt(astro), ...(await renderBodies(astro, name, blocksOverride))];
+  // 文字は透明レイヤーで描き、背景は元PNGをそのまま下敷きに（JPEGノイズを出さない）
+  const cover = await renderCover(astro, name, true);
+  const court = await renderCourt(astro, true);
+  const bodies = await renderBodies(astro, name, blocksOverride, true);
+  const defs = [['cover.png', cover], ['court.png', court], ...bodies.map((b) => ['body.png', b])];
+  const A4 = { width: 595.28, height: 841.89 };
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
-  pages.forEach((c, i) => { if (i) doc.addPage({ size: 'A4', margin: 0 });
-    doc.image(c.toBuffer('image/jpeg', 0.9), 0, 0, { width: 595.28, height: 841.89 }); });
+  defs.forEach(([bg, canvas], i) => {
+    if (i) doc.addPage({ size: 'A4', margin: 0 });
+    doc.image(path.join(ASSETS, bg), 0, 0, A4);                 // 背景＝元PNG（無劣化）
+    doc.image(canvas.toBuffer('image/png'), 0, 0, A4);          // 文字＝透明PNG（くっきり）
+  });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
 }
