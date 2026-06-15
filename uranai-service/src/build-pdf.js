@@ -22,7 +22,7 @@ try {
 } catch (e) { /* なければゴシック */ }
 
 const ASSETS = path.join(__dirname, '..', 'web', 'assets');
-const SC = 3;                 // 3倍解像度（JPEGでも文字くっきり。真っ白回避のためPNGは使わない）
+const SC = 2;                 // 2倍解像度。本文/地図はPNG(無劣化)なので2倍で十分くっきり。表紙(1054px写真)の拡大は2倍に抑える
 const W = 1054 * SC, H = 1492 * SC;
 const X = (p) => W * p / 100, Y = (p) => H * p / 100;
 
