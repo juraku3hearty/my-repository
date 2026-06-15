@@ -422,8 +422,9 @@ async function buildPDF(astro, name, outPath, blocksOverride) {
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
   pages.forEach((c, i) => {
     if (i) doc.addPage({ size: 'A4', margin: 0 });
-    // 1枚絵合成は維持（空白ページ対策）。文字のフチがガビガビにならないよう高品質JPEG(0.98)で書き出す
-    doc.image(c.toBuffer('image/jpeg', 0.98), 0, 0, A4);
+    // 表紙(i=0)は細い光線が多くJPEGだとガビガビになるのでPNG(無劣化)。本文・地図は無地なので軽いJPEGで十分
+    const buf = i === 0 ? c.toBuffer('image/png') : c.toBuffer('image/jpeg', 0.98);
+    doc.image(buf, 0, 0, A4);
   });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
