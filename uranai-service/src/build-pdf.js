@@ -32,6 +32,47 @@ const BM = { 廟: ['◎', '#C99A3A'], 旺: ['◎', '#C99A3A'], 得: ['○', '#9a
   平: ['◇', '#B0834A'], 不: ['△', '#B5524A'], 陷: ['△', '#B5524A'] };
 const MM = { 祿: '#C99A3A', 權: '#C99A3A', 科: '#C99A3A', 忌: '#B5524A' };
 
+// 羊皮紙の背景を「フル解像度でその場に描く」（1054pxビットマップの2倍引き伸ばし＝ガビガビを廃止）。
+// グラデ＋細い金枠＋四隅飾り＋コンパス＋微細ドットを全部ベクター描画するので、どの倍率でもくっきり。
+function drawParchment(x) {
+  // 1) クリーム地のグラデーション
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#f6efda'); g.addColorStop(0.5, '#f1e7c9'); g.addColorStop(1, '#ece0bf');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  // 2) ふちをほんのり落とすヴィネット
+  const rg = x.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.72);
+  rg.addColorStop(0, 'rgba(255,255,255,0)'); rg.addColorStop(1, 'rgba(120,90,40,0.10)');
+  x.fillStyle = rg; x.fillRect(0, 0, W, H);
+  // 3) 微細なドット（紙の風合い）
+  x.save();
+  for (let i = 0; i < 320; i++) {
+    const rx = Math.random() * W, ry = Math.random() * H;
+    x.globalAlpha = 0.05 + Math.random() * 0.06; x.fillStyle = '#b8923f';
+    x.beginPath(); x.arc(rx, ry, SC * (0.3 + Math.random() * 0.5), 0, Math.PI * 2); x.fill();
+  }
+  x.restore();
+  // 4) 金の二重枠＋四隅の菱形飾り
+  x.strokeStyle = COL.gold; x.fillStyle = COL.gold;
+  const m1 = 22 * SC, m2 = 30 * SC;
+  x.lineWidth = 2 * SC; x.strokeRect(m1, m1, W - 2 * m1, H - 2 * m1);
+  x.lineWidth = 0.8 * SC; x.strokeRect(m2, m2, W - 2 * m2, H - 2 * m2);
+  const diamond = (cx, cy, r) => { x.beginPath(); x.moveTo(cx, cy - r); x.lineTo(cx + r, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r, cy); x.closePath(); x.fill(); };
+  [[m1, m1], [W - m1, m1], [m1, H - m1], [W - m1, H - m1]].forEach(([cx, cy]) => diamond(cx, cy, 5 * SC));
+  // 5) コンパスローズ（右下）と八芒星（左下）：細い金線
+  const rose = (cx, cy, R, points) => {
+    x.save(); x.strokeStyle = 'rgba(184,138,58,0.5)'; x.fillStyle = 'rgba(184,138,58,0.5)'; x.lineWidth = 0.7 * SC;
+    for (let i = 0; i < points; i++) {
+      const a = (i / points) * Math.PI * 2; const long = i % (points / 8) === 0;
+      x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * R * (long ? 1 : 0.6), cy + Math.sin(a) * R * (long ? 1 : 0.6)); x.stroke();
+    }
+    x.beginPath(); x.arc(cx, cy, R * 0.5, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.arc(cx, cy, R * 0.16, 0, Math.PI * 2); x.fill();
+    x.restore();
+  };
+  rose(W - 80 * SC, H - 78 * SC, 52 * SC, 32);
+  rose(78 * SC, H - 80 * SC, 30 * SC, 16);
+}
+
 function resolver(astro) {
   const map = {}; astro.palaces.forEach((p) => { map[p.name] = p; });
   return (n) => { const p = map[n]; if (p && p.majorStars.length) return { stars: p.majorStars, b: false };
@@ -192,13 +233,12 @@ function bodyContent(astro) {
 }
 
 async function renderBodies(astro, name, blocksOverride, transparent = false) {
-  const img = transparent ? null : await loadImage(path.join(ASSETS, 'body.png'));
   const blocks = blocksOverride || bodyContent(astro);
   const ML = 130 * SC, MR = W - 130 * SC, contentW = MR - ML;
   const TOP = 175 * SC, BOTTOM = H - 150 * SC;
   const pages = []; let x, c, y; let firstPage = true;
   const newPage = () => {
-    c = createCanvas(W, H); x = c.getContext('2d'); if (img) x.drawImage(img, 0, 0, W, H);
+    c = createCanvas(W, H); x = c.getContext('2d'); if (!transparent) drawParchment(x);
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; y = TOP;
     if (firstPage) {
       x.textAlign = 'center'; x.fillStyle = COL.gold; x.font = `${15 * SC}px ${SERIF}`;
@@ -240,7 +280,7 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
 const COURT_ORDER = ['官祿', '父母', '福德', '田宅', '子女', '兄弟', '僕役', '疾厄', '遷移', '財帛', '夫妻']; // 12時から時計回り
 async function renderCourtDrawn(astro, transparent = false) {
   const c = createCanvas(W, H); const x = c.getContext('2d');
-  if (!transparent) { const bg = await loadImage(path.join(ASSETS, 'body.png')); x.drawImage(bg, 0, 0, W, H); }
+  if (!transparent) drawParchment(x);
   const res = resolver(astro);
   const pmap = {}; astro.palaces.forEach((p) => { pmap[p.name] = p; });
   const bodyName = (astro.palaces.find((p) => p.isBodyPalace) || {}).name;
