@@ -120,4 +120,73 @@ function detectKyoku(a) {
   return { kyoku: found, typeAxis, meiIdx };
 }
 
-module.exports = { detectKyoku, sanpou };
+// ── 目玉スキャナー ───────────────────────────────────────────────
+// 名前のついた格局だけでなく「桃花の集中・廟旺で際立つ星・吉星の密集」も点数化し、
+// その人の一番の“目玉”を自動で拾う。言われなくてもシステムが拾うように。
+const TOKA_MAIN = ['貪狼', '廉貞'];                          // 桃花の主星
+const TOKA_SUB = ['紅鸞', '天喜', '咸池', '天姚', '沐浴'];    // 華やぎ・色気
+const APPEARANCE = ['龍池', '鳳閣'];                         // 容姿端麗・気品
+const SIXKICHI = ['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞']; // 六吉（助け）
+const SELF_PALACES = ['命宮', '遷移', '福德', '夫妻'];        // 自分・人目に出る宮（身宮も加える）
+
+function findHighlights(astro) {
+  const { kyoku, typeAxis, meiIdx } = detectKyoku(astro);
+  const items = kyoku.map((k) => ({ ...k, score: k.rank }));
+  const bodyP = astro.palaces.find((p) => p.isBodyPalace);
+  const selfNames = new Set(SELF_PALACES.concat(bodyP ? [bodyP.name] : []));
+  const meiSanpou = sanpou(meiIdx);
+  const pmap = {}; astro.palaces.forEach((p) => { pmap[p.name] = p; });
+
+  // ① 美貌・人気の華（数より中身で判定：桃花主星が命/身、龍池鳳閣の同宮＝容姿端麗、命宮の愛嬌星）
+  // ※桃花の補助星は誰でも5〜8個持つので、数では差がつかない。配置の“質”で拾う。
+  const meiPalace = astro.palaces[meiIdx];
+  const hasName = (pal, names) => pal && [...pal.majorStars, ...pal.minorStars, ...pal.adjectiveStars].some((s) => names.includes(s.name));
+  let beauty = 0; const bStars = new Set(); const bWhy = [];
+  TOKA_MAIN.forEach((nm) => {
+    if (meiPalace.majorStars.some((s) => s.name === nm)) { beauty += 28; bStars.add(nm); bWhy.push(`魅力の主星「${nm}」が命宮にあり`); }
+    else if (bodyP && bodyP !== meiPalace && bodyP.majorStars.some((s) => s.name === nm)) { beauty += 25; bStars.add(nm); bWhy.push(`魅力の主星「${nm}」が人生の重心（身宮）にあり`); }
+    else if (['遷移', '福德', '夫妻'].some((pn) => pmap[pn] && pmap[pn].majorStars.some((s) => s.name === nm))) { beauty += 8; bStars.add(nm); }
+  });
+  if (hasName(meiPalace, ['紅鸞', '天姚'])) { beauty += 14; ['紅鸞', '天姚'].forEach((n) => { if (hasName(meiPalace, [n])) bStars.add(n); }); bWhy.push('愛嬌の星が命宮にあり'); }
+  astro.palaces.forEach((p) => { const ns = [...p.minorStars, ...p.adjectiveStars].map((s) => s.name); if (ns.includes('龍池') && ns.includes('鳳閣')) { beauty += 14; bStars.add('龍池'); bStars.add('鳳閣'); bWhy.push('容姿端麗の星（龍池・鳳閣）が同じ宮にそろい'); } });
+  ['遷移', '福德', '夫妻'].forEach((pn) => { if (hasName(pmap[pn], TOKA_SUB)) beauty += 4; });
+  if (meiPalace !== bodyP && bodyP && hasName(bodyP, APPEARANCE)) beauty += 6;
+  if (beauty >= 30) {
+    items.push({
+      key: '桃花集中', label: '美貌・人気の華', palace: '命宮・身宮ほか', score: Math.min(97, 45 + beauty),
+      inMeiSanpou: true, stars: [...bStars],
+      why: `${bWhy.join('、')}、人を惹きつける“華”がはっきり出ています。これは「美貌・人気の目玉」。顔立ちというより、その場をぱっと明るくする雰囲気と愛嬌で、自然と人目を引くタイプ。整えるほど（身だしなみ）運も開きます。`,
+    });
+  }
+
+  // ② 廟旺で際立つ星（明るい主星＋吉の四化＝その人の看板の力）
+  const meiPal = astro.palaces[meiIdx];
+  const meiPalForStar = (meiPal.majorStars.length ? meiPal : astro.palaces[(meiIdx + 6) % 12]);
+  meiPalForStar.majorStars.forEach((s) => {
+    const bright = (BRIGHT_RANK[s.brightness] ?? 2) >= 5; // 旺以上
+    const goodMut = ['祿', '權', '科'].includes(s.mutagen);
+    if (bright && goodMut) {
+      items.push({
+        key: '廟旺の主星', label: `際立つ「${s.name}」の力`, palace: '命宮', score: 64,
+        inMeiSanpou: true, stars: [s.name],
+        why: `あなたの中心の星「${s.name}」が、最も力を発揮できる明るい状態（${s.brightness}）で、しかも良い四化（化${s.mutagen}）を帯びています。生まれ持った看板の力で、ここがいちばん前に出る強みです。`,
+      });
+    }
+  });
+
+  // ③ 助けの厚さ（命宮三方四正に六吉が3つ以上＝人に恵まれる目玉）
+  const kichiInSanpou = new Set();
+  meiSanpou.forEach((i) => astro.palaces[i].minorStars.forEach((s) => { if (SIXKICHI.includes(s.name)) kichiInSanpou.add(s.name); }));
+  if (kichiInSanpou.size >= 3) {
+    items.push({
+      key: '吉星集中', label: '人に恵まれる星まわり', palace: '命宮(三方四正)', score: 56 + kichiInSanpou.size * 2,
+      inMeiSanpou: true, stars: [...kichiInSanpou],
+      why: `命宮まわりに、助けや引き立ての星（${[...kichiInSanpou].join('・')}）が${kichiInSanpou.size}つ集まっています。困ったときに人の手が自然と差し伸べられる、“人に恵まれる”目玉です。`,
+    });
+  }
+
+  items.sort((a, b) => b.score - a.score);
+  return { highlights: items, top: items[0] || null, typeAxis, meiIdx };
+}
+
+module.exports = { detectKyoku, findHighlights, sanpou };

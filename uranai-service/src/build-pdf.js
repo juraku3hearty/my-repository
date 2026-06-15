@@ -10,7 +10,7 @@ const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const PDFDocument = require('pdfkit');
 const { buildChart } = require('./generate-chart');
 const D = require('./ziwei-data');
-const { detectKyoku } = require('./kyoku');
+const { findHighlights } = require('./kyoku');
 
 GlobalFonts.registerFromPath('/usr/share/fonts/truetype/fonts-japanese-gothic.ttf', 'jp');
 // 明朝があれば使う（web/assets/fonts/ に .otf/.ttf があれば登録）
@@ -267,9 +267,8 @@ function bodyContent(astro) {
   const cho = uniq(stars.flatMap((s) => (D.CHO[s.name] || '').split('・'))).concat(kichiAdd);
   const tan = uniq(stars.flatMap((s) => (D.TAN[s.name] || '').split('・'))).concat(satsuAdd);
 
-  // 主役の格（命盤まるごとから検出し、一番強い格を主役に据える）
-  const { kyoku } = detectKyoku(astro);
-  const top = kyoku[0];
+  // 主役の力（命盤まるごとをスキャンし、一番の“目玉”＝格局・美貌・際立つ星などを主役に据える）
+  const { top } = findHighlights(astro);
   const kyokuBlocks = top ? [
     { type: 'h', t: `あなたの“主役の力”（${top.label}）` },
     { type: 'p', t: top.why },
