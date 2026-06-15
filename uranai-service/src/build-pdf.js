@@ -421,9 +421,10 @@ async function buildPDF(astro, name, outPath, blocksOverride) {
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
   pages.forEach((c, i) => {
     if (i) doc.addPage({ size: 'A4', margin: 0 });
-    // JPEGで埋め込む（PNGはビューアによって透明情報を白で描き「真っ白」になるため不可）。
-    // SC=3の高解像度なので、JPEGでも文字のフチはくっきり保たれる。
-    doc.image(c.toBuffer('image/jpeg', 0.93), 0, 0, A4);
+    // 表紙(i=0)=写真アートなのでJPEG(軽い・色化けしない)。
+    // 地図・本文(i>=1)=羊皮紙+細字。JPEGだとクリーム色が黄緑に化け＆小字がにじむため、PNG(無劣化)で埋め込む。
+    const buf = i === 0 ? c.toBuffer('image/jpeg', 0.95) : c.toBuffer('image/png');
+    doc.image(buf, 0, 0, A4);
   });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
