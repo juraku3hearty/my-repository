@@ -219,6 +219,13 @@ async function renderCourtDrawn(astro, transparent = false) {
   const c = createCanvas(W, H); const x = c.getContext('2d');
   if (!transparent) { const bg = await loadImage(path.join(ASSETS, 'body.png')); x.drawImage(bg, 0, 0, W, H); }
   const res = resolver(astro);
+  const pmap = {}; astro.palaces.forEach((p) => { pmap[p.name] = p; });
+  const bodyName = (astro.palaces.find((p) => p.isBodyPalace) || {}).name;
+  const SIXK = ['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞'], SIXS = ['擎羊', '陀羅', '火星', '鈴星', '地空', '地劫'];
+  const minorSegs = (n) => { const p = pmap[n]; if (!p) return []; const segs = [];
+    p.minorStars.forEach((s) => { const k = SIXK.includes(s.name), z = SIXS.includes(s.name); if (!k && !z) return;
+      if (segs.length) segs.push(['　', COL.soft]); segs.push([s.name, k ? '#9c6b3f' : '#B5524A']); });
+    return segs; };
   const GOLD = '#C39A4E', GOLD_F = 'rgba(195,154,78,0.42)';
   const cx = W / 2, cy = H * 0.505, rx = W * 0.355, ry = H * 0.285, rc = W * 0.072, discR = W * 0.135;
   x.textAlign = 'center'; x.textBaseline = 'middle';
@@ -236,16 +243,22 @@ async function renderCourtDrawn(astro, transparent = false) {
     const ri = discR * 0.64, ro = discR * (long ? 1.16 : 1.0);
     x.strokeStyle = long ? 'rgba(195,154,78,.55)' : 'rgba(195,154,78,.3)'; x.lineWidth = (long ? 2.4 : 1.3) * SC;
     x.beginPath(); x.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); x.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); x.stroke(); }
-  // 各宮の円＋ラベル
+  // 各宮の円＋ラベル（主星に加え、脇星=六吉六煞と身宮マークも表示＝人ごとに図が変わる）
   pts.forEach(([n, px, py]) => {
-    x.beginPath(); x.arc(px, py, rc, 0, 7); x.fillStyle = 'rgba(255,253,248,.55)'; x.fill();
-    x.lineWidth = 2 * SC; x.strokeStyle = GOLD; x.beginPath(); x.arc(px, py, rc, 0, 7); x.stroke();
-    x.fillStyle = GOLD; x.font = `${12 * SC}px ${SERIF}`; x.fillText('◆', px, py - rc - 9 * SC);
+    const isBody = (n === bodyName);
+    x.beginPath(); x.arc(px, py, rc, 0, 7); x.fillStyle = 'rgba(255,253,248,.6)'; x.fill();
+    x.lineWidth = (isBody ? 3.4 : 2) * SC; x.strokeStyle = isBody ? COL.navy : GOLD;
+    x.beginPath(); x.arc(px, py, rc, 0, 7); x.stroke();
+    if (isBody) { x.fillStyle = COL.navy; x.beginPath(); x.arc(px, py - rc, 12 * SC, 0, 7); x.fill();
+      x.fillStyle = '#fff'; x.font = `bold ${12 * SC}px ${SERIF}`; x.fillText('身', px, py - rc); }
+    else { x.fillStyle = GOLD; x.font = `${12 * SC}px ${SERIF}`; x.fillText('◆', px, py - rc - 9 * SC); }
     const info = D.COURT[n], r = res(n);
-    x.fillStyle = COL.navy; x.font = `bold ${20 * SC}px ${SERIF}`; x.fillText(info.mean, px, py - 30 * SC);
-    x.fillStyle = GOLD; x.font = `${12 * SC}px ${SERIF}`; x.fillText(`（${info.role}）`, px, py - 10 * SC);
-    x.fillStyle = '#7a7060'; x.font = `${10 * SC}px ${SERIF}`; x.fillText(`${n}宮`, px, py + 6 * SC);
-    drawSegsCentered(x, px, py + 26 * SC, starSegs(r.stars, r.b), `${13 * SC}px ${SERIF}`, rc * 1.9, 16 * SC);
+    x.fillStyle = COL.navy; x.font = `bold ${19 * SC}px ${SERIF}`; x.fillText(info.mean, px, py - 33 * SC);
+    x.fillStyle = GOLD; x.font = `${11 * SC}px ${SERIF}`; x.fillText(`（${info.role}）`, px, py - 16 * SC);
+    x.fillStyle = '#7a7060'; x.font = `${9.5 * SC}px ${SERIF}`; x.fillText(`${n}宮`, px, py - 3 * SC);
+    drawSegsCentered(x, px, py + 15 * SC, starSegs(r.stars, r.b), `${13 * SC}px ${SERIF}`, rc * 1.95, 15 * SC);
+    const ms = minorSegs(n);
+    if (ms.length) drawSegsCentered(x, px, py + 39 * SC, ms, `${11 * SC}px ${SERIF}`, rc * 1.95, 13 * SC);
   });
   // 中心の玉座
   x.beginPath(); x.arc(cx, cy, discR * 0.64, 0, 7); x.fillStyle = '#FBF4E2'; x.fill();
@@ -253,8 +266,10 @@ async function renderCourtDrawn(astro, transparent = false) {
   const cr = res('命宮');
   x.fillStyle = GOLD; x.font = `${15 * SC}px ${SERIF}`; x.fillText('◆', cx, cy - discR * 0.42);
   x.fillStyle = COL.navy; x.font = `bold ${44 * SC}px ${SERIF}`; x.fillText('帝', cx, cy - discR * 0.06);
-  x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText('＝ あなた（命宮）', cx, cy + discR * 0.26);
-  drawSegsCentered(x, cx, cy + discR * 0.44, starSegs(cr.stars, cr.b), `${14 * SC}px ${SERIF}`, discR * 1.1, 18 * SC);
+  x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText('＝ あなた（命宮）', cx, cy + discR * 0.24);
+  drawSegsCentered(x, cx, cy + discR * 0.42, starSegs(cr.stars, cr.b), `${14 * SC}px ${SERIF}`, discR * 1.2, 18 * SC);
+  const cms = minorSegs('命宮');
+  if (cms.length) drawSegsCentered(x, cx, cy + discR * 0.60, cms, `${12 * SC}px ${SERIF}`, discR * 1.2, 15 * SC);
   // 凡例
   x.fillStyle = COL.soft; x.font = `${9 * SC}px ${SERIF}`;
   x.fillText('臣下＝主星　◎強 ○中 ◇並 △課題　／　(祿)(權)(科)(忌)＝四化　／　借＝向かいの宮から', cx, H * 0.95);
