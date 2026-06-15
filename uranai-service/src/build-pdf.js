@@ -73,6 +73,72 @@ function drawParchment(x) {
   rose(78 * SC, H - 80 * SC, 30 * SC, 16);
 }
 
+// 表紙アートを「フル解像度でその場に描く」（cover.png 1054pxの2倍引き伸ばし＝ブロックノイズを廃止）。
+// 星空→朝焼け→山並みのグラデ＋中央の朝日（サンバースト）＋金枠＋王冠を全部ベクター描画。
+function drawCoverArt(x) {
+  // 1) 空のグラデーション（深い紺の星空→紫→朝焼けのオレンジ→足元の暗がり）
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0b1430'); g.addColorStop(0.26, '#1c2b56'); g.addColorStop(0.48, '#46396a');
+  g.addColorStop(0.64, '#8f4d5e'); g.addColorStop(0.78, '#cc6a39'); g.addColorStop(0.9, '#f0a64d'); g.addColorStop(1, '#2a1a12');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  // 2) 星（上2/3に散らす）
+  x.save();
+  for (let i = 0; i < 360; i++) {
+    const sx = Math.random() * W, sy = Math.random() * H * 0.62;
+    x.globalAlpha = 0.25 + Math.random() * 0.6; x.fillStyle = Math.random() < 0.15 ? '#ffe6a8' : '#ffffff';
+    x.beginPath(); x.arc(sx, sy, SC * (0.4 + Math.random() * 1.0), 0, Math.PI * 2); x.fill();
+  }
+  x.restore();
+  const cx = W / 2, sunY = H * 0.42;
+  // 3) 中央の朝日：放射する光線（サンバースト）
+  x.save(); x.translate(cx, sunY);
+  for (let i = 0; i < 72; i++) {
+    const a = (i / 72) * Math.PI * 2; const long = i % 3 === 0;
+    const len = H * (long ? 0.30 : 0.20) * (0.85 + Math.random() * 0.3);
+    x.strokeStyle = `rgba(247,210,130,${long ? 0.5 : 0.28})`; x.lineWidth = (long ? 1.4 : 0.8) * SC;
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.cos(a) * len, Math.sin(a) * len); x.stroke();
+  }
+  // 中央から地平へ落ちる光の柱
+  x.strokeStyle = 'rgba(247,220,150,0.45)'; x.lineWidth = 2 * SC;
+  x.beginPath(); x.moveTo(0, 0); x.lineTo(0, H * 0.46); x.stroke();
+  x.restore();
+  // 4) 朝日の輪と光球（中心の白い輝き）
+  const ring = x.createRadialGradient(cx, sunY, H * 0.02, cx, sunY, H * 0.13);
+  ring.addColorStop(0, 'rgba(255,255,245,0.95)'); ring.addColorStop(0.35, 'rgba(255,226,150,0.85)');
+  ring.addColorStop(0.7, 'rgba(232,170,80,0.35)'); ring.addColorStop(1, 'rgba(232,170,80,0)');
+  x.fillStyle = ring; x.beginPath(); x.arc(cx, sunY, H * 0.13, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = 'rgba(247,210,130,0.7)'; x.lineWidth = 1.5 * SC;
+  x.beginPath(); x.arc(cx, sunY, H * 0.075, 0, Math.PI * 2); x.stroke();
+  // 5) 地平線の輝き（足元中央から昇る光）
+  const hor = x.createRadialGradient(cx, H * 0.9, H * 0.01, cx, H * 0.9, H * 0.2);
+  hor.addColorStop(0, 'rgba(255,240,200,0.9)'); hor.addColorStop(0.5, 'rgba(248,180,90,0.4)'); hor.addColorStop(1, 'rgba(248,180,90,0)');
+  x.fillStyle = hor; x.fillRect(0, H * 0.72, W, H * 0.28);
+  // 6) 山並みのシルエット（重なり）
+  const mtn = (baseY, h, col) => {
+    x.fillStyle = col; x.beginPath(); x.moveTo(0, H);
+    x.lineTo(0, baseY);
+    for (let i = 0; i <= 8; i++) { const px = (W / 8) * i; const py = baseY - (Math.sin(i * 1.7) * 0.5 + 0.5) * h; x.lineTo(px, py); }
+    x.lineTo(W, H); x.closePath(); x.fill();
+  };
+  mtn(H * 0.9, H * 0.06, 'rgba(40,24,18,0.55)');
+  mtn(H * 0.95, H * 0.05, 'rgba(24,14,10,0.85)');
+  // 7) 金の二重枠＋四隅菱形＋上部の王冠
+  x.strokeStyle = COL.gold; x.fillStyle = COL.gold;
+  const m1 = 22 * SC, m2 = 30 * SC;
+  x.lineWidth = 2 * SC; x.strokeRect(m1, m1, W - 2 * m1, H - 2 * m1);
+  x.lineWidth = 0.8 * SC; x.strokeRect(m2, m2, W - 2 * m2, H - 2 * m2);
+  const diamond = (dx, dy, r) => { x.beginPath(); x.moveTo(dx, dy - r); x.lineTo(dx + r, dy); x.lineTo(dx, dy + r); x.lineTo(dx - r, dy); x.closePath(); x.fill(); };
+  [[m1, m1], [W - m1, m1], [m1, H - m1], [W - m1, H - m1]].forEach(([dx, dy]) => diamond(dx, dy, 5 * SC));
+  // 王冠（上辺中央）
+  x.save(); x.translate(cx, m1); const cw = 26 * SC, chh = 16 * SC;
+  x.fillStyle = COL.goldL; x.strokeStyle = COL.gold; x.lineWidth = 1.2 * SC;
+  x.beginPath(); x.moveTo(-cw, chh * 0.4); x.lineTo(-cw, -chh * 0.2); x.lineTo(-cw * 0.45, chh * 0.35);
+  x.lineTo(0, -chh); x.lineTo(cw * 0.45, chh * 0.35); x.lineTo(cw, -chh * 0.2); x.lineTo(cw, chh * 0.4); x.closePath();
+  x.fill(); x.stroke();
+  [-cw, 0, cw].forEach((ox) => { x.beginPath(); x.arc(ox, -chh * (ox === 0 ? 1 : 0.2), 2.4 * SC, 0, Math.PI * 2); x.fill(); });
+  x.restore();
+}
+
 function resolver(astro) {
   const map = {}; astro.palaces.forEach((p) => { map[p.name] = p; });
   return (n) => { const p = map[n]; if (p && p.majorStars.length) return { stars: p.majorStars, b: false };
@@ -126,7 +192,7 @@ function drawLine(x, L, ML, y, maxw) {
 
 async function renderCover(astro, name, transparent = false) {
   const c = createCanvas(W, H); const x = c.getContext('2d');
-  if (!transparent) { const img = await loadImage(path.join(ASSETS, 'cover.png')); x.drawImage(img, 0, 0, W, H); }
+  if (!transparent) drawCoverArt(x);
   x.textAlign = 'center'; x.textBaseline = 'middle'; const cx = W / 2;
   const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * SC; };
   sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * SC}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, Y(7));
