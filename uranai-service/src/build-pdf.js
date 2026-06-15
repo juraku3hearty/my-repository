@@ -159,8 +159,8 @@ async function renderBodies(astro, name) {
     if (firstPage) {
       x.textAlign = 'center'; x.fillStyle = COL.gold; x.font = `${15 * SC}px ${SERIF}`;
       x.fillText('帝 の 書　／　自分のトリセツ', W / 2, TOP - 70 * SC);
-      x.fillStyle = COL.navy; x.font = `bold ${34 * SC}px ${SERIF}`; x.fillText('あなたという人', W / 2, TOP - 28 * SC);
-      if (name) { x.fillStyle = COL.soft; x.font = `${16 * SC}px ${SERIF}`; x.fillText(`${name} さま`, W / 2, TOP + 4 * SC); }
+      x.fillStyle = COL.navy; x.font = `bold ${38 * SC}px ${SERIF}`; x.fillText('あなたという人', W / 2, TOP - 28 * SC);
+      if (name) { x.fillStyle = COL.soft; x.font = `${18 * SC}px ${SERIF}`; x.fillText(`${name} さま`, W / 2, TOP + 6 * SC); }
       x.textAlign = 'left'; y = TOP + 40 * SC; firstPage = false;
     }
     pages.push(c);
@@ -169,23 +169,23 @@ async function renderBodies(astro, name) {
   const ensure = (need) => { if (y + need > BOTTOM) newPage(); };
   for (const b of blocks) {
     if (b.type === 'h') {
-      ensure(70 * SC); y += 22 * SC;
-      x.fillStyle = COL.navy; x.font = `bold ${24 * SC}px ${SERIF}`; x.textAlign = 'left'; x.fillText(b.t, ML, y);
-      y += 14 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke();
-      y += 26 * SC;
+      ensure(78 * SC); y += 26 * SC;
+      x.fillStyle = COL.navy; x.font = `bold ${28 * SC}px ${SERIF}`; x.textAlign = 'left'; x.fillText(b.t, ML, y);
+      y += 16 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke();
+      y += 30 * SC;
     } else if (b.type === 'p') {
-      const lh = 34 * SC; const lines = wrap(x, b.t, contentW, `${19 * SC}px ${SERIF}`);
-      for (const ln of lines) { ensure(lh); x.fillStyle = COL.ink; x.font = `${19 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
-      y += 12 * SC;
+      const lh = 44 * SC; const lines = wrap(x, b.t, contentW, `${23 * SC}px ${SERIF}`);
+      for (const ln of lines) { ensure(lh); x.fillStyle = COL.ink; x.font = `${23 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
+      y += 14 * SC;
     } else if (b.type === 'ul') {
-      const lh = 32 * SC;
-      for (const it of b.items) { ensure(lh); x.fillStyle = COL.gold; x.font = `${12 * SC}px ${SERIF}`; x.fillText('◆', ML, y - 4 * SC);
-        x.fillStyle = COL.ink; x.font = `${18 * SC}px ${SERIF}`; x.fillText(it, ML + 26 * SC, y); y += lh; }
-      y += 12 * SC;
+      const lh = 40 * SC;
+      for (const it of b.items) { ensure(lh); x.fillStyle = COL.gold; x.font = `${14 * SC}px ${SERIF}`; x.fillText('◆', ML, y - 5 * SC);
+        x.fillStyle = COL.ink; x.font = `${22 * SC}px ${SERIF}`; x.fillText(it, ML + 30 * SC, y); y += lh; }
+      y += 14 * SC;
     } else if (b.type === 'note') {
-      y += 20 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke(); y += 24 * SC;
-      const lh = 26 * SC; const lines = wrap(x, b.t, contentW, `${13 * SC}px ${SERIF}`);
-      for (const ln of lines) { ensure(lh); x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
+      y += 22 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke(); y += 28 * SC;
+      const lh = 30 * SC; const lines = wrap(x, b.t, contentW, `${15 * SC}px ${SERIF}`);
+      for (const ln of lines) { ensure(lh); x.fillStyle = COL.soft; x.font = `${15 * SC}px ${SERIF}`; x.fillText(ln, ML, y); y += lh; }
     }
   }
   return pages;
