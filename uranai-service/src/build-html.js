@@ -86,8 +86,10 @@ function buildHTML(astro) {
   return { nodes, centerStars, centerProse, choList, tanList, kanText, fuuText, facts };
 }
 
-function render(astro) {
+function render(astro, opts = {}) {
   const h = buildHTML(astro);
+  const name = opts.name || '';
+  const cmd = D.COURT_COORDS['命宮'];
   const ASSET = '../assets';
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
 <title>帝の書 ― 自分のトリセツ</title>
@@ -106,40 +108,33 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
 
 /* 表紙（暗い背景→金/白文字） */
 .cover{background-image:url('${ASSET}/cover.png');color:var(--ivory);}
-.cover .kicker{position:absolute;top:30mm;left:0;right:0;text-align:center;
- font-weight:500;letter-spacing:.5em;font-size:13pt;color:var(--gold);text-indent:.5em;}
-.cover .ttl{position:absolute;top:46mm;left:0;right:0;text-align:center;
- font-family:var(--serif);font-weight:800;font-size:54pt;letter-spacing:.05em;color:#FFFDF8;
- text-shadow:0 2px 18px rgba(0,0,0,.35);}
-.cover .sub{position:absolute;top:78mm;left:0;right:0;text-align:center;
- font-family:var(--serif);font-size:13pt;letter-spacing:.16em;color:var(--ivory);text-shadow:0 1px 8px rgba(0,0,0,.4);}
-.cover .ti{position:absolute;top:150mm;left:0;right:0;text-align:center;
- font-family:var(--serif);font-weight:800;font-size:30pt;color:var(--navy);}
-.cover .msg{position:absolute;top:196mm;left:0;right:0;text-align:center;
- font-family:var(--serif);font-weight:700;font-size:28pt;letter-spacing:.12em;color:#3a2a12;
- text-shadow:0 1px 10px rgba(255,240,200,.5);}
-.cover .pill{position:absolute;top:228mm;left:0;right:0;text-align:center;}
+.cover>div{position:absolute;left:0;right:0;text-align:center;}
+.cover .kicker{top:7%;font-weight:500;letter-spacing:.5em;font-size:13pt;color:var(--gold);text-indent:.5em;text-shadow:0 1px 6px rgba(0,0,0,.5);}
+.cover .ttl{top:13.5%;font-family:var(--serif);font-weight:800;font-size:50pt;letter-spacing:.05em;color:#FFFDF8;text-shadow:0 2px 16px rgba(0,0,0,.5);}
+.cover .sub{top:24%;font-family:var(--serif);font-size:13pt;letter-spacing:.16em;color:var(--ivory);text-shadow:0 1px 8px rgba(0,0,0,.55);}
+.cover .name{top:29.5%;font-family:var(--serif);font-weight:600;font-size:16pt;letter-spacing:.1em;color:#F1DDAE;text-shadow:0 1px 8px rgba(0,0,0,.55);}
+.cover .ti{top:42%;font-family:var(--serif);font-weight:800;font-size:34pt;color:var(--navy);}
+.cover .msg{top:58%;font-family:var(--serif);font-weight:700;font-size:30pt;letter-spacing:.12em;color:#3a2410;text-shadow:0 1px 12px rgba(255,245,210,.65);}
+.cover .pill{top:69%;}
 .cover .pill span{display:inline-block;font-size:11pt;letter-spacing:.12em;color:var(--navy);
- background:rgba(255,253,248,.7);border:1px solid var(--navy);border-radius:30px;padding:5px 20px;}
-.cover .foot{position:absolute;bottom:18mm;left:0;right:0;text-align:center;font-size:9.5pt;
- letter-spacing:.08em;color:#3a2a12;}
+ background:rgba(255,253,248,.8);border:1px solid rgba(16,38,75,.5);border-radius:30px;padding:5px 20px;}
+.cover .foot{bottom:4%;font-size:9.5pt;letter-spacing:.08em;color:#3a2410;}
 
 /* 王宮地図 */
 .court{background-image:url('${ASSET}/court.png');}
 .court .hd{position:absolute;top:16mm;left:0;right:0;text-align:center;}
 .court .hd h2{font-family:var(--serif);font-weight:700;font-size:22pt;color:var(--navy);letter-spacing:.08em;}
 .court .hd p{font-size:10pt;color:var(--ink-soft);margin-top:2.5mm;letter-spacing:.06em;}
-.court-map{position:absolute;top:42mm;left:50%;transform:translateX(-50%);width:180mm;height:180mm;}
-.node{position:absolute;transform:translate(-50%,-50%);width:36mm;text-align:center;}
-.node .mean{font-family:var(--serif);font-weight:700;font-size:11.5pt;color:var(--navy);line-height:1.2;}
-.node .role{font-size:8pt;color:var(--gold);}
-.node .pal{font-size:7pt;color:var(--ink-soft);}
-.node .stars{font-size:9pt;color:var(--ink);margin-top:1px;}
-.throne{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50mm;text-align:center;color:var(--ivory);}
-.throne .ti{font-family:var(--serif);font-weight:800;font-size:30pt;color:var(--gold);line-height:1;
- text-shadow:0 1px 8px rgba(0,0,0,.4);}
-.throne .me{font-size:8.5pt;color:#fff;margin-top:1mm;}
-.throne .ts{font-size:9pt;margin-top:1mm;color:#fff;}
+.court-map{position:absolute;inset:0;}
+.node{position:absolute;transform:translate(-50%,-50%);width:33mm;text-align:center;}
+.node .mean{font-family:var(--serif);font-weight:700;font-size:11pt;color:var(--navy);line-height:1.15;}
+.node .role{font-size:7.5pt;color:#b88a3a;}
+.node .pal{font-size:6.5pt;color:var(--ink-soft);}
+.node .stars{font-size:8.5pt;color:var(--ink);margin-top:1px;line-height:1.2;}
+.throne{position:absolute;transform:translate(-50%,-50%);width:46mm;text-align:center;}
+.throne .ti{font-family:var(--serif);font-weight:800;font-size:32pt;color:var(--navy);line-height:1;}
+.throne .me{font-size:8.5pt;color:#6a5a3a;margin-top:1mm;}
+.throne .ts{font-size:9.5pt;margin-top:1mm;color:var(--ink);}
 .court .legend{position:absolute;bottom:15mm;left:0;right:0;text-align:center;font-size:8.5pt;color:var(--ink-soft);}
 
 /* 本文（クリーム→濃い藍文字） */
@@ -164,6 +159,7 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
   <div class="kicker">紫微斗数 × 帝王学</div>
   <div class="ttl">自分のトリセツ</div>
   <div class="sub">命盤からひもとく、あなたという人</div>
+  ${name ? `<div class="name">— ${esc(name)} さま —</div>` : ''}
   <div class="ti">帝</div>
   <div class="msg">あなたが主役。</div>
   <div class="pill"><span>自己理解の鑑定　／　PDFでお届け</span></div>
@@ -174,13 +170,13 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
   <div class="hd"><h2>あなたの王宮地図</h2><p>命宮を帝とし、十二宮を朝廷として ― あなたを支える役職と臣下たち</p></div>
   <div class="court-map">
     ${h.nodes}
-    <div class="throne"><div class="ti">帝</div><div class="me">＝ あなた（命宮）</div><div class="ts">${h.centerStars}</div></div>
+    <div class="throne" style="left:${cmd[0]}%;top:${cmd[1]}%;"><div class="ti">帝</div><div class="me">＝ あなた（命宮）</div><div class="ts">${h.centerStars}</div></div>
   </div>
   <div class="legend">臣下＝主星　<span class="s-gold">◎</span>強 <span class="s-silver">○</span>中 <span class="s-bronze">◇</span>並 <span class="s-red">△</span>課題　／　(祿)(權)(科)(忌)＝四化　／　借＝向かいの宮から　／　命盤計算：iztro</div>
 </section>
 
 <section class="page body-page">
-  <div class="bh"><div class="bk">帝 の 書　／　自分のトリセツ</div><div class="t">あなたという人</div></div>
+  <div class="bh"><div class="bk">帝 の 書　／　自分のトリセツ</div><div class="t">あなたという人</div>${name ? `<div style="font-size:11pt;color:#6a5a3a;margin-top:1.5mm;letter-spacing:.08em;">${esc(name)} さま</div>` : ''}</div>
   <div class="facts">${h.facts}</div>
   <div class="sec"><div class="h">
     <svg viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><path d="M3 8l4 4 5-7 5 7 4-4v9H3z"/></svg><h3>あなたの中心にあるもの（命宮）</h3></div>
