@@ -262,19 +262,18 @@ async function renderCourtDrawn(astro, transparent = false) {
 }
 
 async function buildPDF(astro, name, outPath, blocksOverride) {
-  // 文字は透明レイヤーで描き、背景は元PNGをそのまま下敷きに（JPEGノイズを出さない）
-  const cover = await renderCover(astro, name, true);
-  const court = await renderCourtDrawn(astro, true);              // 円もコードで描画（ズレ無し・12宮）
-  const bodies = await renderBodies(astro, name, blocksOverride, true);
-  const defs = [['cover.png', cover], ['body.png', court], ...bodies.map((b) => ['body.png', b])]; // 王宮地図の背景は羊皮紙
+  // 各ページは「背景＋文字」を1枚のキャンバスに合成（透明レイヤーは使わない＝どのビューアでも確実に表示）
+  const cover = await renderCover(astro, name);
+  const court = await renderCourtDrawn(astro);                    // 背景=羊皮紙＋円もコード描画（ズレ無し・12宮）
+  const bodies = await renderBodies(astro, name, blocksOverride);
+  const pages = [cover, court, ...bodies];
   const A4 = { width: 595.28, height: 841.89 };
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
-  defs.forEach(([bg, canvas], i) => {
+  pages.forEach((c, i) => {
     if (i) doc.addPage({ size: 'A4', margin: 0 });
-    doc.image(path.join(ASSETS, bg), 0, 0, A4);                 // 背景＝元PNG（無劣化）
-    doc.image(canvas.toBuffer('image/png'), 0, 0, A4);          // 文字＝透明PNG（くっきり）
+    doc.image(c.toBuffer('image/jpeg', 0.94), 0, 0, A4);
   });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
