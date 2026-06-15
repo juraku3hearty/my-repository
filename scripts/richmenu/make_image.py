@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""LINE受付ハブ リッチメニュー画像生成 v2 (2500x1686 / 2行3列 / 6セル)
+"""LINE受付ハブ リッチメニュー画像生成 v3 (2500x1686 / 2行3列 / 6セル)
 
-ブランド世界観に合わせた仕上げ:
-- 生成りクリームの背景 + 白い角丸カード(やわらかい影)
-- 見出しは明朝(Shippori Mincho Bold)・濃紺
-- 英字ミニラベルは暖色オレンジ(letter-spacing)
-- アイコンは Noto Color Emoji(カラー絵文字)
+世界観の仕上げ(写真背景版):
+- 全体背景に支笏湖の写真(サイトのヒーローと同じ)+ 濃紺グラデの薄オーバーレイ
+- ボタンは「すりガラス(フロスト)」風の半透明カード → 湖が透けつつ文字は読みやすい
+- 見出しは明朝(Shippori Mincho Bold)・濃紺、英ラベルは暖色オレンジ、アイコンはカラー絵文字
 出力: richmenu.png
 """
 import os
@@ -21,16 +20,12 @@ MINCHO = os.path.join(HERE, "fonts", "ShipporiMincho-Bold.ttf")
 MINCHO_FALLBACK = "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"
 SANS = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 EMOJI = "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"
+BG_PHOTO = os.path.join(HERE, "assets", "bg_shikotsu.jpg")
 
-# ブランドカラー
-CREAM = (0xF7, 0xF3, 0xEC)
-INK = (0x18, 0x26, 0x3C)   # 濃紺
-ORANGE = (0xD9, 0x7A, 0x2E)  # 暖色
-SUB_COL = (0x6B, 0x6F, 0x76)
-CARD_BG = (0xFF, 0xFF, 0xFF)
-CARD_LINE = (0xE5, 0xDE, 0xD2)
+INK = (0x18, 0x26, 0x3C)
+ORANGE = (0xD9, 0x7A, 0x2E)
+SUB_COL = (0x4A, 0x4F, 0x57)
 
-# 各セル: (絵文字, 英ラベル, 見出し, 補足)
 CELLS = [
     ("🌱", "NEW PAGE", "無料仮ページ", "まずはここから"),
     ("✏️", "EDIT",     "ページ変更",   "内容の修正依頼"),
@@ -47,7 +42,6 @@ def mincho(sz):
 
 
 def emoji_img(ch, target):
-    """Noto Color Emoji を target px のRGBAで返す(native strikeから縮小)."""
     for strike in (109, 136, 128):
         try:
             f = ImageFont.truetype(EMOJI, strike)
@@ -69,30 +63,65 @@ def emoji_img(ch, target):
     return None
 
 
-def rounded(draw, box, r, **kw):
-    draw.rounded_rectangle(box, radius=r, **kw)
+def cover(img, w, h):
+    """cover-fit(短辺基準で拡大→中央クロップ)."""
+    s = max(w / img.width, h / img.height)
+    nw, nh = round(img.width * s), round(img.height * s)
+    img = img.resize((nw, nh), Image.LANCZOS)
+    x = (nw - w) // 2
+    y = (nh - h) // 2
+    return img.crop((x, y, x + w, y + h))
+
+
+def rounded_mask(size, r):
+    m = Image.new("L", size, 0)
+    ImageDraw.Draw(m).rounded_rectangle([0, 0, size[0] - 1, size[1] - 1], radius=r, fill=255)
+    return m
 
 
 def main():
-    base = Image.new("RGB", (W, H), CREAM).convert("RGBA")
+    # --- 背景写真 + 濃紺グラデ オーバーレイ ---
+    photo = Image.open(BG_PHOTO).convert("RGB")
+    bg = cover(photo, W, H)
+    # ほんのり彩度/明度を整えるための薄いぼかしは不要(クロップのみ)。
+    # 濃紺の縦グラデ(上=薄 / 下=濃)で全体を引き締め、白カードを際立たせる
+    ov = Image.new("L", (1, H))
+    for y in range(H):
+        t = y / H
+        ov.putpixel((0, y), int(70 + 70 * t))      # alpha 70→140
+    ov = ov.resize((W, H))
+    navy = Image.new("RGB", (W, H), (16, 28, 46))
+    bg = Image.composite(navy, bg, ov)
 
-    pad = 46          # セル内側余白
     radius = 40
+    pad = 64  # 余白を広めに → 隙間から湖が見える
 
-    # --- やわらかい影レイヤー ---
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
     cards = []
     for ry, rh in ROWS:
         for cx, cw in COLS:
-            box = [cx + pad, ry + pad, cx + cw - pad, ry + rh - pad]
-            cards.append(box)
-            sd.rounded_rectangle([box[0], box[1] + 16, box[2], box[3] + 16],
-                                 radius=radius, fill=(24, 38, 60, 60))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(20))
-    base = Image.alpha_composite(base, shadow)
+            cards.append([cx + pad, ry + pad, cx + cw - pad, ry + rh - pad])
 
+    # --- カードの影 ---
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    for x0, y0, x1, y1 in cards:
+        sd.rounded_rectangle([x0, y0 + 18, x1, y1 + 18], radius=radius, fill=(10, 18, 30, 110))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(24))
+    bg = Image.alpha_composite(bg.convert("RGBA"), shadow).convert("RGB")
+
+    # --- フロスト(すりガラス)カード ---
+    for x0, y0, x1, y1 in cards:
+        region = bg.crop((x0, y0, x1, y1)).filter(ImageFilter.GaussianBlur(26))
+        white = Image.new("RGB", region.size, (255, 255, 255))
+        frost = Image.blend(region, white, 0.72)  # 72%白 → 透け感を残しつつ可読
+        bg.paste(frost, (x0, y0), rounded_mask(region.size, radius))
+
+    base = bg.convert("RGBA")
     d = ImageDraw.Draw(base)
+    # カード枠(白の細線)
+    for x0, y0, x1, y1 in cards:
+        d.rounded_rectangle([x0, y0, x1, y1], radius=radius, outline=(255, 255, 255, 200), width=3)
+
     f_title = mincho(92)
     f_sub = mincho(40)
     f_en = ImageFont.truetype(SANS, 34)
@@ -111,29 +140,20 @@ def main():
             l, t, r, b = d.textbbox((0, 0), text, font=font)
             d.text((cx - (r - l) / 2 - l, cy - (b - t) / 2 - t), text, font=font, fill=fill)
 
-    for box, (ch, en, title, sub) in zip(cards, CELLS):
-        x0, y0, x1, y1 = box
+    for (x0, y0, x1, y1), (ch, en, title, sub) in zip(cards, CELLS):
         cw, chh = x1 - x0, y1 - y0
         ccx = x0 + cw / 2
-        # カード
-        d.rounded_rectangle(box, radius=radius, fill=CARD_BG, outline=CARD_LINE, width=3)
-        # アイコン(絵文字)
-        ic = emoji_img(ch, 150)
+        ic = emoji_img(ch, 144)
         if ic is not None:
-            base.paste(ic, (int(ccx - ic.width / 2), int(y0 + chh * 0.20 - ic.height / 2)), ic)
-        # 英ラベル(オレンジ・字間広め)
+            base.paste(ic, (int(ccx - ic.width / 2), int(y0 + chh * 0.21 - ic.height / 2)), ic)
         center(en, f_en, ccx, y0 + chh * 0.44, ORANGE, tracking=10)
-        # オレンジの短い下線
         ul = 54
-        d.rounded_rectangle([ccx - ul, y0 + chh * 0.50, ccx + ul, y0 + chh * 0.50 + 6],
-                            radius=3, fill=ORANGE)
-        # 見出し(明朝・濃紺)
+        d.rounded_rectangle([ccx - ul, y0 + chh * 0.50, ccx + ul, y0 + chh * 0.50 + 6], radius=3, fill=ORANGE)
         center(title, f_title, ccx, y0 + chh * 0.64, INK)
-        # 補足
         center(sub, f_sub, ccx, y0 + chh * 0.80, SUB_COL)
 
-    out = os.path.join(HERE, "richmenu.png")
-    base.convert("RGB").save(out, "PNG", optimize=True)
+    out = os.path.join(HERE, "richmenu.jpg")
+    base.convert("RGB").save(out, "JPEG", quality=88, optimize=True, progressive=True)
     print(f"wrote {out} ({os.path.getsize(out)} bytes)")
 
 

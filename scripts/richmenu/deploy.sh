@@ -24,8 +24,8 @@ echo "richMenuId = $RID"
 echo "== 2) 画像アップロード =="
 curl -s -X POST "https://api-data.line.me/v2/bot/richmenu/$RID/content" \
   -H "Authorization: Bearer $TOK" \
-  -H "Content-Type: image/png" \
-  --data-binary @richmenu.png \
+  -H "Content-Type: image/jpeg" \
+  --data-binary @richmenu.jpg \
   -w "HTTP %{http_code}\n"
 
 echo "== 3) デフォルト設定 =="
