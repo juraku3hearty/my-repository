@@ -192,7 +192,12 @@ function drawLine(x, L, ML, y, maxw) {
 
 async function renderCover(astro, name, transparent = false) {
   const c = createCanvas(W, H); const x = c.getContext('2d');
-  if (!transparent) drawCoverArt(x);
+  if (!transparent) {
+    // 元のAIアート（きれい）を使う。2倍引き伸ばしのカクつきは高品質スムージングで抑える
+    const img = await loadImage(path.join(ASSETS, 'cover.png'));
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(img, 0, 0, W, H);
+  }
   x.textAlign = 'center'; x.textBaseline = 'middle'; const cx = W / 2;
   const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * SC; };
   sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * SC}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, Y(7));
