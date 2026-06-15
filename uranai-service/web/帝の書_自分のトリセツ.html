@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帝の書 ― 自分のトリセツ</title>
+<!--
+  帝の書 / 自分のトリセツ ― HTML/CSS テンプレート v1.0
+  デザインガイド v1.0 準拠（夜明けの王宮・Navy×Gold×Ivory・自己理解が主役）。
+
+  使い方（Macでの最終PDF化）:
+    1) このファイルを Google Chrome で開く（フォント取得のためネット接続）
+    2) ⌘P →「PDFに保存」→ 余白「なし」、背景グラフィック「オン」
+    ※ Safari でも可。フォントは Google Fonts から自動取得（Noto Serif JP / Shippori Mincho / Noto Sans JP）。
+
+  データ差し込み:
+    本ファイルはサンプル（1983-1-8 / 女 / 寅）入りの見本。
+    将来は iztro のデータを {{ }} 箇所へ流し込んでテンプレート化する想定。
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;600;700&family=Shippori+Mincho:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root{
+  --navy:#10264B; --navy-deep:#0b1c3a; --gold:#D6B06A; --gold-soft:#e6cd9a;
+  --ivory:#F8F4EB; --amber:#F4B36A; --peach:#F5C7B6; --soft-white:#FFFDF8;
+  --ink:#26303f; --ink-soft:#5b6678;
+  --silver:#A9AEB8; --bronze:#B0834A; --soft-red:#B5524A;
+  --serif:'Shippori Mincho','Noto Serif JP',serif;
+  --sans:'Noto Sans JP',sans-serif;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{ font-family:var(--sans); color:var(--ink); background:#586; }
+
+/* A4ページ */
+.page{
+  position:relative; width:210mm; height:297mm; overflow:hidden;
+  margin:8mm auto; background:var(--ivory);
+  box-shadow:0 6px 28px rgba(0,0,0,.35);
+}
+@media print{
+  @page{ size:A4; margin:0; }
+  body{ background:none; }
+  .page{ margin:0; box-shadow:none; page-break-after:always; }
+}
+
+/* 金の装飾枠（全ページ共通） */
+.frame{ position:absolute; inset:9mm; border:1.2px solid var(--gold); border-radius:3px; pointer-events:none; }
+.frame::after{ content:""; position:absolute; inset:2.4mm; border:0.5px solid rgba(214,176,106,.5); border-radius:2px; }
+.frame.on-dark{ border-color:rgba(214,176,106,.85); }
+.frame.on-dark::after{ border-color:rgba(214,176,106,.35); }
+
+/* ============ 表紙 ============ */
+.cover{
+  color:var(--ivory);
+  background:
+    linear-gradient(180deg,
+      #0a1c3c 0%, #102a52 30%, #244a78 50%,
+      #c98f5e 72%, var(--amber) 86%, var(--peach) 100%);
+}
+.cover .stars{ position:absolute; inset:0; }
+.cover-top{ position:absolute; top:24mm; left:0; right:0; text-align:center; }
+.kicker{ font-family:var(--sans); font-weight:500; letter-spacing:.5em;
+  font-size:13pt; color:var(--gold-soft); text-indent:.5em; }
+.brand-seal{ display:inline-block; margin-bottom:9mm; font-family:var(--serif);
+  font-weight:700; font-size:12pt; color:var(--gold); letter-spacing:.35em;
+  border:1px solid var(--gold); border-radius:30px; padding:3px 16px; text-indent:.35em; }
+.cover-title{ position:absolute; top:52mm; left:0; right:0; text-align:center;
+  font-family:var(--serif); font-weight:800; font-size:58pt; letter-spacing:.06em;
+  color:var(--soft-white); text-shadow:0 2px 24px rgba(255,240,200,.35); }
+.cover-sub{ position:absolute; top:84mm; left:0; right:0; text-align:center;
+  font-family:var(--serif); font-size:13pt; letter-spacing:.18em; color:var(--ivory); opacity:.92; }
+
+/* 朝日＋帝 */
+.sunrise{ position:absolute; top:108mm; left:50%; transform:translateX(-50%);
+  width:78mm; height:78mm; }
+.sunrise .rays{ position:absolute; inset:0; border-radius:50%;
+  background:
+    repeating-conic-gradient(from 0deg,
+      rgba(246,220,160,.55) 0deg 1.4deg, rgba(246,220,160,0) 1.4deg 15deg);
+  -webkit-mask:radial-gradient(circle, #000 30%, transparent 62%);
+  mask:radial-gradient(circle, #000 30%, transparent 62%); }
+.sunrise .disc{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:31mm; height:31mm; border-radius:50%;
+  background:radial-gradient(circle at 38% 34%, #fbe6b6, var(--gold) 72%, #c79a4e);
+  box-shadow:0 0 26px rgba(246,220,160,.7), inset 0 0 0 2px rgba(255,253,248,.6);
+  display:flex; align-items:center; justify-content:center; }
+.sunrise .disc span{ font-family:var(--serif); font-weight:800; font-size:34pt; color:var(--navy); }
+
+.cover-msg{ position:absolute; top:196mm; left:0; right:0; text-align:center;
+  font-family:var(--serif); font-weight:700; font-size:30pt; letter-spacing:.12em; color:var(--navy-deep); }
+.cover-meta{ position:absolute; top:222mm; left:0; right:0; text-align:center; color:var(--navy-deep); }
+.cover-pill{ display:inline-block; font-family:var(--sans); font-size:11pt; letter-spacing:.12em;
+  color:var(--navy); background:rgba(255,253,248,.6); border:1px solid var(--navy);
+  border-radius:30px; padding:5px 20px; }
+.cover-foot{ position:absolute; bottom:16mm; left:0; right:0; text-align:center;
+  font-size:9.5pt; letter-spacing:.1em; color:var(--navy-deep); opacity:.8; }
+
+/* ============ 王宮地図（朝廷図） ============ */
+.court{ background:var(--ivory); }
+.court .ttl{ position:absolute; top:18mm; left:0; right:0; text-align:center; }
+.court .ttl h2{ font-family:var(--serif); font-weight:700; font-size:24pt; color:var(--navy); letter-spacing:.08em; }
+.court .ttl p{ font-family:var(--sans); font-size:10.5pt; color:var(--ink-soft); margin-top:3mm; letter-spacing:.08em; }
+.court-map{ position:absolute; top:44mm; left:50%; transform:translateX(-50%); width:176mm; height:176mm; }
+.court-map svg.links{ position:absolute; inset:0; width:100%; height:100%; }
+.node{ position:absolute; transform:translate(-50%,-50%); width:38mm;
+  background:var(--soft-white); border:1px solid var(--gold); border-radius:8px;
+  padding:2.4mm 2mm; text-align:center; box-shadow:0 1px 5px rgba(16,38,75,.08); }
+.node .mean{ font-family:var(--serif); font-weight:700; font-size:12pt; color:var(--navy); }
+.node .role{ font-family:var(--sans); font-size:8pt; color:var(--gold); margin-top:1px; }
+.node .pal{ font-family:var(--sans); font-size:7pt; color:var(--ink-soft); }
+.node .stars{ font-family:var(--sans); font-size:8.5pt; color:var(--ink); margin-top:2px; border-top:.5px solid rgba(214,176,106,.5); padding-top:2px; }
+.throne{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:52mm; height:52mm; border-radius:50%; background:radial-gradient(circle at 40% 36%, #fff7e6, #f3e2bc 70%, var(--gold));
+  border:2px solid var(--gold); box-shadow:0 0 18px rgba(214,176,106,.45);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.throne .ti{ font-family:var(--serif); font-weight:800; font-size:30pt; color:var(--navy); line-height:1; }
+.throne .me{ font-family:var(--sans); font-size:8.5pt; color:var(--navy); margin-top:1mm; }
+.throne .ts{ font-family:var(--sans); font-size:8.5pt; color:#5a4a22; margin-top:1mm; }
+.court .legend{ position:absolute; bottom:16mm; left:0; right:0; text-align:center; font-size:8.5pt; color:var(--ink-soft); }
+.court .legend b{ font-weight:500; }
+
+/* 強弱の色 */
+.s-gold{ color:var(--gold); } .s-silver{ color:var(--silver); }
+.s-bronze{ color:var(--bronze); } .s-red{ color:var(--soft-red); }
+
+/* ============ 本文ページ ============ */
+.body-page{ background:var(--ivory); padding:22mm 20mm; }
+.watermark{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:150mm; height:150mm; opacity:.06; pointer-events:none; }
+.page-head{ text-align:center; margin-bottom:9mm; position:relative; }
+.page-head .bk{ font-family:var(--sans); font-size:9pt; letter-spacing:.3em; color:var(--gold); }
+.page-head .ttl{ font-family:var(--serif); font-weight:700; font-size:18pt; color:var(--navy); margin-top:2mm; letter-spacing:.06em; }
+.section{ position:relative; margin-bottom:9mm; }
+.sec-head{ display:flex; align-items:center; gap:3mm; margin-bottom:3mm;
+  border-bottom:1px solid rgba(214,176,106,.6); padding-bottom:2mm; }
+.sec-head .ic{ width:9mm; height:9mm; flex:0 0 9mm; }
+.sec-head h3{ font-family:var(--serif); font-weight:700; font-size:14.5pt; color:var(--navy); letter-spacing:.04em; }
+.section p{ font-family:var(--sans); font-size:11pt; line-height:2; color:var(--ink); margin-bottom:3mm; }
+.section ul{ list-style:none; }
+.section li{ font-family:var(--sans); font-size:11pt; line-height:1.9; color:var(--ink);
+  padding-left:6mm; position:relative; margin-bottom:1.5mm; }
+.section li::before{ content:"◆"; position:absolute; left:0; color:var(--gold); font-size:8pt; top:1px; }
+.note{ font-family:var(--sans); font-size:8.5pt; line-height:1.7; color:var(--ink-soft);
+  border-top:1px solid rgba(214,176,106,.5); padding-top:3mm; margin-top:6mm; }
+.facts{ font-family:var(--sans); font-size:10pt; color:var(--ink-soft);
+  background:rgba(214,176,106,.1); border-radius:6px; padding:4mm 5mm; margin-bottom:8mm; line-height:1.9; }
+.facts b{ color:var(--navy); font-weight:500; }
+</style>
+</head>
+<body>
+
+<!-- ========== 1. 表紙 ========== -->
+<section class="page cover">
+  <svg class="stars" viewBox="0 0 210 297" preserveAspectRatio="none">
+    <g stroke="rgba(230,205,154,.5)" stroke-width=".25" fill="none">
+      <polyline points="28,30 44,22 60,34 74,26"/>
+      <polyline points="150,24 166,34 182,26 176,42"/>
+      <polyline points="120,52 134,46 148,58"/>
+    </g>
+    <g fill="#fff">
+      <circle cx="28" cy="30" r=".7"/><circle cx="44" cy="22" r=".9"/><circle cx="60" cy="34" r=".7"/><circle cx="74" cy="26" r=".8"/>
+      <circle cx="150" cy="24" r=".8"/><circle cx="166" cy="34" r=".7"/><circle cx="182" cy="26" r=".9"/><circle cx="176" cy="42" r=".7"/>
+      <circle cx="120" cy="52" r=".7"/><circle cx="134" cy="46" r=".8"/><circle cx="148" cy="58" r=".7"/>
+      <circle cx="40" cy="60" r=".6" opacity=".8"/><circle cx="95" cy="30" r=".6" opacity=".7"/><circle cx="105" cy="70" r=".6" opacity=".7"/>
+    </g>
+  </svg>
+  <div class="frame on-dark"></div>
+
+  <div class="cover-top">
+    <div class="brand-seal">帝 の 書</div><br>
+    <div class="kicker">紫微斗数 × 帝王学</div>
+  </div>
+
+  <div class="cover-title">自分のトリセツ</div>
+  <div class="cover-sub">命盤からひもとく、あなたという人</div>
+
+  <div class="sunrise">
+    <div class="rays"></div>
+    <div class="disc"><span>帝</span></div>
+  </div>
+
+  <div class="cover-msg">あなたが主役。</div>
+  <div class="cover-meta">
+    <span class="cover-pill">自己理解の鑑定　／　PDFでお届け</span>
+  </div>
+  <div class="cover-foot">1983年1月8日 生まれ　／　女性　　鑑定日 2026年6月14日</div>
+</section>
+
+<!-- ========== 2. 王宮地図（朝廷図） ========== -->
+<section class="page court">
+  <div class="frame"></div>
+  <div class="ttl">
+    <h2>あなたの王宮地図</h2>
+    <p>命宮を帝とし、十二宮を朝廷として ― あなたを支える役職と臣下たち</p>
+  </div>
+
+  <div class="court-map">
+    <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <g stroke="rgba(214,176,106,.45)" stroke-width=".3">
+        <line x1="50" y1="50" x2="50"   y2="12"/>
+        <line x1="50" y1="50" x2="70.5" y2="18"/>
+        <line x1="50" y1="50" x2="84.6" y2="34.2"/>
+        <line x1="50" y1="50" x2="87.6" y2="55.4"/>
+        <line x1="50" y1="50" x2="78.7" y2="74.9"/>
+        <line x1="50" y1="50" x2="60.7" y2="86.5"/>
+        <line x1="50" y1="50" x2="39.3" y2="86.5"/>
+        <line x1="50" y1="50" x2="21.3" y2="74.9"/>
+        <line x1="50" y1="50" x2="12.4" y2="55.4"/>
+        <line x1="50" y1="50" x2="15.4" y2="34.2"/>
+        <line x1="50" y1="50" x2="29.5" y2="18"/>
+      </g>
+    </svg>
+
+    <!-- 11宮（時計回り・上から） -->
+    <div class="node" style="left:50%;   top:12%;">  <div class="mean">伴侶・恋愛</div><div class="role">（后）</div><div class="pal">夫妻宮</div><div class="stars">借 太陽<span class="s-gold">◎</span> 巨門<span class="s-gold">◎</span></div></div>
+    <div class="node" style="left:70.5%; top:18%;">  <div class="mean">親・目上</div><div class="role">（師父）</div><div class="pal">父母宮</div><div class="stars">天府<span class="s-silver">○</span></div></div>
+    <div class="node" style="left:84.6%; top:34.2%;"><div class="mean">金運・財</div><div class="role">（国庫）</div><div class="pal">財帛宮</div><div class="stars">借 天同<span class="s-gold">◎</span> 太陰<span class="s-gold">◎</span></div></div>
+    <div class="node" style="left:87.6%; top:55.4%;"><div class="mean">家・資産</div><div class="role">（城）</div><div class="pal">田宅宮</div><div class="stars">武曲<span class="s-gold">◎</span><span class="s-red">(忌)</span> 貪狼<span class="s-gold">◎</span></div></div>
+    <div class="node" style="left:78.7%; top:74.9%;"><div class="mean">子・後進</div><div class="role">（世継ぎ）</div><div class="pal">子女宮</div><div class="stars">借 武曲<span class="s-gold">◎</span> 貪狼<span class="s-gold">◎</span></div></div>
+    <div class="node" style="left:60.7%; top:86.5%;"><div class="mean">兄弟・仲間</div><div class="role">（義兄弟）</div><div class="pal">兄弟宮</div><div class="stars">廉貞<span class="s-bronze">◇</span> 破軍<span class="s-red">△</span></div></div>
+    <div class="node" style="left:39.3%; top:86.5%;"><div class="mean">友・部下</div><div class="role">（家臣）</div><div class="pal">僕役宮</div><div class="stars">天相<span class="s-red">△</span></div></div>
+    <div class="node" style="left:21.3%; top:74.9%;"><div class="mean">健康・体</div><div class="role">（御典医）</div><div class="pal">疾厄宮</div><div class="stars">紫微<span class="s-gold">◎</span><span class="s-gold">(權)</span> 七殺<span class="s-bronze">◇</span></div></div>
+    <div class="node" style="left:12.4%; top:55.4%;"><div class="mean">外の世界</div><div class="role">（遠征）</div><div class="pal">遷移宮</div><div class="stars">天機<span class="s-silver">○</span> 天梁<span class="s-gold">◎</span><span class="s-gold">(祿)</span></div></div>
+    <div class="node" style="left:15.4%; top:34.2%;"><div class="mean">心・楽しみ</div><div class="role">（御心）</div><div class="pal">福徳宮</div><div class="stars">天同<span class="s-gold">◎</span> 太陰<span class="s-gold">◎</span></div></div>
+    <div class="node" style="left:29.5%; top:18%;">  <div class="mean">仕事・役職</div><div class="role">（朝廷）</div><div class="pal">官禄宮</div><div class="stars">太陽<span class="s-gold">◎</span> 巨門<span class="s-gold">◎</span></div></div>
+
+    <!-- 中央：帝 -->
+    <div class="throne">
+      <div class="ti">帝</div>
+      <div class="me">＝ あなた（命宮）</div>
+      <div class="ts">借 天機<span class="s-silver">○</span> 天梁<span class="s-gold">◎</span><span class="s-gold">(祿)</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    臣下＝主星　<span class="s-gold">◎</span> 強い　<span class="s-silver">○</span> 中　<span class="s-bronze">◇</span> 並　<span class="s-red">△</span> 課題　／　(祿)(權)(科)(忌)＝四化　／　借＝向かいの宮から　／　命盤計算：iztro
+  </div>
+</section>
+
+<!-- ========== 3. 本文 1ページ目 ========== -->
+<section class="page body-page">
+  <div class="frame"></div>
+  <svg class="watermark" viewBox="0 0 100 100">
+    <g fill="none" stroke="#10264B">
+      <circle cx="50" cy="50" r="30" stroke-width=".4"/>
+      <g stroke-width=".3"><!-- 太陽の光 -->
+        <g id="ray"><line x1="50" y1="6" x2="50" y2="18"/></g>
+      </g>
+    </g>
+    <g fill="#10264B"><text x="50" y="58" font-size="34" text-anchor="middle" font-family="serif">帝</text></g>
+  </svg>
+
+  <div class="page-head">
+    <div class="bk">帝 の 書　／　自分のトリセツ</div>
+    <div class="ttl">あなたという人</div>
+  </div>
+
+  <div class="facts">
+    <b>生年月日</b> 1983年1月8日 4時13分ごろ（寅の刻）　／　<b>性別</b> 女性<br>
+    <b>五行局</b> 金の四局　／　<b>命宮</b> 空宮（向かいの星を借りる）→ 天機・天梁（化祿）　／　<b>身宮</b> 官禄宮
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><path d="M3 8l4 4 5-7 5 7 4-4v9H3z"/><circle cx="3" cy="8" r="1.2" fill="#D6B06A"/><circle cx="21" cy="8" r="1.2" fill="#D6B06A"/><circle cx="12" cy="5" r="1.2" fill="#D6B06A"/></svg>
+      <h3>あなたの中心にあるもの（命宮）</h3>
+    </div>
+    <p>あなたの命宮には、主役の星がない「空宮」でした。紫微斗数では、このとき向かいの宮の星を借りて人物像を読みます。あなたが借りるのは「天機」と「天梁」。よく気がついて、よく考える人です。</p>
+    <p>先のことまで頭が回るぶん、まだ起こってもないことまで心配して、動く前に立ち止まってしまうことがあるかもしれません。でも、本当に「こんなんで動いていいのかな」と思うくらいの段階で一歩出てみたほうが、案外そこから進み始めます。</p>
+    <p>そしてあなたには、困っている人を放っておけない、深い面倒見があります。その誠実さや世話好きは、ただの自己犠牲で終わりません。尽くした分が、人とのご縁やチャンスになって返ってくる――これが、あなたの命盤に表れたいちばんの巡り合わせです（天梁の化祿）。</p>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><circle cx="12" cy="12" r="5"/><g stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.2" y2="6.2"/><line x1="17.8" y1="17.8" x2="19.5" y2="19.5"/><line x1="19.5" y1="4.5" x2="17.8" y2="6.2"/><line x1="6.2" y1="17.8" x2="4.5" y2="19.5"/></g></svg>
+      <h3>あなたの強み</h3>
+    </div>
+    <ul>
+      <li>先を読んで段取りを組める、機転と分析の力（天機）</li>
+      <li>人の気持ちに気づき、困っている人を支えられる面倒見（天機・天梁）</li>
+      <li>筋を通す誠実さと、芯の通った正しさ（天梁）</li>
+      <li>尽くした分が「ご縁」になって返ってくる巡り合わせ（天梁・化祿）</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ========== 4. 本文 2ページ目 ========== -->
+<section class="page body-page">
+  <div class="frame"></div>
+
+  <div class="section">
+    <div class="sec-head">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><path d="M16 3a8 8 0 1 0 5 14.5A9 9 0 0 1 16 3z"/></svg>
+      <h3>気をつけたいクセ</h3>
+    </div>
+    <p>これは欠点ではなく、強みが少し行きすぎたときに出るクセです。知っておくと、扱いやすくなります。</p>
+    <ul>
+      <li>考えすぎて足が止まったり、心配が先に立つことがあります。完璧に見通せてからでなくて大丈夫。「まだ早いかな」で一歩、がちょうどいいくらいです（天機）。</li>
+      <li>人の世話を焼くうち、よかれと思った言葉が「説教」に聞こえてしまうことも。助けるのはやめなくていい。ひと言かける前に、ひと呼吸だけ「今この人は求めてるかな」と置くと、あなたの優しさはまっすぐ届きます（天梁）。</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M12 5l2.5 6.5L12 19l-2.5-7.5z" fill="#D6B06A" stroke="none"/></svg>
+      <h3>活かし方（仕事・社会）</h3>
+    </div>
+    <p>あなたは「身宮」が仕事の宮（官禄宮）に重なっています。仕事や社会での役割が、人生の重心になりやすい人、ということです。</p>
+    <p>その官禄宮には「太陽」と「巨門」が、どちらも強い状態で入っています。太陽は人を明るく照らし、公正にふるまう星。巨門は言葉と専門性の星です。人前に立って、言葉と知識で人を照らす――教育、発信、相談、専門職のような仕事で、あなたはいちばん輝きます。まわりの助けが、そのまま評価や信頼につながる巡り合わせ（左輔の化科）も添えられています。</p>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#D6B06A" stroke-width="1.6"><circle cx="8.5" cy="12" r="5"/><circle cx="15.5" cy="12" r="5"/></svg>
+      <h3>人間関係・ご縁</h3>
+    </div>
+    <p>夫妻宮も空宮なので、向かいの官禄宮から「太陽」と「巨門」を借りて読みます。あなたは、相手に明るく接し、よく尽くす、あたたかな関係をつくる人。そして、言葉が縁になるタイプです。本音をていねいに言葉にして語り合えると、関係はぐっと深まります。逆に、言わないままだと、ちょっとした行き違いから誤解が生まれやすい面も。気持ちを溜め込まず、短くていいから言葉にしてみる。それが、あなたのご縁のいちばんの鍵になります。</p>
+  </div>
+
+  <div class="note">
+    ※ 本鑑定は紫微斗数の命盤にもとづく「持ち味の傾向」をお伝えするものです。未来を断定したり、優劣を決めたりするものではありません。<br>
+    ※ 解釈は本サービスの「基準書」のみを根拠にし、主星と四化を中心に読みます。基準書に項目のない細かな星（命宮の陀羅・華蓋など）は今回は扱っていません。<br>
+    ※ 本鑑定は自己理解を目的としたもので、医療・法律・投資などの専門的助言ではありません。大切な判断はご自身の責任で行ってください。　命盤計算：iztro。
+  </div>
+</section>
+
+</body>
+</html>
