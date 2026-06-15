@@ -5,9 +5,10 @@
 
 ## ✅ 完了:リッチメニュー(2026-06-13)
 **作成・画像アップロード・デフォルト設定まで完了。** 全ユーザの下部メニューに表示される。
-- `richMenuId`: `richmenu-15c6bbf27af398de8b1705048ce0803a`(デフォルト設定済 = `GET /v2/bot/user/all/richmenu` で確認済)
-- 生成物・スクリプトは `scripts/richmenu/`(`make_image.py`=画像生成 / `richmenu.json`=メニュー定義 / `deploy.sh`=一括デプロイ / `richmenu.png`=確定画像)
-- 作り直す/差し替える時は `scripts/richmenu/deploy.sh` を実行(`LINE_CHANNEL_ACCESS_TOKEN` 必須)。再実行すると**新しいIDで再作成**されるので、不要になった旧メニューは `DELETE /v2/bot/richmenu/{id}` で掃除する。
+- `richMenuId`: `richmenu-bb57e4e7389ebfd2255f1a3b1829d8be`(デフォルト設定済 = `GET /v2/bot/user/all/richmenu` で確認済)
+- デザイン: ブランド世界観に合わせた仕上げ(生成りクリーム背景 × 白い角丸カード+影 × 見出しは明朝 Shippori Mincho × 暖色オレンジの英ラベル × Noto Color Emojiのカラーアイコン)
+- 生成物・スクリプトは `scripts/richmenu/`(`make_image.py`=画像生成 / `richmenu.json`=メニュー定義 / `deploy.sh`=一括デプロイ / `richmenu.png`=確定画像 / `fonts/ShipporiMincho-Bold.ttf`=見出しフォント)
+- 作り直す/差し替える時は `scripts/richmenu/deploy.sh` を実行(`LINE_CHANNEL_ACCESS_TOKEN` 必須)。**既存メニューの画像は再アップロード不可**なので、再実行すると新IDで作り直しになる → 古いメニューは `DELETE /v2/bot/richmenu/{id}` で掃除する(deploy.sh内では消さないので手動 or 確認後に削除)。
 - ハマりどころ: デフォルト設定 `POST /v2/bot/user/all/richmenu/{id}` はボディ無しのため `Content-Length: 0` を付けないと Akamai が **HTTP 411** を返す(deploy.sh は対応済)。
 
 ## (旧)今すぐの依頼 — 上記で完了済み
