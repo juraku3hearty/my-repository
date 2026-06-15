@@ -163,7 +163,6 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
   <div class="ttl">自分のトリセツ</div>
   <div class="sub">命盤からひもとく、あなたという人</div>
   ${name ? `<div class="name">— ${esc(name)} さま —</div>` : ''}
-  <div class="ti">帝</div>
   <div class="msg">あなたが主役。</div>
   <div class="pill"><span>自己理解の鑑定　／　PDFでお届け</span></div>
   <div class="foot">${h.facts.replace(/<[^>]+>/g, '')}</div>

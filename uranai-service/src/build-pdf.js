@@ -71,7 +71,7 @@ async function renderCover(astro, name) {
   sh('rgba(0,0,0,.55)', 16); x.fillStyle = COL.white; x.font = `bold ${84 * SC}px ${SERIF}`; x.fillText('自分のトリセツ', cx, Y(13.5));
   sh('rgba(0,0,0,.6)', 8); x.fillStyle = COL.ivory; x.font = `${22 * SC}px ${SERIF}`; x.fillText('命盤からひもとく、あなたという人', cx, Y(22.5));
   if (name) { x.fillStyle = '#F1DDAE'; x.font = `bold ${27 * SC}px ${SERIF}`; x.fillText(`— ${name} さま —`, cx, Y(27.5)); }
-  sh('rgba(255,250,235,.5)', 6); x.fillStyle = COL.navy; x.font = `bold ${60 * SC}px ${SERIF}`; x.fillText('帝', X(49), Y(39));
+  // 表紙の「帝」は廃止（朝日そのものを主役に）。王宮地図の中央には帝を残す。
   sh('rgba(255,245,210,.6)', 12); x.fillStyle = COL.warm; x.font = `bold ${52 * SC}px ${SERIF}`; x.fillText('あなたが主役。', cx, Y(60));
   sh('rgba(0,0,0,0)', 0);
   x.font = `${18 * SC}px ${SERIF}`; const t = '自己理解の鑑定　／　PDFでお届け';
