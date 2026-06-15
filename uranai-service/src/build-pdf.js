@@ -212,12 +212,61 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
   return pages;
 }
 
+// 王宮地図をコードで描画（円も自前で描くので配置ズレ無し・12宮ちょうど・高解像度）。
+// 背景はプレーンな羊皮紙(body.png)を下敷きにし、リング・サンバースト・文字を重ねる。
+const COURT_ORDER = ['官祿', '父母', '福德', '田宅', '子女', '兄弟', '僕役', '疾厄', '遷移', '財帛', '夫妻']; // 12時から時計回り
+async function renderCourtDrawn(astro, transparent = false) {
+  const c = createCanvas(W, H); const x = c.getContext('2d');
+  if (!transparent) { const bg = await loadImage(path.join(ASSETS, 'body.png')); x.drawImage(bg, 0, 0, W, H); }
+  const res = resolver(astro);
+  const GOLD = '#C39A4E', GOLD_F = 'rgba(195,154,78,0.42)';
+  const cx = W / 2, cy = H * 0.505, rx = W * 0.355, ry = H * 0.285, rc = W * 0.072, discR = W * 0.135;
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  // 見出し
+  x.fillStyle = COL.navy; x.font = `bold ${30 * SC}px ${SERIF}`; x.fillText('あなたの王宮地図', cx, H * 0.066);
+  x.fillStyle = COL.soft; x.font = `${12 * SC}px ${SERIF}`; x.fillText('命宮を帝とし、十二宮を朝廷として', cx, H * 0.10);
+  // 各宮の座標（11個を楕円に等間隔）
+  const pts = COURT_ORDER.map((n, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / COURT_ORDER.length;
+    return [n, cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
+  // 中心へのスポーク
+  x.strokeStyle = GOLD_F; x.lineWidth = 1 * SC;
+  pts.forEach(([, px, py]) => { x.beginPath(); x.moveTo(cx, cy); x.lineTo(px, py); x.stroke(); });
+  // 中心サンバースト
+  for (let i = 0; i < 60; i++) { const a = i * Math.PI / 30, long = i % 2 === 0;
+    const ri = discR * 0.64, ro = discR * (long ? 1.16 : 1.0);
+    x.strokeStyle = long ? 'rgba(195,154,78,.55)' : 'rgba(195,154,78,.3)'; x.lineWidth = (long ? 2.4 : 1.3) * SC;
+    x.beginPath(); x.moveTo(cx + ri * Math.cos(a), cy + ri * Math.sin(a)); x.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a)); x.stroke(); }
+  // 各宮の円＋ラベル
+  pts.forEach(([n, px, py]) => {
+    x.beginPath(); x.arc(px, py, rc, 0, 7); x.fillStyle = 'rgba(255,253,248,.55)'; x.fill();
+    x.lineWidth = 2 * SC; x.strokeStyle = GOLD; x.beginPath(); x.arc(px, py, rc, 0, 7); x.stroke();
+    x.fillStyle = GOLD; x.font = `${12 * SC}px ${SERIF}`; x.fillText('◆', px, py - rc - 9 * SC);
+    const info = D.COURT[n], r = res(n);
+    x.fillStyle = COL.navy; x.font = `bold ${20 * SC}px ${SERIF}`; x.fillText(info.mean, px, py - 30 * SC);
+    x.fillStyle = GOLD; x.font = `${12 * SC}px ${SERIF}`; x.fillText(`（${info.role}）`, px, py - 10 * SC);
+    x.fillStyle = '#7a7060'; x.font = `${10 * SC}px ${SERIF}`; x.fillText(`${n}宮`, px, py + 6 * SC);
+    drawSegsCentered(x, px, py + 26 * SC, starSegs(r.stars, r.b), `${13 * SC}px ${SERIF}`, rc * 1.9, 16 * SC);
+  });
+  // 中心の玉座
+  x.beginPath(); x.arc(cx, cy, discR * 0.64, 0, 7); x.fillStyle = '#FBF4E2'; x.fill();
+  x.lineWidth = 3 * SC; x.strokeStyle = GOLD; x.beginPath(); x.arc(cx, cy, discR * 0.64, 0, 7); x.stroke();
+  const cr = res('命宮');
+  x.fillStyle = GOLD; x.font = `${15 * SC}px ${SERIF}`; x.fillText('◆', cx, cy - discR * 0.42);
+  x.fillStyle = COL.navy; x.font = `bold ${44 * SC}px ${SERIF}`; x.fillText('帝', cx, cy - discR * 0.06);
+  x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText('＝ あなた（命宮）', cx, cy + discR * 0.26);
+  drawSegsCentered(x, cx, cy + discR * 0.44, starSegs(cr.stars, cr.b), `${14 * SC}px ${SERIF}`, discR * 1.1, 18 * SC);
+  // 凡例
+  x.fillStyle = COL.soft; x.font = `${9 * SC}px ${SERIF}`;
+  x.fillText('臣下＝主星　◎強 ○中 ◇並 △課題　／　(祿)(權)(科)(忌)＝四化　／　借＝向かいの宮から', cx, H * 0.95);
+  return c;
+}
+
 async function buildPDF(astro, name, outPath, blocksOverride) {
   // 文字は透明レイヤーで描き、背景は元PNGをそのまま下敷きに（JPEGノイズを出さない）
   const cover = await renderCover(astro, name, true);
-  const court = await renderCourt(astro, true);
+  const court = await renderCourtDrawn(astro, true);              // 円もコードで描画（ズレ無し・12宮）
   const bodies = await renderBodies(astro, name, blocksOverride, true);
-  const defs = [['cover.png', cover], ['court.png', court], ...bodies.map((b) => ['body.png', b])];
+  const defs = [['cover.png', cover], ['body.png', court], ...bodies.map((b) => ['body.png', b])]; // 王宮地図の背景は羊皮紙
   const A4 = { width: 595.28, height: 841.89 };
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -255,4 +304,4 @@ const FAMILY = [
   }
 })();
 
-module.exports = { buildPDF, renderCover, renderCourt, renderBodies };
+module.exports = { buildPDF, renderCover, renderCourt, renderCourtDrawn, renderBodies };
