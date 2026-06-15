@@ -268,18 +268,16 @@ function bodyContent(astro) {
   const tan = uniq(stars.flatMap((s) => (D.TAN[s.name] || '').split('・'))).concat(satsuAdd);
 
   // 主役の力（命盤まるごとをスキャンし、一番の“目玉”＝格局・美貌・際立つ星などを主役に据える）
-  const { top } = findHighlights(astro);
+  const { top, highlights } = findHighlights(astro);
   const kyokuBlocks = top ? [
     { type: 'h', t: `あなたの“主役の力”（${top.label}）` },
     { type: 'p', t: top.why },
   ] : [];
   const kanT = sec('官祿', 'あなたが力を発揮しやすいのは、こんな場です。', D.KAN, 'こうした場で持ち味を活かすほど、まわりからの信頼や評価につながっていきます。気負わず、得意なところから動いてみてください。');
   let fuuT = sec('夫妻', '人との関わりでは、こんな傾向があります。', D.FUU, '気持ちを溜め込まず、短くていいから言葉にしてみること。それだけで、すれ違いが減り、ご縁がぐっと深まります。');
-  // 桃花（魅力）の星が「自分・人目に関わる宮」にある人には、身だしなみ開運の一言を添える
-  const TOKA = ['貪狼', '廉貞', '紅鸞', '天喜', '咸池', '天姚'];
-  const selfPalaces = ['命宮', '遷移', '福德', '夫妻'].map((n) => pmap[n]).filter(Boolean);
-  if (bodyP) selfPalaces.push(bodyP);
-  const hasToka = selfPalaces.some((p) => [...p.majorStars, ...p.minorStars, ...p.adjectiveStars].some((s) => TOKA.includes(s.name)));
+  // 身だしなみ開運の一言は「美貌・人気の華」が本当に強い人だけ（findHighlightsの厳密判定）に限定。
+  // ※桃花の補助星は誰でも数個持つので、ゆるい有無判定だと誰にでも出てしまう（伸幸に誤爆していた）。
+  const hasToka = highlights.some((h) => h.key === '桃花集中');
   if (hasToka) fuuT += 'そしてあなたは、人を惹きつける“華”の星を持っています。魅力の星の人は「見られること」で運が開くタイプ。コンビニに行くひとつでも、少し身だしなみを整えて出かけるだけで、いいご縁やチャンスが自然と寄ってきます。';
   const zaiT = sec('財帛', 'お金とは、こんな付き合い方が向いています。', D.ZAI, '自分に合ったお金のリズムを知っておくと、無理なく豊かさを育てていけます。');
   const fukT = sec('福德', '心がいちばん満たされるのは、こんな時間です。', D.FUK, '忙しいときほど、この「満たされる時間」を意識して取り戻すと、あなたらしさが戻ってきます。');
