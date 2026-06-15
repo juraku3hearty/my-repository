@@ -242,6 +242,12 @@ async function renderCourt(astro, transparent = false) {
 // 本文（背景body.png）にセクションを縦に流す。複数ページに自動分割。
 // ※ 主星だけでなく「四化」「身宮」を織り込むことで、骨格が似た命盤でも一人ひとり変わる。
 function bodyContent(astro) {
+  // 命盤リーダー（チェックリスト全項目を自動で読む）に委譲。手書きブロックが無い人はこれで全項目出る。
+  return require('./reader').reader(astro);
+}
+
+// 旧スロット方式（参考保持・未使用）
+function bodyContentLegacy(astro) {
   const res = resolver(astro);
   const uniq = (a) => [...new Set(a)];
   const mutOf = (r) => r.stars.filter((s) => s.mutagen).map((s) => `「${s.name}」には、${D.MUT[s.mutagen]}。`).join('');
