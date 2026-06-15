@@ -10,6 +10,7 @@ const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const PDFDocument = require('pdfkit');
 const { buildChart } = require('./generate-chart');
 const D = require('./ziwei-data');
+const { detectKyoku } = require('./kyoku');
 
 GlobalFonts.registerFromPath('/usr/share/fonts/truetype/fonts-japanese-gothic.ttf', 'jp');
 // 明朝があれば使う（web/assets/fonts/ に .otf/.ttf があれば登録）
@@ -153,6 +154,14 @@ function bodyContent(astro) {
 
   const cho = uniq(stars.flatMap((s) => (D.CHO[s.name] || '').split('・'))).concat(kichiAdd);
   const tan = uniq(stars.flatMap((s) => (D.TAN[s.name] || '').split('・'))).concat(satsuAdd);
+
+  // 主役の格（命盤まるごとから検出し、一番強い格を主役に据える）
+  const { kyoku } = detectKyoku(astro);
+  const top = kyoku[0];
+  const kyokuBlocks = top ? [
+    { type: 'h', t: `あなたの“主役の力”（${top.label}）` },
+    { type: 'p', t: top.why },
+  ] : [];
   const kanT = sec('官祿', 'あなたが力を発揮しやすいのは、こんな場です。', D.KAN, 'こうした場で持ち味を活かすほど、まわりからの信頼や評価につながっていきます。気負わず、得意なところから動いてみてください。');
   const fuuT = sec('夫妻', '人との関わりでは、こんな傾向があります。', D.FUU, '気持ちを溜め込まず、短くていいから言葉にしてみること。それだけで、すれ違いが減り、ご縁がぐっと深まります。');
   const zaiT = sec('財帛', 'お金とは、こんな付き合い方が向いています。', D.ZAI, '自分に合ったお金のリズムを知っておくと、無理なく豊かさを育てていけます。');
@@ -164,6 +173,7 @@ function bodyContent(astro) {
     { type: 'h', t: 'あなたの中心にあるもの（命宮）' }, ...center.map((p) => ({ type: 'p', t: p })),
     ...cmut.map((p) => ({ type: 'p', t: p })), ...shin.map((p) => ({ type: 'p', t: p })),
     { type: 'h', t: 'あなたの強み' }, { type: 'p', t: 'あなたが自然にできること、まわりより少し得意なことを挙げると、こんな持ち味があります。' }, { type: 'ul', items: cho },
+    ...kyokuBlocks,
     { type: 'h', t: '気をつけたいクセ' }, { type: 'p', t: 'これは欠点ではなく、強みが少し行きすぎたときに出るクセです。あらかじめ知っておくと、ぐっと扱いやすくなります。' }, { type: 'ul', items: tan },
     { type: 'h', t: '活かし方（仕事・社会）' }, { type: 'p', t: kanT },
     { type: 'h', t: '人間関係・ご縁' }, { type: 'p', t: fuuT },
