@@ -22,7 +22,7 @@ try {
 } catch (e) { /* なければゴシック */ }
 
 const ASSETS = path.join(__dirname, '..', 'web', 'assets');
-const SC = 2;                 // 2倍解像度（文字くっきり）
+const SC = 3;                 // 3倍解像度（JPEGでも文字くっきり。真っ白回避のためPNGは使わない）
 const W = 1054 * SC, H = 1492 * SC;
 const X = (p) => W * p / 100, Y = (p) => H * p / 100;
 
@@ -43,12 +43,12 @@ function drawParchment(x) {
   const rg = x.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.72);
   rg.addColorStop(0, 'rgba(255,255,255,0)'); rg.addColorStop(1, 'rgba(120,90,40,0.10)');
   x.fillStyle = rg; x.fillRect(0, 0, W, H);
-  // 3) 微細なドット（紙の風合い）
+  // 3) 微細なドット（紙の風合い）※JPEGノイズを避けるため控えめに
   x.save();
-  for (let i = 0; i < 320; i++) {
+  for (let i = 0; i < 120; i++) {
     const rx = Math.random() * W, ry = Math.random() * H;
-    x.globalAlpha = 0.05 + Math.random() * 0.06; x.fillStyle = '#b8923f';
-    x.beginPath(); x.arc(rx, ry, SC * (0.3 + Math.random() * 0.5), 0, Math.PI * 2); x.fill();
+    x.globalAlpha = 0.03 + Math.random() * 0.04; x.fillStyle = '#b8923f';
+    x.beginPath(); x.arc(rx, ry, SC * (0.3 + Math.random() * 0.4), 0, Math.PI * 2); x.fill();
   }
   x.restore();
   // 4) 金の二重枠＋四隅の菱形飾り
@@ -421,9 +421,9 @@ async function buildPDF(astro, name, outPath, blocksOverride) {
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
   pages.forEach((c, i) => {
     if (i) doc.addPage({ size: 'A4', margin: 0 });
-    // 全ページPNG(無劣化)。背景がベクター描画になったので本文/地図のPNGも0.6〜0.8MBと軽い。
-    // JPEGだと文字のフチや金線がにじんで「ガビガビ」になるため使わない。
-    doc.image(c.toBuffer('image/png'), 0, 0, A4);
+    // JPEGで埋め込む（PNGはビューアによって透明情報を白で描き「真っ白」になるため不可）。
+    // SC=3の高解像度なので、JPEGでも文字のフチはくっきり保たれる。
+    doc.image(c.toBuffer('image/jpeg', 0.93), 0, 0, A4);
   });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
