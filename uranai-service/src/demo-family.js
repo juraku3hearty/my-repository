@@ -15,7 +15,7 @@ const FAMILY = [
   { label: '旦那', solar: '1983-3-14',  time: 4, gender: '男', note: '8:45 京都' },
   { label: '長女', solar: '2008-8-1',   time: 8, gender: '女', note: '15:51 京都' },
   { label: '次女', solar: '2011-12-12', time: 8, gender: '女', note: '16:24 京都' },
-  { label: '三女', solar: '2013-7-28',  time: 9, gender: '女', note: '18:00 京都' },
+  { label: '三女', solar: '2013-7-28',  time: 9, gender: '女', note: '17:43 京都' },
 ];
 
 const outDir = path.join(__dirname, '..', 'web', 'out');
