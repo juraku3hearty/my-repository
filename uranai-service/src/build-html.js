@@ -90,7 +90,10 @@ function render(astro, opts = {}) {
   const h = buildHTML(astro);
   const name = opts.name || '';
   const cmd = D.COURT_COORDS['命宮'];
-  const ASSET = '../assets';
+  const A = opts.assets || {};
+  const coverURL = A.cover || '../assets/cover.png';
+  const courtURL = A.court || '../assets/court.png';
+  const bodyURL = A.body || '../assets/body.png';
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
 <title>帝の書 ― 自分のトリセツ</title>
 <style>
@@ -106,22 +109,22 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
 @media print{@page{size:A4;margin:0;}body{background:none;}.page{margin:0;page-break-after:always;}}
 .s-gold{color:var(--gold);}.s-silver{color:var(--silver);}.s-bronze{color:var(--bronze);}.s-red{color:var(--soft-red);}
 
-/* 表紙（暗い背景→金/白文字） */
-.cover{background-image:url('${ASSET}/cover.png');color:var(--ivory);}
-.cover>div{position:absolute;left:0;right:0;text-align:center;}
-.cover .kicker{top:7%;font-weight:500;letter-spacing:.5em;font-size:13pt;color:var(--gold);text-indent:.5em;text-shadow:0 1px 6px rgba(0,0,0,.5);}
-.cover .ttl{top:13.5%;font-family:var(--serif);font-weight:800;font-size:50pt;letter-spacing:.05em;color:#FFFDF8;text-shadow:0 2px 16px rgba(0,0,0,.5);}
-.cover .sub{top:24%;font-family:var(--serif);font-size:13pt;letter-spacing:.16em;color:var(--ivory);text-shadow:0 1px 8px rgba(0,0,0,.55);}
-.cover .name{top:29.5%;font-family:var(--serif);font-weight:600;font-size:16pt;letter-spacing:.1em;color:#F1DDAE;text-shadow:0 1px 8px rgba(0,0,0,.55);}
-.cover .ti{top:44.5%;font-family:var(--serif);font-weight:800;font-size:34pt;color:var(--navy);}
-.cover .msg{top:58%;font-family:var(--serif);font-weight:700;font-size:30pt;letter-spacing:.12em;color:#3a2410;text-shadow:0 1px 12px rgba(255,245,210,.65);}
+/* 表紙（暗い背景→金/白文字）※中央アンカー(translateY-50%)で top%＝縦中心 */
+.cover{background-image:url('${coverURL}');color:var(--ivory);}
+.cover>div{position:absolute;left:0;right:0;text-align:center;transform:translateY(-50%);}
+.cover .kicker{top:7%;font-weight:500;letter-spacing:.5em;font-size:12pt;color:var(--gold);text-indent:.5em;text-shadow:0 1px 6px rgba(0,0,0,.5);}
+.cover .ttl{top:14%;font-family:var(--serif);font-weight:800;font-size:48pt;letter-spacing:.05em;color:#FFFDF8;text-shadow:0 2px 16px rgba(0,0,0,.5);}
+.cover .sub{top:22.5%;font-family:var(--serif);font-size:12pt;letter-spacing:.16em;color:var(--ivory);text-shadow:0 1px 8px rgba(0,0,0,.6);}
+.cover .name{top:27.5%;font-family:var(--serif);font-weight:600;font-size:15pt;letter-spacing:.1em;color:#F1DDAE;text-shadow:0 1px 8px rgba(0,0,0,.6);}
+.cover .ti{top:39%;font-family:var(--serif);font-weight:800;font-size:34pt;color:var(--navy);text-shadow:0 0 8px rgba(255,250,235,.5);}
+.cover .msg{top:60%;font-family:var(--serif);font-weight:700;font-size:29pt;letter-spacing:.12em;color:#3a2410;text-shadow:0 1px 12px rgba(255,245,210,.7);}
 .cover .pill{top:69%;}
 .cover .pill span{display:inline-block;font-size:11pt;letter-spacing:.12em;color:var(--navy);
- background:rgba(255,253,248,.8);border:1px solid rgba(16,38,75,.5);border-radius:30px;padding:5px 20px;}
-.cover .foot{bottom:4%;font-size:9.5pt;letter-spacing:.08em;color:#3a2410;}
+ background:rgba(255,253,248,.85);border:1px solid rgba(16,38,75,.55);border-radius:30px;padding:5px 20px;}
+.cover .foot{top:95.5%;font-size:9pt;letter-spacing:.08em;color:#3a2410;}
 
 /* 王宮地図 */
-.court{background-image:url('${ASSET}/court.png');}
+.court{background-image:url('${courtURL}');}
 .court .hd{position:absolute;top:16mm;left:0;right:0;text-align:center;}
 .court .hd h2{font-family:var(--serif);font-weight:700;font-size:22pt;color:var(--navy);letter-spacing:.08em;}
 .court .hd p{font-size:10pt;color:var(--ink-soft);margin-top:2.5mm;letter-spacing:.06em;}
@@ -138,7 +141,7 @@ body{font-family:var(--sans);color:var(--ink);background:#566;}
 .court .legend{position:absolute;bottom:15mm;left:0;right:0;text-align:center;font-size:8.5pt;color:var(--ink-soft);}
 
 /* 本文（クリーム→濃い藍文字） */
-.body-page{background-image:url('${ASSET}/body.png');padding:30mm 26mm;}
+.body-page{background-image:url('${bodyURL}');padding:30mm 26mm;}
 .bh{text-align:center;margin-bottom:9mm;}
 .bh .bk{font-size:9pt;letter-spacing:.3em;color:var(--gold);}
 .bh .t{font-family:var(--serif);font-weight:700;font-size:18pt;color:var(--navy);margin-top:2mm;letter-spacing:.06em;}
