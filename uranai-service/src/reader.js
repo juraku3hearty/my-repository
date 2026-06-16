@@ -80,8 +80,14 @@ function reader(astro) {
   const soloScore = meiKanNames.filter((n) => soloStars.includes(n)).length + (P['官祿'].majorStars.some((s) => s.mutagen === '權') ? 1 : 0);
   const orgScore = meiKanNames.filter((n) => orgStars.includes(n)).length;
   const solo = soloScore > orgScore;
+  const kanKichi = minorsKichi('官祿'); const kanMut = P['官祿'].majorStars.find((s) => s.mutagen && s.mutagen !== '忌');
   blocks.push(H('仕事・社会での活かし方'));
-  blocks.push(Pp(`${kanText || '人と関わりながら持ち味を活かせる場'}が、あなたの活きる場です。${solo ? '自分で切り拓く・任される・独立して動くほど伸びるタイプ。指示待ちより、裁量のある場を選んで。' : '組織やチームの中で、役割を持って支え・整える場で活きるタイプ。良い仲間とよい仕組みの中で力が出ます。'}気負わず、得意なところから動いてみてください。`));
+  let wp = `${kanText || '人と関わりながら持ち味を活かせる場'}が、あなたの力のいちばん発揮できる場です。`;
+  wp += solo ? '指示を待つより、自分で切り拓いたり任されたりする立場のほうが伸びるタイプ。裁量のある場を選ぶと、持ち味がそのまま成果につながります。' : '組織やチームの中で、はっきりした役割を持って支え・整える働き方が向いています。良い仲間と、よく回る仕組みの中にいるほど、力が自然に出ます。';
+  if (kanKichi.length) wp += 'しかも仕事の場では、人の助けや引き立てに恵まれやすい配置。差し出された手は遠慮なく受け取るほど、道がひらけます。';
+  else if (kanMut) wp += 'その分野では、力や評価という形での後押しも得やすいタイプです。';
+  wp += '気負わず、いちばん得意なところから動いてみてください。';
+  blocks.push(Pp(wp));
 
   // ── お金（財帛）＋貯まるvs散財 ───────────────────────────────
   const zai = majorsOf('財帛');
@@ -94,10 +100,11 @@ function reader(astro) {
   const zaiKi = P['財帛'].majorStars.some((s) => s.mutagen === '忌');
   blocks.push(H('お金との付き合い方'));
   let zp = `${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。`;
-  if (saver) zp += 'コツコツ蓄える力があるので、その堅実さを信じて大丈夫。';
-  if (spender) zp += '一方で勢いで出ていきやすい面もあるので、「使う分」と「とっておく分」を最初に分けておくと安心です。';
-  if (zaiKi) zp += 'お金に強くこだわると視野が狭くなりがち。数字は信頼できる人と共有すると、執着がほどけます。';
-  blocks.push(Pp(zp + '自分に合ったお金のリズムを知っておくと、無理なく豊かさを育てていけます。'));
+  if (saver) zp += 'コツコツ蓄える力があるので、その堅実さは信じて大丈夫。守りに入りすぎず、ときどき自分にごほうびを出すくらいで、ちょうどいいバランスです。';
+  if (spender) zp += '一方で、入ってきたぶん勢いよく出ていきやすいタイプ。これは悪いことではなく、お金を「生きたこと」に使える人ということ。ただ「使う分」と「先にとっておく分」を最初に分けておくと、波が来ても慌てずに済みます。';
+  if (zaiKi) zp += 'お金に強くこだわりすぎると、かえって視野が狭くなりがち。数字は信頼できる人と共有しておくと、執着がふっとほどけます。';
+  if (!saver && !spender && !zaiKi) zp += '大きく増やすことより、自分のペースで無理なく回していくほうが性に合います。背伸びした勝負より、地に足のついたやりくりが、結局いちばん効いてきます。';
+  blocks.push(Pp(zp + 'お金のリズムは人それぞれ。自分のリズムを知って、それに逆らわないことが、あなたの豊かさをいちばん長持ちさせます。'));
 
   // ── 恋愛・結婚（夫妻）＋早婚晩婚＋桃花 ───────────────────────
   const fuu = majorsOf('夫妻');
@@ -110,15 +117,21 @@ function reader(astro) {
   const early = fuuNames.some((n) => earlyStars.includes(n)) || hasStar('夫妻', '紅鸞') || hasStar('夫妻', '天喜');
   blocks.push(H('恋愛・パートナーシップ'));
   let fp = `${fuuText || '気持ちが通うと深くつながるタイプ'}。`;
-  if (late && !early) fp += '結婚はゆっくりめ（晩婚傾向）。焦らず、芯で信頼できる相手を選ぶほど長続きします。';
-  else if (early && !late) fp += '比較的はやくご縁が動きやすいタイプ。気持ちを素直に出せると、関係が育ちます。';
-  if (P['夫妻'].minorStars.some((s) => SIXS.includes(s.name)) || namesOf('夫妻').includes('巨門')) fp += 'ときに衝突やすれ違い（言葉の行き違い）が出やすいので、ためこまず短く言葉にすることが、いちばんの仲直りの作法です。';
+  if (late && !early) fp += '結婚やご縁はゆっくりめ（晩婚傾向）。焦らなくて大丈夫、むしろ時間をかけて芯から信頼できる相手を選ぶほど、長く続く関係になります。';
+  else if (early && !late) fp += '比較的はやくご縁が動きやすいタイプ。気持ちを素直に出せたときほど、関係はやわらかく育っていきます。';
+  else fp += 'ご縁の時期は人それぞれ。タイミングを急ぐより、一緒にいて安心できる相手かどうかを、何より大事にして。';
+  if (P['夫妻'].minorStars.some((s) => SIXS.includes(s.name)) || namesOf('夫妻').includes('巨門')) fp += 'ときに言葉の行き違いやぶつかりが出やすい配置でもあるので、ためこまず短く伝えるのが、いちばんの仲直りの作法になります。';
+  fp += '長い説明はいりません。「うれしい」「さみしい」を短く口にするだけで、あなたの気持ちはまっすぐ相手に届きます。';
   blocks.push(Pp(fp));
 
   // ── 健康（疾厄） ─────────────────────────────────────────────
   const eki = majorsOf('疾厄');
   blocks.push(H('健康・体質の傾向'));
-  blocks.push(Pp(`${eki.stars.map((s) => D.SHITSU[s.name]).filter(Boolean).join('。') || '大きな弱点は出にくいタイプ'}。早めに休む・あたためるなど、ちょっとした習慣が、あなたの調子を支えます。`));
+  const ekiSatsu = minorsSatsu('疾厄');
+  let hp = `${eki.stars.map((s) => D.SHITSU[s.name]).filter(Boolean).join('。') || '大きな弱点は出にくいタイプ'}。`;
+  hp += ekiSatsu.length ? 'もともと無理がきくぶん、気づかないうちに疲れを抱え込みやすいので、限界の前に手を抜くクセをつけておくと安心です。' : 'ふだんは無理がきくタイプですが、それゆえ「頑張りすぎ」に自分で気づきにくい面もあります。';
+  hp += '早めに休む・あたためる・よく眠る——そんな小さな習慣の積み重ねが、何よりあなたの調子を支えてくれます。';
+  blocks.push(Pp(hp));
   blocks.push({ type: 'note', t: '※ 体質の傾向で、医療的な診断ではありません。' });
 
   // ── 人間関係（父母・子女・兄弟・僕役） ─────────────────────────
@@ -134,15 +147,19 @@ function reader(astro) {
   const meiBrt = brightSum('命宮'), senBrt = brightSum('遷移');
   const rikyo = meiEmpty || senBrt > meiBrt || sen.stars.some((s) => ['紫微', '天府', '太陽', '七殺', '破軍'].includes(s.name) && (BR[s.brightness] ?? 2) >= 4);
   blocks.push(H('暮らし・場所・移動'));
-  blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。`));
+  blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。住まいや土地は、あなたの暮らしの土台。ここが整うと、ほかのことも自然と回りはじめます。`));
   let sp = `外の世界：${sen.stars.map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;
-  if (rikyo) sp += 'とくにあなたは、生まれ育った場所にとどまるより、地元を離れて新しい土地・環境に出るほど、味方が現れ運が開ける「外で伸びる」タイプ。環境を変えることを、怖がらなくて大丈夫です。';
+  if (rikyo) sp += 'とくにあなたは、生まれ育った場所にとどまるより、地元を離れて新しい土地や環境に出るほど、味方が現れて運がひらける「外で伸びる」タイプ。引っ越し・遠出・新しい場への挑戦を、怖がらなくて大丈夫です。';
+  else sp += '住み慣れた場所や、勝手のわかる環境にいるほど、落ち着いて力を出せるタイプ。無理に遠くへ動くより、地に足のついた範囲をていねいに耕すのが向いています。';
   blocks.push(Pp(sp));
 
   // ── 心（福徳） ───────────────────────────────────────────────
   const fuk = majorsOf('福德');
   blocks.push(H('心が満たされるとき'));
-  blocks.push(Pp(`${fuk.stars.map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。忙しいときほど、この時間を意識して取り戻すと、あなたらしさが戻ってきます。`));
+  let kp = `${fuk.stars.map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。`;
+  if (minorsSatsu('福德').length) kp += '考えごとや刺激が多いと、心がざわついて、なかなか休まらないこともあります。';
+  kp += '忙しいときほど、この“満たされる時間”を意識して取り戻してみて。あなた自身が満ちていることが、めぐりめぐって、まわりへのいちばんの贈り物になります。';
+  blocks.push(Pp(kp));
 
   // ── 今の人生の流れ（大限） ───────────────────────────────────
   const birthY = parseInt(String(astro.solarDate).split(/[-/]/)[0], 10);
@@ -158,7 +175,7 @@ function reader(astro) {
   const zatsu = [];
   const findStarPalaces = (name) => astro.palaces.filter((p) => [...p.minorStars, ...p.adjectiveStars].some((s) => s.name === name)).map((p) => p.name);
   if (findStarPalaces('天馬').length) zatsu.push('移動・遠方・転機に縁の星（天馬）を持ち、動くほど運が回ります');
-  if (['命宮', '財帛', '田宅', '福德'].some((n) => hasStar(n, '祿存'))) zatsu.push('蓄財の星（祿存）があり、地道にためる力に恵まれています');
+  if (['命宮', '財帛', '田宅', '福德'].some((n) => hasStar(n, '祿存')) && !spender) zatsu.push('蓄財の星（祿存）があり、地道にためる力に恵まれています');
   if (findStarPalaces('紅鸞').length || findStarPalaces('天喜').length) zatsu.push('魅力と結婚運の星（紅鸞・天喜）があり、人に好かれご縁に恵まれます');
   const muts = []; astro.palaces.forEach((p) => [...p.majorStars].forEach((s) => { if (s.mutagen) muts.push(`${p.name}の${s.name}に化${s.mutagen}`); }));
   if (zatsu.length) { blocks.push(H('そのほかの星のしるし')); blocks.push(Pp(zatsu.join('。') + '。')); }

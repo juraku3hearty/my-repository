@@ -406,12 +406,13 @@ async function renderCourtDrawn(astro, transparent = false) {
   x.beginPath(); x.arc(cx, cy, discR * 0.64, 0, 7); x.fillStyle = '#FBF4E2'; x.fill();
   x.lineWidth = 3 * SC; x.strokeStyle = GOLD; x.beginPath(); x.arc(cx, cy, discR * 0.64, 0, 7); x.stroke();
   const cr = res('命宮');
-  x.fillStyle = GOLD; x.font = `${15 * SC}px ${SERIF}`; x.fillText('◆', cx, cy - discR * 0.42);
-  x.fillStyle = COL.navy; x.font = `bold ${44 * SC}px ${SERIF}`; x.fillText('帝', cx, cy - discR * 0.06);
-  x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText('＝ あなた（命宮）', cx, cy + discR * 0.24);
-  drawSegsCentered(x, cx, cy + discR * 0.42, starSegs(cr.stars, cr.b), `${14 * SC}px ${SERIF}`, discR * 1.2, 18 * SC);
   const cms = minorSegs('命宮');
-  if (cms.length) drawSegsCentered(x, cx, cy + discR * 0.60, cms, `${12 * SC}px ${SERIF}`, discR * 1.2, 15 * SC);
+  // ◆は外周の円と同じく「円の頂点（上の縁の外）」に乗せる。中身は円の中にバランスよく置く。
+  x.fillStyle = GOLD; x.font = `${15 * SC}px ${SERIF}`; x.fillText('◆', cx, cy - discR * 0.64 - 13 * SC);
+  x.fillStyle = COL.navy; x.font = `bold ${44 * SC}px ${SERIF}`; x.fillText('帝', cx, cy - discR * 0.16);
+  x.fillStyle = COL.soft; x.font = `${13 * SC}px ${SERIF}`; x.fillText('＝ あなた（命宮）', cx, cy + discR * 0.12);
+  drawSegsCentered(x, cx, cy + discR * 0.31, starSegs(cr.stars, cr.b), `${14 * SC}px ${SERIF}`, discR * 1.2, 18 * SC);
+  if (cms.length) drawSegsCentered(x, cx, cy + discR * 0.48, cms, `${12 * SC}px ${SERIF}`, discR * 1.2, 15 * SC);
   // 凡例
   x.fillStyle = COL.soft; x.font = `${9 * SC}px ${SERIF}`;
   x.fillText('臣下＝主星　◎強 ○中 ◇並 △課題　／　(祿)(權)(科)(忌)＝四化　／　借＝向かいの宮から', cx, H * 0.95);
@@ -446,7 +447,8 @@ const FAMILY = [
   { name: '平井琴芭', solar: '2013-7-28', time: 9, gender: '女' },
 ];
 
-(async () => {
+// 直接実行されたときだけ自動生成する。require時には動かさない（手書き版PDFを上書きしないため）。
+if (require.main === module) (async () => {
   const a = process.argv.slice(2);
   const outDir = path.join(__dirname, '..', 'web', 'pdf');
   if (a.length >= 3) {
