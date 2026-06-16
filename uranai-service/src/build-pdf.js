@@ -435,12 +435,24 @@ async function renderCourtDrawn(astro, transparent = false) {
   return c;
 }
 
+// 最終行が短い孤立行（例：「る。」だけ中央にポツン）を防ぐ。前行末から文字を最終行へ送って2行を均す。
+function deOrphan(lineStrs, minLast = 5) {
+  if (lineStrs.length < 2) return lineStrs;
+  const a = [...lineStrs];
+  let L = a[a.length - 1], P = a[a.length - 2];
+  while ([...L].length < minLast && [...P].length > [...L].length + 1) {
+    const pc = [...P]; L = pc[pc.length - 1] + L; P = pc.slice(0, -1).join('');
+  }
+  a[a.length - 1] = L; a[a.length - 2] = P;
+  return a;
+}
+
 // 女帝モードの「手紙」ページ：羊皮紙に、大きめの文字を上下中央でドーンと配置（招待状・女帝より）。
 function renderJoteiLetter({ kicker, title, sub, paras }) {
   const c = createCanvas(W, H); const x = c.getContext('2d'); drawParchment(x);
   const ML = 160 * SC, cw = W - 2 * ML;
   const bodyFont = `${30 * SC}px ${SERIF}`, lh = 60 * SC, paraGap = 34 * SC;
-  const wrapped = paras.map((p) => wrap(x, p, cw, bodyFont));
+  const wrapped = paras.map((p) => deOrphan(wrap(x, p, cw, bodyFont).map((l) => l.t)));
   let bodyH = 0; wrapped.forEach((lines) => { bodyH += lines.length * lh + paraGap; });
   const titleH = (kicker ? 54 * SC : 0) + 74 * SC + (sub ? 50 * SC : 0) + 40 * SC;
   let y = Math.max(220 * SC, (H - (titleH + bodyH)) / 2); // 上下中央（最低マージン確保）
@@ -451,7 +463,7 @@ function renderJoteiLetter({ kicker, title, sub, paras }) {
   // 区切りの細い金線
   y += 14 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(W / 2 - 70 * SC, y); x.lineTo(W / 2 + 70 * SC, y); x.stroke(); y += 50 * SC;
   x.fillStyle = COL.ink; x.font = bodyFont;
-  for (const lines of wrapped) { for (const L of lines) { x.fillText(L.t, W / 2, y); y += lh; } y += paraGap; }
+  for (const lines of wrapped) { for (const L of lines) { x.fillText(L, W / 2, y); y += lh; } y += paraGap; }
   return c;
 }
 

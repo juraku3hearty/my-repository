@@ -365,14 +365,47 @@ const JOTEI_INTRO = [
   { type: 'p', t: 'これより、そなたという人間を、ゆるりと紐解いていこうぞ。' },
 ];
 
-// 女帝よりの締め。表紙「あなたが主役。」と呼応する universal な閉じ（PDF全体が"主役"で円環になる）。
+// 女帝よりの締め＝その人の鑑定を読み切った女帝による「全体のまとめ」。
+// 芯（命格）＋持ち味（命/官の一番明るい星）＋気をつける点（化忌/離郷/その他）を要約し、最後は表紙「あなたが主役。」と呼応する"主役"で円環。
+const JOTEI_GIFT = {
+  紫微: '人の上に立ち、場を統べる力', 天機: '先を読み、知恵をめぐらす力', 太陽: '人前で照らし、人を導く力',
+  武曲: '物事を成し遂げ、財を動かす力', 天同: '和をつくり、人を安らがせる力', 廉貞: 'おのれの色で場を染める力',
+  天府: '蓄え、守り、人を束ねる力', 太陰: '静かに人を惹き、美を見抜く力', 貪狼: '多芸で人を惹きつける力',
+  巨門: '言葉で説き、専門を究める力', 天相: '人を支え、信を得る力', 天梁: '年長者に愛され、人を世話する力',
+  七殺: '果断に勝負し、切り拓く力', 破軍: '古きを壊し、新しきを創る力',
+};
 function joteiOutro(astro) {
+  const P = {}; astro.palaces.forEach((p) => { P[p.name] = p; });
+  const idx = (n) => astro.palaces.findIndex((p) => p.name === n);
+  const borrowMajors = (n) => (P[n].majorStars.length ? P[n].majorStars : astro.palaces[(idx(n) + 6) % 12].majorStars);
+  const meiMajors = borrowMajors('命宮');
+  const meiNames = meiMajors.map((s) => s.name);
+  const meiEmpty = !P['命宮'].majorStars.length;
+  const hasKiIn = (n) => P[n].majorStars.some((s) => s.mutagen === '忌');
+  const horse = (n) => [...P[n].minorStars, ...P[n].adjectiveStars].some((s) => s.name === '天馬');
+  const isMover = ['七殺', '破軍'].some((n) => meiNames.includes(n));
+  const rikyo = horse('命宮') || horse('遷移') || meiEmpty || isMover;
+  // 芯（命格の軸）
+  const shin = meiEmpty ? 'そなたは、己一本の旗で押し通す王ではない。人と場の力を借り、束ねて治める、しなやかな器じゃ。'
+    : meiNames.some((n) => ['紫微', '天府', '天相'].includes(n)) ? 'そなたの芯は、守り、まとめ、人を束ねる帝の質。'
+      : meiNames.some((n) => ['七殺', '破軍', '貪狼'].includes(n)) ? 'そなたの芯は、動いて道を切り拓く将の質。'
+        : meiNames.some((n) => ['天機', '太陰', '天同', '天梁'].includes(n)) ? 'そなたの芯は、知恵で支え、場を整える賢者の質。'
+          : 'そなたの芯は、格に薄められず、まっすぐ純度高く出る、まれな質。';
+  // 持ち味（命宮＋官祿で一番明るい星）
+  const cmd = [...meiMajors, ...borrowMajors('官祿')];
+  const lead = cmd.length ? cmd.slice().sort((a, b) => (BR[b.brightness] ?? 2) - (BR[a.brightness] ?? 2))[0].name : '';
+  const gift = JOTEI_GIFT[lead] || 'おのれにしか出せぬ力';
+  // 気をつける点
+  const caution = (hasKiIn('田宅') || hasKiIn('財帛')) ? 'ただし、己を安う値付けするでない。蓄えと足場づくりだけは、信ある者に委ねよ。'
+    : rikyo ? '居場所は、生まれた内には収まらぬ。外を恐れるな。動くほどに、そなたを引き立てる者が現れる。'
+      : 'よそ見をするでない。己の「こうしたい」を、何より信じてやれ。';
   return [
     { type: 'h', t: '女帝より' },
-    { type: 'p', t: '妾は多くの命盤を見てきた。じゃが、同じ命盤は一つとしてない。' },
-    { type: 'p', t: 'そなたの人生もまた、誰かの真似では輝かぬ。だから比べるでない。急ぐでない。己の歩幅で進めばよい。' },
-    { type: 'p', t: '道は探すものではない。歩いた先にできるものじゃ。' },
-    { type: 'p', t: '迷ったときは思い出せ。この人生の主役は、いつだって、そなたであることを。' },
+    { type: 'p', t: '妾は数多の命盤を見てきた。じゃが、同じ命盤は一つとしてない。そなたの星もまた、誰の真似でも輝かぬ。' },
+    { type: 'p', t: `${shin}そして、そなたが備えしは、${gift}。` },
+    { type: 'p', t: caution },
+    { type: 'p', t: '比べるでない。急ぐでない。道は探すものではなく、歩いた先にできるものじゃ。' },
+    { type: 'p', t: '迷うたときは思い出せ。この人生の主役は、いつだって、そなたであることを。' },
   ];
 }
 
