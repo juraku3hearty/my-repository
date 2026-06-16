@@ -43,19 +43,18 @@ function lonOf(place) {
   if (place == null || place === '') return { lon: null, level: '指定なし', name: null };
   const s = String(place).replace(/\s+/g, '');
   if (/^-?\d+(\.\d+)?$/.test(s)) return { lon: parseFloat(s), level: '経度を直接指定', name: `${s}°` };
-  // 先頭の都道府県名を剥がして市区町村部分を取り出す
-  const pm = s.match(/^(.+?[都道府県])(.+)$/);
-  const prefPart = pm ? pm[1] : null;
-  const rest = pm ? pm[2] : s;
-  const cands = new Set([s, rest]);
-  for (const c of [...cands]) {
-    cands.add(c.replace(/[市区町村郡].*$/, '')); // 「函館市○○」→「函館」
-    cands.add(c.replace(/(市|区|町|村)$/, ''));   // 「函館市」→「函館」
+  // 先頭の都道府県名を「PREF_LONのキーで前方一致」して剥がす（「京都」の"都"で誤分割しないため）
+  let pref = null, rest = s;
+  for (const p of Object.keys(PREF_LON).sort((a, b) => b.length - a.length)) {
+    if (s.startsWith(p)) { pref = p; rest = s.slice(p.length).replace(/^(都|道|府|県)/, ''); break; }
   }
+  if (pref == null) { const pk = s.replace(/(都|道|府|県)$/, ''); if (PREF_LON[pk] != null) { pref = pk; rest = ''; } }
+  // 市区町村の辞書（市区町村部分を優先、なければ全体から）
+  const cands = new Set();
+  [rest, s].forEach((str) => { if (!str) return; cands.add(str); cands.add(str.replace(/[市区町村郡].*$/, '')); cands.add(str.replace(/(市|区|町|村)$/, '')); });
   for (const c of cands) { if (c && CITY_LON[c] != null) return { lon: CITY_LON[c], level: '市区町村', name: c }; }
-  // 都道府県フォールバック（県庁所在地の経度で近似）
-  const prefKey = (prefPart || s).replace(/(都|道|府|県)$/, '').replace(/^北海$/, '北海道');
-  if (PREF_LON[prefKey] != null) return { lon: PREF_LON[prefKey], level: '都道府県（県庁所在地で近似）', name: prefKey };
+  // 都道府県でフォールバック（県庁所在地の経度で近似）
+  if (pref && PREF_LON[pref] != null) return { lon: PREF_LON[pref], level: '都道府県（県庁所在地で近似）', name: pref };
   return { lon: null, level: '不明（経度補正なし＝均時差のみ）', name: s };
 }
 
