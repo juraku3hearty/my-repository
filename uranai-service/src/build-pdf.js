@@ -474,7 +474,7 @@ async function buildPDF(astro, name, outPath, blocksOverride, headerOverride = n
   let pages;
   if (jotei) {
     // 招待状（中央ドーン）→ 通常本文 → 女帝より（中央ドーン）
-    const invite = renderJoteiLetter({ kicker: '女帝からの招待状', title: '帝の書', sub: name ? `${name} へ` : '', paras: JOTEI_INTRO.map((b) => b.t) });
+    const invite = renderJoteiLetter({ kicker: '', title: '帝の書', sub: name ? `${name} へ` : '', paras: JOTEI_INTRO.map((b) => b.t) });
     const bodies = await renderBodies(astro, name);
     const outroBlocks = joteiOutro(astro);
     const outro = renderJoteiLetter({ kicker: '', title: '女帝より', sub: '', paras: outroBlocks.filter((b) => b.type === 'p').map((b) => b.t) });
