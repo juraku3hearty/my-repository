@@ -81,7 +81,7 @@ function reader(astro) {
   const orgScore = meiKanNames.filter((n) => orgStars.includes(n)).length;
   const solo = soloScore > orgScore;
   blocks.push(H('仕事・社会での活かし方'));
-  blocks.push(Pp(`あなたが力を発揮しやすいのは、こんな場です ―― ${kanText || '人と関わりながら持ち味を活かせる場'}。${solo ? '自分で切り拓く・任される・独立して動くほど活きるタイプ。指示待ちより、裁量のある場を選ぶと伸びます。' : '組織やチームの中で、役割を持って支え・整える場で活きるタイプ。良い仲間とよい仕組みの中にいると、力がぐっと出ます。'}気負わず、得意なところから動いてみてください。`));
+  blocks.push(Pp(`${kanText || '人と関わりながら持ち味を活かせる場'}が、あなたの活きる場です。${solo ? '自分で切り拓く・任される・独立して動くほど伸びるタイプ。指示待ちより、裁量のある場を選んで。' : '組織やチームの中で、役割を持って支え・整える場で活きるタイプ。良い仲間とよい仕組みの中で力が出ます。'}気負わず、得意なところから動いてみてください。`));
 
   // ── お金（財帛）＋貯まるvs散財 ───────────────────────────────
   const zai = majorsOf('財帛');
@@ -93,7 +93,7 @@ function reader(astro) {
   const spender = zaiNames.some((n) => spendStars.includes(n)) && P['財帛'].minorStars.some((s) => SIXS.includes(s.name));
   const zaiKi = P['財帛'].majorStars.some((s) => s.mutagen === '忌');
   blocks.push(H('お金との付き合い方'));
-  let zp = `お金とは、こんな付き合い方が向いています ―― ${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。`;
+  let zp = `${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。`;
   if (saver) zp += 'コツコツ蓄える力があるので、その堅実さを信じて大丈夫。';
   if (spender) zp += '一方で勢いで出ていきやすい面もあるので、「使う分」と「とっておく分」を最初に分けておくと安心です。';
   if (zaiKi) zp += 'お金に強くこだわると視野が狭くなりがち。数字は信頼できる人と共有すると、執着がほどけます。';
@@ -109,7 +109,7 @@ function reader(astro) {
   const late = fuuNames.some((n) => lateStars.includes(n)) || fuuSatsu;
   const early = fuuNames.some((n) => earlyStars.includes(n)) || hasStar('夫妻', '紅鸞') || hasStar('夫妻', '天喜');
   blocks.push(H('恋愛・パートナーシップ'));
-  let fp = `人との関わり・パートナーシップでは、こんな傾向 ―― ${fuuText || '気持ちが通うと深くつながるタイプ'}。`;
+  let fp = `${fuuText || '気持ちが通うと深くつながるタイプ'}。`;
   if (late && !early) fp += '結婚はゆっくりめ（晩婚傾向）。焦らず、芯で信頼できる相手を選ぶほど長続きします。';
   else if (early && !late) fp += '比較的はやくご縁が動きやすいタイプ。気持ちを素直に出せると、関係が育ちます。';
   if (P['夫妻'].minorStars.some((s) => SIXS.includes(s.name)) || namesOf('夫妻').includes('巨門')) fp += 'ときに衝突やすれ違い（言葉の行き違い）が出やすいので、ためこまず短く言葉にすることが、いちばんの仲直りの作法です。';
@@ -118,7 +118,8 @@ function reader(astro) {
   // ── 健康（疾厄） ─────────────────────────────────────────────
   const eki = majorsOf('疾厄');
   blocks.push(H('健康・体質の傾向'));
-  blocks.push(Pp(`体質には、こんな傾向が出やすいようです ―― ${eki.stars.map((s) => D.SHITSU[s.name]).filter(Boolean).join('。') || '大きな弱点は出にくいタイプ'}。あくまで傾向で、決めつけではありません。早めに休む・あたためるなど、ちょっとした習慣が調子を支えます。`));
+  blocks.push(Pp(`${eki.stars.map((s) => D.SHITSU[s.name]).filter(Boolean).join('。') || '大きな弱点は出にくいタイプ'}。早めに休む・あたためるなど、ちょっとした習慣が、あなたの調子を支えます。`));
+  blocks.push({ type: 'note', t: '※ 体質の傾向で、医療的な診断ではありません。' });
 
   // ── 人間関係（父母・子女・兄弟・僕役） ─────────────────────────
   const rel = (palace, label, map) => { const m = majorsOf(palace); const txt = m.stars.map((s) => map[s.name]).filter(Boolean).join('。'); const kch = minorsKichi(palace).length, sts = minorsSatsu(palace).length; let tail = ''; if (kch > sts) tail = '助けや恵まれた縁が出やすいところです。'; else if (sts > kch) tail = 'ときに気をつかう面もありますが、こちらから一言かけると和みます。'; return `${label}：${txt || 'おだやかな縁'}。${tail}`; };
@@ -141,7 +142,7 @@ function reader(astro) {
   // ── 心（福徳） ───────────────────────────────────────────────
   const fuk = majorsOf('福德');
   blocks.push(H('心が満たされるとき'));
-  blocks.push(Pp(`心がいちばん満たされるのは、こんな時間です ―― ${fuk.stars.map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。忙しいときほど、この時間を意識して取り戻すと、あなたらしさが戻ってきます。`));
+  blocks.push(Pp(`${fuk.stars.map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。忙しいときほど、この時間を意識して取り戻すと、あなたらしさが戻ってきます。`));
 
   // ── 今の人生の流れ（大限） ───────────────────────────────────
   const birthY = parseInt(String(astro.solarDate).split(/[-/]/)[0], 10);
@@ -163,7 +164,7 @@ function reader(astro) {
   if (zatsu.length) { blocks.push(H('そのほかの星のしるし')); blocks.push(Pp(zatsu.join('。') + '。')); }
 
   blocks.push(H('あなたへ'));
-  blocks.push(Pp('ここに書いたのは、あなたが生まれ持った「傾向」です。当たっているところは活かし、ピンとこないところは横に置いて大丈夫。大切なのは、自分を責めずに、持ち味を活かす方へ少しずつ舵を切ること。あなたは、あなたの人生の主役です。どうか、あなたらしく歩んでいってください。'));
+  blocks.push(Pp('最後に、ひとつだけ。ここに書いたのは「運命」ではなく、生まれ持った「傾向」――いわば運勢です。運命は決まっていても、傾向は、知って付き合い方を変えるだけで、いくらでも活かす方へ向けられます。だからこの一冊は、決められた答えではなく、あなたが自分を活かすための「地図」。当たっているところは活かし、ピンとこないところは横に置いて大丈夫。読み終えたら、また自分の足で歩きだしてください。主役は、いつだってあなたです。'));
   blocks.push({ type: 'note', t: '※ 本鑑定は紫微斗数の命盤（主星・輔星・煞星・四化・身宮など）にもとづく「持ち味の傾向」をお伝えするものです。未来の断定や優劣の判定ではありません。\n※ 解釈は本サービスの基準書のみを根拠にしています。\n※ 自己理解を目的としたもので、医療・法律・投資などの専門的助言ではありません。命盤計算：iztro。' });
 
   return blocks;

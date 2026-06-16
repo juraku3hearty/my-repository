@@ -198,30 +198,28 @@ function drawLine(x, L, ML, y, maxw) {
 }
 
 async function renderCover(astro, name, transparent = false) {
-  const c = createCanvas(W, H); const x = c.getContext('2d');
-  if (!transparent) {
-    // 元のAIアート（きれい）を使う。2倍引き伸ばしのカクつきは高品質スムージングで抑える
-    const img = await loadImage(path.join(ASSETS, 'cover.png'));
-    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
-    x.drawImage(img, 0, 0, W, H);
-  }
-  x.textAlign = 'center'; x.textBaseline = 'middle'; const cx = W / 2;
-  const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * SC; };
-  sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * SC}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, Y(7));
-  sh('rgba(0,0,0,.55)', 16); x.fillStyle = COL.white; x.font = `bold ${84 * SC}px ${SERIF}`; x.fillText('自分のトリセツ', cx, Y(13.5));
-  sh('rgba(0,0,0,.6)', 8); x.fillStyle = COL.ivory; x.font = `${22 * SC}px ${SERIF}`; x.fillText('命盤からひもとく、あなたという人', cx, Y(22.5));
-  if (name) { x.fillStyle = '#F1DDAE'; x.font = `bold ${27 * SC}px ${SERIF}`; x.fillText(`— ${name} さま —`, cx, Y(27.5)); }
-  // 表紙の「帝」は廃止（朝日そのものを主役に）。王宮地図の中央には帝を残す。
-  sh('rgba(255,245,210,.6)', 12); x.fillStyle = COL.warm; x.font = `bold ${52 * SC}px ${SERIF}`; x.fillText('あなたが主役。', cx, Y(60));
+  // 表紙は元画像(cover.png)の解像度そのままで描く（2倍に引き伸ばさない＝ボケ・ガビガビ無し）。
+  let img = null, cw = W, ch = H;
+  if (!transparent) { img = await loadImage(path.join(ASSETS, 'cover.png')); cw = img.width; ch = img.height; }
+  const c = createCanvas(cw, ch); const x = c.getContext('2d');
+  if (img) x.drawImage(img, 0, 0, cw, ch); // 1:1（引き伸ばし無し）
+  const s = cw / 1054;                      // 文字・座標スケール（元画像1054px基準。高解像度版に差し替えても自動追従）
+  const LX = (p) => cw * p / 100, LY = (p) => ch * p / 100, cx = cw / 2;
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * s; };
+  sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * s}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, LY(7));
+  sh('rgba(0,0,0,.55)', 16); x.fillStyle = COL.white; x.font = `bold ${84 * s}px ${SERIF}`; x.fillText('自分のトリセツ', cx, LY(13.5));
+  sh('rgba(0,0,0,.6)', 8); x.fillStyle = COL.ivory; x.font = `${22 * s}px ${SERIF}`; x.fillText('命盤からひもとく、あなたという人', cx, LY(22.5));
+  if (name) { x.fillStyle = '#F1DDAE'; x.font = `bold ${27 * s}px ${SERIF}`; x.fillText(`— ${name} さま —`, cx, LY(27.5)); }
+  sh('rgba(255,245,210,.6)', 12); x.fillStyle = COL.warm; x.font = `bold ${52 * s}px ${SERIF}`; x.fillText('あなたが主役。', cx, LY(60));
   sh('rgba(0,0,0,0)', 0);
-  x.font = `${18 * SC}px ${SERIF}`; const t = '自己理解の鑑定　／　PDFでお届け';
-  const tw = x.measureText(t).width, pw = tw + 54 * SC, ph = 42 * SC, py = Y(69) - ph / 2, pxx = cx - pw / 2;
-  x.fillStyle = 'rgba(255,253,248,.85)'; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * SC); x.fill();
-  x.strokeStyle = 'rgba(16,38,75,.55)'; x.lineWidth = 1.5 * SC; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * SC); x.stroke();
-  x.fillStyle = COL.navy; x.fillText(t, cx, Y(69));
-  const body = astro.palaces.find((p) => p.isBodyPalace);
-  x.fillStyle = COL.warm; x.font = `${16 * SC}px ${SERIF}`;
-  x.fillText(`${astro.solarDate} 生まれ　／　${astro.gender}　／　五行局 ${astro.fiveElementsClass}`, cx, Y(95.5));
+  x.font = `${18 * s}px ${SERIF}`; const t = '自己理解の鑑定　／　PDFでお届け';
+  const tw = x.measureText(t).width, pw = tw + 54 * s, ph = 42 * s, py = LY(69) - ph / 2, pxx = cx - pw / 2;
+  x.fillStyle = 'rgba(255,253,248,.85)'; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * s); x.fill();
+  x.strokeStyle = 'rgba(16,38,75,.55)'; x.lineWidth = 1.5 * s; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * s); x.stroke();
+  x.fillStyle = COL.navy; x.fillText(t, cx, LY(69));
+  x.fillStyle = COL.warm; x.font = `${16 * s}px ${SERIF}`;
+  x.fillText(`${astro.solarDate} 生まれ　／　${astro.gender}　／　五行局 ${astro.fiveElementsClass}`, cx, LY(95.5));
   return c;
 }
 
@@ -432,10 +430,9 @@ async function buildPDF(astro, name, outPath, blocksOverride) {
   const stream = fs.createWriteStream(outPath); doc.pipe(stream);
   pages.forEach((c, i) => {
     if (i) doc.addPage({ size: 'A4', margin: 0 });
-    // 表紙(i=0)=写真アートなのでJPEG(軽い・色化けしない)。
-    // 地図・本文(i>=1)=羊皮紙+細字。JPEGだとクリーム色が黄緑に化け＆小字がにじむため、PNG(無劣化)で埋め込む。
-    const buf = i === 0 ? c.toBuffer('image/jpeg', 0.95) : c.toBuffer('image/png');
-    doc.image(buf, 0, 0, A4);
+    // 全ページPNG(無劣化)。表紙はJPEGだと夜空にブロックノイズ(ガビガビ)が出るためPNGに統一。
+    // ※残るソフトさは元画像cover.pngが1054pxのため。根治には高解像度の元画像が必要。
+    doc.image(c.toBuffer('image/png'), 0, 0, A4);
   });
   doc.end();
   return new Promise((r) => stream.on('finish', () => r(outPath)));
