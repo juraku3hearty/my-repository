@@ -469,12 +469,12 @@ function renderJoteiLetter({ kicker, title, sub, paras }) {
 
 async function buildPDF(astro, name, outPath, blocksOverride, headerOverride = null, jotei = false) {
   // 各ページは「背景＋文字」を1枚のキャンバスに合成（透明レイヤーは使わない＝どのビューアでも確実に表示）
-  const cover = await renderCover(astro, name, false, jotei ? '女帝の書' : null);
+  const cover = await renderCover(astro, name, false, jotei ? '帝の書' : null);
   const court = await renderCourtDrawn(astro);                    // 背景=羊皮紙＋円もコード描画（ズレ無し・12宮）
   let pages;
   if (jotei) {
     // 招待状（中央ドーン）→ 通常本文 → 女帝より（中央ドーン）
-    const invite = renderJoteiLetter({ kicker: '女帝からの招待状', title: '女帝の書', sub: name ? `${name} へ` : '', paras: JOTEI_INTRO.map((b) => b.t) });
+    const invite = renderJoteiLetter({ kicker: '女帝からの招待状', title: '帝の書', sub: name ? `${name} へ` : '', paras: JOTEI_INTRO.map((b) => b.t) });
     const bodies = await renderBodies(astro, name);
     const outroBlocks = joteiOutro(astro);
     const outro = renderJoteiLetter({ kicker: '', title: '女帝より', sub: '', paras: outroBlocks.filter((b) => b.type === 'p').map((b) => b.t) });
@@ -519,9 +519,9 @@ if (require.main === module) (async () => {
     const r = correctedTimeIndex(solar, hhmm, pref);
     console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.地点 || pref}・${r.detail.精度}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
     const astro = buildChart(solar, r.index, gender);
-    const fname = `${jotei ? '女帝の書' : '自分のトリセツ'}_${name || solar}.pdf`;
+    const fname = `${jotei ? '帝の書' : '自分のトリセツ'}_${name || solar}.pdf`;
     await buildPDF(astro, name || '', path.join(outDir, fname), undefined, null, jotei);
-    console.log('PDF出力:', (jotei ? '【女帝の書】' : '') + (name || solar));
+    console.log('PDF出力:', (jotei ? '【帝の書】' : '') + (name || solar));
   } else if (a.length >= 3) {
     // 旧形式（互換）: <陽暦> <時刻index 0-12> <性別> [名前]
     const astro = buildChart(a[0], Number(a[1]), a[2]);
