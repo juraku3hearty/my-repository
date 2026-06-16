@@ -13,6 +13,7 @@ const { buildChart } = require('./generate-chart');
 const D = require('./ziwei-data');
 const { findHighlights } = require('./kyoku');
 const { correctedTimeIndex } = require('./solar-time');
+const { joteiReader } = require('./reader');
 
 GlobalFonts.registerFromPath('/usr/share/fonts/truetype/fonts-japanese-gothic.ttf', 'jp');
 // 明朝があれば使う（web/assets/fonts/ に .otf/.ttf があれば登録）
@@ -338,6 +339,7 @@ async function renderBodies(astro, name, blocksOverride, transparent = false, he
   newPage();
   const ensure = (need) => { if (y + need > BOTTOM) newPage(); };
   for (const b of blocks) {
+    if (b.type === 'pagebreak') { newPage(); continue; }
     if (b.type === 'h') {
       ensure(78 * SC); y += 26 * SC;
       x.fillStyle = COL.navy; x.font = `bold ${28 * SC}px ${SERIF}`; x.textAlign = 'left'; x.fillText(b.t, ML, y);
@@ -433,11 +435,11 @@ async function renderCourtDrawn(astro, transparent = false) {
   return c;
 }
 
-async function buildPDF(astro, name, outPath, blocksOverride) {
+async function buildPDF(astro, name, outPath, blocksOverride, headerOverride = null) {
   // 各ページは「背景＋文字」を1枚のキャンバスに合成（透明レイヤーは使わない＝どのビューアでも確実に表示）
   const cover = await renderCover(astro, name);
   const court = await renderCourtDrawn(astro);                    // 背景=羊皮紙＋円もコード描画（ズレ無し・12宮）
-  const bodies = await renderBodies(astro, name, blocksOverride);
+  const bodies = await renderBodies(astro, name, blocksOverride, false, headerOverride);
   const pages = [cover, court, ...bodies];
   const A4 = { width: 595.28, height: 841.89 };
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
@@ -463,18 +465,22 @@ const FAMILY = [
 
 // 直接実行されたときだけ自動生成する。require時には動かさない（手書き版PDFを上書きしないため）。
 if (require.main === module) (async () => {
-  const a = process.argv.slice(2);
+  let a = process.argv.slice(2);
+  const jotei = a.includes('--jotei') || a.includes('女帝'); // 女帝モード（帝の書）
+  a = a.filter((x) => x !== '--jotei' && x !== '女帝');
   const outDir = path.join(__dirname, '..', 'web', 'pdf');
+  const joteiArgs = jotei ? { blocks: (astro) => joteiReader(astro), header: (name) => ({ kicker: '女帝からの招待状', title: '帝の書', sub: name ? `${name} へ` : '' }), prefix: '帝の書' } : null;
   const isClock = a[1] && /^\d{1,2}:\d{2}$/.test(a[1]);
   if (isClock) {
     // 新形式: <陽暦> <HH:MM> <都道府県> <性別> [名前]　…真太陽時(経度時差+均時差)で時刻indexを自動補正
     const [solar, hhmm, pref, gender, name] = a;
-    if (!pref || !gender) { console.error('使い方: node src/build-pdf.js <陽暦YYYY-M-D> <HH:MM> <都道府県> <性別 男|女> [名前]'); process.exit(1); }
+    if (!pref || !gender) { console.error('使い方: node src/build-pdf.js <陽暦YYYY-M-D> <HH:MM> <都道府県> <性別 男|女> [名前] [--jotei]'); process.exit(1); }
     const r = correctedTimeIndex(solar, hhmm, pref);
     console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.地点 || pref}・${r.detail.精度}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
     const astro = buildChart(solar, r.index, gender);
-    await buildPDF(astro, name || '', path.join(outDir, `自分のトリセツ_${name || solar}.pdf`));
-    console.log('PDF出力:', name || solar);
+    const fname = `${jotei ? '帝の書' : '自分のトリセツ'}_${name || solar}.pdf`;
+    await buildPDF(astro, name || '', path.join(outDir, fname), jotei ? joteiArgs.blocks(astro) : undefined, jotei ? joteiArgs.header(name) : null);
+    console.log('PDF出力:', (jotei ? '【帝の書】' : '') + (name || solar));
   } else if (a.length >= 3) {
     // 旧形式（互換）: <陽暦> <時刻index 0-12> <性別> [名前]
     const astro = buildChart(a[0], Number(a[1]), a[2]);
