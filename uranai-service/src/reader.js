@@ -387,7 +387,7 @@ function joteiOutro(astro) {
   const rikyo = horse('命宮') || horse('遷移') || meiEmpty || isMover;
   // 芯（命格の軸）
   const shin = meiEmpty ? 'そなたは、己一本の旗で押し通す王ではない。人と場の力を借り、束ねて治める、しなやかな器じゃ。'
-    : meiNames.some((n) => ['紫微', '天府', '天相'].includes(n)) ? 'そなたの芯は、守り、まとめ、人を束ねる帝の質。'
+    : meiNames.some((n) => ['紫微', '天府', '天相'].includes(n)) ? 'そなたの芯は、守り、まとめ、人を束ねる長（おさ）の質。'
       : meiNames.some((n) => ['七殺', '破軍', '貪狼'].includes(n)) ? 'そなたの芯は、動いて道を切り拓く将の質。'
         : meiNames.some((n) => ['天機', '太陰', '天同', '天梁'].includes(n)) ? 'そなたの芯は、知恵で支え、場を整える賢者の質。'
           : 'そなたの芯は、格に薄められず、まっすぐ純度高く出る、まれな質。';
