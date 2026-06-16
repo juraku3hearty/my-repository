@@ -1,7 +1,8 @@
 // 帝の書 PDF 直接生成（私の環境で描画を確認できる方式）
 // 背景(原寸PNG)＋命盤データ＋基準書テキストを canvas で合成し、各ページをJPEGにして PDF 化。
 // プレビューで詰めた座標そのままなので「見た通りのPDF」になる。
-//   実行: node src/build-pdf.js <陽暦> <時刻index> <性別> [出力名]
+//   実行: node src/build-pdf.js <陽暦> <HH:MM> <都道府県> <性別> [名前]　…真太陽時で時刻を自動補正
+//   旧式: node src/build-pdf.js <陽暦> <時刻index 0-12> <性別> [名前]　（互換）
 //   一括: node src/build-pdf.js  （家族5人）
 
 const fs = require('fs');
@@ -11,6 +12,7 @@ const PDFDocument = require('pdfkit');
 const { buildChart } = require('./generate-chart');
 const D = require('./ziwei-data');
 const { findHighlights } = require('./kyoku');
+const { correctedTimeIndex } = require('./solar-time');
 
 GlobalFonts.registerFromPath('/usr/share/fonts/truetype/fonts-japanese-gothic.ttf', 'jp');
 // 明朝があれば使う（web/assets/fonts/ に .otf/.ttf があれば登録）
@@ -463,7 +465,18 @@ const FAMILY = [
 if (require.main === module) (async () => {
   const a = process.argv.slice(2);
   const outDir = path.join(__dirname, '..', 'web', 'pdf');
-  if (a.length >= 3) {
+  const isClock = a[1] && /^\d{1,2}:\d{2}$/.test(a[1]);
+  if (isClock) {
+    // 新形式: <陽暦> <HH:MM> <都道府県> <性別> [名前]　…真太陽時(経度時差+均時差)で時刻indexを自動補正
+    const [solar, hhmm, pref, gender, name] = a;
+    if (!pref || !gender) { console.error('使い方: node src/build-pdf.js <陽暦YYYY-M-D> <HH:MM> <都道府県> <性別 男|女> [名前]'); process.exit(1); }
+    const r = correctedTimeIndex(solar, hhmm, pref);
+    console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.pref}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
+    const astro = buildChart(solar, r.index, gender);
+    await buildPDF(astro, name || '', path.join(outDir, `自分のトリセツ_${name || solar}.pdf`));
+    console.log('PDF出力:', name || solar);
+  } else if (a.length >= 3) {
+    // 旧形式（互換）: <陽暦> <時刻index 0-12> <性別> [名前]
     const astro = buildChart(a[0], Number(a[1]), a[2]);
     await buildPDF(astro, a[3] || '', path.join(outDir, `自分のトリセツ_${a[3] || a[0]}.pdf`));
     console.log('PDF出力:', a[3] || a[0]);
