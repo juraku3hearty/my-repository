@@ -105,7 +105,9 @@ function reader(astro) {
   const cmut = mei.stars.filter((s) => s.mutagen).map((s) => `そしてあなたの場合、「${s.name}」に、${D.MUT[s.mutagen]}。`);
   center.push(...cmut);
   if (!meiEmpty) {
-    const strong = mei.stars.some((s) => (BR[s.brightness] ?? 2) >= 5);
+    // 「軸がはっきり」は、いちばん明るい星が廟旺で、かつ暗い星に足を引っ張られていない（最暗も得以上）ときだけ。混在輝度は“やわらかめ”に。
+    const brs = mei.stars.map((s) => (BR[s.brightness] ?? 2));
+    const strong = brs.length && Math.max(...brs) >= 5 && Math.min(...brs) >= 4;
     center.push(strong ? '命宮の星が明るく、自分の軸がはっきりしているタイプ。自分の「こうしたい」を大事にするほど、力が出ます。' : '命宮の星はやわらかめで、力みなく、まわりと調和しながら進めるタイプ。気の合う環境を選ぶことが、いちばんの追い風になります。');
   }
   if (bodyP && D.SHIN[bodyP.name]) {
@@ -218,14 +220,17 @@ function reader(astro) {
   const finStar = zai.stars.length ? brightest(zai.stars).name : '';
   const finSlow = ['太陰', '天同', '天機', '天府', '天相'].includes(finStar); // 財帛の星が既に慎重系なら重複させない
   const tempo = (slowMei && !finSlow) ? 'そしてもともと慎重で迷いやすいタイプなので、ほしい気持ちはあっても、決めるまでにじっくり時間をかける（ときに悩んで買いそびれる）面もあります。' : '';
-  let zp = `${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。${kime || ''}${tempo}`;
+  // 使う型(spender)のときは、堅実系のKIMEを出すと下の散財説明と矛盾するので出さない（武曲＋破軍など同居の是正）
+  let zp = `${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。${spender ? '' : (kime || '')}${tempo}`;
   if (saver) zp += 'コツコツ蓄える力があるので、その堅実さは信じて大丈夫。守りに入りすぎず、ときどき自分にごほうびを出すくらいで、ちょうどいいバランスです。';
   if (spender) zp += '一方で、入ってきたぶん勢いよく出ていくタイプ。楽しいことや「今ほしい！」に使った結果、「気づいたら手元にお金がない…」なんてことも。これは悪いことじゃなく、お金を“生きたこと”に変えられる人だからこそ。ただ、入った時点で「使う分」と「先にとっておく分」を分けておくと、ぐっと慌てずに済みます。';
   if (zaiKi) zp += 'お金に強くこだわりすぎると、かえって視野が狭くなりがち。数字は信頼できる人と共有しておくと、執着がふっとほどけます。';
   if (!saver && !spender && !zaiKi) zp += '大きく増やすことより、自分のペースで無理なく回していくほうが性に合います。背伸びした勝負より、地に足のついたやりくりが、結局いちばん効いてきます。';
   const zaiM = (P['財帛'].majorStars.find((s) => s.mutagen) || {}).mutagen;
   zp += { 祿: 'お金の巡りに恵まれる追い風があるので、ケチらず生きたことに使うほど、めぐって返ってきます。', 權: 'お金を動かす力が強いぶん、勢いで大きく張りすぎないのがコツ。', 科: '堅実さがそのまま信頼になり、人からの評価がお金に変わっていくタイプです。' }[zaiM] || '';
-  if (bodyP && bodyP.name === '財帛') zp += 'そして、あなたは「身宮」がこのお金の場所に重なる人。人生の中で“豊かさ”が大きな主戦場になり、お金を動かす額も、稼ぐ・使うの振れ幅も、人より大きくなりやすいタイプです。';
+  if (bodyP && bodyP.name === '財帛') zp += spender
+    ? 'そして、あなたは「身宮」がこのお金の場所に重なる人。人生の中で“豊かさ”が大きな主戦場になり、お金を動かす額も、稼ぐ・使うの振れ幅も、人より大きくなりやすいタイプです。'
+    : 'そして、あなたは「身宮」がこのお金の場所に重なる人。お金や豊かさが人生の大事なテーマになりやすく、丁寧に向き合うほど、着実に育てていけるタイプです。';
   // 財帛の輔星（助け・表現）も差し色に
   const zaiK = minorsKichi('財帛'); if (zaiK.length) zp += `お金まわりでは、${zaiK.map((n) => D.KICHI[n]).join('・')}も働き、人の助けや得意が収入につながりやすい後押しがあります。`;
   blocks.push(Pp(zp));
@@ -276,11 +281,15 @@ function reader(astro) {
   // ── 暮らし・移動（田宅＋遷移） ───────────────────────────────
   const den = majorsOf('田宅'); const sen = majorsOf('遷移');
   const meiBrt = brightSum('命宮'), senBrt = brightSum('遷移');
-  const rikyo = meiEmpty || senBrt > meiBrt || sen.stars.some((s) => ['紫微', '天府', '太陽', '七殺', '破軍'].includes(s.name) && (BR[s.brightness] ?? 2) >= 4);
+  // 「生まれた場所を離れろ」は本物の離郷マーカー＝天馬が命宮or遷移宮にある人だけ。これが無ければ言わない（誤発火の是正）。
+  const horseIn = (n) => [...P[n].minorStars, ...P[n].adjectiveStars].some((s) => s.name === '天馬');
+  const rikyo = horseIn('命宮') || horseIn('遷移');
+  const outward = !rikyo && (meiEmpty || senBrt > meiBrt + 2); // 外向き寄り（離郷ほど強くはない）
   blocks.push(H('暮らし・場所・移動'));
   blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。`));
   let sp = `外の世界：${sen.stars.map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;
-  if (rikyo) sp += 'とくにあなたは、生まれ育った場所にとどまるより、地元を離れて新しい土地や環境に出るほど、味方が現れて運がひらける「外で伸びる」タイプ。引っ越し・遠出・新しい場への挑戦を、怖がらなくて大丈夫です。';
+  if (rikyo) sp += 'とくにあなたは、生まれ育った場所にとどまるより、地元を離れて新しい土地や環境に出るほど、味方が現れて運がひらく「離郷で伸びる」タイプ。引っ越し・遠出・移住を、怖がらなくて大丈夫です。';
+  else if (outward) sp += 'どちらかといえば、家にこもるより外に出て人と交わるほど引き立てられ、力が伸びるタイプ。地元を離れる必要まではありませんが、出不精にならず外との接点を持つほど運が回ります。';
   else sp += '住み慣れた場所や、勝手のわかる環境にいるほど、落ち着いて力を出せるタイプ。無理に遠くへ動くより、地に足のついた範囲をていねいに耕すのが向いています。';
   blocks.push(Pp(sp));
 
