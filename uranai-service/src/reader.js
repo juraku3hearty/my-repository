@@ -2,7 +2,7 @@
 // 検出は鋭く、言葉はやさしく（決めつけず"扉つき"で）。iztro＋本サービスの基準書のみを根拠にする。
 // 出力：本文ブロック配列（build-pdf がそのまま組む）。
 const D = require('./ziwei-data');
-const { findHighlights, sanpou } = require('./kyoku');
+const { findHighlights, detectKyoku, sanpou } = require('./kyoku');
 
 const BR = { 廟: 6, 旺: 5, 得: 4, 利: 3, 平: 2, 不: 1, 陷: 0 };
 // 代表させる1星は「いちばん明るい星」（廟旺…）＝輝き優先。同じ明るさなら先頭。
@@ -202,30 +202,43 @@ function reader(astro) {
   wp += { 祿: 'しかもこの仕事の場は、努力がご縁や実りに変わりやすい追い風つき。出し惜しまず動くほど返ってきます。', 權: 'この分野で力を持ちやすいぶん、ぜんぶ握ろうとせず人に任せると、もっと大きく回ります。', 科: '名前や評価が立ちやすいので、表に出る場を恐れず、得意を見せていって。', 忌: '深くのめり込みやすいぶん、手を広げず一つに絞ると、それが誰にも真似できない専門になります。' }[kanM] || '';
   blocks.push(Pp(wp));
 
-  // ── お金（財帛）＋貯まるvs散財 ───────────────────────────────
+  // ── お金（財帛）：貯める星×使う星の同居は「輝き優先」で1つの読みに統合（基準書 読み方ルール§5／格局§1 武貪格）──
   const zai = majorsOf('財帛');
-  const zaiText = zai.stars.map((s) => D.ZAI[s.name]).filter(Boolean).join('。');
   const saveStars = ['武曲', '天府', '太陰'], spendStars = ['破軍', '貪狼', '七殺'];
-  const zaiNames = namesOf('財帛');
   const hasRokuzon = ['命宮', '財帛', '福德'].some((n) => hasStar(n, '祿存'));
-  // 財帛に七殺・破軍・貪狼があれば「使う型」を優先（祿存があっても蓄財判定で上書きしない）
-  const spender = zaiNames.some((n) => spendStars.includes(n));
-  const saver = !spender && (zaiNames.some((n) => saveStars.includes(n)) || hasRokuzon);
+  const saveZ = zai.stars.filter((s) => saveStars.includes(s.name));
+  const spendZ = zai.stars.filter((s) => spendStars.includes(s.name));
+  const brMax = (arr) => (arr.length ? Math.max(...arr.map((s) => BR[s.brightness] ?? 2)) : -1);
+  // 貯める/使うの判定は財帛で一番明るい星の系統で決める。同居かつ同輝度なら統合読み（武貪格＝出入り大）。
+  let moneyType;
+  if (saveZ.length && spendZ.length) moneyType = brMax(saveZ) > brMax(spendZ) ? 'save' : (brMax(spendZ) > brMax(saveZ) ? 'spend' : 'mixed');
+  else if (spendZ.length) moneyType = 'spend';
+  else if (saveZ.length || hasRokuzon) moneyType = 'save';
+  else moneyType = 'neutral';
+  const spender = moneyType === 'spend' || moneyType === 'mixed'; // 身宮財帛の振れ幅文で使用
   const zaiKi = P['財帛'].majorStars.some((s) => s.mutagen === '忌');
   blocks.push(H('お金との付き合い方'));
-  const kime = zai.stars.length ? KIME[brightest(zai.stars).name] : '';
-  // 買い方は「お金の宮＋性格(命宮)」の合わせ技。命宮が慎重系なら"迷い"を足す（麗波の悩んで買いそびれる等）
+  const baseZai = zai.stars.length ? brightest(zai.stars).name : '';
+  const kime = baseZai ? KIME[baseZai] : '';
   const meiSet2 = new Set(mei.stars.map((s) => s.name));
   const slowMei = ['天同', '太陰', '天機', '天府', '天相'].some((n) => meiSet2.has(n)) && !['破軍', '七殺', '貪狼', '廉貞'].some((n) => meiSet2.has(n));
-  const finStar = zai.stars.length ? brightest(zai.stars).name : '';
-  const finSlow = ['太陰', '天同', '天機', '天府', '天相'].includes(finStar); // 財帛の星が既に慎重系なら重複させない
-  const tempo = (slowMei && !finSlow) ? 'そしてもともと慎重で迷いやすいタイプなので、ほしい気持ちはあっても、決めるまでにじっくり時間をかける（ときに悩んで買いそびれる）面もあります。' : '';
-  // 使う型(spender)のときは、堅実系のKIMEを出すと下の散財説明と矛盾するので出さない（武曲＋破軍など同居の是正）
-  let zp = `${zaiText || '自分のリズムで、無理なく育てるのが合うタイプ'}。${spender ? '' : (kime || '')}${tempo}`;
-  if (saver) zp += 'コツコツ蓄える力があるので、その堅実さは信じて大丈夫。守りに入りすぎず、ときどき自分にごほうびを出すくらいで、ちょうどいいバランスです。';
-  if (spender) zp += '一方で、入ってきたぶん勢いよく出ていくタイプ。楽しいことや「今ほしい！」に使った結果、「気づいたら手元にお金がない…」なんてことも。これは悪いことじゃなく、お金を“生きたこと”に変えられる人だからこそ。ただ、入った時点で「使う分」と「先にとっておく分」を分けておくと、ぐっと慌てずに済みます。';
+  const finSlow = ['太陰', '天同', '天機', '天府', '天相'].includes(baseZai);
+  const tempo = (slowMei && !finSlow && moneyType === 'save') ? 'そしてもともと慎重で迷いやすいタイプなので、ほしい気持ちはあっても、決めるまでにじっくり時間をかける（ときに悩んで買いそびれる）面もあります。' : '';
+  // 優先順位 格局 ＞ 輝き優先 ＞ 同輝度統合（基準書 読み方ルール§5・格局§1）。財帛に格局が立っていれば、それを統合の答えにする。
+  const zaiKyoku = detectKyoku(astro).kyoku.find((k) => k.palace === '財帛' && ['武貪格', '火貪格', '鈴貪格'].includes(k.key));
+  let zp;
+  if (zaiKyoku) {
+    zp = `${zaiKyoku.why}${spender ? '入ってくる勢いも、出ていく勢いも大きいので、入った時点で「使う分」と「先にとっておく分」を分けておくと安心です。' : 'この力は中年以降にじわじわ効いてくる晩成型。焦らず腰を据えて育てていって大丈夫です。'}`;
+  } else if (moneyType === 'mixed') {
+    zp = `稼ぐ力（${saveZ.map((s) => s.name).join('・')}）も、動かして使う力（${spendZ.map((s) => s.name).join('・')}）も両方しっかり持っていて、お金の出入りが大きいタイプ。${D.ZAI[baseZai] || ''}。貯め込むより、入ってきたぶんを楽しみや経験に変えながら回していくほうが性に合います。ただ出ていく勢いも強いので、入った時点で「使う分」と「先にとっておく分」を分けておくと、ぐっと慌てずに済みます。`;
+  } else if (moneyType === 'spend') {
+    zp = `${D.ZAI[baseZai] || '自分のリズムで回していくタイプ'}。${kime || ''}入ってきたぶん勢いよく出ていくタイプで、楽しいことや「今ほしい！」に使った結果、「気づいたら手元にお金がない…」なんてことも。これは悪いことじゃなく、お金を“生きたこと”に変えられる人だからこそ。入った時点で「使う分」と「先にとっておく分」を分けておくと安心です。`;
+  } else if (moneyType === 'save') {
+    zp = `${D.ZAI[baseZai] || 'コツコツ育てていくタイプ'}。${kime || ''}${tempo}コツコツ蓄える力があるので、その堅実さは信じて大丈夫。守りに入りすぎず、ときどき自分にごほうびを出すくらいで、ちょうどいいバランスです。`;
+  } else {
+    zp = `${D.ZAI[baseZai] || '自分のリズムで、無理なく育てるのが合うタイプ'}。${kime || ''}${tempo}大きく増やすことより、自分のペースで無理なく回していくほうが性に合います。背伸びした勝負より、地に足のついたやりくりが、結局いちばん効いてきます。`;
+  }
   if (zaiKi) zp += 'お金に強くこだわりすぎると、かえって視野が狭くなりがち。数字は信頼できる人と共有しておくと、執着がふっとほどけます。';
-  if (!saver && !spender && !zaiKi) zp += '大きく増やすことより、自分のペースで無理なく回していくほうが性に合います。背伸びした勝負より、地に足のついたやりくりが、結局いちばん効いてきます。';
   const zaiM = (P['財帛'].majorStars.find((s) => s.mutagen) || {}).mutagen;
   zp += { 祿: 'お金の巡りに恵まれる追い風があるので、ケチらず生きたことに使うほど、めぐって返ってきます。', 權: 'お金を動かす力が強いぶん、勢いで大きく張りすぎないのがコツ。', 科: '堅実さがそのまま信頼になり、人からの評価がお金に変わっていくタイプです。' }[zaiM] || '';
   if (bodyP && bodyP.name === '財帛') zp += spender
@@ -281,10 +294,14 @@ function reader(astro) {
   // ── 暮らし・移動（田宅＋遷移） ───────────────────────────────
   const den = majorsOf('田宅'); const sen = majorsOf('遷移');
   const meiBrt = brightSum('命宮'), senBrt = brightSum('遷移');
-  // 「生まれた場所を離れろ」は本物の離郷マーカー＝天馬が命宮or遷移宮にある人だけ。これが無ければ言わない（誤発火の是正）。
+  // 基準書: 離郷の発火条件。「生まれた場所を離れろ」は本物の離郷マーカー＝天馬が命宮or遷移宮にある人だけ。
   const horseIn = (n) => [...P[n].minorStars, ...P[n].adjectiveStars].some((s) => s.name === '天馬');
   const rikyo = horseIn('命宮') || horseIn('遷移');
-  const outward = !rikyo && (meiEmpty || senBrt > meiBrt + 2); // 外向き寄り（離郷ほど強くはない）
+  // 外向き/落ち着きの結論は遷移の「一番明るい主星」の性質で決める＝外の世界の文と必ず一致させる（矛盾させない＝基準書§5 輝き優先）。
+  const senLead = sen.stars.length ? brightest(sen.stars).name : '';
+  const senActive = sen.stars.some((s) => s.mutagen === '祿' || s.mutagen === '權'); // 遷移が化禄/化権で活性＝外で動く後押し
+  const movingStars = ['七殺', '破軍', '貪狼', '天機', '太陽', '廉貞'];
+  const outward = !rikyo && (movingStars.includes(senLead) || senActive); // 遷移の主役が動の星 or 活性なら外向き
   blocks.push(H('暮らし・場所・移動'));
   blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。`));
   let sp = `外の世界：${sen.stars.map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;

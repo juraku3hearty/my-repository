@@ -471,7 +471,7 @@ if (require.main === module) (async () => {
     const [solar, hhmm, pref, gender, name] = a;
     if (!pref || !gender) { console.error('使い方: node src/build-pdf.js <陽暦YYYY-M-D> <HH:MM> <都道府県> <性別 男|女> [名前]'); process.exit(1); }
     const r = correctedTimeIndex(solar, hhmm, pref);
-    console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.pref}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
+    console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.地点 || pref}・${r.detail.精度}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
     const astro = buildChart(solar, r.index, gender);
     await buildPDF(astro, name || '', path.join(outDir, `自分のトリセツ_${name || solar}.pdf`));
     console.log('PDF出力:', name || solar);
