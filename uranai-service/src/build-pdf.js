@@ -218,8 +218,12 @@ async function renderCover(astro, name, transparent = false) {
   x.fillStyle = 'rgba(255,253,248,.85)'; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * s); x.fill();
   x.strokeStyle = 'rgba(16,38,75,.55)'; x.lineWidth = 1.5 * s; x.beginPath(); x.roundRect(pxx, py, pw, ph, 21 * s); x.stroke();
   x.fillStyle = COL.navy; x.fillText(t, cx, LY(69));
-  x.fillStyle = COL.warm; x.font = `${16 * s}px ${SERIF}`;
-  x.fillText(`${astro.solarDate} 生まれ　／　${astro.gender}　／　五行局 ${astro.fiveElementsClass}`, cx, LY(95.5));
+  // 下段（生年月日・五行局）は暗い山際に埋もれて読めないことがあるので、薄い帯を敷いてから明るい文字で描く
+  x.font = `${16 * s}px ${SERIF}`;
+  const bt = `${astro.solarDate} 生まれ　／　${astro.gender}　／　五行局 ${astro.fiveElementsClass}`;
+  const btw = x.measureText(bt).width, bpw = btw + 44 * s, bph = 30 * s, bpy = LY(95.5) - bph / 2, bpx = cx - bpw / 2;
+  x.fillStyle = 'rgba(18,12,8,.45)'; x.beginPath(); x.roundRect(bpx, bpy, bpw, bph, bph / 2); x.fill();
+  sh('rgba(0,0,0,.6)', 6); x.fillStyle = COL.ivory; x.fillText(bt, cx, LY(95.5)); sh('rgba(0,0,0,0)', 0);
   return c;
 }
 
@@ -321,7 +325,7 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; y = TOP;
     if (firstPage) {
       x.textAlign = 'center'; x.fillStyle = COL.gold; x.font = `${15 * SC}px ${SERIF}`;
-      x.fillText('帝 の 書　／　自分のトリセツ', W / 2, TOP - 70 * SC);
+      x.fillText('自 分 の ト リ セ ツ', W / 2, TOP - 70 * SC);
       x.fillStyle = COL.navy; x.font = `bold ${38 * SC}px ${SERIF}`; x.fillText('あなたという人', W / 2, TOP - 28 * SC);
       if (name) { x.fillStyle = COL.soft; x.font = `${18 * SC}px ${SERIF}`; x.fillText(`${name} さま`, W / 2, TOP + 6 * SC); }
       x.textAlign = 'left'; y = TOP + 40 * SC; firstPage = false;
@@ -460,12 +464,12 @@ if (require.main === module) (async () => {
   const outDir = path.join(__dirname, '..', 'web', 'pdf');
   if (a.length >= 3) {
     const astro = buildChart(a[0], Number(a[1]), a[2]);
-    await buildPDF(astro, a[3] || '', path.join(outDir, `帝の書_${a[3] || a[0]}.pdf`));
+    await buildPDF(astro, a[3] || '', path.join(outDir, `自分のトリセツ_${a[3] || a[0]}.pdf`));
     console.log('PDF出力:', a[3] || a[0]);
   } else {
     for (const m of FAMILY) {
       const astro = buildChart(m.solar, m.time, m.gender);
-      const p = await buildPDF(astro, m.name, path.join(outDir, `帝の書_${m.name}.pdf`));
+      const p = await buildPDF(astro, m.name, path.join(outDir, `自分のトリセツ_${m.name}.pdf`));
       console.log('PDF出力:', m.name, Math.round(fs.statSync(p).size / 1024) + 'KB');
     }
   }
