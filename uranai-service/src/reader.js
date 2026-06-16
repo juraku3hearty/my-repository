@@ -294,14 +294,17 @@ function reader(astro) {
   // ── 暮らし・移動（田宅＋遷移） ───────────────────────────────
   const den = majorsOf('田宅'); const sen = majorsOf('遷移');
   const meiBrt = brightSum('命宮'), senBrt = brightSum('遷移');
-  // 基準書: 離郷の発火条件。「生まれた場所を離れろ」は本物の離郷マーカー＝天馬が命宮or遷移宮にある人だけ。
+  // 基準書§9: 離郷＝①命宮が空宮（借遷移＝自分が"外"にある）②命宮に七殺・破軍（動いて切り拓く核／格局§3）③天馬が命宮or遷移宮。
+  // ＝自分の星が命宮にしっかり座る安定型でない人。これが「離れた方がいい／外で伸びる」と「地元で落ち着く」の線。
   const horseIn = (n) => [...P[n].minorStars, ...P[n].adjectiveStars].some((s) => s.name === '天馬');
-  const rikyo = horseIn('命宮') || horseIn('遷移');
-  // 外向き/落ち着きの結論は遷移の「一番明るい主星」の性質で決める＝外の世界の文と必ず一致させる（矛盾させない＝基準書§5 輝き優先）。
+  const meiAxisNames = new Set(mei.stars.map((s) => s.name));
+  const isMover = ['七殺', '破軍'].some((n) => meiAxisNames.has(n)); // 動いて切り拓く核（貪狼は社交寄りなので除外）
+  const rikyo = horseIn('命宮') || horseIn('遷移') || meiEmpty || isMover;
+  // 外向き/落ち着きの結論は遷移の「一番明るい主星」の性質で決める＝外の世界の文と必ず一致させる（基準書§5 輝き優先）。動の命格は落ち着き型にしない。
   const senLead = sen.stars.length ? brightest(sen.stars).name : '';
   const senActive = sen.stars.some((s) => s.mutagen === '祿' || s.mutagen === '權'); // 遷移が化禄/化権で活性＝外で動く後押し
   const movingStars = ['七殺', '破軍', '貪狼', '天機', '太陽', '廉貞'];
-  const outward = !rikyo && (movingStars.includes(senLead) || senActive); // 遷移の主役が動の星 or 活性なら外向き
+  const outward = !rikyo && (movingStars.includes(senLead) || senActive);
   blocks.push(H('暮らし・場所・移動'));
   blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。`));
   let sp = `外の世界：${sen.stars.map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;
