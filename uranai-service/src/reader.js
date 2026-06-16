@@ -125,6 +125,27 @@ function reader(astro) {
   const { top } = findHighlights(astro);
   if (top) { blocks.push(H(`あなたの“主役の力”（${top.label}）`)); blocks.push(Pp(top.why)); }
 
+  // ── 才能スキャナー（際立つ得意だけを拾う：廟旺 or 化科 or 同宮の時のみ）───────
+  // ※太陰・貪狼などは誰でも持つので「際立つ配置」に限定し、全員に出ないようにする
+  const PROM = ['命宮', '福德', '官祿', '田宅'].concat(bodyP ? [bodyP.name] : []); // 才能が際立つ宮
+  const hasKa = (name) => astro.palaces.some((p) => p.majorStars.some((s) => s.name === name && s.mutagen === '科')); // 化科=認められる才（どの宮でも）
+  const promStar = (name) => hasKa(name) || PROM.some((pn) => (P[pn] || { majorStars: [] }).majorStars.some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5));
+  const samePalace = (a2, b2) => astro.palaces.some((p) => { const ns = [...p.minorStars, ...p.adjectiveStars].map((s) => s.name); return ns.includes(a2) && ns.includes(b2); });
+  const wenIn = (name) => PROM.some((pn) => (P[pn] ? [...P[pn].minorStars, ...P[pn].adjectiveStars] : []).some((s) => s.name === name));
+  const talents = [];
+  if (samePalace('文昌', '文曲') || (wenIn('文昌') && wenIn('文曲'))) talents.push('読む・書く・伝える――言葉と学問・表現の才（文昌・文曲）');
+  else if (wenIn('文曲')) talents.push('話術や表現・芸ごとのセンス（文曲）');
+  else if (wenIn('文昌')) talents.push('筋道立った思考と、文章・学びの才（文昌）');
+  if (promStar('太陰') || samePalace('龍池', '鳳閣')) talents.push('色や形・美しいものを見抜く、美術やデザインの感性。古いものや和の美に惹かれることも（太陰／龍池・鳳閣）');
+  if (promStar('貪狼')) talents.push('多趣味で、芸ごとや、人を楽しませることの才（貪狼）');
+  if (promStar('巨門')) talents.push('語り・教える・専門を究める、言葉の力（巨門）');
+  if (promStar('天機')) talents.push('企画・分析・アイデアを生む、頭の回転（天機）');
+  if (talents.length) {
+    blocks.push(H('あなたの才能（際立つ得意）'));
+    blocks.push(Pp('命盤の中でも、とくに際立つ得意です。眠らせず、のびのび使うほど人生がひらけます。'));
+    blocks.push({ type: 'ul', items: talents });
+  }
+
   // ── 強み（六吉＋主星長所） / クセ（六煞＋主星短所） ─────────────
   const triad = ['命宮', '遷移', '官祿', '財帛'];
   const kichi = uniq(triad.flatMap((n) => minorsKichi(n))).map((nm) => D.KICHI[nm]);
