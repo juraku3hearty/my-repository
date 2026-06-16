@@ -91,6 +91,8 @@ function reader(astro) {
   const uniq = (a) => [...new Set(a)];
   const H = (t) => ({ type: 'h', t });
   const Pp = (t) => ({ type: 'p', t });
+  // 基準書§5 輝き優先：複数主星を連結するセクションは、一番明るい星を主役（先頭）にして並べる。
+  const byBright = (stars) => [...stars].sort((a, b) => (BR[b.brightness] ?? 2) - (BR[a.brightness] ?? 2));
 
   const blocks = [];
   const bodyP = astro.palaces.find((p) => p.isBodyPalace);
@@ -101,7 +103,7 @@ function reader(astro) {
   blocks.push(H('あなたの中心にあるもの（命宮）'));
   const center = [];
   if (meiEmpty) center.push(`あなたの命宮は主役の星がない「空宮」。自分の旗を一本立てて押し通すより、まわりの力を借り、人や場に合わせてしなやかに動く柔軟さが持ち味です。向かいの宮から「${mei.stars.map((s) => s.name).join('」「')}」を借りて読みます。`);
-  center.push(...mei.stars.map((s) => D.PROSE[s.name]).filter(Boolean));
+  center.push(...byBright(mei.stars).map((s) => D.PROSE[s.name]).filter(Boolean));
   const cmut = mei.stars.filter((s) => s.mutagen).map((s) => `そしてあなたの場合、「${s.name}」に、${D.MUT[s.mutagen]}。`);
   center.push(...cmut);
   if (!meiEmpty) {
@@ -250,7 +252,7 @@ function reader(astro) {
 
   // ── 恋愛・結婚（夫妻）＋早婚晩婚＋桃花 ───────────────────────
   const fuu = majorsOf('夫妻');
-  const fuuText = fuu.stars.map((s) => D.FUU[s.name]).filter(Boolean).join('。');
+  const fuuText = byBright(fuu.stars).map((s) => D.FUU[s.name]).filter(Boolean).join('。');
   const lateStars = ['武曲', '七殺', '破軍', '天梁'];
   const earlyStars = ['太陰', '天同'];
   const fuuNames = namesOf('夫妻');
@@ -308,8 +310,10 @@ function reader(astro) {
   const movingStars = ['七殺', '破軍', '貪狼', '天機', '太陽', '廉貞'];
   const outward = !rikyo && (movingStars.includes(senLead) || senActive);
   blocks.push(H('暮らし・場所・移動'));
-  blocks.push(Pp(`家・資産：${den.stars.map((s) => D.DENTAKU[s.name]).filter(Boolean).join('。') || '落ち着ける住まいに縁'}。`));
-  let sp = `外の世界：${sen.stars.map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;
+  // 田宅は「定着（築く）vs 変動（住み替え）」の同一軸の逆向きがあるので、輝き優先で一番明るい星のみ（矛盾回避）。
+  const denLead = den.stars.length ? brightest(den.stars).name : '';
+  blocks.push(Pp(`家・資産：${(denLead && D.DENTAKU[denLead]) || '落ち着ける住まいに縁'}。`));
+  let sp = `外の世界：${byBright(sen.stars).map((s) => D.SEN[s.name]).filter(Boolean).join('。') || '外でも自然体で過ごせるタイプ'}。`;
   if (rikyo) sp += 'とくにあなたは、生まれ育った場所にとどまるより、外の土地・人・環境に出るほど、味方が現れて運がひらく「外で伸びる」タイプ。動くほど縁が増えます。もし環境を変えたくなったときは、その直感を信じて大丈夫です（いまの場所が心地よいなら、無理に動く必要はありません）。';
   else if (outward) sp += 'どちらかといえば、家にこもるより外に出て人と交わるほど引き立てられ、力が伸びるタイプ。地元を離れる必要まではありませんが、出不精にならず外との接点を持つほど運が回ります。';
   else sp += '住み慣れた場所や、勝手のわかる環境にいるほど、落ち着いて力を出せるタイプ。無理に遠くへ動くより、地に足のついた範囲をていねいに耕すのが向いています。';
@@ -318,7 +322,7 @@ function reader(astro) {
   // ── 心（福徳） ───────────────────────────────────────────────
   const fuk = majorsOf('福德');
   blocks.push(H('心が満たされるとき'));
-  let kp = `${fuk.stars.map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。`;
+  let kp = `${byBright(fuk.stars).map((s) => D.FUK[s.name]).filter(Boolean).join('。') || '穏やかに自分を取り戻せる時間'}。`;
   // へこむポイント＝命宮の性格から。立ち直り方は"満たされる時間"を取り戻すこと。
   const hekomi = mei.stars.map((s) => HEKOMI[s.name]).filter(Boolean)[0];
   if (hekomi) kp += `逆に心がへこみやすいのは、${hekomi}。そんなときは無理に元気を出そうとせず、さっきの“満たされる時間”を意識して取り戻すのが、いちばんの立ち直り方です。`;
