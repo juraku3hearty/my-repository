@@ -272,7 +272,9 @@ function reader(astro) {
   const eki = majorsOf('疾厄');
   blocks.push(H('健康・体質の傾向'));
   const ekiSatsu = minorsSatsu('疾厄');
-  let hp = `${eki.stars.map((s) => D.SHITSU[s.name]).filter(Boolean).join('。') || '大きな弱点は出にくく、わりと丈夫なタイプ'}。`;
+  // 基準書§5 輝き優先：体質も一番明るい星の読みを主役にする（紫微＋天府で「出やすい」と「丈夫」を並べない）。
+  const ekiLead = eki.stars.length ? brightest(eki.stars).name : '';
+  let hp = `${(ekiLead && D.SHITSU[ekiLead]) || '大きな弱点は出にくく、わりと丈夫なタイプ'}。`;
   if (ekiSatsu.length) hp += 'もともと無理がきくぶん、気づかないうちに疲れを抱え込みやすいタイプ。限界の前に、こまめに手を抜くくらいがちょうどいいです。';
   else hp += 'ふだんは無理がきくぶん、かえって「頑張りすぎ」に自分で気づきにくい面があります。';
   blocks.push(Pp(hp));
