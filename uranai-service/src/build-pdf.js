@@ -315,19 +315,20 @@ function bodyContentLegacy(astro) {
   ];
 }
 
-async function renderBodies(astro, name, blocksOverride, transparent = false) {
+async function renderBodies(astro, name, blocksOverride, transparent = false, headerOverride = null) {
   const blocks = blocksOverride || bodyContent(astro);
   const ML = 130 * SC, MR = W - 130 * SC, contentW = MR - ML;
   const TOP = 175 * SC, BOTTOM = H - 150 * SC;
   const pages = []; let x, c, y; let firstPage = true;
+  const HD = headerOverride || { kicker: '自 分 の ト リ セ ツ', title: 'あなたという人', sub: name ? `${name} さま` : '' };
   const newPage = () => {
     c = createCanvas(W, H); x = c.getContext('2d'); if (!transparent) drawParchment(x);
     x.textAlign = 'left'; x.textBaseline = 'alphabetic'; y = TOP;
     if (firstPage) {
       x.textAlign = 'center'; x.fillStyle = COL.gold; x.font = `${15 * SC}px ${SERIF}`;
-      x.fillText('自 分 の ト リ セ ツ', W / 2, TOP - 70 * SC);
-      x.fillStyle = COL.navy; x.font = `bold ${38 * SC}px ${SERIF}`; x.fillText('あなたという人', W / 2, TOP - 28 * SC);
-      if (name) { x.fillStyle = COL.soft; x.font = `${18 * SC}px ${SERIF}`; x.fillText(`${name} さま`, W / 2, TOP + 6 * SC); }
+      x.fillText(HD.kicker, W / 2, TOP - 70 * SC);
+      x.fillStyle = COL.navy; x.font = `bold ${38 * SC}px ${SERIF}`; x.fillText(HD.title, W / 2, TOP - 28 * SC);
+      if (HD.sub) { x.fillStyle = COL.soft; x.font = `${18 * SC}px ${SERIF}`; x.fillText(HD.sub, W / 2, TOP + 6 * SC); }
       x.textAlign = 'left'; y = TOP + 40 * SC; firstPage = false;
     }
     pages.push(c);
