@@ -7,6 +7,8 @@ const { findHighlights, sanpou } = require('./kyoku');
 const BR = { 廟: 6, 旺: 5, 得: 4, 利: 3, 平: 2, 不: 1, 陷: 0 };
 // 代表させる1星は「いちばん明るい星」（廟旺…）＝輝き優先。同じ明るさなら先頭。
 const brightest = (stars) => stars.slice().sort((a, b) => (BR[b.brightness] ?? 2) - (BR[a.brightness] ?? 2))[0];
+// 星の“ひと言エッセンス”（身宮＝にじみ出るもう一つの顔を書くため）
+const ESSENCE = { 紫微: 'まとめ役としての風格', 天機: '知恵と機転', 太陽: '人を照らす明るさ', 武曲: 'やり遂げる実行力', 天同: '和ませるやさしさ', 廉貞: '内に秘めた情熱', 天府: '守り育てる安定感', 太陰: '感じとる繊細さ・美的センス', 貪狼: '多才と楽しむ力', 巨門: '見抜く力と言葉', 天相: '支える誠実さ', 天梁: '包容と面倒見', 七殺: '切り拓く度胸', 破軍: '壊して創る開拓力' };
 const SIXK = ['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞'];
 const SIXS = ['擎羊', '陀羅', '火星', '鈴星', '地空', '地劫'];
 
@@ -42,7 +44,17 @@ function reader(astro) {
     const strong = mei.stars.some((s) => (BR[s.brightness] ?? 2) >= 5);
     center.push(strong ? '命宮の星が明るく、自分の軸がはっきりしているタイプ。自分の「こうしたい」を大事にするほど、力が出ます。' : '命宮の星はやわらかめで、力みなく、まわりと調和しながら進めるタイプ。気の合う環境を選ぶことが、いちばんの追い風になります。');
   }
-  if (bodyP && D.SHIN[bodyP.name]) center.push(`また、人生の重心（身宮）は「${D.SHIN[bodyP.name]}」に置かれやすく、ここがあなたの一生で特に大切なテーマになります。`);
+  if (bodyP && D.SHIN[bodyP.name]) {
+    const bStars = bodyP.majorStars.map((s) => s.name);
+    const meiSet = new Set(mei.stars.map((s) => s.name));
+    const ess = bStars.map((n) => ESSENCE[n]).filter(Boolean).join('・');
+    // 身宮が命宮と違う星を持つなら、その“もう一つの顔”を書いて人物像を差別化する
+    if (bStars.length && ess && !bStars.every((n) => meiSet.has(n))) {
+      center.push(`そして人生の重心（身宮）は「${D.SHIN[bodyP.name]}」。ここに${bStars.join('・')}があり、「${ess}」が、年々あなたの前面に強まっていきます。命宮の素の自分に、この“もう一つの顔”が重なるのが、あなたらしさです。`);
+    } else {
+      center.push(`また、人生の重心（身宮）は「${D.SHIN[bodyP.name]}」。ここがあなたの一生で特に大切になるテーマです。`);
+    }
+  }
   center.forEach((t) => blocks.push(Pp(t)));
 
   // ── 主役の力（目玉スキャナー） ───────────────────────────────
