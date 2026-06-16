@@ -5,6 +5,8 @@ const D = require('./ziwei-data');
 const { findHighlights, sanpou } = require('./kyoku');
 
 const BR = { 廟: 6, 旺: 5, 得: 4, 利: 3, 平: 2, 不: 1, 陷: 0 };
+// 代表させる1星は「いちばん明るい星」（廟旺…）＝輝き優先。同じ明るさなら先頭。
+const brightest = (stars) => stars.slice().sort((a, b) => (BR[b.brightness] ?? 2) - (BR[a.brightness] ?? 2))[0];
 const SIXK = ['左輔', '右弼', '文昌', '文曲', '天魁', '天鉞'];
 const SIXS = ['擎羊', '陀羅', '火星', '鈴星', '地空', '地劫'];
 
@@ -74,7 +76,7 @@ function reader(astro) {
   // ── 仕事（官禄）＋自営vs組織 ─────────────────────────────────
   const kan = majorsOf('官祿');
   // 職種は主役の星1つに絞る（2星ぶん並べると多すぎて迷うため）
-  const kanText = kan.stars.length ? D.KAN[kan.stars[0].name] : '';
+  const kanText = kan.stars.length ? D.KAN[brightest(kan.stars).name] : '';
   const soloStars = ['七殺', '破軍', '貪狼', '廉貞', '太陽'];
   const orgStars = ['天機', '天同', '天梁', '太陰', '天相', '天府'];
   const meiKanNames = uniq([...namesOf('命宮'), ...namesOf('官祿')]);
@@ -137,7 +139,7 @@ function reader(astro) {
 
   // ── 人間関係（父母・子女・兄弟・僕役） ─────────────────────────
   // 主役の星1つで代表させる（2星ぶん並べると印象が割れて混乱するため）
-  const rel = (palace, label, map) => { const m = majorsOf(palace); const txt = m.stars.length ? map[m.stars[0].name] : ''; const kch = minorsKichi(palace).length, sts = minorsSatsu(palace).length; let tail = ''; if (kch > sts) tail = '助けや恵まれた縁が出やすいところです。'; else if (sts > kch) tail = 'ときに気をつかう面もありますが、こちらから一言かけると和みます。'; return `${label}：${txt || 'おだやかな縁'}。${tail}`; };
+  const rel = (palace, label, map) => { const m = majorsOf(palace); const txt = m.stars.length ? map[brightest(m.stars).name] : ''; const kch = minorsKichi(palace).length, sts = minorsSatsu(palace).length; let tail = ''; if (kch > sts) tail = '助けや恵まれた縁が出やすいところです。'; else if (sts > kch) tail = 'ときに気をつかう面もありますが、こちらから一言かけると和みます。'; return `${label}：${txt || 'おだやかな縁'}。${tail}`; };
   blocks.push(H('まわりとのご縁（親・子・仲間・人脈）'));
   blocks.push(Pp(rel('父母', '親・目上', D.FUBO)));
   blocks.push(Pp(rel('子女', '子ども・後輩', D.SHIJO)));
