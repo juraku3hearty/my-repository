@@ -133,16 +133,23 @@ function reader(astro) {
   const promStar = (name) => !hasKi(name) && (hasKa(name) || PROM.some((pn) => (P[pn] || { majorStars: [] }).majorStars.some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5)));
   const samePalace = (a2, b2) => astro.palaces.some((p) => { const ns = [...p.minorStars, ...p.adjectiveStars].map((s) => s.name); return ns.includes(a2) && ns.includes(b2); });
   const wenIn = (name) => PROM.some((pn) => (P[pn] ? [...P[pn].minorStars, ...P[pn].adjectiveStars] : []).some((s) => s.name === name));
-  const talents = [];
-  if (samePalace('文昌', '文曲') || (wenIn('文昌') && wenIn('文曲'))) talents.push('読む・書く・伝える――言葉と学問・表現の才（文昌・文曲）');
-  else if (wenIn('文曲')) talents.push('話術や表現・芸ごとのセンス（文曲）');
-  else if (wenIn('文昌')) talents.push('筋道立った思考と、文章・学びの才（文昌）');
-  if (promStar('太陰') || samePalace('龍池', '鳳閣')) talents.push('色や形・美しいものを見抜く、美術やデザインの感性。古いものや和の美に惹かれることも（太陰／龍池・鳳閣）');
-  if (promStar('貪狼')) talents.push('多趣味で、芸ごとや、人を楽しませることの才（貪狼）');
-  if (promStar('巨門')) talents.push('語り・教える・専門を究める、言葉の力（巨門）');
-  if (promStar('天機')) talents.push('企画・分析・アイデアを生む、頭の回転（天機）');
-  if (promStar('武曲')) talents.push('手に職をつける技術力と、数字やお金・実務をきっちり回す正確さ（武曲）');
-  if (promStar('天府')) talents.push('人やお金・場の段取りをまとめ、堅実に回していく管理・運営の才（天府）');
+  // 命宮が七殺・破軍（殺破狼＝行動/開拓型）の人は、文・府相系の「精緻で静的な才」とは逆向き。
+  // そういう命には精緻系才能を出さない（命宮・官祿に在る星だけは中核なので例外で残す）。
+  const isAction = mei.stars.some((s) => ['七殺', '破軍'].includes(s.name));
+  const REFINED = new Set(['文昌', '文曲', '太陰', '武曲', '天府', '巨門', '天機']); // 精緻・静的な才（貪狼=芸は行動型でも出す）
+  const coreOfficeNames = new Set(['命宮', '官祿'].flatMap((n) => allStars(n).map((s) => s.name)));
+  const talentsRaw = [];
+  const addT = (star, t) => talentsRaw.push({ star, t });
+  if (samePalace('文昌', '文曲') || (wenIn('文昌') && wenIn('文曲'))) addT('文昌', '読む・書く・伝える――言葉と学問・表現の才（文昌・文曲）');
+  else if (wenIn('文曲')) addT('文曲', '話術や表現・芸ごとのセンス（文曲）');
+  else if (wenIn('文昌')) addT('文昌', '筋道立った思考と、文章・学びの才（文昌）');
+  if (promStar('太陰') || samePalace('龍池', '鳳閣')) addT('太陰', '色や形・美しいものを見抜く、美術やデザインの感性。古いものや和の美に惹かれることも（太陰／龍池・鳳閣）');
+  if (promStar('貪狼')) addT('貪狼', '多趣味で、芸ごとや、人を楽しませることの才（貪狼）');
+  if (promStar('巨門')) addT('巨門', '語り・教える・専門を究める、言葉の力（巨門）');
+  if (promStar('天機')) addT('天機', '企画・分析・アイデアを生む、頭の回転（天機）');
+  if (promStar('武曲')) addT('武曲', '手に職をつける技術力と、数字やお金・実務をきっちり回す正確さ（武曲）');
+  if (promStar('天府')) addT('天府', '人やお金・場の段取りをまとめ、堅実に回していく管理・運営の才（天府）');
+  const talents = talentsRaw.filter((x) => !isAction || !REFINED.has(x.star) || coreOfficeNames.has(x.star)).map((x) => x.t);
   if (talents.length) {
     blocks.push(H('あなたの才能（際立つ得意）'));
     blocks.push(Pp('命盤の中でも、とくに際立つ得意です。眠らせず、のびのび使うほど人生がひらけます。'));

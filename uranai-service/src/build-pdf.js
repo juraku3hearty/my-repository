@@ -341,9 +341,16 @@ async function renderBodies(astro, name, blocksOverride, transparent = false) {
       for (const L of lines) { ensure(lh); x.fillStyle = COL.ink; x.font = `${23 * SC}px ${SERIF}`; drawLine(x, L, ML, y, contentW); y += lh; }
       y += 14 * SC;
     } else if (b.type === 'ul') {
-      const lh = 40 * SC;
-      for (const it of b.items) { ensure(lh); x.fillStyle = COL.gold; x.font = `${14 * SC}px ${SERIF}`; x.fillText('◆', ML, y - 5 * SC);
-        x.fillStyle = COL.ink; x.font = `${22 * SC}px ${SERIF}`; x.fillText(it, ML + 30 * SC, y); y += lh; }
+      const lh = 40 * SC; const indent = 30 * SC; const itemFont = `${22 * SC}px ${SERIF}`;
+      for (const it of b.items) {
+        // 長い項目は枠内で折り返す。◆は1行目だけ、2行目以降はテキスト開始位置(ML+indent)にぶら下げ。
+        const lines = wrap(x, it, contentW - indent, itemFont);
+        lines.forEach((L, li) => {
+          ensure(lh);
+          if (li === 0) { x.fillStyle = COL.gold; x.font = `${14 * SC}px ${SERIF}`; x.fillText('◆', ML, y - 5 * SC); }
+          x.fillStyle = COL.ink; x.font = itemFont; drawLine(x, L, ML + indent, y, contentW - indent); y += lh;
+        });
+      }
       y += 14 * SC;
     } else if (b.type === 'note') {
       y += 22 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(ML, y); x.lineTo(MR, y); x.stroke(); y += 28 * SC;
