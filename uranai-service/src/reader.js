@@ -129,7 +129,8 @@ function reader(astro) {
   // ※太陰・貪狼などは誰でも持つので「際立つ配置」に限定し、全員に出ないようにする
   const PROM = ['命宮', '福德', '官祿', '田宅'].concat(bodyP ? [bodyP.name] : []); // 才能が際立つ宮
   const hasKa = (name) => astro.palaces.some((p) => p.majorStars.some((s) => s.name === name && s.mutagen === '科')); // 化科=認められる才（どの宮でも）
-  const promStar = (name) => hasKa(name) || PROM.some((pn) => (P[pn] || { majorStars: [] }).majorStars.some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5));
+  const hasKi = (name) => astro.palaces.some((p) => p.majorStars.some((s) => s.name === name && s.mutagen === '忌')); // 化忌=その星は「才能」でなく「詰まり」。才能としては拾わない
+  const promStar = (name) => !hasKi(name) && (hasKa(name) || PROM.some((pn) => (P[pn] || { majorStars: [] }).majorStars.some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5)));
   const samePalace = (a2, b2) => astro.palaces.some((p) => { const ns = [...p.minorStars, ...p.adjectiveStars].map((s) => s.name); return ns.includes(a2) && ns.includes(b2); });
   const wenIn = (name) => PROM.some((pn) => (P[pn] ? [...P[pn].minorStars, ...P[pn].adjectiveStars] : []).some((s) => s.name === name));
   const talents = [];
@@ -140,6 +141,8 @@ function reader(astro) {
   if (promStar('貪狼')) talents.push('多趣味で、芸ごとや、人を楽しませることの才（貪狼）');
   if (promStar('巨門')) talents.push('語り・教える・専門を究める、言葉の力（巨門）');
   if (promStar('天機')) talents.push('企画・分析・アイデアを生む、頭の回転（天機）');
+  if (promStar('武曲')) talents.push('手に職をつける技術力と、数字やお金・実務をきっちり回す正確さ（武曲）');
+  if (promStar('天府')) talents.push('人やお金・場の段取りをまとめ、堅実に回していく管理・運営の才（天府）');
   if (talents.length) {
     blocks.push(H('あなたの才能（際立つ得意）'));
     blocks.push(Pp('命盤の中でも、とくに際立つ得意です。眠らせず、のびのび使うほど人生がひらけます。'));
