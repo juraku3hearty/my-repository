@@ -165,6 +165,8 @@ function drawSegsCentered(x, cx, cy, segs, font, maxw, lh) {
 }
 // 行頭に置けない文字（句読点・閉じ括弧・小書きなど）＝行頭禁則。来そうなら前行末にぶら下げる。
 const NO_LINE_START = '、。，．・：；！？」』）】〕》〉”’ーぁぃぅぇぉっゃゅょゎ々';
+// 行末に置けない文字（開き括弧）＝行末禁則。取り残されそうなら次行へ送る。
+const NO_LINE_END = '「『（【〔《〈“‘';
 // 各行を {t:文字列, full:両端揃え対象か} で返す。full行は枠幅に揃える、最終行/改行/ぶら下げ行は自然な左揃え。
 function wrap(x, text, maxw, font) {
   x.font = font; const out = []; let line = '';
@@ -172,7 +174,12 @@ function wrap(x, text, maxw, font) {
     if (ch === '\n') { out.push({ t: line, full: false }); line = ''; continue; }
     if (line && x.measureText(line + ch).width > maxw) {
       if (NO_LINE_START.includes(ch)) { line += ch; out.push({ t: line, full: false }); line = ''; } // ぶら下げ
-      else { out.push({ t: line, full: true }); line = ch; }
+      else {
+        // 行末禁則：行末が開き括弧なら、その括弧を次行へ送って中身と離れないようにする
+        let carry = '';
+        while ([...line].length > 1 && NO_LINE_END.includes(line[line.length - 1])) { carry = line[line.length - 1] + carry; line = line.slice(0, -1); }
+        out.push({ t: line, full: true }); line = carry + ch;
+      }
     } else line += ch;
   }
   if (line) out.push({ t: line, full: false });
