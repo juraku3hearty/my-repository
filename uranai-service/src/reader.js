@@ -73,7 +73,8 @@ function reader(astro) {
 
   // ── 仕事（官禄）＋自営vs組織 ─────────────────────────────────
   const kan = majorsOf('官祿');
-  const kanText = kan.stars.map((s) => D.KAN[s.name]).filter(Boolean).join('／');
+  // 職種は主役の星1つに絞る（2星ぶん並べると多すぎて迷うため）
+  const kanText = kan.stars.length ? D.KAN[kan.stars[0].name] : '';
   const soloStars = ['七殺', '破軍', '貪狼', '廉貞', '太陽'];
   const orgStars = ['天機', '天同', '天梁', '太陰', '天相', '天府'];
   const meiKanNames = uniq([...namesOf('命宮'), ...namesOf('官祿')]);
@@ -135,7 +136,8 @@ function reader(astro) {
   blocks.push({ type: 'note', t: '※ 体質の傾向で、医療的な診断ではありません。' });
 
   // ── 人間関係（父母・子女・兄弟・僕役） ─────────────────────────
-  const rel = (palace, label, map) => { const m = majorsOf(palace); const txt = m.stars.map((s) => map[s.name]).filter(Boolean).join('。'); const kch = minorsKichi(palace).length, sts = minorsSatsu(palace).length; let tail = ''; if (kch > sts) tail = '助けや恵まれた縁が出やすいところです。'; else if (sts > kch) tail = 'ときに気をつかう面もありますが、こちらから一言かけると和みます。'; return `${label}：${txt || 'おだやかな縁'}。${tail}`; };
+  // 主役の星1つで代表させる（2星ぶん並べると印象が割れて混乱するため）
+  const rel = (palace, label, map) => { const m = majorsOf(palace); const txt = m.stars.length ? map[m.stars[0].name] : ''; const kch = minorsKichi(palace).length, sts = minorsSatsu(palace).length; let tail = ''; if (kch > sts) tail = '助けや恵まれた縁が出やすいところです。'; else if (sts > kch) tail = 'ときに気をつかう面もありますが、こちらから一言かけると和みます。'; return `${label}：${txt || 'おだやかな縁'}。${tail}`; };
   blocks.push(H('まわりとのご縁（親・子・仲間・人脈）'));
   blocks.push(Pp(rel('父母', '親・目上', D.FUBO)));
   blocks.push(Pp(rel('子女', '子ども・後輩', D.SHIJO)));
