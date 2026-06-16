@@ -365,27 +365,14 @@ const JOTEI_INTRO = [
   { type: 'p', t: 'これより、そなたという人間を、ゆるりと紐解いていこうぞ。' },
 ];
 
+// 女帝よりの締め。表紙「あなたが主役。」と呼応する universal な閉じ（PDF全体が"主役"で円環になる）。
 function joteiOutro(astro) {
-  const P = {}; astro.palaces.forEach((p) => { P[p.name] = p; });
-  const idx = (n) => astro.palaces.findIndex((p) => p.name === n);
-  const meiMajors = P['命宮'].majorStars.length ? P['命宮'].majorStars : astro.palaces[(idx('命宮') + 6) % 12].majorStars;
-  const meiNames = meiMajors.map((s) => s.name);
-  const meiEmpty = !P['命宮'].majorStars.length;
-  const hasKiIn = (n) => P[n].majorStars.some((s) => s.mutagen === '忌');
-  const horse = (n) => [...P[n].minorStars, ...P[n].adjectiveStars].some((s) => s.name === '天馬');
-  const isMover = ['七殺', '破軍'].some((n) => meiNames.includes(n));
-  const rikyo = horse('命宮') || horse('遷移') || meiEmpty || isMover;
-  let msg;
-  if (hasKiIn('田宅') || hasKiIn('財帛')) msg = 'そなたは、己を安く見積もる癖がある。されど、そなたの器は本来もっと大きい。価値のわからぬ者のもとで身を縮めるより、堂々と値を張れ。金の流れと足場づくりだけは、信ある者に任せるがよい。';
-  else if (isMover) msg = 'そなたは、留まるために生まれた者ではない。壊し、創り、また進む――それがそなたの道じゃ。現状維持という名の牢に、己を閉じ込めるでない。';
-  else if (rikyo) msg = 'そなたの居場所は、生まれた土地の内には収まらぬ。外へ出よ。動くほどに、そなたを引き立てる者が現れる盤じゃ。';
-  else if (meiEmpty) msg = 'そなたは一本の旗を立てて押し通す王ではない。人と場の力を借り、束ねて治める器じゃ。己の色の薄さを嘆くな、それは万物を映す鏡の強さじゃ。';
-  else msg = 'そなたの星は、格に薄められず、まっすぐ純度高く出る。よそ見をするな。己の「こうしたい」を、何より信じてやれ。';
   return [
     { type: 'h', t: '女帝より' },
-    { type: 'p', t: 'そなたの命盤を見終えて、一つだけ申しておこう。' },
-    { type: 'p', t: msg },
-    { type: 'p', t: '選ぶのは、相手ではない。まず、己じゃ。' },
+    { type: 'p', t: '妾は多くの命盤を見てきた。じゃが、同じ命盤は一つとしてない。' },
+    { type: 'p', t: 'そなたの人生もまた、誰かの真似では輝かぬ。だから比べるでない。急ぐでない。己の歩幅で進めばよい。' },
+    { type: 'p', t: '道は探すものではない。歩いた先にできるものじゃ。' },
+    { type: 'p', t: '迷ったときは思い出せ。この人生の主役は、いつだって、そなたであることを。' },
   ];
 }
 

@@ -13,7 +13,7 @@ const { buildChart } = require('./generate-chart');
 const D = require('./ziwei-data');
 const { findHighlights } = require('./kyoku');
 const { correctedTimeIndex } = require('./solar-time');
-const { joteiReader } = require('./reader');
+const { JOTEI_INTRO, joteiOutro } = require('./reader');
 
 GlobalFonts.registerFromPath('/usr/share/fonts/truetype/fonts-japanese-gothic.ttf', 'jp');
 // 明朝があれば使う（web/assets/fonts/ に .otf/.ttf があれば登録）
@@ -200,7 +200,7 @@ function drawLine(x, L, ML, y, maxw) {
   for (const ch of chars) { x.fillText(ch, cx, y); cx += x.measureText(ch).width + gap; }
 }
 
-async function renderCover(astro, name, transparent = false) {
+async function renderCover(astro, name, transparent = false, titleText = null) {
   // 表紙は元画像(cover.png)の解像度そのままで描く（2倍に引き伸ばさない＝ボケ・ガビガビ無し）。
   let img = null, cw = W, ch = H;
   if (!transparent) { img = await loadImage(path.join(ASSETS, 'cover.png')); cw = img.width; ch = img.height; }
@@ -211,7 +211,7 @@ async function renderCover(astro, name, transparent = false) {
   x.textAlign = 'center'; x.textBaseline = 'middle';
   const sh = (col, b) => { x.shadowColor = col; x.shadowBlur = b * s; };
   sh('rgba(0,0,0,.5)', 8); x.fillStyle = COL.goldL; x.font = `${22 * s}px ${SERIF}`; x.fillText('紫 微 斗 数  ×  帝 王 学', cx, LY(7));
-  sh('rgba(0,0,0,.55)', 16); x.fillStyle = COL.white; x.font = `bold ${84 * s}px ${SERIF}`; x.fillText('自分のトリセツ', cx, LY(13.5));
+  sh('rgba(0,0,0,.55)', 16); x.fillStyle = COL.white; x.font = `bold ${84 * s}px ${SERIF}`; x.fillText(titleText || '自分のトリセツ', cx, LY(13.5));
   sh('rgba(0,0,0,.6)', 8); x.fillStyle = COL.ivory; x.font = `${22 * s}px ${SERIF}`; x.fillText('命盤からひもとく、あなたという人', cx, LY(22.5));
   if (name) { x.fillStyle = '#F1DDAE'; x.font = `bold ${27 * s}px ${SERIF}`; x.fillText(`— ${name} さま —`, cx, LY(27.5)); }
   sh('rgba(255,245,210,.6)', 12); x.fillStyle = COL.warm; x.font = `bold ${52 * s}px ${SERIF}`; x.fillText('あなたが主役。', cx, LY(60));
@@ -435,12 +435,42 @@ async function renderCourtDrawn(astro, transparent = false) {
   return c;
 }
 
-async function buildPDF(astro, name, outPath, blocksOverride, headerOverride = null) {
+// 女帝モードの「手紙」ページ：羊皮紙に、大きめの文字を上下中央でドーンと配置（招待状・女帝より）。
+function renderJoteiLetter({ kicker, title, sub, paras }) {
+  const c = createCanvas(W, H); const x = c.getContext('2d'); drawParchment(x);
+  const ML = 160 * SC, cw = W - 2 * ML;
+  const bodyFont = `${30 * SC}px ${SERIF}`, lh = 60 * SC, paraGap = 34 * SC;
+  const wrapped = paras.map((p) => wrap(x, p, cw, bodyFont));
+  let bodyH = 0; wrapped.forEach((lines) => { bodyH += lines.length * lh + paraGap; });
+  const titleH = (kicker ? 54 * SC : 0) + 74 * SC + (sub ? 50 * SC : 0) + 40 * SC;
+  let y = Math.max(220 * SC, (H - (titleH + bodyH)) / 2); // 上下中央（最低マージン確保）
+  x.textAlign = 'center';
+  if (kicker) { x.fillStyle = COL.gold; x.font = `${16 * SC}px ${SERIF}`; x.fillText(kicker, W / 2, y); y += 54 * SC; }
+  x.fillStyle = COL.navy; x.font = `bold ${54 * SC}px ${SERIF}`; x.fillText(title, W / 2, y); y += 74 * SC;
+  if (sub) { x.fillStyle = COL.soft; x.font = `${20 * SC}px ${SERIF}`; x.fillText(sub, W / 2, y); y += 50 * SC; }
+  // 区切りの細い金線
+  y += 14 * SC; x.strokeStyle = COL.line; x.lineWidth = 1 * SC; x.beginPath(); x.moveTo(W / 2 - 70 * SC, y); x.lineTo(W / 2 + 70 * SC, y); x.stroke(); y += 50 * SC;
+  x.fillStyle = COL.ink; x.font = bodyFont;
+  for (const lines of wrapped) { for (const L of lines) { x.fillText(L.t, W / 2, y); y += lh; } y += paraGap; }
+  return c;
+}
+
+async function buildPDF(astro, name, outPath, blocksOverride, headerOverride = null, jotei = false) {
   // 各ページは「背景＋文字」を1枚のキャンバスに合成（透明レイヤーは使わない＝どのビューアでも確実に表示）
-  const cover = await renderCover(astro, name);
+  const cover = await renderCover(astro, name, false, jotei ? '帝の書' : null);
   const court = await renderCourtDrawn(astro);                    // 背景=羊皮紙＋円もコード描画（ズレ無し・12宮）
-  const bodies = await renderBodies(astro, name, blocksOverride, false, headerOverride);
-  const pages = [cover, court, ...bodies];
+  let pages;
+  if (jotei) {
+    // 招待状（中央ドーン）→ 通常本文 → 女帝より（中央ドーン）
+    const invite = renderJoteiLetter({ kicker: '女帝からの招待状', title: '帝の書', sub: name ? `${name} へ` : '', paras: JOTEI_INTRO.map((b) => b.t) });
+    const bodies = await renderBodies(astro, name);
+    const outroBlocks = joteiOutro(astro);
+    const outro = renderJoteiLetter({ kicker: '', title: '女帝より', sub: '', paras: outroBlocks.filter((b) => b.type === 'p').map((b) => b.t) });
+    pages = [cover, court, invite, ...bodies, outro];
+  } else {
+    const bodies = await renderBodies(astro, name, blocksOverride, false, headerOverride);
+    pages = [cover, court, ...bodies];
+  }
   const A4 = { width: 595.28, height: 841.89 };
   const doc = new PDFDocument({ size: 'A4', margin: 0 });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -469,7 +499,6 @@ if (require.main === module) (async () => {
   const jotei = a.includes('--jotei') || a.includes('女帝'); // 女帝モード（帝の書）
   a = a.filter((x) => x !== '--jotei' && x !== '女帝');
   const outDir = path.join(__dirname, '..', 'web', 'pdf');
-  const joteiArgs = jotei ? { blocks: (astro) => joteiReader(astro), header: (name) => ({ kicker: '女帝からの招待状', title: '帝の書', sub: name ? `${name} へ` : '' }), prefix: '帝の書' } : null;
   const isClock = a[1] && /^\d{1,2}:\d{2}$/.test(a[1]);
   if (isClock) {
     // 新形式: <陽暦> <HH:MM> <都道府県> <性別> [名前]　…真太陽時(経度時差+均時差)で時刻indexを自動補正
@@ -479,7 +508,7 @@ if (require.main === module) (async () => {
     console.log(`真太陽時補正: JST ${r.detail.jst}（${r.detail.地点 || pref}・${r.detail.精度}/${r.detail.lon}°）→ 真太陽時 ${r.trueSolar} → 時刻index ${r.index}（経度時差${r.detail.経度時差分}分＋均時差${r.detail.均時差分}分）`);
     const astro = buildChart(solar, r.index, gender);
     const fname = `${jotei ? '帝の書' : '自分のトリセツ'}_${name || solar}.pdf`;
-    await buildPDF(astro, name || '', path.join(outDir, fname), jotei ? joteiArgs.blocks(astro) : undefined, jotei ? joteiArgs.header(name) : null);
+    await buildPDF(astro, name || '', path.join(outDir, fname), undefined, null, jotei);
     console.log('PDF出力:', (jotei ? '【帝の書】' : '') + (name || solar));
   } else if (a.length >= 3) {
     // 旧形式（互換）: <陽暦> <時刻index 0-12> <性別> [名前]
@@ -495,4 +524,4 @@ if (require.main === module) (async () => {
   }
 })();
 
-module.exports = { buildPDF, renderCover, renderCourt, renderCourtDrawn, renderBodies };
+module.exports = { buildPDF, renderCover, renderCourt, renderCourtDrawn, renderBodies, renderJoteiLetter };
