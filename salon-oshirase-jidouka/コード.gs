@@ -319,6 +319,34 @@ function testCyfonsPost() {
   console.log("ページに動画embedが含まれるか: " + ((check.getContentText() || "").indexOf("player.vimeo.com") !== -1));
 }
 
+/**
+ * 手動診断用：投稿後の「残り2つ」を読み取りチェックする（送信・投稿はしない）。
+ *  1) トップページに記事リンクが載っているか
+ *  2) LINEトークンが有効か＋月間配信の上限/消費
+ */
+function testRemaining() {
+  // 1) トップページの記事リンク
+  const cookieHeader = getCyfonsCookieHeader();
+  const topPageUrl = "https://famitect.biz/members/admin/builders/tp_tops/index.php";
+  const html = (UrlFetchApp.fetch(topPageUrl + "?status=edit&id=1", { headers: cookieHeader, muteHttpExceptions: true }).getContentText()) || "";
+  const m = html.match(/name="contents"[^>]*>([\s\S]*?)<\/textarea>/);
+  const contents = m ? m[1] : "(取得失敗)";
+  const linkCount = (contents.match(/famitect\.biz\/members\/pg\/post-/g) || []).length;
+  console.log("トップページの記事リンク数: " + linkCount);
+  console.log("トップページcontents末尾400字:\n" + contents.substring(Math.max(0, contents.length - 400)));
+
+  // 2) LINE トークン有効性＋上限
+  const token = props.getProperty("LINE_ACCESS_TOKEN");
+  console.log("LINE_ACCESS_TOKEN: " + (token ? "設定あり" : "未設定"));
+  const h = { headers: { Authorization: `Bearer ${token}` }, muteHttpExceptions: true };
+  const info = UrlFetchApp.fetch("https://api.line.me/v2/bot/info", h);
+  console.log("LINE bot/info HTTP: " + info.getResponseCode() + " / body: " + info.getContentText());
+  const quota = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/quota", h);
+  console.log("LINE 上限(quota): " + quota.getContentText());
+  const used = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/quota/consumption", h);
+  console.log("LINE 消費(consumption): " + used.getContentText());
+}
+
 function createZoomMeeting(topic, startTime) {
   const token = getZoomAccessToken();
   const payload = { topic: topic, type: 2, start_time: startTime, timezone: "Asia/Tokyo" };
