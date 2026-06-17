@@ -276,6 +276,49 @@ function testCyfonsLogin() {
   if (!loggedIn) console.log(html.substring(0, 300));
 }
 
+/**
+ * 手動診断用：実際に1本テスト投稿して、サーバーの応答とページ生成を確認する。
+ * GASエディタでこの関数を選んで実行 → 実行ログを確認。
+ * ※ サイトに「【テスト投稿】〜」という記事が1件できます。確認後、Cyfons管理画面から削除してOK。
+ * ※ LINE配信はしません。処理済みにも記録しません。
+ */
+function testCyfonsPost() {
+  const videoId = "1201812458"; // 直近に処理済みになった動画でテスト
+
+  const id = props.getProperty("CYFONS_ID");
+  const pw = props.getProperty("CYFONS_PW");
+  const loginResp = UrlFetchApp.fetch("https://famitect.biz/members/admin/index.php", { method: "post", payload: { status: "login", email: id, password: pw }, followRedirects: false, muteHttpExceptions: true });
+  const cookieHeader = extractCookieHeader_(loginResp);
+  console.log("ログイン: " + loginResp.getResponseCode() + " / Cookie: " + (cookieHeader ? "取得OK" : "なし"));
+  if (!cookieHeader) return;
+
+  const vimeoToken = props.getProperty("VIMEO_ACCESS_TOKEN");
+  const vResp = UrlFetchApp.fetch(`https://api.vimeo.com/videos/${videoId}`, { headers: { Authorization: `Bearer ${vimeoToken}` }, muteHttpExceptions: true });
+  console.log("Vimeo取得HTTP: " + vResp.getResponseCode());
+  const videoData = JSON.parse(vResp.getContentText());
+  console.log("動画名: " + videoData.name);
+
+  const rawEmbed = videoData.embed && videoData.embed.html ? videoData.embed.html : `<iframe src="https://player.vimeo.com/video/${videoId}" width="600" height="338" frameborder="0" allowfullscreen></iframe>`;
+  const embedCode = rawEmbed.replace(/width="\d+"/, 'width="600"').replace(/height="\d+"/, 'height="338"');
+
+  const postUrl = "https://famitect.biz/members/admin/builders/tp_contents/";
+  const urlSlug = "test-" + Utilities.formatDate(new Date(), "JST", "yyyyMMddHHmmss");
+  const postPayload = {
+    status: "add_done", layout: "page", add_br: "0",
+    side_title: "その他", side_title2: "", title: "【テスト投稿】" + videoData.name,
+    url: urlSlug, description: "", keyword: "", contents: embedCode,
+    public: "1", public_date: "0", no_public_date: "", password: "",
+    "group_id-4": "4", "group_id-5": "5", "group_id-6": "6", "group_id-8": "8", "group_id-12": "12"
+  };
+  const postResp = UrlFetchApp.fetch(postUrl, { method: "post", payload: postPayload, headers: cookieHeader, muteHttpExceptions: true });
+  console.log("投稿POST HTTP: " + postResp.getResponseCode());
+  console.log("投稿POST body先頭1000字:\n" + (postResp.getContentText() || "").substring(0, 1000));
+
+  const check = UrlFetchApp.fetch("https://famitect.biz/members/pg/" + urlSlug, { headers: cookieHeader, muteHttpExceptions: true });
+  console.log("作成ページ確認 HTTP: " + check.getResponseCode());
+  console.log("ページに動画embedが含まれるか: " + ((check.getContentText() || "").indexOf("player.vimeo.com") !== -1));
+}
+
 function createZoomMeeting(topic, startTime) {
   const token = getZoomAccessToken();
   const payload = { topic: topic, type: 2, start_time: startTime, timezone: "Asia/Tokyo" };
