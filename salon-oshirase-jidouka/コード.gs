@@ -349,6 +349,53 @@ function testRemaining() {
   console.log("LINE 消費(consumption): " + used.getContentText());
 }
 
+/**
+ * YouTube動画を会員サイト（Cyfons）に投稿する。Vimeoの仕組みを再利用。
+ * @param youtubeUrl 例 https://www.youtube.com/watch?v=xxxx / https://youtu.be/xxxx
+ * @param title      記事タイトル
+ * @param sideTitle  カテゴリ（本講座 / AI活用講座① / 自賠責保険（基礎編） など。空なら「その他」）
+ * @param notifyLine 会員へLINE一斉配信するなら true（既定 false）
+ */
+function postYouTubeToCyfons(youtubeUrl, title, sideTitle, notifyLine) {
+  const idMatch = String(youtubeUrl).match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+  if (!idMatch) return "YouTubeのURLから動画IDが取れません。URLを確認してください。";
+  const ytId = idMatch[1];
+  const embedCode = `<iframe width="600" height="338" src="https://www.youtube.com/embed/${ytId}" frameborder="0" allowfullscreen></iframe>`;
+
+  const cookieHeader = getCyfonsCookieHeader();
+  if (!cookieHeader) return "Cyfonsログインに失敗しました（CYFONS_ID/PWを確認）。";
+
+  const postUrl = "https://famitect.biz/members/admin/builders/tp_contents/";
+  const urlSlug = "post-" + Utilities.formatDate(new Date(), "JST", "yyyyMMddHHmmss");
+  const postPayload = {
+    status: "add_done", layout: "page", add_br: "0",
+    side_title: sideTitle || "その他", side_title2: "", title: title || ("YouTube動画 " + ytId),
+    url: urlSlug, description: "", keyword: "", contents: embedCode,
+    public: "1", public_date: "0", no_public_date: "", password: "",
+    "group_id-4": "4", "group_id-5": "5", "group_id-6": "6", "group_id-8": "8", "group_id-12": "12"
+  };
+  const postResp = UrlFetchApp.fetch(postUrl, { method: "post", payload: postPayload, headers: cookieHeader, muteHttpExceptions: true });
+  const code = postResp.getResponseCode();
+  console.log("YouTube投稿 HTTP: " + code);
+  if (code !== 200 && code !== 302) return "投稿に失敗しました（HTTP " + code + "）。";
+
+  updateTopPageWithArchiveLink(postPayload.title, urlSlug, cookieHeader);
+  if (notifyLine) sendLineMessage(`【事務局からのお知らせ】\n動画を掲載しました。\n\nトップページからご覧いただけます🆕\nhttps://famitect.biz/members`);
+  return "投稿完了！ ページ: https://famitect.biz/members/pg/" + urlSlug;
+}
+
+/**
+ * 手動用：ここのURL・タイトル・カテゴリを書き換えて、この関数を実行する。
+ */
+function postYouTubeNow() {
+  const url      = "ここにYouTubeのURLを貼る";
+  const title    = "ここにタイトルを書く";
+  const category = "その他";   // 本講座 / AI活用講座① / 自賠責保険（基礎編） / その他
+  const sendLine = false;      // 会員全員にLINE配信するなら true にする
+
+  console.log(postYouTubeToCyfons(url, title, category, sendLine));
+}
+
 function createZoomMeeting(topic, startTime) {
   const token = getZoomAccessToken();
   const payload = { topic: topic, type: 2, start_time: startTime, timezone: "Asia/Tokyo" };
