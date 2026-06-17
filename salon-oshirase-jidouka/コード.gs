@@ -123,10 +123,12 @@ function postToCyfons(videoId, sideTitle, notifyLine = true) {
   const loginUrl = "https://famitect.biz/members/admin/index.php";
 
   const loginPayload = { status: "login", email: id, password: pw };
-  const loginResp = UrlFetchApp.fetch(loginUrl, { method: "post", payload: loginPayload, followRedirects: false });
-  const rawCookies = loginResp.getAllHeaders()["Set-Cookie"];
-  const cookies = Array.isArray(rawCookies) ? rawCookies : [rawCookies];
-  const cookieHeader = { Cookie: cookies.join("; ") };
+  const loginResp = UrlFetchApp.fetch(loginUrl, { method: "post", payload: loginPayload, followRedirects: false, muteHttpExceptions: true });
+  console.log(`Cyfonsログイン: HTTP=${loginResp.getResponseCode()}`);
+  const cookieHeader = extractCookieHeader_(loginResp);
+  if (!cookieHeader) {
+    return "投稿に失敗しました：Cyfonsログインのセッションが取得できません。CYFONS_ID / CYFONS_PW を確認してください。";
+  }
 
   const vimeoToken = props.getProperty("VIMEO_ACCESS_TOKEN");
   const videoData = JSON.parse(UrlFetchApp.fetch(`https://api.vimeo.com/videos/${videoId}`, { headers: { Authorization: `Bearer ${vimeoToken}` } }).getContentText());
@@ -156,9 +158,15 @@ function postToCyfons(videoId, sideTitle, notifyLine = true) {
   };
   const postResp = UrlFetchApp.fetch(postUrl, { method: "post", payload: postPayload, headers: cookieHeader, muteHttpExceptions: true });
   const respCode = postResp.getResponseCode();
+  const respBody = postResp.getContentText() || "";
+  console.log(`Cyfons投稿: HTTP=${respCode} / body先頭=${respBody.substring(0, 200)}`);
 
   if (respCode !== 200 && respCode !== 302) {
-    return "投稿に失敗しました。管理画面を確認してください。";
+    return `投稿に失敗しました（HTTP ${respCode}）。管理画面を確認してください。`;
+  }
+  // 投稿先がログイン画面を返した＝セッション無効。HTTPは200でも実際は未投稿。
+  if (respBody.indexOf('name="email"') !== -1 && respBody.indexOf('name="password"') !== -1) {
+    return "投稿に失敗しました：ログイン状態が無効でした（CYFONS_ID/PWを確認）。実際にはサイトへ投稿されていません。";
   }
 
   updateTopPageWithArchiveLink(videoData.name, urlSlug, cookieHeader);
@@ -227,10 +235,45 @@ function getCyfonsCookieHeader() {
   const pw = props.getProperty("CYFONS_PW");
   const loginUrl = "https://famitect.biz/members/admin/index.php";
   const loginPayload = { status: "login", email: id, password: pw };
-  const loginResp = UrlFetchApp.fetch(loginUrl, { method: "post", payload: loginPayload, followRedirects: false });
-  const rawCookies = loginResp.getAllHeaders()["Set-Cookie"];
-  const cookies = Array.isArray(rawCookies) ? rawCookies : [rawCookies];
-  return { Cookie: cookies.join("; ") };
+  const loginResp = UrlFetchApp.fetch(loginUrl, { method: "post", payload: loginPayload, followRedirects: false, muteHttpExceptions: true });
+  return extractCookieHeader_(loginResp);
+}
+
+/**
+ * ログインレスポンスから Set-Cookie を取り出し、Cookie ヘッダーを組み立てる。
+ * 複数Cookie・大文字小文字・カンマ連結のいずれにも耐えるよう name=value だけ抽出する。
+ */
+function extractCookieHeader_(loginResp) {
+  const headers = loginResp.getAllHeaders();
+  const raw = headers["Set-Cookie"] || headers["set-cookie"];
+  if (!raw) return null;
+  const arr = Array.isArray(raw) ? raw : [raw];
+  const pairs = arr.map(c => String(c).split(";")[0].trim()).filter(Boolean);
+  return pairs.length ? { Cookie: pairs.join("; ") } : null;
+}
+
+/**
+ * 手動診断用：Cyfonsへのログインが成立しているか確認する（投稿はしない）。
+ * GASエディタでこの関数を選んで実行 → 実行ログで結果を確認。
+ */
+function testCyfonsLogin() {
+  const id = props.getProperty("CYFONS_ID");
+  const pw = props.getProperty("CYFONS_PW");
+  console.log(`CYFONS_ID: ${id ? "設定あり" : "未設定"} / CYFONS_PW: ${pw ? "設定あり" : "未設定"}`);
+  const loginUrl = "https://famitect.biz/members/admin/index.php";
+  const loginResp = UrlFetchApp.fetch(loginUrl, { method: "post", payload: { status: "login", email: id, password: pw }, followRedirects: false, muteHttpExceptions: true });
+  console.log("ログインHTTP: " + loginResp.getResponseCode());
+  const cookieHeader = extractCookieHeader_(loginResp);
+  console.log("取得Cookie: " + (cookieHeader ? cookieHeader.Cookie : "（取得できず）"));
+  if (!cookieHeader) { console.error("❌ セッションCookieが取れません → ID/PWまたはログイン仕様を確認"); return; }
+
+  const topPageUrl = "https://famitect.biz/members/admin/builders/tp_tops/index.php";
+  const check = UrlFetchApp.fetch(topPageUrl + "?status=edit&id=1", { headers: cookieHeader, muteHttpExceptions: true });
+  const html = check.getContentText() || "";
+  const loggedIn = /name="contents"[^>]*>[\s\S]*?<\/textarea>/.test(html);
+  console.log("管理ページ取得HTTP: " + check.getResponseCode());
+  console.log(loggedIn ? "✅ ログイン成功（編集ページのcontentsを取得できた）" : "❌ ログイン失敗の可能性（contents無し。body先頭↓）");
+  if (!loggedIn) console.log(html.substring(0, 300));
 }
 
 function createZoomMeeting(topic, startTime) {
@@ -348,5 +391,6 @@ function doGet(e) {
 function doPost(e) {
   const notifyLine = e.parameter.no_line !== "1";
   const result = postToCyfons(e.parameter.v, e.parameter.category, notifyLine);
-  return HtmlService.createHtmlOutput('<html><body style="font-family:sans-serif; text-align:center; padding:50px;"><h2>✅ '+result+'</h2><p>この画面は閉じて大丈夫です。</p></body></html>');
+  const icon = result.indexOf("失敗") !== -1 ? "⚠️" : "✅";
+  return HtmlService.createHtmlOutput('<html><body style="font-family:sans-serif; text-align:center; padding:50px;"><h2>'+icon+' '+result+'</h2><p>この画面は閉じて大丈夫です。</p></body></html>');
 }
