@@ -50,7 +50,8 @@ function processReadyVideos() {
     const vid = v.uri.split("/").pop();
     const tagNames = (v.tags || []).map(t => t.name);
     const category = detectCategory(v.name, tagNames);
-    const result = postToCyfons(vid, category, true);
+    // LINEは手動運用。自動投稿はサイト掲載のみ（第3引数 false）。
+    const result = postToCyfons(vid, category, false);
     console.log(`自動投稿: ${v.name} → カテゴリ「${category}」/ ${result}`);
   }
 }
