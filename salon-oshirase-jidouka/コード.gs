@@ -48,21 +48,23 @@ function processReadyVideos() {
 
   for (const v of readyVideos) {
     const vid = v.uri.split("/").pop();
-    const category = detectCategory(v.name);
+    const tagNames = (v.tags || []).map(t => t.name);
+    const category = detectCategory(v.name, tagNames);
     const result = postToCyfons(vid, category, true);
     console.log(`自動投稿: ${v.name} → カテゴリ「${category}」/ ${result}`);
   }
 }
 
 /**
- * 動画タイトルから投稿カテゴリ（side_title）を自動判定する。
- * 該当キーワードが無ければ「その他」。
+ * 投稿カテゴリ（side_title）を自動判定する。
+ * 動画タイトルとVimeoタグの両方を見て判定し、該当が無ければ「その他」。
  */
-function detectCategory(videoName) {
-  const n = normalizeText(videoName);
-  if (n.indexOf("自賠責") !== -1) return "自賠責保険（基礎編）";
-  if (n.indexOf("ai") !== -1) return "AI活用講座①";
-  if (n.indexOf("本講座") !== -1) return "本講座";
+function detectCategory(videoName, tagNames) {
+  const tags = (tagNames || []).map(t => normalizeText(t)).join(" ");
+  const hay = normalizeText(videoName) + " " + tags;
+  if (hay.indexOf("自賠責") !== -1) return "自賠責保険（基礎編）";
+  if (hay.indexOf("ai") !== -1) return "AI活用講座①";
+  if (hay.indexOf("本講座") !== -1) return "本講座";
   return "その他";
 }
 
