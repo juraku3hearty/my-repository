@@ -246,8 +246,48 @@ function getZoomAccessToken() {
 }
 
 function sendLineMessage(text) {
-  const options = { method: "post", headers: { Authorization: `Bearer ${props.getProperty("LINE_ACCESS_TOKEN")}`, "Content-Type": "application/json" }, payload: JSON.stringify({ messages: [{ type: "text", text: text }] }) };
-  UrlFetchApp.fetch("https://api.line.me/v2/bot/message/broadcast", options);
+  const token = props.getProperty("LINE_ACCESS_TOKEN");
+  if (!token) {
+    console.error("LINE配信失敗: スクリプトプロパティ LINE_ACCESS_TOKEN が未設定です。");
+    return 0;
+  }
+  const options = {
+    method: "post",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    payload: JSON.stringify({ messages: [{ type: "text", text: text }] }),
+    muteHttpExceptions: true
+  };
+  const resp = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/broadcast", options);
+  const code = resp.getResponseCode();
+  if (code !== 200) {
+    // 401:トークン無効/期限切れ 429:月間上限到達 400:リクエスト不正 など
+    console.error(`LINE配信失敗 code=${code} body=${resp.getContentText()}`);
+  } else {
+    console.log("LINE配信OK (broadcast)");
+  }
+  return code;
+}
+
+/**
+ * 手動診断用：GASエディタでこの関数を選んで実行 → 実行ログで結果を確認。
+ * 友だち登録した自分のLINEにテスト配信が届くかチェックする。
+ */
+function testLineBroadcast() {
+  const code = sendLineMessage("【テスト配信】LINE配信テストです。これが届いたら設定OK。");
+  console.log("testLineBroadcast 結果コード: " + code + "（200ならAPIは成功。届かない場合は『友だち登録』か『月間上限』を確認）");
+}
+
+/**
+ * 手動診断用：LINE公式アカウントの月間メッセージ上限と消費数を確認する。
+ * consumption が quota に達していると broadcast が 429 で弾かれて届かない。
+ */
+function checkLineQuota() {
+  const token = props.getProperty("LINE_ACCESS_TOKEN");
+  const h = { headers: { Authorization: `Bearer ${token}` }, muteHttpExceptions: true };
+  const quota = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/quota", h);
+  const used = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/quota/consumption", h);
+  console.log("上限(quota): " + quota.getResponseCode() + " " + quota.getContentText());
+  console.log("消費(consumption): " + used.getResponseCode() + " " + used.getContentText());
 }
 
 function doGet(e) {
