@@ -134,7 +134,9 @@ function reader(astro) {
   const PROM = ['命宮', '福德', '官祿', '田宅'].concat(bodyP ? [bodyP.name] : []); // 才能が際立つ宮
   const hasKa = (name) => astro.palaces.some((p) => p.majorStars.some((s) => s.name === name && s.mutagen === '科')); // 化科=認められる才（どの宮でも）
   const hasKi = (name) => astro.palaces.some((p) => p.majorStars.some((s) => s.name === name && s.mutagen === '忌')); // 化忌=その星は「才能」でなく「詰まり」。才能としては拾わない
-  const promStar = (name) => !hasKi(name) && (hasKa(name) || PROM.some((pn) => (P[pn] || { majorStars: [] }).majorStars.some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5)));
+  // PROM宮が空宮なら對宮から主星を借りて見る（基準書§3 借星安宮）。みのり=福德が空宮で天機を借りる→体系化の才を拾う。
+  const promMajors = (pn) => { const p = P[pn]; if (!p) return []; return p.majorStars.length ? p.majorStars : opp(pn).majorStars; };
+  const promStar = (name) => !hasKi(name) && (hasKa(name) || PROM.some((pn) => promMajors(pn).some((s) => s.name === name && (BR[s.brightness] ?? 2) >= 5)));
   const samePalace = (a2, b2) => astro.palaces.some((p) => { const ns = [...p.minorStars, ...p.adjectiveStars].map((s) => s.name); return ns.includes(a2) && ns.includes(b2); });
   const wenIn = (name) => PROM.some((pn) => (P[pn] ? [...P[pn].minorStars, ...P[pn].adjectiveStars] : []).some((s) => s.name === name));
   // 命宮が七殺・破軍（殺破狼＝行動/開拓型）の人は、文・府相系の「精緻で静的な才」とは逆向き。
