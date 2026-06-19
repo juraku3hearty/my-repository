@@ -34,11 +34,46 @@ function doPost(e) {
 }
 
 function handleLineWebhook(body) {
-  // 必要な処理はここに実装。現状は受信確認のみ。
   (body.events || []).forEach(function(event) {
-    if (event && event.type === 'message' && event.message && event.message.text) {
-      Logger.log('LINE message: ' + event.message.text);
+    try {
+      if (!event || event.type !== 'message' || !event.message) return;
+      var msg = event.message;
+      var reply = null;
+
+      if (msg.type === 'image') {
+        // 投稿アナリティクスのスクショ → Gemini OCR → シート追記
+        reply = handleXAnalyticsImage(msg.id, '');
+      } else if (msg.type === 'text') {
+        // 「インプ いいね リポスト ...」のテキスト入力にも対応
+        reply = handleXAnalyticsText(msg.text);
+        if (reply === null) {
+          reply = '📸 投稿アナリティクスのスクショを送ると自動で記録します。\n' +
+                  '数値を直接送る場合は「インプ いいね リポスト コメント ブックマーク」の順で。';
+        }
+      }
+
+      if (reply && event.replyToken) {
+        replyLineMessage(event.replyToken, reply);
+      }
+    } catch (err) {
+      Logger.log('handleLineWebhook error: ' + err.message);
+      if (event && event.replyToken) {
+        replyLineMessage(event.replyToken, '⚠️ 読み取りに失敗しました: ' + err.message);
+      }
     }
   });
   return ContentService.createTextOutput('OK');
+}
+
+function replyLineMessage(replyToken, text) {
+  UrlFetchApp.fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + CONFIG.LINE_CHANNEL_ACCESS_TOKEN },
+    payload: JSON.stringify({
+      replyToken: replyToken,
+      messages: [{ type: 'text', text: text }]
+    }),
+    muteHttpExceptions: true
+  });
 }
