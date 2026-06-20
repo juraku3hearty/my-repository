@@ -92,6 +92,23 @@ function selfTest() {
 }
 
 /**
+ * 使えるモデル一覧をログに出す（generateContent 対応のものだけ）。
+ * RECHECK_MODEL や GEMINI_MODEL に指定できる正しいモデル名を確認するのに使う。
+ */
+function listModels() {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  const res = UrlFetchApp.fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + apiKey,
+    { muteHttpExceptions: true });
+  const data = JSON.parse(res.getContentText());
+  (data.models || []).forEach(function(m) {
+    if ((m.supportedGenerationMethods || []).indexOf('generateContent') >= 0) {
+      Logger.log(m.name); // 例: models/gemini-2.5-pro
+    }
+  });
+}
+
+/**
  * 初回セットアップ：自動実行トリガー（10分ごと）を登録する。
  * 設置時に一度だけ実行すればOK（以後は写真を入れるだけで自動処理される）。
  */
@@ -171,8 +188,13 @@ function processOneImage_(blob, name, sheet) {
     const rows = buildRows_(staff, passA, passB);
 
     // 上位モデルで全件再読し、Flashの値と食い違うセルを炙り出す
+    // （再読がコケても主役のFlash結果は残す＝再チェック失敗で全体を止めない）
     if (CONFIG.RECHECK_WITH_PRO) {
-      checkAgainstPro_(rows, ocrTimecard_(blob, CONFIG.RECHECK_MODEL, 0.0));
+      try {
+        checkAgainstPro_(rows, ocrTimecard_(blob, CONFIG.RECHECK_MODEL, 0.0));
+      } catch (e) {
+        Logger.log('Pro再読スキップ（' + CONFIG.RECHECK_MODEL + '）: ' + e.message);
+      }
     }
     writeRows_(sheet, rows);
     Logger.log('OK: ' + name + ' (' + rows.length + '日)');
