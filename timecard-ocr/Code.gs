@@ -159,13 +159,15 @@ function processUnprocessedTimecards() {
         processed++;
       }
     } else if (isZip_(file, mime)) {
-      // ZIPは解凍して中の画像を全部処理（先生のデータがZIPで来てもそのままでOK）
+      // ZIPは解凍して中の画像を全部処理（先生のデータがZIPで来てもそのままでOK）。
+      // 1人=1ZIPの運用に合わせ、ZIP名（拡張子なし）を中の全写真の氏名にする。
+      const zipStaff = file.getName().replace(/\.[^.]+$/, '');
       let any = false;
       Utilities.unzip(file.getBlob()).forEach(function(b) {
         const nm = b.getName();
         if (/(^|\/)(__MACOSX|\._)/.test(nm)) return; // macOSのゴミファイル除外
         if (!isImageName_(nm)) return;
-        if (processOneImage_(b, baseName_(nm), sheet)) { any = true; processed++; }
+        if (processOneImage_(b, baseName_(nm), sheet, zipStaff)) { any = true; processed++; }
       });
       if (any) moveProcessed_(file, folder);
     }
@@ -174,12 +176,13 @@ function processUnprocessedTimecards() {
   Logger.log('完了: ' + processed + '件処理');
 }
 
-/** 1枚の画像Blobを処理（OCR2回＋Pro全件再読＋書き込み）。成功でtrue */
-function processOneImage_(blob, name, sheet) {
+/** 1枚の画像Blobを処理（OCR2回＋Pro全件再読＋書き込み）。成功でtrue
+ *  staffOverride を渡すとそれを氏名にする（ZIP名を全写真の氏名にする等） */
+function processOneImage_(blob, name, sheet, staffOverride) {
   try {
     const m = mimeFromName_(name);
     if (m) blob.setContentType(m);
-    const staff = extractStaffName_(name);
+    const staff = staffOverride || extractStaffName_(name);
 
     // 同一モデルで2回読む（認識率最優先）。温度差で“判読が怪しい所だけ”結果が揺れ、
     // 食い違いとして拾える。同一誤読の隠れは下のPro全件再読＋論理チェックで補う。
