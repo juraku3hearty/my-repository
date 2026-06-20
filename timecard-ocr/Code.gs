@@ -135,38 +135,74 @@ function processUnprocessedTimecards() {
   while (it.hasNext()) {
     const file = it.next();
     const mime = file.getMimeType();
-    if (mime !== 'image/jpeg' && mime !== 'image/png') continue;
 
-    try {
-      const name = file.getName();
-      const staff = extractStaffName_(name);
-
-      // ★2回OCR（別モデルで“別人の目”として読ませる。同一誤読の隠蔽を防ぐ）
-      const passA = ocrTimecard_(file.getBlob(), CONFIG.GEMINI_MODEL_A, 0.0);
-      const passB = ocrTimecard_(file.getBlob(), CONFIG.GEMINI_MODEL_B, 0.0);
-
-      const rows = buildRows_(staff, passA, passB);
-
-      // ★上位モデルで“全件”再読し、Flashの値と食い違うセルを炙り出す
-      if (CONFIG.RECHECK_WITH_PRO) {
-        const proRead = ocrTimecard_(file.getBlob(), CONFIG.RECHECK_MODEL, 0.0);
-        checkAgainstPro_(rows, proRead);
+    if (isImageMime_(mime)) {
+      if (processOneImage_(file.getBlob(), file.getName(), sheet)) {
+        moveProcessed_(file, folder);
+        processed++;
       }
-
-      writeRows_(sheet, rows);
-
-      if (CONFIG.PROCESSED_FOLDER_ID) {
-        DriveApp.getFolderById(CONFIG.PROCESSED_FOLDER_ID).addFile(file);
-        folder.removeFile(file);
-      }
-      processed++;
-      Logger.log('OK: ' + name + ' (' + rows.length + '日)');
-    } catch (err) {
-      Logger.log('NG: ' + file.getName() + ' / ' + err.message);
+    } else if (isZip_(file, mime)) {
+      // ZIPは解凍して中の画像を全部処理（先生のデータがZIPで来てもそのままでOK）
+      let any = false;
+      Utilities.unzip(file.getBlob()).forEach(function(b) {
+        const nm = b.getName();
+        if (/(^|\/)(__MACOSX|\._)/.test(nm)) return; // macOSのゴミファイル除外
+        if (!isImageName_(nm)) return;
+        if (processOneImage_(b, baseName_(nm), sheet)) { any = true; processed++; }
+      });
+      if (any) moveProcessed_(file, folder);
     }
+    // それ以外のファイルはスキップ
   }
-  Logger.log('完了: ' + processed + 'ファイル処理');
+  Logger.log('完了: ' + processed + '件処理');
 }
+
+/** 1枚の画像Blobを処理（OCR2回＋Pro全件再読＋書き込み）。成功でtrue */
+function processOneImage_(blob, name, sheet) {
+  try {
+    const m = mimeFromName_(name);
+    if (m) blob.setContentType(m);
+    const staff = extractStaffName_(name);
+
+    // 同一モデルで2回読む（認識率最優先）。温度差で“判読が怪しい所だけ”結果が揺れ、
+    // 食い違いとして拾える。同一誤読の隠れは下のPro全件再読＋論理チェックで補う。
+    const passA = ocrTimecard_(blob, CONFIG.GEMINI_MODEL, 0.0);
+    const passB = ocrTimecard_(blob, CONFIG.GEMINI_MODEL, 0.6);
+    const rows = buildRows_(staff, passA, passB);
+
+    // 上位モデルで全件再読し、Flashの値と食い違うセルを炙り出す
+    if (CONFIG.RECHECK_WITH_PRO) {
+      checkAgainstPro_(rows, ocrTimecard_(blob, CONFIG.RECHECK_MODEL, 0.0));
+    }
+    writeRows_(sheet, rows);
+    Logger.log('OK: ' + name + ' (' + rows.length + '日)');
+    return true;
+  } catch (err) {
+    Logger.log('NG: ' + name + ' / ' + err.message);
+    return false;
+  }
+}
+
+/** 処理済みファイルを移動（PROCESSED_FOLDER_ID未設定なら何もしない） */
+function moveProcessed_(file, folder) {
+  if (!CONFIG.PROCESSED_FOLDER_ID) return;
+  DriveApp.getFolderById(CONFIG.PROCESSED_FOLDER_ID).addFile(file);
+  folder.removeFile(file);
+}
+
+/* --- ファイル種別ヘルパー --- */
+function isImageMime_(mime) { return mime === 'image/jpeg' || mime === 'image/png'; }
+function isImageName_(name) { return /\.(jpe?g|png)$/i.test(name); }
+function isZip_(file, mime) {
+  return mime === 'application/zip' || mime === 'application/x-zip-compressed'
+      || /\.zip$/i.test(file.getName());
+}
+function mimeFromName_(name) {
+  if (/\.png$/i.test(name)) return 'image/png';
+  if (/\.jpe?g$/i.test(name)) return 'image/jpeg';
+  return '';
+}
+function baseName_(path) { return path.replace(/^.*\//, ''); }
 
 /**
  * Gemini に1回OCRさせて、構造化JSONで受け取る。
