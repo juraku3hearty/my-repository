@@ -58,9 +58,37 @@ const OUTLIER_MARGIN_MIN = 150;
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('タイムカード読み取り')
+    .addItem('① 接続テスト', 'selfTest')
+    .addItem('② 自動読み取りを設定', 'setup')
     .addItem('今すぐ読み取り', 'processUnprocessedTimecards')
-    .addItem('自動読み取りを設定', 'setup')
     .addToUi();
+}
+
+/**
+ * 接続テスト：APIキーと課金が有効か・モデルに繋がるかを確認する。
+ * 画像なし・ごく短いリクエストなので費用はほぼゼロ。設置直後の確認に使う。
+ */
+function selfTest() {
+  const ui = (function(){ try { return SpreadsheetApp.getUi(); } catch (e) { return null; } })();
+  let msg;
+  try {
+    const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+    if (!apiKey) throw new Error('GEMINI_API_KEY が未設定です（プロジェクトの設定→スクリプトプロパティ）');
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+              + CONFIG.GEMINI_MODEL + ':generateContent?key=' + apiKey;
+    const res = UrlFetchApp.fetch(url, {
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify({ contents: [{ parts: [{ text: '「OK」とだけ返してください' }] }] }),
+      muteHttpExceptions: true
+    });
+    if (res.getResponseCode() !== 200) {
+      throw new Error('APIエラー ' + res.getResponseCode() + '：' + res.getContentText().slice(0, 200));
+    }
+    msg = '接続OK：APIキー・課金・モデル（' + CONFIG.GEMINI_MODEL + '）は正常です。';
+  } catch (e) {
+    msg = '接続NG：' + e.message;
+  }
+  if (ui) ui.alert(msg); else Logger.log(msg);
 }
 
 /**
