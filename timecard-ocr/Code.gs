@@ -30,7 +30,9 @@ const CONFIG = {
   //   永遠に拾えない。Proで全部読んでFlashの値と食い違う所を炙り出す＝真のエラーチェック。
   //   食い違ったセルは色を付け、メモに「Pro再読: 6:16」を添える（自動上書きはしない）。
   RECHECK_WITH_PRO: true,
-  RECHECK_MODEL: 'gemini-3.1-pro',
+  // 再チェック用モデル。安定版の 'gemini-2.5-pro' を採用（3.x Proは現状 preview のみ）。
+  // 最新の精度を試したいときは 'gemini-3.1-pro-preview' 等に変更可（listModels で確認）。
+  RECHECK_MODEL: 'gemini-2.5-pro',
 
   // 入口フォルダ（タイムカード＿未処理）
   UNPROCESSED_FOLDER_ID: '1VkjUeNaI4m4iwPMCZlm11uGhqBIMoSeE',
