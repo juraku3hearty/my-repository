@@ -44,6 +44,10 @@ const CONFIG = {
   SHEET_NAME: 'シート1', // ← 実際のシート名に合わせる
 
   CLOSING_DAY: 25, // 賃金締め日
+
+  // 案件の対象年。ファイル名（例 1月_1.jpg＝月だけ）やカードに年が無いとき使う。
+  // 年月をまたぐ案件はファイル名に年を入れる（例 2024-12_氏名.jpg）。
+  DEFAULT_YEAR: 2025,
 };
 
 // セルの色
@@ -290,7 +294,7 @@ function buildRows_(staff, passA, passB, fileName) {
   // 年月は「ファイル名」を最優先（2枚目カードは見出しが無く、AIが月を誤読するため）。
   // ファイル名に年月が無いときだけOCRヘッダの読みを使う。
   const fb = parseYearMonthFromName_(fileName);
-  const year  = fb.year  || passA.year_western || passB.year_western;
+  const year  = fb.year  || passA.year_western || passB.year_western || CONFIG.DEFAULT_YEAR;
   const month = fb.month || passA.month_label  || passB.month_label;
 
   const mapA = indexByDay_(passA.rows);
