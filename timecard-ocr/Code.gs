@@ -18,11 +18,19 @@
  */
 
 const CONFIG = {
-  // Gemini（数字の読み取りに強いモデル。AI Studioのモデル名に合わせて変更可）
-  // ★1回目と2回目で “別モデル” を使う。同じモデルだと同じ誤読を繰り返して
-  //   「2回とも一致＝正しい」と勘違いし、かえってエラーが隠れるため。
-  GEMINI_MODEL_A: 'gemini-3.5-flash',
-  GEMINI_MODEL_B: 'gemini-2.0-flash',
+  // Gemini モデル。実地では「認識率が一番高い同一モデルで2回」読むのが最良
+  //（弱いモデルと突き合わせると誤検知が増えるだけ）。
+  //  ・速さ/安さ重視: 'gemini-3.5-flash'（最新Flash・印字数字は十分）
+  //  ・精度最優先  : 'gemini-3.1-pro' / 'gemini-2.5-pro'（手書きに強い）
+  // 「同一モデル2回でも同じ誤読で一致して隠れる」問題は、下の論理チェックで補う。
+  GEMINI_MODEL: 'gemini-3.5-flash',
+
+  // ★上位モデル(Pro)で“全セル”を再チェックする（第三の独立した目）。
+  //   色付きだけ再読すると、Flash2回が同じ誤読で一致した所（色が付かない誤り）を
+  //   永遠に拾えない。Proで全部読んでFlashの値と食い違う所を炙り出す＝真のエラーチェック。
+  //   食い違ったセルは色を付け、メモに「Pro再読: 6:16」を添える（自動上書きはしない）。
+  RECHECK_WITH_PRO: true,
+  RECHECK_MODEL: 'gemini-3.1-pro',
 
   // 入口フォルダ（タイムカード＿未処理）
   UNPROCESSED_FOLDER_ID: '1VkjUeNaI4m4iwPMCZlm11uGhqBIMoSeE',
@@ -40,6 +48,9 @@ const CONFIG = {
 const COLOR_MISMATCH = '#fff3b0'; // 🟡 2回の結果が違う＝要確認
 const COLOR_UNREAD   = '#ffc7ce'; // 🟥 読み取れなかった＝要入力
 const COLOR_CHECK    = '#ffd9a0'; // 🟧 論理チェックで矛盾＝要確認（一致してても付く）
+
+// 中央値からこの分数以上ズレた打刻は外れ値（誤読の疑い）として色付け。2.5時間。
+const OUTLIER_MARGIN_MIN = 150;
 
 /**
  * メイン：未処理フォルダの画像を全部処理して確認シートに追記する。
@@ -67,6 +78,13 @@ function processUnprocessedTimecards() {
       const passB = ocrTimecard_(file.getBlob(), CONFIG.GEMINI_MODEL_B, 0.0);
 
       const rows = buildRows_(staff, passA, passB);
+
+      // ★上位モデルで“全件”再読し、Flashの値と食い違うセルを炙り出す
+      if (CONFIG.RECHECK_WITH_PRO) {
+        const proRead = ocrTimecard_(file.getBlob(), CONFIG.RECHECK_MODEL, 0.0);
+        checkAgainstPro_(rows, proRead);
+      }
+
       writeRows_(sheet, rows);
 
       if (CONFIG.PROCESSED_FOLDER_ID) {
@@ -178,17 +196,66 @@ function buildRows_(staff, passA, passB) {
       inCell.flag  = upgrade_(inCell.flag, 'check');
       outCell.flag = upgrade_(outCell.flag, 'check');
     }
-    // 3) 時刻レンジ（出勤3:00-12:00 / 退勤14:00-24:00 を外れたら要確認）
-    if (inCell.value && !inRange_(inCell.value, 3, 12))   inCell.flag  = upgrade_(inCell.flag, 'check');
-    if (outCell.value && !inRange_(outCell.value, 14, 24)) outCell.flag = upgrade_(outCell.flag, 'check');
+    // 3) 外れ値はカード全体の中央値を出してから後段でまとめて判定（下の flagOutliers_）
 
     out.push({
       staff: staff, year: cal.year, month: cal.month, day: cal.day,
+      cardDay: day,    // カード上の日付（Pro再読の突き合わせ用）
       amIn: inCell,    // 午前IN ← 出勤
       pmOut: outCell,  // 午後OUT ← 退勤
     });
   });
+
+  // ★勤務時間は時間帯が集中する → 中央値から大きく外れた打刻は誤読として色付け
+  flagOutliers_(out);
   return out;
+}
+
+/**
+ * 出勤・退勤それぞれの中央値を求め、そこから OUTLIER_MARGIN_MIN 以上外れた値を
+ * 'check' で色付け。例: 出勤が毎日6時台なのに1件だけ16時台→桁誤りとして炙り出す。
+ */
+function flagOutliers_(rows) {
+  const medIn  = median_(rows.map(function(r){ return toMin_(r.amIn.value); }).filter(function(m){ return m >= 0; }));
+  const medOut = median_(rows.map(function(r){ return toMin_(r.pmOut.value); }).filter(function(m){ return m >= 0; }));
+  rows.forEach(function(r) {
+    const mi = toMin_(r.amIn.value);
+    if (mi >= 0 && medIn  !== null && Math.abs(mi - medIn)  > OUTLIER_MARGIN_MIN)
+      r.amIn.flag  = upgrade_(r.amIn.flag, 'check');
+    const mo = toMin_(r.pmOut.value);
+    if (mo >= 0 && medOut !== null && Math.abs(mo - medOut) > OUTLIER_MARGIN_MIN)
+      r.pmOut.flag = upgrade_(r.pmOut.flag, 'check');
+  });
+}
+
+/** 数値配列の中央値（空なら null） */
+function median_(arr) {
+  if (!arr.length) return null;
+  const s = arr.slice().sort(function(a, b){ return a - b; });
+  const m = Math.floor(s.length / 2);
+  return (s.length % 2) ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/**
+ * 上位モデル(Pro)の全件再読と突き合わせ。Flashの値とProが食い違うセルを
+ * 'check' で色付けし、メモにProの読みを添える（Flash2回が同じ誤読で一致した
+ * “色の付かない誤り”をここで初めて検出できる）。
+ */
+function checkAgainstPro_(rows, proRead) {
+  const map = indexByDay_(proRead.rows);
+  rows.forEach(function(r) {
+    const p = map[r.cardDay] || {};
+    compareCellToPro_(r.amIn,  norm_(p.in));
+    compareCellToPro_(r.pmOut, norm_(p.out));
+  });
+}
+
+function compareCellToPro_(cell, proVal) {
+  if (!proVal) return;                 // Proが読めない所は判定材料にしない
+  if (cell.value !== proVal) {         // Flashの値とProが食い違う＝要確認
+    cell.flag = upgrade_(cell.flag, 'check');
+    cell.note = 'Pro再読: ' + proVal;  // 第三の読みをメモに残す
+  }
 }
 
 /** 1回目/2回目の値を突き合わせて {value, flag} を返す */
@@ -210,11 +277,13 @@ function writeRows_(sheet, rows) {
   });
   sheet.getRange(startRow, 1, values.length, 10).setValues(values);
 
-  // 色付け（E列=午前IN=5, H列=午後OUT=8）
+  // 色付け＋Pro再読メモ（E列=午前IN=5, H列=午後OUT=8）
   rows.forEach(function(r, i) {
     const row = startRow + i;
     paintCell_(sheet, row, 5, r.amIn.flag);
     paintCell_(sheet, row, 8, r.pmOut.flag);
+    if (r.amIn.note)  sheet.getRange(row, 5).setNote(r.amIn.note);
+    if (r.pmOut.note) sheet.getRange(row, 8).setNote(r.pmOut.note);
   });
 }
 
@@ -241,13 +310,6 @@ function toMin_(t) {
   return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : -1;
 }
 
-/** 時刻 t の「時」が [loH, hiH) の範囲内か */
-function inRange_(t, loH, hiH) {
-  const mm = toMin_(t);
-  if (mm < 0) return true;            // 読めない値はここでは弾かない
-  const h = mm / 60;
-  return h >= loH && h < hiH;
-}
 
 /* ---------- ヘルパー ---------- */
 
