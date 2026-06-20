@@ -201,7 +201,7 @@ function processOneImage_(blob, name, sheet, staffOverride) {
       : -1;
     const responses = UrlFetchApp.fetchAll(reqs);
 
-    const rows = buildRows_(staff, parseOcrResponse_(responses[0]), parseOcrResponse_(responses[1]));
+    const rows = buildRows_(staff, parseOcrResponse_(responses[0]), parseOcrResponse_(responses[1]), name);
 
     // Proで全件再読し食い違いを炙り出す（再読がコケても主役のFlash結果は残す）
     if (proIdx >= 0) {
@@ -286,9 +286,12 @@ function parseOcrResponse_(res) {
  * 2回分の結果を突き合わせ、確認シート用の行配列を作る。
  * 各セルは {value, flag} 形式。flag: '' | 'mismatch' | 'unread'
  */
-function buildRows_(staff, passA, passB) {
-  const year  = passA.year_western || passB.year_western;
-  const month = passA.month_label  || passB.month_label;
+function buildRows_(staff, passA, passB, fileName) {
+  // 年月は「ファイル名」を最優先（2枚目カードは見出しが無く、AIが月を誤読するため）。
+  // ファイル名に年月が無いときだけOCRヘッダの読みを使う。
+  const fb = parseYearMonthFromName_(fileName);
+  const year  = fb.year  || passA.year_western || passB.year_western;
+  const month = fb.month || passA.month_label  || passB.month_label;
 
   const mapA = indexByDay_(passA.rows);
   const mapB = indexByDay_(passB.rows);
@@ -465,6 +468,21 @@ function norm_(t) {
   const m = s.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return '';
   return parseInt(m[1], 10) + ':' + m[2];
+}
+
+/** ファイル名から年月を取り出す。"2025-01_..." / "2025年1月" / "令和7年1月" / "1月" 等に対応 */
+function parseYearMonthFromName_(name) {
+  const out = { year: null, month: null };
+  if (!name) return out;
+  const s = String(name);
+  let m;
+  if ((m = s.match(/令和\s*(\d{1,2})\s*年/)))      out.year = 2018 + parseInt(m[1], 10);
+  else if ((m = s.match(/(20\d{2})\s*[年\-_./]/)))  out.year = parseInt(m[1], 10);
+  else if ((m = s.match(/(20\d{2})/)))              out.year = parseInt(m[1], 10);
+  if ((m = s.match(/(\d{1,2})\s*月/)))                          out.month = parseInt(m[1], 10);
+  else if ((m = s.match(/20\d{2}[\-_./](\d{1,2})(?:\D|$)/)))    out.month = parseInt(m[1], 10);
+  if (out.month !== null && (out.month < 1 || out.month > 12)) out.month = null;
+  return out;
 }
 
 /** ファイル名から氏名を取り出す（"2025-01_田中太郎.jpg" → "田中太郎"。無ければ拡張子抜き） */
