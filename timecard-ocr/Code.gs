@@ -186,17 +186,27 @@ function processOneImage_(blob, name, sheet, staffOverride) {
     if (m) blob.setContentType(m);
     const staff = staffOverride || extractStaffName_(name);
 
-    // 同一モデルで2回読む（認識率最優先）。温度差で“判読が怪しい所だけ”結果が揺れ、
-    // 食い違いとして拾える。同一誤読の隠れは下のPro全件再読＋論理チェックで補う。
-    const passA = ocrTimecard_(blob, CONFIG.GEMINI_MODEL, 0.0);
-    const passB = ocrTimecard_(blob, CONFIG.GEMINI_MODEL, 0.6);
-    const rows = buildRows_(staff, passA, passB);
+    // 画像は1回だけBase64化して使い回す
+    const data = Utilities.base64Encode(blob.getBytes());
+    const mime = blob.getContentType();
 
-    // 上位モデルで全件再読し、Flashの値と食い違うセルを炙り出す
-    // （再読がコケても主役のFlash結果は残す＝再チェック失敗で全体を止めない）
-    if (CONFIG.RECHECK_WITH_PRO) {
+    // 同一モデルで2回（温度差で“怪しい所だけ”揺れる）＋Pro再読 を“同時並行”で投げる。
+    // 逐次だと1枚50〜65秒→6分制限に当たるため fetchAll で並行化（1枚20秒程度に短縮）。
+    const reqs = [
+      buildOcrRequest_(data, mime, CONFIG.GEMINI_MODEL, 0.0),
+      buildOcrRequest_(data, mime, CONFIG.GEMINI_MODEL, 0.6)
+    ];
+    const proIdx = CONFIG.RECHECK_WITH_PRO
+      ? reqs.push(buildOcrRequest_(data, mime, CONFIG.RECHECK_MODEL, 0.0)) - 1
+      : -1;
+    const responses = UrlFetchApp.fetchAll(reqs);
+
+    const rows = buildRows_(staff, parseOcrResponse_(responses[0]), parseOcrResponse_(responses[1]));
+
+    // Proで全件再読し食い違いを炙り出す（再読がコケても主役のFlash結果は残す）
+    if (proIdx >= 0) {
       try {
-        checkAgainstPro_(rows, ocrTimecard_(blob, CONFIG.RECHECK_MODEL, 0.0));
+        checkAgainstPro_(rows, parseOcrResponse_(responses[proIdx]));
       } catch (e) {
         Logger.log('Pro再読スキップ（' + CONFIG.RECHECK_MODEL + '）: ' + e.message);
       }
@@ -231,56 +241,45 @@ function mimeFromName_(name) {
 }
 function baseName_(path) { return path.replace(/^.*\//, ''); }
 
-/**
- * Gemini に1回OCRさせて、構造化JSONで受け取る。
- */
-function ocrTimecard_(blob, model, temperature) {
+/** OCR用プロンプト（全モデル共通） */
+const OCR_PROMPT =
+  'これは日本のタイムカード（TIME CARD）の写真です。正確に読み取って厳密なJSONで返してください。\n' +
+  '【ヘッダ】上部に「令和○年 ○月分」または「20XX年 ○月分」と書かれています。\n' +
+  '  - year_western: 西暦（令和○年は 2018+○ で西暦化。例 令和7年=2025）\n' +
+  '  - month_label : 「○月分」の月（1〜12の整数）\n' +
+  '【各行】日付ごとに「定時 出（出勤）」「定時 退（退勤）」の打刻があります。\n' +
+  '  - day      : 日付（1〜31の整数）\n' +
+  '  - weekday  : 曜日の漢字1文字（無ければ空文字）\n' +
+  '  - in       : 出勤打刻 "H:MM"（24時間制。無ければ null）\n' +
+  '  - out      : 退勤打刻 "H:MM"（無ければ null）\n' +
+  '  - holiday  : 日付が丸囲み・三角・斜線などで休みを示す場合 true、通常は false\n' +
+  '打刻が薄い/判読できない数字は推測せず null にしてください（後で人が確認します）。\n' +
+  '出力は次の形だけ:\n' +
+  '{"year_western":2025,"month_label":1,"rows":[{"day":26,"weekday":"木","in":"6:16","out":"17:02","holiday":false}]}';
+
+/** Gemini generateContent への1リクエスト分の指定を組み立てる（fetchAll で並行実行する） */
+function buildOcrRequest_(b64data, mime, model, temperature) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error('スクリプトプロパティ GEMINI_API_KEY が未設定です');
-
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
-            + model + ':generateContent?key=' + apiKey;
-
-  const prompt =
-    'これは日本のタイムカード（TIME CARD）の写真です。正確に読み取って厳密なJSONで返してください。\n' +
-    '【ヘッダ】上部に「令和○年 ○月分」または「20XX年 ○月分」と書かれています。\n' +
-    '  - year_western: 西暦（令和○年は 2018+○ で西暦化。例 令和7年=2025）\n' +
-    '  - month_label : 「○月分」の月（1〜12の整数）\n' +
-    '【各行】日付ごとに「定時 出（出勤）」「定時 退（退勤）」の打刻があります。\n' +
-    '  - day      : 日付（1〜31の整数）\n' +
-    '  - weekday  : 曜日の漢字1文字（無ければ空文字）\n' +
-    '  - in       : 出勤打刻 "H:MM"（24時間制。無ければ null）\n' +
-    '  - out      : 退勤打刻 "H:MM"（無ければ null）\n' +
-    '  - holiday  : 日付が丸囲み・三角・斜線などで休みを示す場合 true、通常は false\n' +
-    '打刻が薄い/判読できない数字は推測せず null にしてください（後で人が確認します）。\n' +
-    '出力は次の形だけ:\n' +
-    '{"year_western":2025,"month_label":1,"rows":[{"day":26,"weekday":"木","in":"6:16","out":"17:02","holiday":false}]}';
-
-  const payload = {
-    contents: [{
-      parts: [
-        { text: prompt },
-        { inline_data: { mime_type: blob.getContentType(), data: Utilities.base64Encode(blob.getBytes()) } }
-      ]
-    }],
-    generationConfig: {
-      temperature: temperature,
-      responseMimeType: 'application/json'
-    }
-  };
-
-  const res = UrlFetchApp.fetch(url, {
+  return {
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey,
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify(payload),
+    payload: JSON.stringify({
+      contents: [{ parts: [{ text: OCR_PROMPT }, { inline_data: { mime_type: mime, data: b64data } }] }],
+      generationConfig: { temperature: temperature, responseMimeType: 'application/json' }
+    }),
     muteHttpExceptions: true
-  });
+  };
+}
+
+/** generateContent のレスポンスをパースして構造化JSONを返す */
+function parseOcrResponse_(res) {
   if (res.getResponseCode() !== 200) {
     throw new Error('Gemini API ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 300));
   }
   const json = JSON.parse(res.getContentText());
-  const text = json.candidates[0].content.parts[0].text;
-  return JSON.parse(text);
+  return JSON.parse(json.candidates[0].content.parts[0].text);
 }
 
 /**
