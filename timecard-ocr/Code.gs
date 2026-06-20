@@ -79,6 +79,20 @@ function setup() {
 }
 
 /**
+ * 引き渡し前クリーンアップ：APIキー（スクリプトプロパティ）と自動実行トリガーを削除。
+ * 自分のアカウントで動作確認した後にこれを実行してから渡せば、
+ * こちらの鍵・課金・自動実行が相手側に残らない（残骸ゼロで引き渡せる）。
+ * 受け取った側は自分のキーを登録し setup() を実行すれば使えます。
+ */
+function clearSecretsForHandoff() {
+  PropertiesService.getScriptProperties().deleteProperty('GEMINI_API_KEY');
+  ScriptApp.getProjectTriggers().forEach(function(t) { ScriptApp.deleteTrigger(t); });
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast('APIキーと自動実行を削除しました（引き渡し可）');
+  } catch (e) {}
+}
+
+/**
  * メイン：未処理フォルダの画像を全部処理して確認シートに追記する。
  * トリガーで自動実行 or メニュー「今すぐ読み取り」から手動実行。
  */
