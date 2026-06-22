@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平井まゆみ ｜ 小さな事業者さんのAI担当</title>
+<meta name="description" content="バックオフィス15年 × 三姉妹母 × 北海道在住。小さな事業者さんの「めんどくさい」をAIで消す。いま「無料でAI解決」100人チャレンジ中。">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#111418; --muted:#8b8f96; --line:#e6e7ea;
+    --line2:#d6d8dc; --accent:#111418;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    line-height:1.85;-webkit-font-smoothing:antialiased;letter-spacing:.01em}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  a{color:inherit}
+  /* nav */
+  header{position:sticky;top:0;background:rgba(255,255,255,.86);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);z-index:20}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{font-weight:800;letter-spacing:.02em;font-size:16px}
+  .brand small{display:block;font-size:9.5px;letter-spacing:.34em;color:var(--muted);
+    font-weight:600;margin-top:-2px}
+  .navlinks{display:flex;gap:22px}
+  .navlinks a{font-size:12px;letter-spacing:.18em;color:var(--muted);text-decoration:none;
+    font-family:ui-monospace,monospace}
+  .navlinks a:hover{color:var(--ink)}
+  @media(max-width:680px){.navlinks{display:none}}
+  /* section frame */
+  section{padding:84px 0;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.22em;
+    color:var(--muted);margin-bottom:26px}
+  .eyebrow b{color:var(--ink);font-weight:700}
+  h2{font-size:30px;font-weight:800;letter-spacing:.01em;margin:0 0 18px;line-height:1.4}
+  p.body{font-size:16px;color:#3b4048;max-width:640px;margin:0 0 16px}
+  /* hero */
+  .hero{padding:96px 0 88px;border-bottom:1px solid var(--line)}
+  .hero .tag{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.2em;
+    color:var(--muted);margin-bottom:26px}
+  .hero h1{font-size:46px;line-height:1.34;font-weight:900;letter-spacing:.01em;margin:0 0 24px}
+  .hero h1 .u{border-bottom:3px solid var(--ink);padding-bottom:2px}
+  .hero .lede{font-size:17px;color:#3b4048;max-width:600px;margin:0 0 36px}
+  @media(max-width:680px){.hero h1{font-size:33px}}
+  .btn{display:inline-flex;align-items:center;gap:9px;border:1.5px solid var(--ink);
+    background:var(--ink);color:#fff;text-decoration:none;font-weight:700;font-size:15px;
+    padding:13px 26px;border-radius:2px;transition:.15s}
+  .btn:hover{background:#fff;color:var(--ink)}
+  .btn.ghost{background:#fff;color:var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+  /* strength */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);
+    border-radius:3px;overflow:hidden}
+  .grid3 .cell{padding:26px 22px;border-right:1px solid var(--line)}
+  .grid3 .cell:last-child{border-right:0}
+  .grid3 .lbl{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.14em;
+    color:var(--muted);margin-bottom:12px}
+  .grid3 .lbl b{color:var(--ink)}
+  .grid3 h3{font-size:18px;margin:0 0 8px}
+  .grid3 p{font-size:13.5px;color:#5b606a;margin:0;line-height:1.7}
+  @media(max-width:680px){.grid3{grid-template-columns:1fr}
+    .grid3 .cell{border-right:0;border-bottom:1px solid var(--line)}
+    .grid3 .cell:last-child{border-bottom:0}}
+  /* work cards */
+  .works{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:680px){.works{grid-template-columns:1fr}}
+  .work{border:1px solid var(--line);border-radius:3px;padding:24px 22px;
+    transition:.15s;background:#fff}
+  .work:hover{border-color:var(--line2);transform:translateY(-2px)}
+  .work .cat{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.16em;
+    color:var(--muted);display:flex;justify-content:space-between;margin-bottom:16px}
+  .work .cat .st{color:var(--ink)}
+  .work h3{font-size:19px;margin:0 0 8px}
+  .work p{font-size:14px;color:#5b606a;margin:0}
+  /* about */
+  .about-meta{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+  .about-meta span{font-family:ui-monospace,monospace;font-size:12.5px;letter-spacing:.06em;
+    border:1px solid var(--line2);border-radius:99px;padding:6px 15px;color:#3b4048}
+  /* service */
+  .svc{border:1px solid var(--line);border-radius:3px;padding:28px 26px;margin-bottom:14px}
+  .svc.now{border-color:var(--ink);border-width:1.5px}
+  .svc .k{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.18em;
+    color:var(--muted);margin-bottom:10px}
+  .svc.now .k{color:var(--ink)}
+  .svc h3{font-size:21px;margin:0 0 10px}
+  .svc p{font-size:14.5px;color:#4a4f58;margin:0 0 10px}
+  .svc .tgt{font-size:13px;color:var(--muted)}
+  /* contact */
+  .contact{text-align:center}
+  .contact h2{font-size:32px}
+  .contact p.body{margin:0 auto 30px}
+  .xhandle{font-family:ui-monospace,monospace;font-size:14px;color:var(--muted);margin-top:18px}
+  footer{padding:40px 0;text-align:center;color:var(--muted);font-size:12px}
+  footer .mono{letter-spacing:.18em}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<header>
+  <div class="wrap nav">
+    <div class="brand">平井まゆみ<small>HIRAI MAYUMI</small></div>
+    <nav class="navlinks">
+      <a href="#why">WHY</a>
+      <a href="#work">WORK</a>
+      <a href="#about">ABOUT</a>
+      <a href="#service">SERVICE</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<div class="wrap">
+  <div class="hero">
+    <div class="tag">小さな事業者さんのAI担当 ／ 「無料でAI解決」100人チャレンジ中</div>
+    <h1>雑務に追われる毎日を、<br><span class="u">やりたいこと</span>に使える毎日へ。</h1>
+    <p class="lede">やりたいことがあるのに、雑務に時間を全部持っていかれる——。<br>
+      その「めんどくさい」を、AIで消すのが私のしごとです。</p>
+    <a class="btn" href="#contact">無料で相談する →</a>
+  </div>
+</div>
+
+<!-- ===== 01 WHY ===== -->
+<div class="wrap">
+<section id="why">
+  <div class="eyebrow">01 / <b>WHY</b> — なぜ私がこれをやるのか</div>
+  <h2>「忙しいのがつらい」んじゃない。<br>やりたいことに時間を使えないのが、つらかった。</h2>
+  <p class="body">15年間、整骨院の裏方を一人で抱えてきました。受付・経理・人事、そして育児と家事。
+    体調を崩して年に一度は入院しても、働かざるを得ない毎日でした。</p>
+  <p class="body">そんな中でAIに出会い、「これは手放せる」と気づいたんです。
+    一人で抱え込まなくていい。同じ悩みを持つ小さな事業者さんを、今度は私が助けたい——。
+    それがこの活動の原動力です。</p>
+</section>
+</div>
+
+<!-- ===== 02 STRENGTH ===== -->
+<div class="wrap">
+<section id="strength">
+  <div class="eyebrow">02 / <b>STRENGTH</b> — 私の3つの強み</div>
+  <div class="grid3">
+    <div class="cell">
+      <div class="lbl">01 / <b>現場目線</b></div>
+      <h3>現場の「めんどくさい」が分かる</h3>
+      <p>15年のバックオフィス経験。机上の理論じゃなく、実際に手を動かしてきた人間が設計します。</p>
+    </div>
+    <div class="cell">
+      <div class="lbl">02 / <b>無料・即解決</b></div>
+      <h3>難しい設定なし、今すぐ</h3>
+      <p>専門知識はいりません。Claudeで、その日から使える形にしてお渡しします。</p>
+    </div>
+    <div class="cell">
+      <div class="lbl">03 / <b>伴走型</b></div>
+      <h3>使い続けられるまで一緒に</h3>
+      <p>ツールを渡して終わりにしません。ちゃんと定着するまで、横で伴走します。</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ===== 03 WORK ===== -->
+<div class="wrap">
+<section id="work">
+  <div class="eyebrow">03 / <b>WORK</b> — これまでの事例</div>
+  <div class="works">
+    <div class="work">
+      <div class="cat"><span>AUTOMATION</span><span class="st">実績</span></div>
+      <h3>整骨院の受付業務を自動化</h3>
+      <p>毎日くり返す受付まわりの手作業を、AIで自動化。スタッフの手間を減らしました。</p>
+    </div>
+    <div class="work">
+      <div class="cat"><span>AUTOMATION</span><span class="st">実績</span></div>
+      <h3>レジ業務の効率化</h3>
+      <p>会計・レジまわりの作業を見直し、ミスと時間の両方を減らす仕組みに。</p>
+    </div>
+    <div class="work">
+      <div class="cat"><span>AI ・ TOOL</span><span class="st">実績</span></div>
+      <h3>サロンの予約システム改善</h3>
+      <p>予約まわりのやりとりを整理し、取りこぼしのない仕組みに改善しました。</p>
+    </div>
+    <div class="work">
+      <div class="cat"><span>MEDIA</span><span class="st">運営中</span></div>
+      <h3>地域情報サイト運営</h3>
+      <p>北海道・千歳の「本当に良いお店」を紹介する地域メディアを運営しています。</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ===== 04 ABOUT ===== -->
+<div class="wrap">
+<section id="about">
+  <div class="eyebrow">04 / <b>ABOUT</b> — 自己紹介</div>
+  <h2>平井まゆみ</h2>
+  <div class="about-meta">
+    <span>バックオフィス歴 15年</span>
+    <span>三姉妹の母</span>
+    <span>北海道在住</span>
+  </div>
+  <p class="body">整骨院の裏方を15年。受付から経理・人事までを一人でこなしながら、三姉妹を育ててきました。
+    「忙しさ」より「やりたいことに手が回らないこと」のつらさを誰より知っているからこそ、
+    同じ立場の小さな事業者さんの力になりたいと思っています。難しい言葉は使いません。
+    現場の言葉で、いっしょに考えます。</p>
+  <a class="btn ghost" href="https://x.com/hir_ai3" target="_blank" rel="noopener">Xを見る ＠hir_ai3 →</a>
+</section>
+</div>
+
+<!-- ===== 05 SERVICE ===== -->
+<div class="wrap">
+<section id="service">
+  <div class="eyebrow">05 / <b>SERVICE</b> — いま提供していること</div>
+  <div class="svc now">
+    <div class="k">NOW ／ 無料</div>
+    <h3>「無料でAI解決」100人チャレンジ</h3>
+    <p>小さな事業者さんの「これ、めんどくさい…」を、Claudeで無料で解決しています。
+      Xの固定ポストを引用して、気軽にご相談ください。むずかしい準備はいりません。</p>
+    <div class="tgt">対象：整骨院・サロン・小売店など、小規模事業者さん</div>
+  </div>
+  <div class="svc">
+    <div class="k">NEXT ／ 検討中</div>
+    <h3>有料プラン・継続サポート</h3>
+    <p>「もっとしっかり任せたい」という声を受けて、有料での継続サポートも準備中です。
+      まずは無料チャレンジから、お気軽にどうぞ。</p>
+  </div>
+</section>
+</div>
+
+<!-- ===== 06 CONTACT ===== -->
+<div class="wrap">
+<section id="contact" class="contact">
+  <div class="eyebrow" style="text-align:left">06 / <b>CONTACT</b> — ご相談</div>
+  <h2>その「めんどくさい」、聞かせてください。</h2>
+  <p class="body">Xの固定ポストを引用して送るだけ。相談は無料、しつこい営業もしません。<br>
+    まずは気軽に、ひとことから。</p>
+  <a class="btn" href="https://x.com/hir_ai3" target="_blank" rel="noopener">Xで相談する ＠hir_ai3 →</a>
+  <div class="xhandle">＠hir_ai3</div>
+</section>
+</div>
+
+<footer>
+  <div class="mono">HIRAI MAYUMI © 2026</div>
+</footer>
+
+</body>
+</html>
