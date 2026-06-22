@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>整骨院のAI業務自動化 — 料金ぜんぶ公開しています</title>
+<style>
+  :root{
+    --bg:#0c0e12; --panel:#14171e; --panel2:#181c24; --line:#262b36; --txt:#e8eaf0;
+    --muted:#8a93a6; --accent:#5ee0c0; --accent2:#7aa2ff; --hi:#ff6b6b; --gold:#f5c451;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    line-height:1.8;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px}
+  .eyebrow{font-family:ui-monospace,Menlo,monospace;letter-spacing:.3em;
+    font-size:11px;color:var(--accent);text-transform:uppercase}
+  section{padding:46px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:24px;margin:8px 0 6px;letter-spacing:.02em}
+  .sub{color:var(--muted);font-size:14.5px;margin:0 0 26px}
+  /* hero */
+  .hero{text-align:center;padding:64px 0 50px}
+  .hero h1{font-size:32px;line-height:1.4;margin:14px 0 14px}
+  .hero h1 b{background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:15.5px;max-width:520px;margin:0 auto 28px}
+  .cta-btn{display:inline-block;border:0;border-radius:99px;cursor:pointer;text-decoration:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04110d;
+    font-weight:700;font-size:16px;padding:15px 36px}
+  .cta-btn.line{background:#06c755;color:#fff}
+  .cta-note{font-size:12.5px;color:var(--muted);margin-top:12px}
+  /* 強み */
+  .pillars{display:grid;grid-template-columns:1fr;gap:12px}
+  .pillar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .pillar .no{font-family:ui-monospace,monospace;color:var(--accent2);font-size:12px;letter-spacing:.2em}
+  .pillar h3{margin:4px 0 4px;font-size:17px}
+  .pillar p{margin:0;color:var(--muted);font-size:14px}
+  /* 料金プラン */
+  .tiers{display:grid;grid-template-columns:1fr;gap:14px}
+  .tier{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;position:relative}
+  .tier.reco{border-color:var(--accent)}
+  .tier .badge{position:absolute;top:-11px;left:22px;background:var(--accent);color:#04110d;
+    font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 12px;border-radius:99px}
+  .tier .name{font-size:13px;color:var(--accent2);font-family:ui-monospace,monospace;letter-spacing:.12em}
+  .tier h3{margin:4px 0 2px;font-size:20px}
+  .tier .price{font-size:30px;font-weight:800;margin:8px 0 2px}
+  .tier .price small{font-size:14px;color:var(--muted);font-weight:500}
+  .tier .term{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .tier ul{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px}
+  .tier ul li{margin:3px 0}
+  /* テーブル */
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+  th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12.5px;letter-spacing:.04em}
+  td.price{text-align:right;white-space:nowrap;font-weight:700;color:var(--txt)}
+  td.free{color:var(--accent)}
+  .menu-no{display:inline-block;width:22px;color:var(--accent2);font-family:ui-monospace,monospace;font-size:12px}
+  /* 月額の明瞭ボックス */
+  .money{background:linear-gradient(135deg,rgba(94,224,192,.08),rgba(122,162,255,.08));
+    border:1px solid var(--line);border-radius:16px;padding:22px;margin-top:6px}
+  .money .row{display:flex;justify-content:space-between;align-items:baseline;
+    padding:12px 0;border-bottom:1px dashed var(--line)}
+  .money .row:last-child{border:0}
+  .money .row .l b{font-size:15px}
+  .money .row .l span{display:block;font-size:12.5px;color:var(--muted)}
+  .money .row .r{font-size:20px;font-weight:800;white-space:nowrap}
+  .money .row .r.zero{color:var(--accent)}
+  /* FAQ */
+  .faq{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 20px;margin-top:6px}
+  .faq details{border-bottom:1px solid var(--line);padding:14px 0}
+  .faq details:last-child{border:0}
+  .faq summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;gap:10px}
+  .faq summary::before{content:"Q";color:var(--accent2);font-family:ui-monospace,monospace}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq p{margin:10px 0 2px 22px;color:var(--muted);font-size:14px}
+  /* flow */
+  .flow{display:grid;gap:10px}
+  .step{display:flex;gap:14px;align-items:flex-start;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .step .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--accent2);color:#04110d;
+    font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .step .b b{font-size:15px}
+  .step .b span{display:block;color:var(--muted);font-size:13px}
+  .final{text-align:center;border:0}
+  .footnote{color:var(--muted);font-size:12px;text-align:center;padding:28px 0 60px}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<div class="wrap">
+  <div class="hero">
+    <span class="eyebrow">AI Automation for Clinics</span>
+    <h1>整骨院の「めんどう」を、<br><b>AIにやらせる。</b></h1>
+    <p>予約リマインド・口コミ返信・経費入力…毎日の手作業を自動化します。<br>
+      現場で働くスタッフが作るから、現場の言葉が分かる。</p>
+    <a class="cta-btn" href="#contact">まずは無料で相談する</a>
+    <div class="cta-note">15分のヒアリングは無料。しつこい営業はしません。</div>
+  </div>
+</div>
+
+<!-- ===== 明瞭会計（メイン） ===== -->
+<div class="wrap">
+<section>
+  <span class="eyebrow">Clear Pricing</span>
+  <h2>料金は、ぜんぶ公開しています。</h2>
+  <p class="sub">「結局いくら？」で悩ませません。初期費用も月額も、ここに全部書いてあります。</p>
+
+  <div class="tiers">
+    <div class="tier reco">
+      <span class="badge">いちばん人気</span>
+      <span class="name">TIER 1</span>
+      <h3>整骨院あるあるパック</h3>
+      <div class="price">¥9,800<small> 〜（初期・買い切り）</small></div>
+      <div class="term">納期 24〜48時間 ／ 月額API ¥0</div>
+      <ul>
+        <li>下の8メニューから1つを自動化</li>
+        <li>LINE・スプレッドシート・カレンダー連携込み</li>
+        <li>15分の無料ヒアリング込み</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <span class="name">TIER 2</span>
+      <h3>院まるごと連携</h3>
+      <div class="price">¥48,000<small> 〜（初期）</small></div>
+      <div class="term">納期 約1週間</div>
+      <ul>
+        <li>複数の業務をつなげて自動化</li>
+        <li>条件分岐・LINE双方向のやりとり</li>
+        <li>予約↔カルテ↔会計のデータ同期</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <span class="name">TIER 3</span>
+      <h3>常駐AIフルセット</h3>
+      <div class="price">¥98,000<small> 〜（初期）</small></div>
+      <div class="term">納期 約2週間</div>
+      <ul>
+        <li>院の業務をまるごと設計</li>
+        <li>毎日横にいる常駐AIを導入</li>
+        <li>スタッフ向けAI研修つき</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Tier1 8メニュー ===== -->
+<section>
+  <span class="eyebrow">Tier 1 Menu</span>
+  <h2>あるあるパックの8メニュー</h2>
+  <p class="sub">どれも初期 ¥9,800〜・最短48時間。まずは1つ、効くやつから。</p>
+  <table>
+    <tr><th>メニュー</th><th style="text-align:right">初期費用</th></tr>
+    <tr><td><span class="menu-no">①</span>予約リマインドLINE自動送信</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">②</span>来院前WEB問診 → シート集約</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">③</span>口コミ新着監視 ＋ AI返信文案</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">④</span>朝の経営ダイジェスト（売上・来院数）</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">⑤</span>領収書・レシート → 経費シート</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">⑥</span>物販・備品の発注アラート</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">⑦</span>スタッフ日報のAI集約</td><td class="price">¥9,800〜</td></tr>
+    <tr><td><span class="menu-no">⑧</span>キャンセル枠の自動再募集</td><td class="price">¥48,000〜</td></tr>
+  </table>
+  <p class="sub" style="margin-top:14px;font-size:13px">※ ⑧は複数業務の連携が必要なため Tier 2 になります。</p>
+</section>
+
+<!-- ===== アドオン ===== -->
+<section>
+  <span class="eyebrow">Add-on</span>
+  <h2>追加オプション</h2>
+  <p class="sub">必要なものだけ足せます。要らなければ¥0のまま。</p>
+  <table>
+    <tr><th>オプション</th><th style="text-align:right">追加料金</th></tr>
+    <tr><td>LINE双方向（自動応答ボット化）</td><td class="price">+¥5,000</td></tr>
+    <tr><td>複数のAIステップ</td><td class="price">+¥3,000</td></tr>
+    <tr><td>条件分岐（3つまで）</td><td class="price">+¥3,000</td></tr>
+    <tr><td>カスタムAIプロンプト</td><td class="price">+¥3,000</td></tr>
+    <tr><td>ヒアリング30分追加</td><td class="price">+¥3,000</td></tr>
+    <tr><td>Googleカレンダー連携</td><td class="free">基本料金に込み</td></tr>
+  </table>
+</section>
+
+<!-- ===== 月額のしくみ ===== -->
+<section>
+  <span class="eyebrow">Monthly</span>
+  <h2>月額のしくみ（ここが大事）</h2>
+  <p class="sub">「毎月いくら取られるの？」が一番の不安だと思うので、はっきり書きます。</p>
+  <div class="money">
+    <div class="row">
+      <div class="l"><b>AI利用料</b><span>Geminiの無料枠で動かします</span></div>
+      <div class="r zero">¥0 / 月</div>
+    </div>
+    <div class="row">
+      <div class="l"><b>運用保守サポート（任意）</b><span>不具合対応・ちょっとした改修。要らなければ無し</span></div>
+      <div class="r">¥3,000 / 月〜</div>
+    </div>
+    <div class="row">
+      <div class="l"><b>常駐AI（Tier 3の上位・任意）</b><span>毎日働くAIを置く場合のみ。初回6ヶ月は¥15,000、以降¥6,600</span></div>
+      <div class="r">¥6,600 / 月〜</div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:14px;font-size:13px">
+    ※ 多くの院は「初期 ¥9,800＋月額 ¥0」から始めています。月額は“必要になったら”でOK。
+  </p>
+</section>
+
+<!-- ===== 3つの強み ===== -->
+<section>
+  <span class="eyebrow">Why Us</span>
+  <h2>選ばれる3つの理由</h2>
+  <div class="pillars">
+    <div class="pillar"><span class="no">01</span><h3>現場のスタッフが作る</h3>
+      <p>整骨院で実際に働く人間が、自院で試してから提供します。机上の空論なし。</p></div>
+    <div class="pillar"><span class="no">02</span><h3>ランニングがほぼ¥0</h3>
+      <p>無料のAI枠で動かすので、毎月のAI利用料は0円。導入のお財布ダメージを最小に。</p></div>
+    <div class="pillar"><span class="no">03</span><h3>作って終わりにしない</h3>
+      <p>導入後も運用を伴走。常駐AIで“毎日横にいる”状態まで持っていけます。</p></div>
+  </div>
+</section>
+
+<!-- ===== 流れ ===== -->
+<section>
+  <span class="eyebrow">Flow</span>
+  <h2>無料相談からの流れ</h2>
+  <div class="flow">
+    <div class="step"><div class="n">1</div><div class="b"><b>無料相談（15分）</b>
+      <span>LINEかオンラインで。いまの「めんどう」を聞かせてください。</span></div></div>
+    <div class="step"><div class="n">2</div><div class="b"><b>診断・お見積り</b>
+      <span>自動化できる候補と、料金（このページの通り）をその場で提示。</span></div></div>
+    <div class="step"><div class="n">3</div><div class="b"><b>最短48時間で1本納品</b>
+      <span>まずは効くやつを1つ。動くものを見てから判断できます。</span></div></div>
+    <div class="step"><div class="n">4</div><div class="b"><b>運用・横展開</b>
+      <span>うまくいったら次の業務へ。月額¥0のまま増やせます。</span></div></div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section>
+  <span class="eyebrow">FAQ</span>
+  <h2>料金まわりのよくある質問</h2>
+  <div class="faq">
+    <details><summary>結局、いちばん安いといくら？</summary>
+      <p>初期 ¥9,800＋月額 ¥0 です。8メニューから1つを48時間で自動化します。</p></details>
+    <details><summary>毎月お金を取られるのが不安です。</summary>
+      <p>AI利用料は無料枠で¥0。運用保守（¥3,000/月）も任意で、要らなければ月額は発生しません。</p></details>
+    <details><summary>うちに何が必要か分かりません。</summary>
+      <p>無料相談で診断します。「何を自動化すべきか」をこちらが提案するので、丸腰でOKです。</p></details>
+    <details><summary>あとから追加料金を請求されない？</summary>
+      <p>このページに書いてある金額が全てです。オプションも事前に提示し、了承なく増やしません。</p></details>
+  </div>
+</section>
+
+<!-- ===== 最終CTA ===== -->
+<section id="contact" class="final">
+  <span class="eyebrow">Contact</span>
+  <h2>まずは15分、話だけでも。</h2>
+  <p class="sub">相談は無料。料金はこのページの通りなので、安心してどうぞ。</p>
+  <a class="cta-btn line" href="#" onclick="return false">LINEで無料相談する →</a>
+</section>
+
+<p class="footnote">
+  ※ このページはサンプルです。屋号・LINEリンク・連絡先は差し替えてください。
+</p>
+</div>
+</body>
+</html>
