@@ -17,6 +17,7 @@
 
 const NEWS_PER_TOPIC = 5;   // 1分野あたり取る本数
 const DIGEST_MAX = 10;      // 1通あたりの最大本数
+const RECENT_HOURS = 30;    // 直近何時間のニュースに絞るか（30時間＝朝の時点で"昨日中心"。24で当日厳しめ、48で緩め）
 
 /** 毎朝の配信（トリガーで実行） */
 function sendDailyDigests() {
@@ -67,19 +68,25 @@ function buildDigest_(topics) {
   return all.slice(0, DIGEST_MAX);
 }
 
-/** Googleニュース RSS から記事を取得（タイトル/URL/媒体） */
+/** Googleニュース RSS から記事を取得（タイトル/URL/媒体）。直近RECENT_HOURSに絞る */
 function fetchNews_(keyword) {
   const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(keyword) + '&hl=ja&gl=JP&ceid=JP:ja';
   const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   if (res.getResponseCode() !== 200) return [];
+  const cutoff = Date.now() - RECENT_HOURS * 3600 * 1000;
   try {
     const channel = XmlService.parse(res.getContentText()).getRootElement().getChild('channel');
     return channel.getChildren('item').map(function(it) {
+      const pd = it.getChildText('pubDate') || '';
+      const ts = pd ? Date.parse(pd) : NaN;
       return {
         title: it.getChildText('title') || '',
         url: it.getChildText('link') || '',
-        source: it.getChild('source') ? it.getChild('source').getText() : ''
+        source: it.getChild('source') ? it.getChild('source').getText() : '',
+        ts: ts
       };
+    }).filter(function(it) {
+      return isNaN(it.ts) || it.ts >= cutoff;   // 日時不明は残す、それ以外は直近のみ
     });
   } catch (e) { return []; }
 }
