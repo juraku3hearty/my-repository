@@ -39,6 +39,9 @@
     <label>差出人名（会社名）<span class="hint">届くメールの送信者名</span></label>
     <input id="senderName" type="text" placeholder="例：株式会社〇〇">
 
+    <label>差出人アドレス<span class="hint">空ならGmailから。要：Gmailで送信元認証</span></label>
+    <input id="senderEmail" type="email" placeholder="info@famitect.com">
+
     <label>メールの件名</label>
     <input id="subject" type="text" placeholder="☀️ 今朝のニュース">
 
@@ -65,6 +68,7 @@
   function load(){
     google.script.run.withSuccessHandler(function(s){
       document.getElementById('senderName').value = s.senderName || '';
+      document.getElementById('senderEmail').value = s.senderEmail || '';
       document.getElementById('subject').value = s.subject || '';
       document.getElementById('perTopic').value = s.perTopic || 3;
       document.getElementById('recentHours').value = s.recentHours || 30;
@@ -78,6 +82,7 @@
   function save(){
     const data = {
       senderName: document.getElementById('senderName').value.trim(),
+      senderEmail: document.getElementById('senderEmail').value.trim(),
       subject: document.getElementById('subject').value.trim(),
       perTopic: document.getElementById('perTopic').value,
       recentHours: document.getElementById('recentHours').value,

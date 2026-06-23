@@ -14,32 +14,49 @@ const DIGEST_MAX = 12;      // 1通あたりの最大本数（安全上限）
 /** 設定タブを読む（無ければ作る）。会社名・件名などの“入口”。
  *  スプレッドシートが無い（単体プロジェクトでのテスト）ときはデフォルト値を返す。 */
 function getSettings_(ss) {
-  const def = { senderName:'毎朝ニュース', subject:'☀️ 今朝のニュース', perTopic:3, recentHours:30, footer:'毎朝ニュース', unsubUrl:'' };
+  const def = { senderName:'毎朝ニュース', subject:'☀️ 今朝のニュース', perTopic:3, recentHours:30, footer:'毎朝ニュース', unsubUrl:'', senderEmail:'' };
   if (!ss) return def;
   let sh = ss.getSheetByName('設定');
   if (!sh) {
     sh = ss.insertSheet('設定');
-    sh.getRange('A1:B6').setValues([
+    sh.getRange('A1:B7').setValues([
       ['差出人名（会社名）', '毎朝ニュース'],
       ['メールの件名',       '☀️ 今朝のニュース'],
       ['1分野あたりの本数',   3],
       ['対象とする直近時間',   30],
       ['フッター文',          '毎朝ニュース'],
-      ['配信停止URL（WebAppのURLを貼る）', '']
+      ['配信停止URL（WebAppのURLを貼る）', ''],
+      ['差出人アドレス（要：Gmailで送信元認証）', '']
     ]);
-    sh.getRange('A1:A6').setFontWeight('bold');
-    sh.setColumnWidth(1, 220); sh.setColumnWidth(2, 320);
-    sh.getRange('A8').setValue('★ここの値を変えると配信内容が変わります（コード不要）');
+    sh.getRange('A1:A7').setFontWeight('bold');
+    sh.setColumnWidth(1, 260); sh.setColumnWidth(2, 320);
+    sh.getRange('A9').setValue('★ここの値を変えると配信内容が変わります（コード不要）');
   }
-  const v = sh.getRange('B1:B6').getValues();
+  if (sh.getRange('A7').getValue() === '') sh.getRange('A7').setValue('差出人アドレス（要：Gmailで送信元認証）').setFontWeight('bold');
+  const v = sh.getRange('B1:B7').getValues();
   return {
     senderName:  String(v[0][0] || '毎朝ニュース'),
     subject:     String(v[1][0] || '☀️ 今朝のニュース'),
     perTopic:    parseInt(v[2][0], 10) || 3,
     recentHours: parseInt(v[3][0], 10) || 30,
     footer:      String(v[4][0] || '毎朝ニュース'),
-    unsubUrl:    String(v[5][0] || '')
+    unsubUrl:    String(v[5][0] || ''),
+    senderEmail: String(v[6][0] || '')
   };
+}
+
+/** 差出人アドレス(認証済みエイリアス)があればそこから、ダメなら通常送信にフォールバック */
+function sendMail_(to, subject, text, html, s) {
+  const opts = { name: s.senderName, htmlBody: html };
+  if (s.senderEmail) {
+    try {
+      GmailApp.sendEmail(to, subject, text, { name: s.senderName, htmlBody: html, from: s.senderEmail });
+      return;
+    } catch (e) {
+      Logger.log('差出人アドレス(' + s.senderEmail + ')で送信不可→通常送信: ' + e.message);
+    }
+  }
+  GmailApp.sendEmail(to, subject, text, opts);
 }
 
 function regSS_() {
@@ -66,9 +83,7 @@ function sendDailyDigests() {
     try {
       const items = buildDigest_(topics, s);
       if (!items.length) return;
-      GmailApp.sendEmail(email, s.subject, digestText_(items), {
-        name: s.senderName, htmlBody: digestHtml_(items, topics, s, email)
-      });
+      sendMail_(email, s.subject, digestText_(items), digestHtml_(items, topics, s, email), s);
       sent++;
     } catch (e) { Logger.log('配信NG ' + email + ': ' + e.message); }
   });
@@ -92,10 +107,8 @@ function testDigest() {
   const me = Session.getActiveUser().getEmail();
   const topics = ['生成AI', '経営'];
   const items = buildDigest_(topics, s);
-  GmailApp.sendEmail(me, '【テスト】' + s.subject, digestText_(items), {
-    name: s.senderName, htmlBody: digestHtml_(items, topics, s, me)
-  });
-  Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName);
+  sendMail_(me, '【テスト】' + s.subject, digestText_(items), digestHtml_(items, topics, s, me), s);
+  Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName + (s.senderEmail ? ' <'+s.senderEmail+'>' : ''));
 }
 
 /** 複数分野のニュースを集めて、重複を除いて返す */

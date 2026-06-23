@@ -51,6 +51,8 @@ function saveSettings(d) {
   sh.getRange('B3').setValue(parseInt(d.perTopic, 10) || 3);
   sh.getRange('B4').setValue(parseInt(d.recentHours, 10) || 30);
   sh.getRange('B5').setValue(String(d.footer || ''));
+  sh.getRange('A7').setValue('差出人アドレス（要：Gmailで送信元認証）');
+  sh.getRange('B7').setValue(String(d.senderEmail || ''));
   return true;
 }
 
