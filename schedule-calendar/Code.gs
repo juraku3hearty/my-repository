@@ -334,6 +334,17 @@ function registerToCalendar() {
     }
 
     const title2 = String(title);
+
+    // ★重複防止：その日に同じ（または近い）予定が既にあれば作らない
+    //   → 試合要項と月間カレンダーで同じ予定が来ても二重に入らない＝消す作業が不要
+    const dayDate = makeDate_(y, m, d, '00:00');
+    const already = cal.getEventsForDay(dayDate).some(function(ev){ return sameEvent_(ev.getTitle(), title2); });
+    if (already) {
+      sheet.getRange(i + 2, 8).setValue('既存');
+      skipped++;
+      continue;
+    }
+
     try {
       if (start && String(start).match(/^\d{1,2}:\d{2}$/)) {
         const s = makeDate_(y, m, d, String(start));
@@ -357,6 +368,12 @@ function makeDate_(y, m, d, hhmm) {
   const t = String(hhmm).match(/^(\d{1,2}):(\d{2})$/);
   const hh = t ? parseInt(t[1],10) : 0, mm = t ? parseInt(t[2],10) : 0;
   return new Date(parseInt(y,10), parseInt(m,10) - 1, parseInt(d,10), hh, mm);
+}
+/** 同じ予定とみなすか（空白を無視して、一致 or 片方がもう片方を含む） */
+function sameEvent_(a, b) {
+  const x = String(a).replace(/\s/g, ''), y = String(b).replace(/\s/g, '');
+  if (!x || !y) return false;
+  return x === y || x.indexOf(y) >= 0 || y.indexOf(x) >= 0;
 }
 function isImageMime_(mime) { return mime === 'image/jpeg' || mime === 'image/png'; }
 function upgrade_(cur, next) { const r={'':0,'check':1,'mismatch':2,'unread':3}; return r[next]>r[cur]?next:cur; }
