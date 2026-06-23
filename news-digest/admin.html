@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>毎朝ニュース ｜ 管理</title>
+<style>
+  :root{ --brand:#2563eb; --brand-d:#1d4ed8; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg1:#eef2ff; --bg2:#f8fafc; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:24px 14px 60px;}
+  .card{width:100%;max-width:460px;background:#fff;border-radius:22px;box-shadow:0 18px 50px rgba(30,41,59,.12);padding:26px 22px 24px;}
+  .logo{font-size:28px}
+  h1{font-size:20px;margin:6px 0 2px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  label{display:block;font-size:13.5px;font-weight:700;margin:16px 0 6px}
+  .hint{font-weight:400;color:var(--muted);font-size:11.5px;margin-left:4px}
+  input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;font-size:15px;outline:none}
+  input:focus{border-color:var(--brand)}
+  .row{display:flex;gap:10px}
+  .row > div{flex:1}
+  .submit{width:100%;margin-top:24px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--brand),var(--brand-d));
+    color:#fff;font-size:16px;font-weight:800;padding:15px;cursor:pointer;box-shadow:0 10px 24px rgba(37,99,235,.35)}
+  .submit:disabled{opacity:.5}
+  .msg{text-align:center;margin-top:14px;font-size:13px;font-weight:700;min-height:18px}
+  .ok{color:#059669} .ng{color:#dc2626}
+  .load{text-align:center;color:var(--muted);padding:30px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">⚙️</div>
+  <h1>毎朝ニュース 管理</h1>
+  <p class="sub">配信の内容をここで変更できます。</p>
+
+  <div id="loading" class="load">読み込み中…</div>
+
+  <div id="form" style="display:none">
+    <label>差出人名（会社名）<span class="hint">届くメールの送信者名</span></label>
+    <input id="senderName" type="text" placeholder="例：株式会社〇〇">
+
+    <label>メールの件名</label>
+    <input id="subject" type="text" placeholder="☀️ 今朝のニュース">
+
+    <div class="row">
+      <div>
+        <label>1分野の本数</label>
+        <input id="perTopic" type="number" min="1" max="10">
+      </div>
+      <div>
+        <label>直近何時間<span class="hint">昨日中心=30</span></label>
+        <input id="recentHours" type="number" min="6" max="72">
+      </div>
+    </div>
+
+    <label>フッター文<span class="hint">メール下部に表示</span></label>
+    <input id="footer" type="text" placeholder="会社名など">
+
+    <button class="submit" id="go" onclick="save()">保存する</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+  function load(){
+    google.script.run.withSuccessHandler(function(s){
+      document.getElementById('senderName').value = s.senderName || '';
+      document.getElementById('subject').value = s.subject || '';
+      document.getElementById('perTopic').value = s.perTopic || 3;
+      document.getElementById('recentHours').value = s.recentHours || 30;
+      document.getElementById('footer').value = s.footer || '';
+      document.getElementById('loading').style.display='none';
+      document.getElementById('form').style.display='block';
+    }).withFailureHandler(function(e){
+      document.getElementById('loading').textContent = '読み込みエラー: '+e.message;
+    }).getSettingsForUI();
+  }
+  function save(){
+    const data = {
+      senderName: document.getElementById('senderName').value.trim(),
+      subject: document.getElementById('subject').value.trim(),
+      perTopic: document.getElementById('perTopic').value,
+      recentHours: document.getElementById('recentHours').value,
+      footer: document.getElementById('footer').value.trim()
+    };
+    const m=document.getElementById('msg'); m.textContent=''; m.className='msg';
+    document.getElementById('go').disabled=true;
+    google.script.run.withSuccessHandler(function(){
+      m.textContent='✓ 保存しました'; m.className='msg ok';
+      document.getElementById('go').disabled=false;
+    }).withFailureHandler(function(e){
+      m.textContent='保存エラー: '+e.message; m.className='msg ng';
+      document.getElementById('go').disabled=false;
+    }).saveSettings(data);
+  }
+  load();
+</script>
+</body>
+</html>

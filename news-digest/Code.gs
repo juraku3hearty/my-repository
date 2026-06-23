@@ -16,15 +16,42 @@
 
 const REG_SHEET_ID = '';      // ← 登録者リストのスプレッドシートID（空なら、このスクリプトを束ねたシート）
 const REG_TAB = '登録';
+const ADMIN_KEY = 'mayu2026'; // ← 管理画面URLの合言葉。推測されにくい文字列に変更推奨
 
-/** Web App のページ表示／配信停止 */
+/** Web App のページ表示／配信停止／管理画面 */
 function doGet(e) {
-  if (e && e.parameter && e.parameter.unsub) {
-    return unsubscribe_(e.parameter.unsub);
+  const p = (e && e.parameter) || {};
+  if (p.unsub) return unsubscribe_(p.unsub);
+  if (p.admin) {
+    if (p.admin === ADMIN_KEY) {
+      return HtmlService.createHtmlOutputFromFile('admin')
+        .setTitle('毎朝ニュース ｜ 管理')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+    }
+    return HtmlService.createHtmlOutput('<p style="font-family:sans-serif;text-align:center;padding:50px">アクセスできません</p>');
   }
   return HtmlService.createHtmlOutputFromFile('picker')
     .setTitle('毎朝ニュース ｜ 設定')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+}
+
+/** 管理画面：現在の設定を返す */
+function getSettingsForUI() {
+  const ss = REG_SHEET_ID ? SpreadsheetApp.openById(REG_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  return getSettings_(ss); // digest.gs
+}
+
+/** 管理画面：設定を保存する */
+function saveSettings(d) {
+  const ss = REG_SHEET_ID ? SpreadsheetApp.openById(REG_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName('設定');
+  if (!sh) { getSettings_(ss); sh = ss.getSheetByName('設定'); }
+  sh.getRange('B1').setValue(String(d.senderName || ''));
+  sh.getRange('B2').setValue(String(d.subject || ''));
+  sh.getRange('B3').setValue(parseInt(d.perTopic, 10) || 3);
+  sh.getRange('B4').setValue(parseInt(d.recentHours, 10) || 30);
+  sh.getRange('B5').setValue(String(d.footer || ''));
+  return true;
 }
 
 /** 配信停止：該当メールの「配信」列を停止にする */
