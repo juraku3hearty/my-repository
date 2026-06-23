@@ -17,11 +17,37 @@
 const REG_SHEET_ID = '';      // ← 登録者リストのスプレッドシートID（空なら、このスクリプトを束ねたシート）
 const REG_TAB = '登録';
 
-/** Web App のページ表示 */
-function doGet() {
+/** Web App のページ表示／配信停止 */
+function doGet(e) {
+  if (e && e.parameter && e.parameter.unsub) {
+    return unsubscribe_(e.parameter.unsub);
+  }
   return HtmlService.createHtmlOutputFromFile('picker')
     .setTitle('毎朝ニュース ｜ 設定')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+}
+
+/** 配信停止：該当メールの「配信」列を停止にする */
+function unsubscribe_(email) {
+  const ss = REG_SHEET_ID ? SpreadsheetApp.openById(REG_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss ? ss.getSheetByName(REG_TAB) : null;
+  let done = false;
+  if (sh && sh.getLastRow() >= 2) {
+    const emails = sh.getRange(2, 4, sh.getLastRow() - 1, 1).getValues(); // D=メール
+    for (let i = 0; i < emails.length; i++) {
+      if (String(emails[i][0]).trim().toLowerCase() === String(email).trim().toLowerCase()) {
+        sh.getRange(i + 2, 6).setValue('停止'); // F=配信
+        done = true;
+        break;
+      }
+    }
+  }
+  const msg = done ? '配信を停止しました。ご利用ありがとうございました。'
+                   : '対象のアドレスが見つかりませんでした。';
+  return HtmlService.createHtmlOutput(
+    '<div style="font-family:sans-serif;text-align:center;padding:48px 20px">' +
+    '<div style="font-size:40px">📭</div><h2 style="font-size:18px">' + msg + '</h2></div>'
+  );
 }
 
 /** 登録を保存（画面の google.script.run から呼ばれる） */

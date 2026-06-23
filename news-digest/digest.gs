@@ -14,29 +14,31 @@ const DIGEST_MAX = 12;      // 1通あたりの最大本数（安全上限）
 /** 設定タブを読む（無ければ作る）。会社名・件名などの“入口”。
  *  スプレッドシートが無い（単体プロジェクトでのテスト）ときはデフォルト値を返す。 */
 function getSettings_(ss) {
-  const def = { senderName:'毎朝ニュース', subject:'☀️ 今朝のニュース', perTopic:3, recentHours:30, footer:'毎朝ニュース' };
+  const def = { senderName:'毎朝ニュース', subject:'☀️ 今朝のニュース', perTopic:3, recentHours:30, footer:'毎朝ニュース', unsubUrl:'' };
   if (!ss) return def;
   let sh = ss.getSheetByName('設定');
   if (!sh) {
     sh = ss.insertSheet('設定');
-    sh.getRange('A1:B5').setValues([
+    sh.getRange('A1:B6').setValues([
       ['差出人名（会社名）', '毎朝ニュース'],
       ['メールの件名',       '☀️ 今朝のニュース'],
       ['1分野あたりの本数',   3],
       ['対象とする直近時間',   30],
-      ['フッター文',          '毎朝ニュース']
+      ['フッター文',          '毎朝ニュース'],
+      ['配信停止URL（WebAppのURLを貼る）', '']
     ]);
-    sh.getRange('A1:A5').setFontWeight('bold');
-    sh.setColumnWidth(1, 180); sh.setColumnWidth(2, 280);
-    sh.getRange('A7').setValue('★ここの値を変えると配信内容が変わります（コード不要）');
+    sh.getRange('A1:A6').setFontWeight('bold');
+    sh.setColumnWidth(1, 220); sh.setColumnWidth(2, 320);
+    sh.getRange('A8').setValue('★ここの値を変えると配信内容が変わります（コード不要）');
   }
-  const v = sh.getRange('B1:B5').getValues();
+  const v = sh.getRange('B1:B6').getValues();
   return {
     senderName:  String(v[0][0] || '毎朝ニュース'),
     subject:     String(v[1][0] || '☀️ 今朝のニュース'),
     perTopic:    parseInt(v[2][0], 10) || 3,
     recentHours: parseInt(v[3][0], 10) || 30,
-    footer:      String(v[4][0] || '毎朝ニュース')
+    footer:      String(v[4][0] || '毎朝ニュース'),
+    unsubUrl:    String(v[5][0] || '')
   };
 }
 
@@ -65,7 +67,7 @@ function sendDailyDigests() {
       const items = buildDigest_(topics, s);
       if (!items.length) return;
       GmailApp.sendEmail(email, s.subject, digestText_(items), {
-        name: s.senderName, htmlBody: digestHtml_(items, topics, s)
+        name: s.senderName, htmlBody: digestHtml_(items, topics, s, email)
       });
       sent++;
     } catch (e) { Logger.log('配信NG ' + email + ': ' + e.message); }
@@ -81,7 +83,7 @@ function testDigest() {
   const topics = ['生成AI', '経営'];
   const items = buildDigest_(topics, s);
   GmailApp.sendEmail(me, '【テスト】' + s.subject, digestText_(items), {
-    name: s.senderName, htmlBody: digestHtml_(items, topics, s)
+    name: s.senderName, htmlBody: digestHtml_(items, topics, s, me)
   });
   Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName);
 }
@@ -126,8 +128,8 @@ function digestText_(items) {
   return items.map(function(it, i) { return (i + 1) + '. ' + it.title + '\n' + it.url; }).join('\n\n');
 }
 
-/** メールHTML版（テーマ別に見出しで区切り＋各記事に「Xでシェア」） */
-function digestHtml_(items, topics, s) {
+/** メールHTML版（テーマ別に見出しで区切り＋各記事に「Xでシェア」＋配信停止） */
+function digestHtml_(items, topics, s, email) {
   let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
   let curTopic = '';
   items.forEach(function(it, i) {
@@ -143,7 +145,12 @@ function digestHtml_(items, topics, s) {
        + 'style="font-size:12px;font-weight:700;color:#fff;background:#111;border-radius:6px;padding:3px 10px;text-decoration:none">Xでシェア</a>'
        + '</div></div>';
   });
-  h += '<p style="color:#bbb;font-size:11px;margin-top:18px">' + s.footer + '</p></div>';
+  h += '<p style="color:#bbb;font-size:11px;margin-top:18px">' + s.footer;
+  if (s.unsubUrl && email) {
+    const sep = s.unsubUrl.indexOf('?') >= 0 ? '&' : '?';
+    h += '<br><a href="' + s.unsubUrl + sep + 'unsub=' + encodeURIComponent(email) + '" style="color:#999">配信停止</a>';
+  }
+  h += '</p></div>';
   return h;
 }
 
