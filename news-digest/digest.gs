@@ -1,28 +1,55 @@
 /**
- * 毎朝ニュース 配信エンジン
+ * 毎朝ニュース 配信エンジン（設定シート対応版）
  * ------------------------------------------------------------------
- * 登録シート（Code.gs の REG_SHEET_ID / REG_TAB）を読み、各人の興味分野で
- * Google ニュースRSS を取得して、上位10本を毎朝メール送信する。
+ * 「設定」タブの値で、差出人名(会社名)・件名・本数・対象時間・フッターを
+ * コードを触らずに変更できる。配信先は「登録」タブ（Code.gs と同じブック）。
  *
- * ・ニュース取得＝GoogleニュースRSS（無料・APIキー不要）
- * ・要約AIは「任意の後付け」。まずはタイトル＋URLで"届くか"を確認できる。
- *
- * 【まず"届くか"テスト】
- *   この digest.gs と Code.gs を Apps Script に入れて、testDigest を実行
- *   → 自分宛に1通届けば成功（登録やデプロイ前でも試せる）
- *
- * 【本番】
- *   sendDailyDigests に「時間主導トリガー（毎朝7時など）」を設定
+ * 【まず"届くか"テスト】 testDigest を実行 → 自分宛に1通
+ * 【登録者へ配信】       sendDailyDigests に毎朝のトリガーを設定
+ * 【内容を変える】       「設定」タブの値を書き換えるだけ（会社名・件名など）
  */
 
-const NEWS_PER_TOPIC = 5;   // 1分野あたり取る本数
-const DIGEST_MAX = 10;      // 1通あたりの最大本数
-const RECENT_HOURS = 30;    // 直近何時間のニュースに絞るか（30時間＝朝の時点で"昨日中心"。24で当日厳しめ、48で緩め）
+const DIGEST_MAX = 12;      // 1通あたりの最大本数（安全上限）
 
-/** 毎朝の配信（トリガーで実行） */
-function sendDailyDigests() {
-  const ss = (typeof REG_SHEET_ID !== 'undefined' && REG_SHEET_ID)
+/** 設定タブを読む（無ければ作る）。会社名・件名などの“入口”。
+ *  スプレッドシートが無い（単体プロジェクトでのテスト）ときはデフォルト値を返す。 */
+function getSettings_(ss) {
+  const def = { senderName:'毎朝ニュース', subject:'☀️ 今朝のニュース', perTopic:3, recentHours:30, footer:'毎朝ニュース' };
+  if (!ss) return def;
+  let sh = ss.getSheetByName('設定');
+  if (!sh) {
+    sh = ss.insertSheet('設定');
+    sh.getRange('A1:B5').setValues([
+      ['差出人名（会社名）', '毎朝ニュース'],
+      ['メールの件名',       '☀️ 今朝のニュース'],
+      ['1分野あたりの本数',   3],
+      ['対象とする直近時間',   30],
+      ['フッター文',          '毎朝ニュース']
+    ]);
+    sh.getRange('A1:A5').setFontWeight('bold');
+    sh.setColumnWidth(1, 180); sh.setColumnWidth(2, 280);
+    sh.getRange('A7').setValue('★ここの値を変えると配信内容が変わります（コード不要）');
+  }
+  const v = sh.getRange('B1:B5').getValues();
+  return {
+    senderName:  String(v[0][0] || '毎朝ニュース'),
+    subject:     String(v[1][0] || '☀️ 今朝のニュース'),
+    perTopic:    parseInt(v[2][0], 10) || 3,
+    recentHours: parseInt(v[3][0], 10) || 30,
+    footer:      String(v[4][0] || '毎朝ニュース')
+  };
+}
+
+function regSS_() {
+  return (typeof REG_SHEET_ID !== 'undefined' && REG_SHEET_ID)
     ? SpreadsheetApp.openById(REG_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
+}
+
+/** 毎朝の配信（トリガーで実行）。登録タブの全員に送る */
+function sendDailyDigests() {
+  const ss = regSS_();
+  if (!ss) { Logger.log('スプレッドシートがありません。シートに紐づけるか REG_SHEET_ID を設定してください。'); return; }
+  const s = getSettings_(ss);
   const sh = ss.getSheetByName(REG_TAB);
   if (!sh || sh.getLastRow() < 2) { Logger.log('登録者なし'); return; }
 
@@ -31,34 +58,40 @@ function sendDailyDigests() {
   let sent = 0;
   rows.forEach(function(r) {
     const email = String(r[3] || '').trim();
-    const topics = String(r[4] || '').split(',').map(function(s){ return s.trim(); }).filter(String);
+    const topics = String(r[4] || '').split(',').map(function(x){ return x.trim(); }).filter(String);
     const status = String(r[5] || '有効');
     if (!email || !topics.length || status === '停止') return;
     try {
-      const items = buildDigest_(topics);
+      const items = buildDigest_(topics, s);
       if (!items.length) return;
-      GmailApp.sendEmail(email, todayTitle_(), digestText_(items), { htmlBody: digestHtml_(items, topics) });
+      GmailApp.sendEmail(email, s.subject, digestText_(items), {
+        name: s.senderName, htmlBody: digestHtml_(items, topics, s)
+      });
       sent++;
     } catch (e) { Logger.log('配信NG ' + email + ': ' + e.message); }
   });
   Logger.log('配信完了: ' + sent + '通');
 }
 
-/** 自分宛にテスト送信（"ほんとに届くか"の確認用） */
+/** 自分宛にテスト送信（届くか確認用） */
 function testDigest() {
+  const ss = regSS_();
+  const s = getSettings_(ss);
   const me = Session.getActiveUser().getEmail();
   const topics = ['生成AI', '経営'];
-  const items = buildDigest_(topics);
-  GmailApp.sendEmail(me, '【テスト】' + todayTitle_(), digestText_(items), { htmlBody: digestHtml_(items, topics) });
-  Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本');
+  const items = buildDigest_(topics, s);
+  GmailApp.sendEmail(me, '【テスト】' + s.subject, digestText_(items), {
+    name: s.senderName, htmlBody: digestHtml_(items, topics, s)
+  });
+  Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName);
 }
 
-/** 複数分野のニュースを集めて、重複を除いて上位を返す */
-function buildDigest_(topics) {
+/** 複数分野のニュースを集めて、重複を除いて返す */
+function buildDigest_(topics, s) {
   const all = [];
   const seen = {};
   topics.forEach(function(t) {
-    fetchNews_(t).slice(0, NEWS_PER_TOPIC).forEach(function(it) {
+    fetchNews_(t, s.recentHours).slice(0, s.perTopic).forEach(function(it) {
       if (seen[it.title]) return;
       seen[it.title] = 1;
       it.topic = t;
@@ -68,31 +101,24 @@ function buildDigest_(topics) {
   return all.slice(0, DIGEST_MAX);
 }
 
-/** Googleニュース RSS から記事を取得（タイトル/URL/媒体）。直近RECENT_HOURSに絞る */
-function fetchNews_(keyword) {
+/** Googleニュース RSS から取得。直近 recentHours に絞る */
+function fetchNews_(keyword, recentHours) {
   const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(keyword) + '&hl=ja&gl=JP&ceid=JP:ja';
   const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   if (res.getResponseCode() !== 200) return [];
-  const cutoff = Date.now() - RECENT_HOURS * 3600 * 1000;
+  const cutoff = Date.now() - (recentHours || 30) * 3600 * 1000;
   try {
     const channel = XmlService.parse(res.getContentText()).getRootElement().getChild('channel');
     return channel.getChildren('item').map(function(it) {
       const pd = it.getChildText('pubDate') || '';
-      const ts = pd ? Date.parse(pd) : NaN;
       return {
         title: it.getChildText('title') || '',
         url: it.getChildText('link') || '',
         source: it.getChild('source') ? it.getChild('source').getText() : '',
-        ts: ts
+        ts: pd ? Date.parse(pd) : NaN
       };
-    }).filter(function(it) {
-      return isNaN(it.ts) || it.ts >= cutoff;   // 日時不明は残す、それ以外は直近のみ
-    });
+    }).filter(function(it) { return isNaN(it.ts) || it.ts >= cutoff; });
   } catch (e) { return []; }
-}
-
-function todayTitle_() {
-  return '☀️ 今朝のニュース（' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M月d日') + '）';
 }
 
 /** プレーンテキスト版（X投稿にも流用できる「タイトル＋URL」） */
@@ -100,22 +126,24 @@ function digestText_(items) {
   return items.map(function(it, i) { return (i + 1) + '. ' + it.title + '\n' + it.url; }).join('\n\n');
 }
 
-/** メールのHTML版（各記事に「𝕏 シェア」ボタン付き＝ワンタップで投稿画面） */
-function digestHtml_(items, topics) {
+/** メールHTML版（テーマ別に見出しで区切り＋各記事に「Xでシェア」） */
+function digestHtml_(items, topics, s) {
   let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
-  h += '<p style="color:#888;font-size:13px">分野：' + topics.join(' / ') + '</p>';
+  let curTopic = '';
   items.forEach(function(it, i) {
-    h += '<div style="margin:14px 0;padding-bottom:12px;border-bottom:1px solid #eee">'
-       + '<a href="' + it.url + '" style="font-size:15px;color:#1a0dab;text-decoration:none;font-weight:600">'
-       + (i + 1) + '. ' + it.title + '</a>'
+    if (it.topic !== curTopic) {
+      curTopic = it.topic;
+      h += '<h3 style="margin:20px 0 8px;color:#2563eb;border-left:4px solid #2563eb;padding-left:8px">■ ' + curTopic + '</h3>';
+    }
+    h += '<div style="margin:10px 0;padding-bottom:10px;border-bottom:1px solid #eee">'
+       + '<a href="' + it.url + '" style="font-size:15px;color:#1a0dab;text-decoration:none;font-weight:600">' + it.title + '</a>'
        + '<div style="margin-top:5px;display:flex;align-items:center;gap:10px">'
        + (it.source ? '<span style="color:#999;font-size:12px">' + it.source + '</span>' : '')
        + '<a href="' + xShareUrl_(it.title, it.url) + '" target="_blank" '
        + 'style="font-size:12px;font-weight:700;color:#fff;background:#111;border-radius:6px;padding:3px 10px;text-decoration:none">Xでシェア</a>'
-       + '</div>'
-       + '</div>';
+       + '</div></div>';
   });
-  h += '<p style="color:#bbb;font-size:11px;margin-top:18px">毎朝ニュース</p></div>';
+  h += '<p style="color:#bbb;font-size:11px;margin-top:18px">' + s.footer + '</p></div>';
   return h;
 }
 
