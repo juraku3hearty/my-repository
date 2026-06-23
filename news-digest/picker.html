@@ -80,6 +80,10 @@
     </div>
     <div class="chips" id="custom" style="margin-top:10px"></div>
 
+    <div class="label">🏢 会社名・お名前</div>
+    <div class="field"><input id="company" type="text" placeholder="会社名"></div>
+    <div class="field" style="margin-top:8px"><input id="name" type="text" placeholder="お名前"></div>
+
     <div class="label">✉️ 届け先メール</div>
     <div class="field"><input id="email" type="email" placeholder="you@example.com"></div>
 
@@ -122,9 +126,12 @@
   document.getElementById('kw').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();addCustom();}});
 
   function submit(){
+    const company=document.getElementById('company').value.trim();
+    const name=document.getElementById('name').value.trim();
     const email=document.getElementById('email').value.trim();
     const topics=[...selected, ...customs];
     if(topics.length===0){ alert('分野を1つ以上選んでください'); return; }
+    if(!name){ alert('お名前を入れてください'); return; }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('メールアドレスを入れてください'); return; }
 
     document.getElementById('go').disabled=true;
@@ -133,7 +140,7 @@
       google.script.run
         .withSuccessHandler(function(){ showDone(topics); })
         .withFailureHandler(function(e){ alert('保存エラー: '+e.message); document.getElementById('go').disabled=false; })
-        .saveRegistration({ email: email, topics: topics });
+        .saveRegistration({ company: company, name: name, email: email, topics: topics });
     } else {
       showDone(topics); // プレビュー（ローカルで開いた時）
     }

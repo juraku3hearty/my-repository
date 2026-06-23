@@ -32,24 +32,26 @@ function saveRegistration(data) {
   let sh = ss.getSheetByName(REG_TAB);
   if (!sh) {
     sh = ss.insertSheet(REG_TAB);
-    sh.appendRow(['登録日時', 'メール', '分野', '配信']);
+    sh.appendRow(['登録日時', '会社名', 'お名前', 'メール', '分野', '配信']);
   }
+  const company = String(data && data.company || '').trim();
+  const name = String(data && data.name || '').trim();
   const email = String(data && data.email || '').trim();
   const topics = (data && data.topics || []).join(', ');
   if (!email || !topics) throw new Error('メールと分野が必要です');
 
-  // 既に同じメールがあれば分野を上書き（再登録に対応）
+  // 既に同じメールがあれば情報を上書き（再登録に対応）。メール列＝D列(4)
   const last = sh.getLastRow();
   if (last >= 2) {
-    const emails = sh.getRange(2, 2, last - 1, 1).getValues();
+    const emails = sh.getRange(2, 4, last - 1, 1).getValues();
     for (let i = 0; i < emails.length; i++) {
       if (String(emails[i][0]).trim().toLowerCase() === email.toLowerCase()) {
-        sh.getRange(i + 2, 1).setValue(new Date());
-        sh.getRange(i + 2, 3).setValue(topics);
+        const row = i + 2;
+        sh.getRange(row, 1, 1, 5).setValues([[new Date(), company, name, email, topics]]);
         return true;
       }
     }
   }
-  sh.appendRow([new Date(), email, topics, '有効']);
+  sh.appendRow([new Date(), company, name, email, topics, '有効']);
   return true;
 }

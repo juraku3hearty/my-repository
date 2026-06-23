@@ -25,12 +25,13 @@ function sendDailyDigests() {
   const sh = ss.getSheetByName(REG_TAB);
   if (!sh || sh.getLastRow() < 2) { Logger.log('登録者なし'); return; }
 
-  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
+  // 列: 登録日時(A) 会社名(B) お名前(C) メール(D) 分野(E) 配信(F)
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
   let sent = 0;
   rows.forEach(function(r) {
-    const email = String(r[1] || '').trim();
-    const topics = String(r[2] || '').split(',').map(function(s){ return s.trim(); }).filter(String);
-    const status = String(r[3] || '有効');
+    const email = String(r[3] || '').trim();
+    const topics = String(r[4] || '').split(',').map(function(s){ return s.trim(); }).filter(String);
+    const status = String(r[5] || '有効');
     if (!email || !topics.length || status === '停止') return;
     try {
       const items = buildDigest_(topics);
@@ -103,7 +104,7 @@ function digestHtml_(items, topics) {
        + '<div style="margin-top:5px;display:flex;align-items:center;gap:10px">'
        + (it.source ? '<span style="color:#999;font-size:12px">' + it.source + '</span>' : '')
        + '<a href="' + xShareUrl_(it.title, it.url) + '" target="_blank" '
-       + 'style="font-size:12px;font-weight:700;color:#fff;background:#111;border-radius:6px;padding:3px 10px;text-decoration:none">𝕏 シェア</a>'
+       + 'style="font-size:12px;font-weight:700;color:#fff;background:#111;border-radius:6px;padding:3px 10px;text-decoration:none">Xでシェア</a>'
        + '</div>'
        + '</div>';
   });
