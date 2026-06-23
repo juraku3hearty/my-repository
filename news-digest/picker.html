@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>毎朝ニュース ｜ 設定</title>
+<style>
+  :root{
+    --brand:#2563eb; --brand-d:#1d4ed8; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --bg1:#eef2ff; --bg2:#f8fafc; --chip:#f1f5f9;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:24px 14px 60px;
+  }
+  .card{
+    width:100%;max-width:460px;background:#fff;border-radius:22px;
+    box-shadow:0 18px 50px rgba(30,41,59,.12);padding:26px 22px 24px;
+  }
+  .logo{font-size:30px}
+  h1{font-size:21px;margin:6px 0 2px;letter-spacing:.02em}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 20px;line-height:1.6}
+  .label{font-size:14px;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
+  .label .hint{font-weight:400;color:var(--muted);font-size:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{
+    border:1.5px solid var(--line);background:var(--chip);color:#374151;
+    padding:9px 14px;border-radius:999px;font-size:13.5px;cursor:pointer;
+    transition:.15s;user-select:none;font-weight:600;
+  }
+  .chip:hover{border-color:#c7d2fe}
+  .chip.on{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+  .chip .x{margin-left:6px;opacity:.7}
+  .addrow{display:flex;gap:8px;margin-top:11px}
+  .addrow input{
+    flex:1;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14px;outline:none;
+  }
+  .addrow input:focus{border-color:var(--brand)}
+  .addbtn{
+    border:none;background:#eef2ff;color:var(--brand-d);font-weight:700;
+    padding:0 16px;border-radius:12px;cursor:pointer;font-size:14px;
+  }
+  .field{margin-top:7px}
+  .field input{
+    width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px;font-size:15px;outline:none;
+  }
+  .field input:focus{border-color:var(--brand)}
+  .submit{
+    width:100%;margin-top:24px;border:none;border-radius:14px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;
+    font-size:16px;font-weight:800;padding:15px;cursor:pointer;
+    box-shadow:0 10px 24px rgba(37,99,235,.35);transition:.15s;
+  }
+  .submit:hover{transform:translateY(-1px)}
+  .submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .foot{text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;line-height:1.6}
+  .done{display:none;text-align:center;padding:14px 4px}
+  .done .big{font-size:44px}
+  .done h2{font-size:19px;margin:8px 0 4px}
+  .done p{color:var(--muted);font-size:13.5px;margin:0;line-height:1.7}
+  .tags{margin:12px 0 0;font-size:13px;color:#374151}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="form">
+    <div class="logo">📰</div>
+    <h1>毎朝ニュース</h1>
+    <p class="sub">興味のある分野を選ぶだけ。<br>翌朝から、その分野の注目ニュースが毎朝届きます。</p>
+
+    <div class="label">📌 興味のある分野 <span class="hint">（複数OK・タップで選択）</span></div>
+    <div class="chips" id="preset"></div>
+
+    <div class="label">➕ 自分のキーワードを追加 <span class="hint">（業界名・社名など）</span></div>
+    <div class="addrow">
+      <input id="kw" type="text" placeholder="例：半導体、インバウンド…" maxlength="20">
+      <button class="addbtn" onclick="addCustom()">追加</button>
+    </div>
+    <div class="chips" id="custom" style="margin-top:10px"></div>
+
+    <div class="label">✉️ 届け先メール</div>
+    <div class="field"><input id="email" type="email" placeholder="you@example.com"></div>
+
+    <button class="submit" id="go" onclick="submit()">この内容で登録する</button>
+    <p class="foot">公開ニュースのみを取得します。あなたのデータは送信しません。<br>登録後も分野はいつでも変更できます。</p>
+  </div>
+
+  <div class="done" id="done">
+    <div class="big">🎉</div>
+    <h2>登録できました！</h2>
+    <p>明日の朝から、選んだ分野のニュースが<br>メールに届きます。</p>
+    <div class="tags" id="doneTags"></div>
+  </div>
+</div>
+
+<script>
+  const PRESETS = ['経営','DX','生成AI','M&A','人事・採用','マーケティング',
+    'スタートアップ','金融・投資','海外・国際','製造業','小売・流通','不動産',
+    'ヘルスケア','サステナビリティ','法改正・規制'];
+  const selected = new Set();
+  const customs = [];
+
+  const presetEl = document.getElementById('preset');
+  PRESETS.forEach(function(t){
+    const c=document.createElement('div'); c.className='chip'; c.textContent=t;
+    c.onclick=function(){ c.classList.toggle('on');
+      c.classList.contains('on')?selected.add(t):selected.delete(t); };
+    presetEl.appendChild(c);
+  });
+
+  function addCustom(){
+    const i=document.getElementById('kw'); const v=i.value.trim();
+    if(!v||customs.includes(v))return; customs.push(v); i.value='';
+    const wrap=document.getElementById('custom');
+    const c=document.createElement('div'); c.className='chip on';
+    c.innerHTML=v+' <span class="x">×</span>';
+    c.onclick=function(){ const k=customs.indexOf(v); if(k>=0)customs.splice(k,1); c.remove(); };
+    wrap.appendChild(c);
+  }
+  document.getElementById('kw').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();addCustom();}});
+
+  function submit(){
+    const email=document.getElementById('email').value.trim();
+    const topics=[...selected, ...customs];
+    if(topics.length===0){ alert('分野を1つ以上選んでください'); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('メールアドレスを入れてください'); return; }
+
+    document.getElementById('go').disabled=true;
+    // GAS Web App上なら google.script.run でサーバに保存。単体プレビュー時はそのまま完了表示。
+    if(typeof google!=='undefined' && google.script && google.script.run){
+      google.script.run
+        .withSuccessHandler(function(){ showDone(topics); })
+        .withFailureHandler(function(e){ alert('保存エラー: '+e.message); document.getElementById('go').disabled=false; })
+        .saveRegistration({ email: email, topics: topics });
+    } else {
+      showDone(topics); // プレビュー（ローカルで開いた時）
+    }
+  }
+  function showDone(topics){
+    document.getElementById('form').style.display='none';
+    const d=document.getElementById('done'); d.style.display='block';
+    document.getElementById('doneTags').textContent='選んだ分野：'+topics.join(' / ');
+  }
+</script>
+</body>
+</html>
