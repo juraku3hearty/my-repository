@@ -75,13 +75,15 @@ function sendDailyDigests() {
   Logger.log('配信完了: ' + sent + '通');
 }
 
-/** 毎朝4〜5時の自動配信トリガーを設定（1回実行すればOK） */
+/** 毎朝の自動配信トリガーを設定（1回実行すればOK）。
+ *  早起きの人も起きた時点で届いているよう、3時台（3〜4時）に送る。
+ *  もっと早くしたいなら atHour(2) などに変更。 */
 function setupDailyTrigger() {
   ScriptApp.getProjectTriggers().forEach(function(t){
     if (t.getHandlerFunction() === 'sendDailyDigests') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger('sendDailyDigests').timeBased().everyDays(1).atHour(4).create();
-  Logger.log('毎朝4〜5時の配信を設定しました');
+  ScriptApp.newTrigger('sendDailyDigests').timeBased().everyDays(1).atHour(3).create();
+  Logger.log('毎朝3〜4時の配信を設定しました');
 }
 
 /** 自分宛にテスト送信（届くか確認用） */
