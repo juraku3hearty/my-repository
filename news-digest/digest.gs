@@ -64,30 +64,55 @@ function regSS_() {
     ? SpreadsheetApp.openById(REG_SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet();
 }
 
-/** 毎朝の配信（トリガーで実行）。登録タブの全員に送る */
+/** 毎朝の配信（トリガーで実行）。登録タブの全員に送る。
+ *  G列に各自の「送信履歴」を持たせ、過去に送った記事は再送しない（30時間枠の被り対策）。 */
 function sendDailyDigests() {
   const ss = regSS_();
   if (!ss) { Logger.log('スプレッドシートがありません。シートに紐づけるか REG_SHEET_ID を設定してください。'); return; }
   const s = getSettings_(ss);
   const sh = ss.getSheetByName(REG_TAB);
   if (!sh || sh.getLastRow() < 2) { Logger.log('登録者なし'); return; }
+  if (sh.getRange(1, 7).getValue() === '') sh.getRange(1, 7).setValue('送信履歴(自動・触らない)');
 
-  // 列: 登録日時(A) 会社名(B) お名前(C) メール(D) 分野(E) 配信(F)
-  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+  // 列: 登録日時(A) 会社名(B) お名前(C) メール(D) 分野(E) 配信(F) 送信履歴(G)
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();
   let sent = 0;
-  rows.forEach(function(r) {
+  rows.forEach(function(r, idx) {
     const email = String(r[3] || '').trim();
     const topics = String(r[4] || '').split(',').map(function(x){ return x.trim(); }).filter(String);
     const status = String(r[5] || '有効');
     if (!email || !topics.length || status === '停止') return;
     try {
-      const items = buildDigest_(topics, s);
-      if (!items.length) return;
+      const hist = parseHist_(r[6]);                                   // G列：過去に送った記事キー
+      const items = buildDigest_(topics, s).filter(function(it){       // 既送の記事は除外
+        return !hist[keyOf_(it.title)];
+      });
+      if (!items.length) return;                                       // 全部既送なら送らない
       sendMail_(email, s.subject, digestText_(items), digestHtml_(items, topics, s, email), s);
       sent++;
+      sh.getRange(idx + 2, 7).setValue(mergeHist_(hist, items.map(function(it){ return keyOf_(it.title); })));
     } catch (e) { Logger.log('配信NG ' + email + ': ' + e.message); }
   });
   Logger.log('配信完了: ' + sent + '通');
+}
+
+/* ---- 再送防止：記事タイトルを短いキー化して履歴管理（人ごと・直近400件）---- */
+function keyOf_(title) {
+  const b = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, String(title));
+  return b.slice(0, 4).map(function(x){ return ('0' + (x & 0xff).toString(16)).slice(-2); }).join('');
+}
+function parseHist_(cell) {
+  const set = {};
+  try { (cell ? JSON.parse(cell) : []).forEach(function(k){ set[k] = 1; }); } catch (e) {}
+  return set;
+}
+function mergeHist_(set, newKeys) {
+  const arr = Object.keys(set).concat(newKeys);
+  const uniq = [], seen = {};
+  for (let i = arr.length - 1; i >= 0 && uniq.length < 400; i--) {
+    if (!seen[arr[i]]) { seen[arr[i]] = 1; uniq.unshift(arr[i]); }
+  }
+  return JSON.stringify(uniq);
 }
 
 /** 毎朝の自動配信トリガーを設定（1回実行すればOK）。
@@ -109,117 +134,6 @@ function testDigest() {
   const items = buildDigest_(topics, s);
   sendMail_(me, '【テスト】' + s.subject, digestText_(items), digestHtml_(items, topics, s, me), s);
   Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName + (s.senderEmail ? ' <'+s.senderEmail+'>' : ''));
-}
-
-/** 【MAYU専用】自分宛にだけ、仕事ネタのダイジェストを送る（X投稿ネタ用）。
- *  ・手動でいつでも実行OK（朝の投稿前にポチッ）
- *  ・専用トリガーにしてもOK（例：毎朝7時に自分だけへ）
- *  ・配信先の登録リストには一切影響しない（自分宛にだけ送る） */
-const MY_TOPICS = ['業務自動化', '中小企業 DX', '生成AI 活用', '人手不足', 'ノーコード', 'LINE 公式アカウント', '整骨院'];
-
-function sendToMe() {
-  const ss = regSS_();
-  const s = getSettings_(ss);
-  const me = Session.getActiveUser().getEmail();
-  const items = buildDigest_(MY_TOPICS, s);
-  if (!items.length) { Logger.log('該当ニュースなし（少し時間をおいて再実行）'); return; }
-  sendMail_(me, '【Xネタ】' + s.subject, digestText_(items), digestHtml_(items, MY_TOPICS, s, me), s);
-  Logger.log('自分宛に送信 → ' + me + ' / ' + items.length + '本');
-}
-
-/** 任意：sendToMe を毎朝7時台に自分だけへ自動送信（1回実行すれば設定完了） */
-function setupMyMorningTrigger() {
-  ScriptApp.getProjectTriggers().forEach(function(t){
-    if (t.getHandlerFunction() === 'sendToMe') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('sendToMe').timeBased().everyDays(1).atHour(7).create();
-  Logger.log('毎朝7時台に、自分宛だけのXネタ配信を設定しました');
-}
-
-/* ============================================================
- *  【MAYU専用・別軸】AIが"リポスト下書き"まで作るモード
- *  ニュース → Geminiが現場目線のX投稿文を生成 → ワンタップ投稿リンク付きで自分に送る
- *  ※このモードだけ Gemini API を使う（料金は月数円レベル）。
- *    スクリプトプロパティに GEMINI_API_KEY が必要（timecardと同じキーでOK）。
- * ============================================================ */
-const DRAFT_MODEL = 'gemini-2.5-flash'; // 速い・安い。404なら 'gemini-3.5-flash' に差し替え or listModels で確認
-const DRAFT_MAX = 8;                    // 下書きを作る最大本数（コスト・量の抑制）
-
-/** 自分宛に「AI下書き＋ワンタップ投稿リンク」付きのXネタを送る（MAYU専用） */
-function sendMyXdrafts() {
-  const ss = regSS_();
-  const s = getSettings_(ss);
-  const me = Session.getActiveUser().getEmail();
-  const items = buildDigest_(MY_TOPICS, s).slice(0, DRAFT_MAX);
-  if (!items.length) { Logger.log('該当ニュースなし（少し時間をおいて再実行）'); return; }
-  items.forEach(function(it, i){
-    if (i > 0) Utilities.sleep(1200); // 無料枠のレート制限(RPM)対策：1.2秒ずつ間を空ける
-    it.draft = geminiDraft_(it.title);
-  });
-  sendMail_(me, '【Xネタ・下書き付き】' + s.subject, draftsText_(items), draftsHtml_(items, s), s);
-  Logger.log('下書き付きで自分宛に送信 → ' + me + ' / ' + items.length + '本');
-}
-
-/** 任意：sendMyXdrafts を毎朝7時台に自分だけへ自動送信 */
-function setupMyDraftTrigger() {
-  ScriptApp.getProjectTriggers().forEach(function(t){
-    if (t.getHandlerFunction() === 'sendMyXdrafts') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('sendMyXdrafts').timeBased().everyDays(1).atHour(7).create();
-  Logger.log('毎朝7時台に、下書き付きXネタ配信を設定しました');
-}
-
-/** Geminiで、見出しから"現場目線のX投稿文"を1つ生成 */
-function geminiDraft_(title) {
-  const key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-  if (!key) { Logger.log('GEMINI_API_KEY 未設定'); return ''; }
-  const prompt =
-    'あなたは中小企業のAI自動化を現場で手がける実務家です（整骨院スタッフ兼エンジニアで、' +
-    '整骨院・弁護士事務所・酒屋などの自動化を実際に作っている）。' +
-    '次のニュース見出しを受けて、X(旧Twitter)に投稿する短いコメントを1つ書いて。' +
-    '条件：日本語／120字以内／煽らない／自分の現場目線で具体的に／最後に関連ハッシュタグを2つ。' +
-    'コメント本文だけを出力（前置き不要）。見出し:「' + title + '」';
-  try {
-    const res = UrlFetchApp.fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + DRAFT_MODEL + ':generateContent?key=' + key,
-      { method:'post', contentType:'application/json', muteHttpExceptions:true,
-        payload: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }],
-          generationConfig:{ temperature:0.7, maxOutputTokens:200 } }) });
-    if (res.getResponseCode() !== 200) { Logger.log('Gemini ' + res.getResponseCode() + ': ' + res.getContentText().slice(0,200)); return ''; }
-    const j = JSON.parse(res.getContentText());
-    return (j.candidates && j.candidates[0] && j.candidates[0].content.parts[0].text || '').trim();
-  } catch (e) { Logger.log('Geminiエラー: ' + e.message); return ''; }
-}
-
-/** 下書き文をそのまま入れたX投稿リンク（ワンタップで投稿画面が下書き入りで開く） */
-function xDraftUrl_(text, url) {
-  return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
-}
-
-function draftsText_(items) {
-  return items.map(function(it, i){
-    return (i+1) + '. ' + it.title + '\n【下書き】' + (it.draft || '(生成なし)') + '\n' + it.url;
-  }).join('\n\n');
-}
-
-/** 各ニュースに AI下書き＋「この文で投稿」ボタンを付けたHTML */
-function draftsHtml_(items, s) {
-  let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
-  h += '<p style="color:#6b7280;font-size:13px">今日のXネタ候補。気に入った下書きの「この文で投稿」を押すと、投稿画面が下書き入りで開きます。一言直して投稿でOK。</p>';
-  items.forEach(function(it){
-    h += '<div style="margin:14px 0;padding:12px;border:1px solid #eee;border-radius:10px">'
-       + '<a href="' + it.url + '" style="font-size:14px;color:#1a0dab;text-decoration:none;font-weight:600">' + it.title + '</a>';
-    if (it.draft) {
-      h += '<div style="margin:8px 0;padding:10px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">' + it.draft + '</div>'
-         + '<a href="' + xDraftUrl_(it.draft, it.url) + '" target="_blank" '
-         + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none">この文で投稿 ✍️</a>';
-    } else {
-      h += '<div style="margin-top:6px"><a href="' + xShareUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;color:#111">Xでシェア</a></div>';
-    }
-    h += '</div>';
-  });
-  h += '<p style="color:#bbb;font-size:11px;margin-top:16px">' + s.footer + '</p></div>';
-  return h;
 }
 
 /** 複数分野のニュースを集めて、重複を除いて返す */
