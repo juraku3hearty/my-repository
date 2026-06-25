@@ -152,7 +152,10 @@ function sendMyXdrafts() {
   const me = Session.getActiveUser().getEmail();
   const items = buildDigest_(MY_TOPICS, s).slice(0, DRAFT_MAX);
   if (!items.length) { Logger.log('該当ニュースなし（少し時間をおいて再実行）'); return; }
-  items.forEach(function(it){ it.draft = geminiDraft_(it.title); });
+  items.forEach(function(it, i){
+    if (i > 0) Utilities.sleep(1200); // 無料枠のレート制限(RPM)対策：1.2秒ずつ間を空ける
+    it.draft = geminiDraft_(it.title);
+  });
   sendMail_(me, '【Xネタ・下書き付き】' + s.subject, draftsText_(items), draftsHtml_(items, s), s);
   Logger.log('下書き付きで自分宛に送信 → ' + me + ' / ' + items.length + '本');
 }
