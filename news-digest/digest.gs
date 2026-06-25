@@ -111,6 +111,31 @@ function testDigest() {
   Logger.log('テスト送信 → ' + me + ' / ' + items.length + '本 / 差出人:' + s.senderName + (s.senderEmail ? ' <'+s.senderEmail+'>' : ''));
 }
 
+/** 【MAYU専用】自分宛にだけ、仕事ネタのダイジェストを送る（X投稿ネタ用）。
+ *  ・手動でいつでも実行OK（朝の投稿前にポチッ）
+ *  ・専用トリガーにしてもOK（例：毎朝7時に自分だけへ）
+ *  ・配信先の登録リストには一切影響しない（自分宛にだけ送る） */
+const MY_TOPICS = ['業務自動化', '中小企業 DX', '生成AI 活用', '人手不足', 'ノーコード', 'LINE 公式アカウント', '整骨院'];
+
+function sendToMe() {
+  const ss = regSS_();
+  const s = getSettings_(ss);
+  const me = Session.getActiveUser().getEmail();
+  const items = buildDigest_(MY_TOPICS, s);
+  if (!items.length) { Logger.log('該当ニュースなし（少し時間をおいて再実行）'); return; }
+  sendMail_(me, '【Xネタ】' + s.subject, digestText_(items), digestHtml_(items, MY_TOPICS, s, me), s);
+  Logger.log('自分宛に送信 → ' + me + ' / ' + items.length + '本');
+}
+
+/** 任意：sendToMe を毎朝7時台に自分だけへ自動送信（1回実行すれば設定完了） */
+function setupMyMorningTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if (t.getHandlerFunction() === 'sendToMe') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('sendToMe').timeBased().everyDays(1).atHour(7).create();
+  Logger.log('毎朝7時台に、自分宛だけのXネタ配信を設定しました');
+}
+
 /** 複数分野のニュースを集めて、重複を除いて返す */
 function buildDigest_(topics, s) {
   const all = [];
