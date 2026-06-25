@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>樹鍼灸整骨院｜肩こり・腰痛・骨盤の歪み</title>
+<style>
+  @font-face{
+    font-family:'NotoSerifLocal';
+    src:url('file:///home/user/my-repository/NotoSerifJP-VariableFont_wght.ttf') format('truetype');
+    font-weight:100 900; font-display:swap;
+  }
+  :root{
+    --bg:#f4f1ec; --ink:#332f2b; --sub:#665f57;
+    --accent:#3f6f6a; --accent-d:#2f5651; --gold:#b08643;
+    --card:#fffefb; --line:#e2dccf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'NotoSerifLocal','Noto Serif JP',serif;color:var(--ink);background:var(--bg);
+    line-height:1.9;-webkit-font-smoothing:antialiased;letter-spacing:.02em}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px}
+  .ph{color:var(--accent-d);background:#e7efed;border:1px dashed var(--accent);
+    border-radius:6px;padding:1px 8px;font-size:.78em;white-space:nowrap}
+
+  .hero{background:
+      radial-gradient(120% 80% at 72% 0%, #d9e6e3 0%, rgba(217,230,227,0) 55%),
+      linear-gradient(160deg,#e7e3da 0%, #dfe6e0 100%);
+    padding:64px 0 56px;text-align:center;position:relative;overflow:hidden}
+  .hero .ey{color:var(--accent-d);font-size:.92rem;letter-spacing:.22em;margin-bottom:18px}
+  .hero h1{font-size:2.05rem;line-height:1.55;font-weight:800;margin-bottom:20px}
+  .hero h1 .mk{color:var(--accent);border-bottom:6px solid #a7cdc6;padding-bottom:2px}
+  .hero p.sub{color:var(--sub);font-size:1.02rem;max-width:560px;margin:0 auto 30px}
+  .cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    font-weight:700;font-size:1.06rem;padding:16px 38px;border-radius:50px;
+    box-shadow:0 10px 22px rgba(63,111,106,.3);transition:.2s}
+  .cta:hover{background:var(--accent-d);transform:translateY(-2px)}
+  .cta small{display:block;font-size:.72rem;font-weight:400;opacity:.9;margin-top:2px}
+  .hero .visual{margin-top:34px;color:var(--sub);font-size:.8rem}
+
+  section{padding:56px 0}
+  h2{font-size:1.55rem;font-weight:800;text-align:center;line-height:1.5;margin-bottom:8px}
+  .lead{text-align:center;color:var(--sub);font-size:.95rem;margin-bottom:34px}
+  .bartitle::after{content:"";display:block;width:46px;height:3px;background:var(--accent);
+    margin:14px auto 0;border-radius:2px}
+
+  .pain{background:var(--card)}
+  .pain ul{max-width:560px;margin:0 auto;list-style:none}
+  .pain li{background:var(--bg);border-radius:12px;padding:15px 20px;margin-bottom:12px;
+    font-size:1.02rem;display:flex;gap:12px;align-items:flex-start}
+  .pain li::before{content:"✔";color:var(--accent);font-weight:800;flex:none}
+  .pain .note{text-align:center;margin-top:26px;color:var(--ink);font-weight:700}
+
+  .cause p{font-size:1.04rem;margin-bottom:18px}
+  .cause .key{color:var(--accent-d);font-weight:800}
+
+  .steps{background:linear-gradient(180deg,#e3ebe7,#dbe4dd)}
+  .step{background:var(--card);border-radius:16px;padding:26px 26px 24px;margin-bottom:18px;
+    box-shadow:0 6px 16px rgba(80,100,95,.08);position:relative}
+  .step .n{position:absolute;top:-14px;left:24px;background:var(--accent);color:#fff;
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;
+    box-shadow:0 4px 10px rgba(63,111,106,.35)}
+  .step h3{font-size:1.2rem;margin:10px 0 8px;font-weight:800}
+  .step h3 .tag{font-size:.82rem;color:var(--gold);font-weight:700;margin-left:6px}
+  .step p{color:var(--sub);font-size:.98rem}
+  .steps .punch{text-align:center;font-weight:800;font-size:1.08rem;margin-top:8px;line-height:1.7}
+
+  .symptoms{background:var(--card)}
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:600px;margin:0 auto}
+  .sgrid div{background:var(--bg);border-radius:10px;padding:16px 8px;text-align:center;
+    font-weight:700;font-size:.98rem;border:1px solid var(--line)}
+
+  .post{background:#eef0e8}
+  .post .box{background:var(--card);border-radius:16px;padding:30px 26px;border:1px solid var(--line)}
+  .post .badge{display:inline-block;background:var(--gold);color:#fff;font-size:.78rem;
+    padding:4px 14px;border-radius:30px;font-weight:700;margin-bottom:14px}
+  .post p{font-size:1rem;margin-bottom:14px;color:var(--ink)}
+  .post .warn{background:#f6f0e3;border-left:4px solid var(--gold);padding:12px 16px;
+    font-size:.88rem;color:var(--sub);border-radius:6px}
+
+  .clinic{background:var(--card)}
+  .clinic ul{max-width:560px;margin:0 auto;list-style:none}
+  .clinic li{padding:12px 0;border-bottom:1px dashed var(--line);font-size:1rem}
+  .clinic li::before{content:"●";color:var(--accent);margin-right:10px;font-size:.7rem;vertical-align:middle}
+
+  table{width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:var(--card);
+    border-radius:12px;overflow:hidden}
+  th,td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#e3ebe7;font-weight:700;width:42%}
+  td{color:var(--sub)}
+
+  .faq{background:#eef0e8}
+  .qa{background:var(--card);border-radius:12px;padding:18px 22px;margin-bottom:12px;max-width:600px;
+    margin-left:auto;margin-right:auto}
+  .qa .q{font-weight:800;margin-bottom:6px}
+  .qa .q::before{content:"Q. ";color:var(--accent)}
+  .qa .a{color:var(--sub);font-size:.95rem}
+  .qa .a::before{content:"A. ";color:var(--gold);font-weight:700}
+
+  .last{background:linear-gradient(160deg,#3f6f6a,#2f5651);color:#fff;text-align:center;padding:64px 0}
+  .last h2{color:#fff}
+  .last p{font-size:1.1rem;margin:14px 0 30px;opacity:.96}
+  .last .cta{background:#fff;color:var(--accent-d)}
+  .last .cta:hover{background:#f2f8f6}
+
+  footer{background:#2c2926;color:#c4bcb0;text-align:center;padding:26px;font-size:.82rem}
+  @media(max-width:520px){.hero h1{font-size:1.6rem}h2{font-size:1.3rem}.sgrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="ey">千歳市の鍼灸整骨院</div>
+    <h1>その痛み、その場しのぎで<br>終わらせていませんか？<br><span class="mk">骨盤から</span>整える鍼灸整骨院。</h1>
+    <p class="sub">マッサージしてもすぐ戻る…それは、体の土台＝骨盤・骨格の歪みが残っているから。原因から整えて、戻りにくい体へ。</p>
+    <a class="cta" href="#yoyaku">▶ はじめての方の予約<small>LINE / お電話でかんたん予約</small></a>
+    <div class="visual">［ メインビジュアル：院内・施術風景 <span class="ph">要確認</span> ］</div>
+  </div>
+</header>
+
+<section class="pain">
+  <div class="wrap">
+    <h2 class="bartitle">こんなお悩み、ありませんか？</h2>
+    <ul>
+      <li>肩こり・腰痛が慢性化していて、ずっとつらい</li>
+      <li>マッサージや湿布をしても、すぐに戻ってしまう</li>
+      <li>病院で「異常なし」と言われたが、痛みは続いている</li>
+      <li>姿勢の歪み・反り腰・猫背が気になる</li>
+      <li>交通事故のあと、首や腰に違和感が残っている</li>
+    </ul>
+    <p class="note">ひとつでも当てはまったら、原因は「もみ足りなさ」ではないかもしれません。</p>
+  </div>
+</section>
+
+<section class="cause">
+  <div class="wrap">
+    <h2 class="bartitle">なぜ、すぐ戻ってしまうのか？</h2>
+    <p class="lead">　</p>
+    <p>痛みが出ている場所だけをほぐしても、楽になるのは一時的。<br>多くの不調は、体の土台である <span class="key">骨盤・骨格の歪み</span> が背景にあります。</p>
+    <p>土台が傾いたままだと、特定の筋肉に負担がかかり続け、ほぐしてもまた同じところに戻ってしまいます。だから、<span class="key">原因の歪みそのもの</span>を整えることが大切です。</p>
+  </div>
+</section>
+
+<section class="steps">
+  <div class="wrap">
+    <h2 class="bartitle">当院の施術の考え方</h2>
+    <p class="lead">「見つける → 整える → 支える」</p>
+    <div class="step"><div class="n">1</div>
+      <h3>見つける<span class="tag">検査・カウンセリング</span></h3>
+      <p>痛みの場所だけでなく、骨盤・姿勢の歪みや原因を確認。今どこに負担がかかっているかを共有します。</p></div>
+    <div class="step"><div class="n">2</div>
+      <h3>整える<span class="tag">手技・骨盤矯正・鍼灸</span></h3>
+      <p>骨盤・骨格を正しい位置へ。手技と、必要に応じた鍼灸で、痛みやこりの根本にアプローチします。</p></div>
+    <div class="step"><div class="n">3</div>
+      <h3>支える<span class="tag">EMS</span></h3>
+      <p>整えた体を、深層の筋肉（インナーマッスル）で支えられるようにEMSでアプローチ。自分で追い込まなくても、戻りにくい状態を目指します。</p></div>
+    <p class="punch">「その場しのぎ」で終わらせない。<br>原因から整えて、戻りにくい体へ。</p>
+  </div>
+</section>
+
+<section class="symptoms">
+  <div class="wrap">
+    <h2 class="bartitle">対応する症状</h2>
+    <p class="lead">こんな不調にご相談ください</p>
+    <div class="sgrid">
+      <div>肩こり</div><div>腰痛</div><div>骨盤の歪み</div>
+      <div>姿勢・猫背</div><div>膝の痛み</div><div>頭痛</div>
+      <div>首の痛み</div><div>自律神経の不調</div><div>交通事故</div>
+    </div>
+  </div>
+</section>
+
+<section class="post">
+  <div class="wrap">
+    <div class="box">
+      <span class="badge">交通事故・むち打ち対応</span>
+      <p>交通事故によるむち打ち・首や腰の違和感は、事故直後は症状が出にくく、後から重くなることがあります。「異常なし」と言われた違和感も、早めのケアが大切です。</p>
+      <p>当院は交通事故の施術に対応しています。保険会社とのやり取りや、他院からの転院についてもご相談ください。</p>
+      <p class="warn">⚠️ 自賠責保険の適用や窓口負担、必要書類は状況により異なります。詳しくはお問い合わせください。<span class="ph">院の方針：要確認</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="clinic">
+  <div class="wrap">
+    <h2 class="bartitle">樹鍼灸整骨院について</h2>
+    <p class="lead">　</p>
+    <ul>
+      <li>鍼灸と整骨、両方の知識で体の根本にアプローチできる院です</li>
+      <li>院長・スタッフ紹介 <span class="ph">要確認</span></li>
+      <li>駐車場・キッズスペースの有無 <span class="ph">要確認</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="bartitle">料金・メニュー</h2>
+    <p class="lead"><span class="ph">料金は要確認</span></p>
+    <table>
+      <tr><th>初回（検査込み）</th><td>― 円</td></tr>
+      <tr><th>通常施術</th><td>― 円</td></tr>
+      <tr><th>保険診療</th><td>― 円 <span class="ph">要確認</span></td></tr>
+      <tr><th>交通事故</th><td>窓口負担 <span class="ph">要確認</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="wrap">
+    <h2 class="bartitle">よくある質問</h2>
+    <p class="lead">　</p>
+    <div class="qa"><div class="q">保険は使えますか？</div><div class="a"><span class="ph">要確認</span>（適用条件）</div></div>
+    <div class="qa"><div class="q">どのくらいの頻度で通えばいいですか？</div><div class="a">症状により異なります。検査のうえ、無理のない通院プランをご提案します。</div></div>
+    <div class="qa"><div class="q">交通事故でも通えますか？</div><div class="a">対応しています。保険会社とのやり取りや転院もご相談ください。<span class="ph">要確認</span></div></div>
+    <div class="qa"><div class="q">予約は必要ですか？</div><div class="a"><span class="ph">要確認</span>（予約優先 / 当日OK 等）</div></div>
+    <div class="qa"><div class="q">着替えはありますか？</div><div class="a"><span class="ph">要確認</span></div></div>
+  </div>
+</section>
+
+<section class="last" id="yoyaku">
+  <div class="wrap">
+    <h2>その痛み、原因から整えませんか？</h2>
+    <p>まずは検査・カウンセリングから。お気軽にご相談ください。</p>
+    <a class="cta" href="#">▶ LINE / お電話で予約する<small>※予約先 要確認</small></a>
+  </div>
+</section>
+
+<footer>
+  樹鍼灸整骨院｜千歳市 住所・営業時間・アクセス <span class="ph" style="background:#403c37;border-color:#3f6f6a;color:#dfe6e0">要確認</span><br>
+  © 樹鍼灸整骨院
+</footer>
+
+</body>
+</html>
