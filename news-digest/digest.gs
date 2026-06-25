@@ -136,6 +136,89 @@ function setupMyMorningTrigger() {
   Logger.log('毎朝7時台に、自分宛だけのXネタ配信を設定しました');
 }
 
+/* ============================================================
+ *  【MAYU専用・別軸】AIが"リポスト下書き"まで作るモード
+ *  ニュース → Geminiが現場目線のX投稿文を生成 → ワンタップ投稿リンク付きで自分に送る
+ *  ※このモードだけ Gemini API を使う（料金は月数円レベル）。
+ *    スクリプトプロパティに GEMINI_API_KEY が必要（timecardと同じキーでOK）。
+ * ============================================================ */
+const DRAFT_MODEL = 'gemini-2.5-flash'; // 速い・安い。404なら 'gemini-3.5-flash' に差し替え or listModels で確認
+const DRAFT_MAX = 8;                    // 下書きを作る最大本数（コスト・量の抑制）
+
+/** 自分宛に「AI下書き＋ワンタップ投稿リンク」付きのXネタを送る（MAYU専用） */
+function sendMyXdrafts() {
+  const ss = regSS_();
+  const s = getSettings_(ss);
+  const me = Session.getActiveUser().getEmail();
+  const items = buildDigest_(MY_TOPICS, s).slice(0, DRAFT_MAX);
+  if (!items.length) { Logger.log('該当ニュースなし（少し時間をおいて再実行）'); return; }
+  items.forEach(function(it){ it.draft = geminiDraft_(it.title); });
+  sendMail_(me, '【Xネタ・下書き付き】' + s.subject, draftsText_(items), draftsHtml_(items, s), s);
+  Logger.log('下書き付きで自分宛に送信 → ' + me + ' / ' + items.length + '本');
+}
+
+/** 任意：sendMyXdrafts を毎朝7時台に自分だけへ自動送信 */
+function setupMyDraftTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if (t.getHandlerFunction() === 'sendMyXdrafts') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('sendMyXdrafts').timeBased().everyDays(1).atHour(7).create();
+  Logger.log('毎朝7時台に、下書き付きXネタ配信を設定しました');
+}
+
+/** Geminiで、見出しから"現場目線のX投稿文"を1つ生成 */
+function geminiDraft_(title) {
+  const key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!key) { Logger.log('GEMINI_API_KEY 未設定'); return ''; }
+  const prompt =
+    'あなたは中小企業のAI自動化を現場で手がける実務家です（整骨院スタッフ兼エンジニアで、' +
+    '整骨院・弁護士事務所・酒屋などの自動化を実際に作っている）。' +
+    '次のニュース見出しを受けて、X(旧Twitter)に投稿する短いコメントを1つ書いて。' +
+    '条件：日本語／120字以内／煽らない／自分の現場目線で具体的に／最後に関連ハッシュタグを2つ。' +
+    'コメント本文だけを出力（前置き不要）。見出し:「' + title + '」';
+  try {
+    const res = UrlFetchApp.fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + DRAFT_MODEL + ':generateContent?key=' + key,
+      { method:'post', contentType:'application/json', muteHttpExceptions:true,
+        payload: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }],
+          generationConfig:{ temperature:0.7, maxOutputTokens:200 } }) });
+    if (res.getResponseCode() !== 200) { Logger.log('Gemini ' + res.getResponseCode() + ': ' + res.getContentText().slice(0,200)); return ''; }
+    const j = JSON.parse(res.getContentText());
+    return (j.candidates && j.candidates[0] && j.candidates[0].content.parts[0].text || '').trim();
+  } catch (e) { Logger.log('Geminiエラー: ' + e.message); return ''; }
+}
+
+/** 下書き文をそのまま入れたX投稿リンク（ワンタップで投稿画面が下書き入りで開く） */
+function xDraftUrl_(text, url) {
+  return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+}
+
+function draftsText_(items) {
+  return items.map(function(it, i){
+    return (i+1) + '. ' + it.title + '\n【下書き】' + (it.draft || '(生成なし)') + '\n' + it.url;
+  }).join('\n\n');
+}
+
+/** 各ニュースに AI下書き＋「この文で投稿」ボタンを付けたHTML */
+function draftsHtml_(items, s) {
+  let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
+  h += '<p style="color:#6b7280;font-size:13px">今日のXネタ候補。気に入った下書きの「この文で投稿」を押すと、投稿画面が下書き入りで開きます。一言直して投稿でOK。</p>';
+  items.forEach(function(it){
+    h += '<div style="margin:14px 0;padding:12px;border:1px solid #eee;border-radius:10px">'
+       + '<a href="' + it.url + '" style="font-size:14px;color:#1a0dab;text-decoration:none;font-weight:600">' + it.title + '</a>';
+    if (it.draft) {
+      h += '<div style="margin:8px 0;padding:10px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">' + it.draft + '</div>'
+         + '<a href="' + xDraftUrl_(it.draft, it.url) + '" target="_blank" '
+         + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none">この文で投稿 ✍️</a>';
+    } else {
+      h += '<div style="margin-top:6px"><a href="' + xShareUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;color:#111">Xでシェア</a></div>';
+    }
+    h += '</div>';
+  });
+  h += '<p style="color:#bbb;font-size:11px;margin-top:16px">' + s.footer + '</p></div>';
+  return h;
+}
+
 /** 複数分野のニュースを集めて、重複を除いて返す */
 function buildDigest_(topics, s) {
   const all = [];
