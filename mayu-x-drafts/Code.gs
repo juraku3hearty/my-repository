@@ -39,6 +39,7 @@ function sendMyDrafts() {
   items.forEach(function(it, i){
     if (i > 0) Utilities.sleep(1200);                          // 無料枠のレート制限(RPM)対策
     it.draft = geminiDraft_(it.title);
+    it.shareUrl = shortenUrl_(it.url);                         // 長いGoogleニュースURLを短縮
   });
   GmailApp.sendEmail(me, '【Xネタ・下書き付き】☀️ 今朝のニュース', draftsText_(items),
     { name: MAIL_NAME, htmlBody: draftsHtml_(items) });
@@ -139,6 +140,18 @@ function geminiDraft_(title) {
   Logger.log('Gemini 429: 再試行しても上限。キー(課金)かモデルを見直し'); return '';
 }
 
+/** 長いURLを短縮（無料TinyURL）。失敗時は元のURLをそのまま返す */
+function shortenUrl_(longUrl) {
+  try {
+    const res = UrlFetchApp.fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl), { muteHttpExceptions: true });
+    if (res.getResponseCode() === 200) {
+      const s = res.getContentText().trim();
+      if (s.indexOf('http') === 0) return s;
+    }
+  } catch (e) { Logger.log('短縮失敗: ' + e.message); }
+  return longUrl;
+}
+
 /** Xの投稿画面を下書き入りで開くリンク */
 function xDraftUrl_(text, url) {
   return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
@@ -150,7 +163,7 @@ function threadsDraftUrl_(text, url) {
 
 function draftsText_(items) {
   return items.map(function(it, i){
-    return (i+1) + '. ' + it.title + '\n【下書き】' + (it.draft || '(生成なし)') + '\n' + it.url;
+    return (i+1) + '. ' + it.title + '\n【下書き】' + (it.draft || '(生成なし)') + '\n' + (it.shareUrl || it.url);
   }).join('\n\n');
 }
 
@@ -159,20 +172,21 @@ function draftsHtml_(items) {
   let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
   h += '<p style="color:#6b7280;font-size:13px">今朝のXネタ候補（前回と被らない新着）。下書きの「Xに投稿／Threadsに投稿」を押すと、下書き入りで投稿画面が開きます。一言直して投稿でOK。</p>';
   items.forEach(function(it){
+    const su = it.shareUrl || it.url;   // 短縮URL（無ければ元URL）
     h += '<div style="margin:14px 0;padding:12px;border:1px solid #eee;border-radius:10px">'
        + '<a href="' + it.url + '" style="font-size:14px;color:#1a0dab;text-decoration:none;font-weight:600">' + it.title + '</a>'
        + (it.source ? '<span style="color:#999;font-size:12px;margin-left:8px">' + it.source + '</span>' : '');
     if (it.draft) {
       h += '<div style="margin:8px 0;padding:10px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">' + it.draft + '</div>'
-         + '<a href="' + xDraftUrl_(it.draft, it.url) + '" target="_blank" '
+         + '<a href="' + xDraftUrl_(it.draft, su) + '" target="_blank" '
          + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none;margin-right:8px">Xに投稿 ✍️</a>'
-         + '<a href="' + threadsDraftUrl_(it.draft, it.url) + '" target="_blank" '
+         + '<a href="' + threadsDraftUrl_(it.draft, su) + '" target="_blank" '
          + 'style="display:inline-block;font-size:13px;font-weight:700;color:#111;background:#fff;border:1.5px solid #111;border-radius:8px;padding:6px 13px;text-decoration:none">Threadsに投稿 🧵</a>';
     } else {
       // 下書きが作れなかった時（Gemini上限など）でも、タイトルでシェアできるように
       h += '<div style="margin-top:6px">'
-         + '<a href="' + xDraftUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111;margin-right:12px">Xでシェア</a>'
-         + '<a href="' + threadsDraftUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111">Threadsでシェア</a>'
+         + '<a href="' + xDraftUrl_(it.title, su) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111;margin-right:12px">Xでシェア</a>'
+         + '<a href="' + threadsDraftUrl_(it.title, su) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111">Threadsでシェア</a>'
          + '</div>';
     }
     h += '</div>';
