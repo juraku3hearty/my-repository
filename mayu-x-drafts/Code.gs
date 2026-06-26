@@ -17,10 +17,10 @@
  */
 
 // ===== 設定（ここだけ触ればOK） =====
-const MY_TOPICS    = ['業務自動化', '中小企業 DX', '生成AI 活用', '人手不足', 'ノーコード', 'LINE 公式アカウント', '整骨院'];
-const PER_TOPIC    = 3;               // 1分野あたり何件拾うか
+const MY_TOPICS    = ['Claude AI', 'Anthropic', '生成AI 活用', 'AI 業務効率化']; // Claude関連＋AI活用関連
+const PER_TOPIC    = 5;               // 1分野あたり何件拾うか
 const RECENT_HOURS = 30;             // 直近何時間のニュースを対象にするか
-const DRAFT_MAX    = 8;               // 下書きを作る最大本数（コスト・量の抑制）
+const DRAFT_MAX    = 20;              // 下書きを作る最大本数（4分野×5件＝最大20）
 const DRAFT_MODEL  = 'gemini-2.5-flash'; // 404なら 'gemini-3.5-flash' に変更
 const START_HOUR   = 4;               // 自動配信の時間帯（北海道の朝活に合わせて4時）
 const MAIL_NAME    = '朝のXネタ';      // 届くメールの送信者名（自分宛なので何でもOK）
