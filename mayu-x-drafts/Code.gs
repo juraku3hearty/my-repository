@@ -121,16 +121,22 @@ function geminiDraft_(title) {
     '次のニュース見出しを受けて、SNS(X／Threads)に投稿する短いコメントを1つ書いて。' +
     '条件：日本語／120字以内／煽らない／自分の現場目線で具体的に／最後に関連ハッシュタグを2つ。' +
     'コメント本文だけを出力（前置き不要）。見出し:「' + title + '」';
-  try {
-    const res = UrlFetchApp.fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + DRAFT_MODEL + ':generateContent?key=' + key,
-      { method:'post', contentType:'application/json', muteHttpExceptions:true,
-        payload: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }],
-          generationConfig:{ temperature:0.7, maxOutputTokens:200 } }) });
-    if (res.getResponseCode() !== 200) { Logger.log('Gemini ' + res.getResponseCode() + ': ' + res.getContentText().slice(0,200)); return ''; }
-    const j = JSON.parse(res.getContentText());
-    return (j.candidates && j.candidates[0] && j.candidates[0].content.parts[0].text || '').trim();
-  } catch (e) { Logger.log('Geminiエラー: ' + e.message); return ''; }
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + DRAFT_MODEL + ':generateContent?key=' + key;
+  const payload = JSON.stringify({ contents:[{ parts:[{ text: prompt }] }],
+    generationConfig:{ temperature:0.7, maxOutputTokens:200 } });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = UrlFetchApp.fetch(url, { method:'post', contentType:'application/json', muteHttpExceptions:true, payload: payload });
+      const code = res.getResponseCode();
+      if (code === 200) {
+        const j = JSON.parse(res.getContentText());
+        return (j.candidates && j.candidates[0] && j.candidates[0].content.parts[0].text || '').trim();
+      }
+      if (code === 429) { Utilities.sleep(4000 * (attempt + 1)); continue; } // レート制限→待って再試行
+      Logger.log('Gemini ' + code + ': ' + res.getContentText().slice(0,200)); return '';
+    } catch (e) { Logger.log('Geminiエラー: ' + e.message); return ''; }
+  }
+  Logger.log('Gemini 429: 再試行しても上限。キー(課金)かモデルを見直し'); return '';
 }
 
 /** Xの投稿画面を下書き入りで開くリンク */
@@ -162,6 +168,12 @@ function draftsHtml_(items) {
          + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none;margin-right:8px">Xに投稿 ✍️</a>'
          + '<a href="' + threadsDraftUrl_(it.draft, it.url) + '" target="_blank" '
          + 'style="display:inline-block;font-size:13px;font-weight:700;color:#111;background:#fff;border:1.5px solid #111;border-radius:8px;padding:6px 13px;text-decoration:none">Threadsに投稿 🧵</a>';
+    } else {
+      // 下書きが作れなかった時（Gemini上限など）でも、タイトルでシェアできるように
+      h += '<div style="margin-top:6px">'
+         + '<a href="' + xDraftUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111;margin-right:12px">Xでシェア</a>'
+         + '<a href="' + threadsDraftUrl_(it.title, it.url) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111">Threadsでシェア</a>'
+         + '</div>';
     }
     h += '</div>';
   });
