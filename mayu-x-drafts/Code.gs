@@ -39,7 +39,6 @@ function sendMyDrafts() {
   items.forEach(function(it, i){
     if (i > 0) Utilities.sleep(1200);                          // 無料枠のレート制限(RPM)対策
     it.draft = geminiDraft_(it.title);
-    it.shareUrl = shortenUrl_(it.url);                         // 長いGoogleニュースURLを短縮
   });
   GmailApp.sendEmail(me, '【Xネタ・下書き付き】☀️ 今朝のニュース', draftsText_(items),
     { name: MAIL_NAME, htmlBody: draftsHtml_(items) });
@@ -119,9 +118,10 @@ function geminiDraft_(title) {
   const prompt =
     'あなたは中小企業のAI自動化を現場で手がける実務家です（整骨院スタッフ兼エンジニアで、' +
     '整骨院・弁護士事務所・酒屋などの自動化を実際に作っている）。' +
-    '次のニュース見出しを受けて、SNS(X／Threads)に投稿する短いコメントを1つ書いて。' +
-    '条件：日本語／120字以内／煽らない／自分の現場目線で具体的に／最後に関連ハッシュタグを2つ。' +
-    'コメント本文だけを出力（前置き不要）。見出し:「' + title + '」';
+    '次のニュース見出しをもとに、X／Threadsにそのまま投稿できる文を作って。' +
+    '構成：①このニュースが何かが一読で分かる一文（見出しの言い換え。リンクは入れない）→' +
+    '②自分の現場目線の一言。条件：日本語／全体140字以内／煽らない／最後にハッシュタグ2つ。' +
+    '投稿本文だけを出力（前置き不要）。見出し:「' + title + '」';
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + DRAFT_MODEL + ':generateContent?key=' + key;
   const payload = JSON.stringify({ contents:[{ parts:[{ text: prompt }] }],
     generationConfig:{ temperature:0.7, maxOutputTokens:200 } });
@@ -140,57 +140,45 @@ function geminiDraft_(title) {
   Logger.log('Gemini 429: 再試行しても上限。キー(課金)かモデルを見直し'); return '';
 }
 
-/** 長いURLを短縮（無料TinyURL）。失敗時は元のURLをそのまま返す */
-function shortenUrl_(longUrl) {
-  try {
-    const res = UrlFetchApp.fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl), { muteHttpExceptions: true });
-    if (res.getResponseCode() === 200) {
-      const s = res.getContentText().trim();
-      if (s.indexOf('http') === 0) return s;
-    }
-  } catch (e) { Logger.log('短縮失敗: ' + e.message); }
-  return longUrl;
+/** Xの投稿画面を、本文だけ入れて開く（URLは入れない＝ニュースの中身を投稿） */
+function xDraftUrl_(text) {
+  return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
 }
-
-/** Xの投稿画面を下書き入りで開くリンク */
-function xDraftUrl_(text, url) {
-  return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+/** Threadsの投稿画面を、本文だけ入れて開く */
+function threadsDraftUrl_(text) {
+  return 'https://www.threads.net/intent/post?text=' + encodeURIComponent(text);
 }
-/** Threadsの投稿画面を下書き入りで開くリンク（textにURLも含める） */
-function threadsDraftUrl_(text, url) {
-  return 'https://www.threads.net/intent/post?text=' + encodeURIComponent(text + '\n' + url);
+/** 投稿本文を組み立てる（下書き or 見出し ＋ 媒体名の出典。URLは入れない） */
+function postText_(it) {
+  const body = it.draft || it.title;
+  return body + (it.source ? '\n（' + it.source + 'より）' : '');
 }
 
 function draftsText_(items) {
   return items.map(function(it, i){
-    return (i+1) + '. ' + it.title + '\n【下書き】' + (it.draft || '(生成なし)') + '\n' + (it.shareUrl || it.url);
+    return (i+1) + '. ' + postText_(it) + '\n（記事を読む: ' + it.url + '）';
   }).join('\n\n');
 }
 
 /** 各ニュースに AI下書き＋「Xに投稿／Threadsに投稿」ボタンを付けたHTML */
 function draftsHtml_(items) {
   let h = '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">';
-  h += '<p style="color:#6b7280;font-size:13px">今朝のXネタ候補（前回と被らない新着）。下書きの「Xに投稿／Threadsに投稿」を押すと、下書き入りで投稿画面が開きます。一言直して投稿でOK。</p>';
+  h += '<p style="color:#6b7280;font-size:13px">今朝のニュース候補（前回と被らない新着）。「Xに投稿／Threadsに投稿」を押すと、<b>ニュースの中身＋一言（URLなし）</b>が入った投稿画面が開きます。直して投稿でOK。記事を読みたい時は見出しをタップ。</p>';
   items.forEach(function(it){
-    const su = it.shareUrl || it.url;   // 短縮URL（無ければ元URL）
+    const post = postText_(it);   // 投稿本文（見出し/下書き＋出典・URLなし）
     h += '<div style="margin:14px 0;padding:12px;border:1px solid #eee;border-radius:10px">'
        + '<a href="' + it.url + '" style="font-size:14px;color:#1a0dab;text-decoration:none;font-weight:600">' + it.title + '</a>'
        + (it.source ? '<span style="color:#999;font-size:12px;margin-left:8px">' + it.source + '</span>' : '');
     if (it.draft) {
-      h += '<div style="margin:8px 0;padding:10px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">' + it.draft + '</div>'
-         + '<a href="' + xDraftUrl_(it.draft, su) + '" target="_blank" '
-         + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none;margin-right:8px">Xに投稿 ✍️</a>'
-         + '<a href="' + threadsDraftUrl_(it.draft, su) + '" target="_blank" '
-         + 'style="display:inline-block;font-size:13px;font-weight:700;color:#111;background:#fff;border:1.5px solid #111;border-radius:8px;padding:6px 13px;text-decoration:none">Threadsに投稿 🧵</a>';
-    } else {
-      // 下書きが作れなかった時（Gemini上限など）でも、タイトルでシェアできるように
-      h += '<div style="margin-top:6px">'
-         + '<a href="' + xDraftUrl_(it.title, su) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111;margin-right:12px">Xでシェア</a>'
-         + '<a href="' + threadsDraftUrl_(it.title, su) + '" target="_blank" style="font-size:12px;font-weight:700;color:#111">Threadsでシェア</a>'
-         + '</div>';
+      h += '<div style="margin:8px 0;padding:10px;background:#f8fafc;border-radius:8px;font-size:14px;line-height:1.6;white-space:pre-wrap">' + it.draft + '</div>';
     }
-    h += '</div>';
+    h += '<div style="margin-top:8px">'
+       + '<a href="' + xDraftUrl_(post) + '" target="_blank" '
+       + 'style="display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#111;border-radius:8px;padding:7px 14px;text-decoration:none;margin-right:8px">Xに投稿 ✍️</a>'
+       + '<a href="' + threadsDraftUrl_(post) + '" target="_blank" '
+       + 'style="display:inline-block;font-size:13px;font-weight:700;color:#111;background:#fff;border:1.5px solid #111;border-radius:8px;padding:6px 13px;text-decoration:none">Threadsに投稿 🧵</a>'
+       + '</div></div>';
   });
-  h += '<p style="color:#bbb;font-size:11px;margin-top:16px">自分用Xネタ（公開ニュースのみ）</p></div>';
+  h += '<p style="color:#bbb;font-size:11px;margin-top:16px">自分用ニュースネタ（公開ニュースのみ）</p></div>';
   return h;
 }
