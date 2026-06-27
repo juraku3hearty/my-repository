@@ -109,7 +109,7 @@ function setupSystem() {
     st.getRange('A1:B3').setValues([
       ['お子さんの学年（1〜3）', 1],
       ['お子さんの名前（専用カレンダー名になります）', ''],
-      ['お母さんのメール（共有先・任意）', '']
+      ['共有したい人のメール（任意・いなければ空欄）', '']
     ]);
     st.getRange('A5').setValue('★毎年、学年が上がったら B1 の数字を変えてください（1〜3）★');
     st.getRange('A1:A3').setFontWeight('bold');
