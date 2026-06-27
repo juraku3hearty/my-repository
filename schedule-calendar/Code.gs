@@ -65,6 +65,29 @@ function getGrade_(ss) {
   return (n >= 1 && n <= 3) ? n : null;
 }
 
+/** 設定タブから「お子さんの名前」を読む（専用カレンダー名に使う） */
+function getChildName_(ss) {
+  const sh = ss.getSheetByName(CONFIG.SETTING_TAB);
+  return sh ? String(sh.getRange('B2').getValue() || '').trim() : '';
+}
+
+/** 登録先カレンダーを決める：お子さんの名前があれば「○○の予定」専用カレンダーを作って使う／無ければメイン */
+function resolveCalendar_(ss) {
+  const p = PropertiesService.getScriptProperties();
+  const saved = p.getProperty('CHILD_CALENDAR_ID');
+  if (saved) {
+    const c = CalendarApp.getCalendarById(saved);
+    if (c) return c;
+  }
+  const name = getChildName_(ss);
+  if (!name) return CalendarApp.getDefaultCalendar();      // 名前未設定ならメインカレンダー
+  const calName = name + 'の予定';
+  const found = CalendarApp.getCalendarsByName(calName);
+  const cal = (found && found.length) ? found[0] : CalendarApp.createCalendar(calName);
+  p.setProperty('CHILD_CALENDAR_ID', cal.getId());
+  return cal;
+}
+
 /* ============ 初期セットアップ ============ */
 /**
  * デプロイ後に1回実行：未処理フォルダ・確認タブ・設定タブ・自動実行を用意し、
@@ -80,14 +103,19 @@ function setupSystem() {
     sh.appendRow(['年','月','日','開始','終了','予定名','対象学年','登録済']);
   }
 
-  // 設定タブ（学年をここで管理＝毎年ここだけ変える）
+  // 設定タブ（学年・お子さんの名前・共有先をここで管理）
   let st = ss.getSheetByName(CONFIG.SETTING_TAB) || ss.insertSheet(CONFIG.SETTING_TAB);
   if (st.getRange('A1').getValue() === '') {
-    st.getRange('A1').setValue('お子さんの学年');
-    st.getRange('B1').setValue(1);
-    st.getRange('A3').setValue('★毎年、学年が上がったら B1 の数字を変えてください（1〜3）★');
-    st.getRange('A1').setFontWeight('bold');
+    st.getRange('A1:B3').setValues([
+      ['お子さんの学年（1〜3）', 1],
+      ['お子さんの名前（専用カレンダー名になります）', ''],
+      ['お母さんのメール（共有先・任意）', '']
+    ]);
+    st.getRange('A5').setValue('★毎年、学年が上がったら B1 の数字を変えてください（1〜3）★');
+    st.getRange('A1:A3').setFontWeight('bold');
     st.getRange('B1').setBackground('#fff3b0');
+    st.getRange('B2').setBackground('#fff3b0');
+    st.setColumnWidth(1, 280); st.setColumnWidth(2, 260);
   }
 
   // 未処理フォルダ
@@ -105,7 +133,9 @@ function setupSystem() {
   ScriptApp.newTrigger('processSchedules').timeBased().everyMinutes(10).create();
 
   const msg = 'セットアップ完了。\n未処理フォルダ: ' + folder.getUrl() +
-              '\n①「設定」タブで学年を入力\n②APIキーをスクリプトプロパティ GEMINI_API_KEY に登録';
+              '\n①「設定」タブで 学年(B1)・お子さんの名前(B2)・共有先メール(B3) を入力' +
+              '\n②APIキーをスクリプトプロパティ GEMINI_API_KEY に登録' +
+              '\n③「★カレンダーに登録」で、お子さん名の専用カレンダーに入ります';
   try { SpreadsheetApp.getUi().alert(msg); } catch(e) { Logger.log(msg); }
 }
 
@@ -314,9 +344,7 @@ function registerToCalendar() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(CONFIG.CONFIRM_TAB);
   const grade = getGrade_(ss);
-  const cal = (CONFIG.CALENDAR_ID === 'primary')
-    ? CalendarApp.getDefaultCalendar()
-    : CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
+  const cal = resolveCalendar_(ss);   // お子さん名の専用カレンダー（名前未設定ならメイン）
 
   const last = sheet.getLastRow();
   if (last < 2) { toast_(ss, '登録する予定がありません'); return; }
