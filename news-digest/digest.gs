@@ -11,6 +11,16 @@
 
 const DIGEST_MAX = 12;      // 1通あたりの最大本数（安全上限）
 
+// 有料記事（ペイウォール）を除外する。中身が読めない媒体・表記を弾く。
+// ※必要に応じて媒体名を足し引きしてください（'日経' は日経ビジネス等も含みます）
+const PAYWALL_SOURCES = ['日本経済新聞','日経','東洋経済','ダイヤモンド','Bloomberg','ブルームバーグ',
+  'WSJ','ウォール・ストリート','Financial Times','フィナンシャル・タイムズ','朝日新聞','毎日新聞'];
+function isPaywalled_(title, source) {
+  if (/有料|会員限定|有料会員|有料記事/.test(String(title || ''))) return true;
+  const s = String(source || '');
+  return PAYWALL_SOURCES.some(function(p){ return s.indexOf(p) >= 0; });
+}
+
 /** 設定タブを読む（無ければ作る）。会社名・件名などの“入口”。
  *  スプレッドシートが無い（単体プロジェクトでのテスト）ときはデフォルト値を返す。 */
 function getSettings_(ss) {
@@ -167,7 +177,9 @@ function fetchNews_(keyword, recentHours) {
         source: it.getChild('source') ? it.getChild('source').getText() : '',
         ts: pd ? Date.parse(pd) : NaN
       };
-    }).filter(function(it) { return isNaN(it.ts) || it.ts >= cutoff; });
+    }).filter(function(it) {
+      return (isNaN(it.ts) || it.ts >= cutoff) && !isPaywalled_(it.title, it.source); // 有料記事を除外
+    });
   } catch (e) { return []; }
 }
 
