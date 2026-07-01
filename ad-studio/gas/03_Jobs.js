@@ -24,7 +24,17 @@ function createJob(type, scriptId, materialIds, videoPrompt) {
 
   const jobId = newId_('JOB');
   const now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
-  const voiceId = getSetting_('デフォルトボイスID', '');
+
+  // 声の優先順位: 台本のAI推奨ボイス > カテゴリ別ボイス > デフォルト
+  const category = script ? script.category : '';
+  let voiceId = getSetting_('デフォルトボイスID', '');
+  if (category) {
+    try {
+      const cat = getCategory_(category);
+      if (cat.voiceId) voiceId = cat.voiceId;
+    } catch (_) { /* カテゴリ未登録の旧台本はデフォルト声 */ }
+  }
+  if (script && script.recommendedVoiceId) voiceId = script.recommendedVoiceId;
 
   ADS.sheet(ADS.SHEETS.JOBS).appendRow([
     jobId, type, 'pending', scriptId, materialIds || '', videoPrompt || '',
@@ -34,7 +44,7 @@ function createJob(type, scriptId, materialIds, videoPrompt) {
   // バリアントも同時に起票(結果測定のため必ずジョブと1:1で残す)
   ADS.sheet(ADS.SHEETS.VARIANTS).appendRow([
     newId_('VAR'), jobId, scriptId + ' / ' + (videoPrompt || '素材のみ'), scriptId,
-    '', '', '', '未公開', '',
+    '', '', '', '未公開', '', category,
   ]);
 
   return jobId;
@@ -44,7 +54,10 @@ function findScript_(scriptId) {
   const values = ADS.sheet(ADS.SHEETS.SCRIPTS).getDataRange().getValues();
   for (let i = 1; i < values.length; i++) {
     if (values[i][0] === scriptId) {
-      return { hook: values[i][4], body: values[i][5], cta: values[i][6] };
+      return {
+        hook: values[i][4], body: values[i][5], cta: values[i][6],
+        category: values[i][9] || '', recommendedVoiceId: values[i][10] || '',
+      };
     }
   }
   return null;

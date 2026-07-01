@@ -6,34 +6,53 @@
  */
 function generateScriptsFromMenu() {
   const ui = SpreadsheetApp.getUi();
+  const category = ui.prompt('カテゴリは?(事業カテゴリシート参照。例: 脱毛 / 整体 / 睡眠)').getResponseText();
+  if (!category) return;
   const target = ui.prompt('ターゲット層は?(例: 産後の骨盤が気になる30代ママ)').getResponseText();
   if (!target) return;
-  const appeal = ui.prompt('訴求ポイントは?(例: 国家資格者による骨盤矯正・初回2980円)').getResponseText();
-  if (!appeal) return;
-  const ids = generateScripts(target, appeal);
+  const appeal = ui.prompt('訴求ポイントは?(空欄=カテゴリの「強み」を使用)').getResponseText();
+  const ids = generateScripts(category, target, appeal);
   ui.alert('台本を' + ids.length + '本生成しました: ' + ids.join(', '));
 }
 
-function generateScripts(target, appeal) {
+function generateScripts(category, target, appeal) {
   const clinicName = getSetting_('院名', '当院');
   const duration = Number(getSetting_('動画の長さ(秒)', 90));
+  const cat = getCategory_(category);
+  const effectiveAppeal = appeal || cat.strengths;
+  const voices = getVoiceList_();
+
+  const voiceSection = voices.length
+    ? [
+        '',
+        '# 使えるナレーションボイス一覧(この中からターゲットに最適な声を各台本ごとに1つ選ぶ)',
+      ].concat(voices.map(function(v) {
+        return '- ' + v.name + '(' + v.gender + ' / ' + v.tone + ')';
+      }))
+    : [];
 
   const prompt = [
-    'あなたは整骨院専門の広告動画ディレクターです。',
+    'あなたは整骨院・サロン専門の広告動画ディレクターです。',
     'SNS縦型動画広告(' + duration + '秒)のナレーション台本を3パターン作成してください。',
+    '',
+    '# 事業カテゴリ: ' + cat.name,
+    '- サービス内容: ' + cat.desc,
+    '- このカテゴリのNG表現・注意点(必ず守る): ' + cat.ng,
     '',
     '# 条件',
     '- 院名: ' + clinicName,
     '- ターゲット: ' + target,
-    '- 訴求ポイント: ' + appeal,
+    '- 訴求ポイント: ' + effectiveAppeal,
     '- ナレーションは音声合成(スタッフの声のクローン)で読み上げるため、話し言葉として自然で、読み間違えにくい表現にする',
     '- 数字・固有名詞はひらがな/カタカナ交じりでも読み上げが自然になる表記にする',
     '- 医療広告ガイドラインに配慮し、効果の断定(「必ず治る」等)や誇大表現は使わない',
     '- 3パターンは切り口を変える: A=共感型(悩みに寄り添う) / B=実績・信頼型 / C=オファー型(特典訴求)',
+  ].concat(voiceSection).concat([
     '',
     '# 出力形式(JSONのみ、コードブロック不要)',
-    '{"scripts":[{"variant":"A","hook":"冒頭2秒のつかみ一文","body":"本文ナレーション","cta":"締めの行動喚起一文"}, ...]}',
-  ].join('\n');
+    '{"scripts":[{"variant":"A","hook":"冒頭2秒のつかみ一文","body":"本文ナレーション","cta":"締めの行動喚起一文",' +
+    '"recommended_voice":"ボイス一覧から選んだ名前(一覧が無ければ空文字)","voice_reason":"その声を選んだ理由(一覧が無ければ空文字)"}, ...]}',
+  ]).join('\n');
 
   const scripts = callLlm_(prompt);
 
@@ -42,10 +61,53 @@ function generateScripts(target, appeal) {
   const ids = [];
   scripts.forEach(function(p) {
     const id = newId_('SC') + '-' + p.variant;
-    sheet.appendRow([id, today, target, appeal, p.hook, p.body, p.cta, duration, '未使用']);
+    const voice = findVoiceByName_(voices, p.recommended_voice);
+    const voiceNote = voice ? voice.name + ' — ' + (p.voice_reason || '') : '';
+    sheet.appendRow([
+      id, today, target, effectiveAppeal, p.hook, p.body, p.cta, duration, '未使用', cat.name,
+      voice ? voice.id : '', voiceNote,
+    ]);
     ids.push(id);
   });
   return ids;
+}
+
+/** ボイス一覧シートを読む */
+function getVoiceList_() {
+  const sh = ADS.ss().getSheetByName(ADS.SHEETS.VOICES);
+  if (!sh) return [];
+  return sh.getDataRange().getValues().slice(1)
+    .filter(function(r) { return r[0]; })
+    .map(function(r) {
+      return { id: String(r[0]).trim(), name: String(r[1] || r[0]).trim(), gender: r[2] || '', tone: r[3] || '' };
+    });
+}
+
+function findVoiceByName_(voices, name) {
+  if (!name) return null;
+  const n = String(name).trim();
+  for (let i = 0; i < voices.length; i++) {
+    if (voices[i].name === n || voices[i].id === n) return voices[i];
+  }
+  return null;
+}
+
+/** 事業カテゴリシートから1行引く */
+function getCategory_(name) {
+  const values = ADS.sheet(ADS.SHEETS.CATEGORIES).getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]).trim() === String(name).trim()) {
+      return {
+        name: values[i][0],
+        desc: values[i][1] || '',
+        strengths: values[i][2] || '',
+        ng: values[i][3] || '特になし',
+        voiceId: values[i][4] || '',
+      };
+    }
+  }
+  const available = values.slice(1).map(function(r) { return r[0]; }).filter(Boolean).join(' / ');
+  throw new Error('カテゴリ「' + name + '」が事業カテゴリシートにありません。登録済み: ' + available);
 }
 
 /**
@@ -94,8 +156,10 @@ const CLAUDE_SCRIPT_SCHEMA = {
           hook: { type: 'string' },
           body: { type: 'string' },
           cta: { type: 'string' },
+          recommended_voice: { type: 'string' },
+          voice_reason: { type: 'string' },
         },
-        required: ['variant', 'hook', 'body', 'cta'],
+        required: ['variant', 'hook', 'body', 'cta', 'recommended_voice', 'voice_reason'],
         additionalProperties: false,
       },
     },

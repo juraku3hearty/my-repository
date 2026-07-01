@@ -31,6 +31,8 @@ const ADS = {
 
   // シート名(ワーカー側 worker/src/sheets.js と一致させること)
   SHEETS: {
+    CATEGORIES: '事業カテゴリ',
+    VOICES: 'ボイス一覧',
     MATERIALS: '素材ライブラリ',
     SCRIPTS: '台本',
     JOBS: 'ジョブ',

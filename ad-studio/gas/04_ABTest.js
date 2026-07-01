@@ -13,9 +13,9 @@ function updateReport() {
   const jobCost = {};
   jobs.forEach(function(j) { jobCost[j[0]] = Number(j[9]) || 0; });
 
-  // バリアントID → {名前, ジョブID}
+  // バリアントID → {名前, ジョブID, カテゴリ}
   const varInfo = {};
-  variants.forEach(function(v) { varInfo[v[0]] = { name: v[2], jobId: v[1] }; });
+  variants.forEach(function(v) { varInfo[v[0]] = { name: v[2], jobId: v[1], category: v[9] || '' }; });
 
   // バリアント×媒体で集計
   const agg = {};
@@ -35,24 +35,30 @@ function updateReport() {
     const variantId = parts[0];
     const media = parts[1];
     const a = agg[key];
-    const info = varInfo[variantId] || { name: '?', jobId: '' };
+    const info = varInfo[variantId] || { name: '?', jobId: '', category: '' };
     const createCost = jobCost[info.jobId] || 0;
     const total = a.spend + createCost;
     const ctr = a.imp ? (a.click / a.imp * 100).toFixed(2) + '%' : '-';
     const cvr = a.click ? (a.cv / a.click * 100).toFixed(2) + '%' : '-';
     const cpa = a.cv ? Math.round(total / a.cv) : '';
-    return [variantId, info.name, media, a.imp, a.click, ctr, a.cv, cvr,
+    return [variantId, info.name, info.category, media, a.imp, a.click, ctr, a.cv, cvr,
             a.spend, createCost, total, cpa, ''];
   });
 
-  // CPA昇順(安く予約が取れた順)。CPA空欄は最後
+  // CPA昇順(安く予約が取れた順)。CPA空欄は最後。勝ち判定はカテゴリごと
+  const CPA_COL = 12;
   rows.sort(function(x, y) {
-    const a = x[11] === '' ? Infinity : x[11];
-    const b = y[11] === '' ? Infinity : y[11];
+    const a = x[CPA_COL] === '' ? Infinity : x[CPA_COL];
+    const b = y[CPA_COL] === '' ? Infinity : y[CPA_COL];
     return a - b;
   });
-  rows.forEach(function(r, i) {
-    if (r[11] !== '') r[12] = i === 0 ? '★勝ち' : '';
+  const wonCategories = {};
+  rows.forEach(function(r) {
+    const catKey = r[2] || '(未分類)';
+    if (r[CPA_COL] !== '' && !wonCategories[catKey]) {
+      r[13] = '★勝ち';
+      wonCategories[catKey] = true;
+    }
   });
 
   const sheet = ADS.sheet(ADS.SHEETS.REPORT);
