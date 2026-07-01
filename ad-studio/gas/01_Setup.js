@@ -19,6 +19,12 @@ function initialize() {
     ]);
   }
 
+  createSheetIfMissing_(ss, ADS.SHEETS.STORES, [
+    '店舗', 'エンド素材ID(店舗情報クリップ)', 'メモ',
+  ]);
+  // 各店舗の締め(住所・電話・地図など)のクリップを素材ライブラリに登録し、その素材IDをここに紐付ける。
+  // ジョブ発行時に店舗を指定すると、本体は共通のままエンドカードだけ差し替えて店舗の数だけ動画が作られる
+
   createSheetIfMissing_(ss, ADS.SHEETS.VOICES, [
     'ボイスID(Fish Audio reference_id)', '名前', '性別', '声の印象・トーン', 'メモ',
   ]);
@@ -38,22 +44,28 @@ function initialize() {
   createSheetIfMissing_(ss, ADS.SHEETS.JOBS, [
     'ジョブID', '種別', '状態', '台本ID', '素材ID(カンマ区切り)', '動画プロンプト',
     '音声ボイスID', '出力DriveID', '出力URL', '作成コスト(円)', 'エラー', '作成日時', '更新日時', 'ワーカーメモ',
+    'エンド素材ID(店舗)',
   ]);
   // 種別: full(台本→音声→動画→合成) / voice / video / assemble
   // 状態: pending → processing → done / error(ワーカーが更新)
 
   createSheetIfMissing_(ss, ADS.SHEETS.VARIANTS, [
-    'バリアントID', 'ジョブID', '名前', '台本ID', '媒体', '出力URL', '公開日', 'ステータス', 'メモ', 'カテゴリ',
+    'バリアントID', 'ジョブID', '名前', '台本ID', '媒体', '出力URL', '公開日', 'ステータス', 'メモ', 'カテゴリ', '店舗',
   ]);
 
   createSheetIfMissing_(ss, ADS.SHEETS.RESULTS, [
-    '日付', 'バリアントID', '媒体', '表示回数', '再生数', 'クリック', '予約数', '費用(円)',
+    '日付', 'バリアントID', '媒体', '表示回数', '再生数', 'クリック', '予約数', '費用(円)', '店舗',
   ]);
 
   createSheetIfMissing_(ss, ADS.SHEETS.REPORT, [
     'バリアントID', '名前', 'カテゴリ', '媒体', '表示回数', 'クリック', 'CTR', '予約数', 'CVR',
     '広告費合計', '作成コスト', '総コスト', 'CPA(円/予約)', '判定',
   ]);
+
+  createSheetIfMissing_(ss, ADS.SHEETS.REPORT_STORES, [
+    'カテゴリ', '店舗', '表示回数', 'クリック', 'CTR', '予約数', 'CVR', '広告費', 'CPA(広告費のみ・円/予約)',
+  ]);
+  // 内容(カテゴリ)ごとに店舗間の成績差を見る。作成コストは店舗をまたいで共有なので広告費ベースで比較
 
   const settings = createSheetIfMissing_(ss, ADS.SHEETS.SETTINGS, ['キー', '値', '説明']);
   if (settings.getLastRow() === 1) {

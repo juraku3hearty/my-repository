@@ -13,12 +13,15 @@ function updateReport() {
   const jobCost = {};
   jobs.forEach(function(j) { jobCost[j[0]] = Number(j[9]) || 0; });
 
-  // バリアントID → {名前, ジョブID, カテゴリ}
+  // バリアントID → {名前, ジョブID, カテゴリ, 店舗}
   const varInfo = {};
-  variants.forEach(function(v) { varInfo[v[0]] = { name: v[2], jobId: v[1], category: v[9] || '' }; });
+  variants.forEach(function(v) {
+    varInfo[v[0]] = { name: v[2], jobId: v[1], category: v[9] || '', store: v[10] || '' };
+  });
 
-  // バリアント×媒体で集計
+  // バリアント×媒体で集計(全店舗合算) + カテゴリ×店舗で集計
   const agg = {};
+  const storeAgg = {};
   results.forEach(function(r) {
     if (!r[1]) return;
     const key = r[1] + '|' + (r[2] || '不明');
@@ -28,6 +31,15 @@ function updateReport() {
     agg[key].click += Number(r[5]) || 0;
     agg[key].cv += Number(r[6]) || 0;
     agg[key].spend += Number(r[7]) || 0;
+
+    const info = varInfo[r[1]] || { category: '', store: '' };
+    // 店舗はバリアント(店舗別動画)から自動判定。共通動画はAB結果の店舗列で手入力
+    const storeKey = (info.category || '(未分類)') + '|' + (info.store || r[8] || '共通');
+    if (!storeAgg[storeKey]) storeAgg[storeKey] = { imp: 0, click: 0, cv: 0, spend: 0 };
+    storeAgg[storeKey].imp += Number(r[3]) || 0;
+    storeAgg[storeKey].click += Number(r[5]) || 0;
+    storeAgg[storeKey].cv += Number(r[6]) || 0;
+    storeAgg[storeKey].spend += Number(r[7]) || 0;
   });
 
   const rows = Object.keys(agg).map(function(key) {
@@ -68,7 +80,31 @@ function updateReport() {
   if (rows.length) {
     sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
   }
-  Logger.log('レポート更新: ' + rows.length + '行');
+
+  // 店舗比較: カテゴリ×店舗で並べて、同じ内容の店舗間の差を見る
+  const storeRows = Object.keys(storeAgg).map(function(key) {
+    const parts = key.split('|');
+    const s = storeAgg[key];
+    const ctr = s.imp ? (s.click / s.imp * 100).toFixed(2) + '%' : '-';
+    const cvr = s.click ? (s.cv / s.click * 100).toFixed(2) + '%' : '-';
+    const cpa = s.cv ? Math.round(s.spend / s.cv) : '';
+    return [parts[0], parts[1], s.imp, s.click, ctr, s.cv, cvr, s.spend, cpa];
+  });
+  storeRows.sort(function(x, y) {
+    if (x[0] !== y[0]) return x[0] < y[0] ? -1 : 1; // カテゴリでまとめる
+    const a = x[8] === '' ? Infinity : x[8];
+    const b = y[8] === '' ? Infinity : y[8];
+    return a - b; // 同カテゴリ内はCPAが安い店舗が上
+  });
+  const storeSheet = ADS.sheet(ADS.SHEETS.REPORT_STORES);
+  if (storeSheet.getLastRow() > 1) {
+    storeSheet.getRange(2, 1, storeSheet.getLastRow() - 1, storeSheet.getLastColumn()).clearContent();
+  }
+  if (storeRows.length) {
+    storeSheet.getRange(2, 1, storeRows.length, storeRows[0].length).setValues(storeRows);
+  }
+
+  Logger.log('レポート更新: ' + rows.length + '行 / 店舗比較: ' + storeRows.length + '行');
 }
 
 /** 結果入力(メニューから1件ずつ) */
@@ -77,10 +113,11 @@ function addResultFromMenu() {
   const variantId = ui.prompt('バリアントIDは?').getResponseText();
   if (!variantId) return;
   const media = ui.prompt('媒体は?(Instagram/TikTok/YouTube/LINE/Google など)').getResponseText();
+  const store = ui.prompt('店舗は?(店舗別動画なら空欄でOK=自動判定。共通動画の場合のみ入力)').getResponseText();
   const nums = ui.prompt('表示回数,再生数,クリック,予約数,費用(円) をカンマ区切りで').getResponseText();
   const n = nums.split(',').map(function(s) { return Number(s.trim()) || 0; });
   const today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
-  ADS.sheet(ADS.SHEETS.RESULTS).appendRow([today, variantId, media, n[0], n[1], n[2], n[3], n[4]]);
+  ADS.sheet(ADS.SHEETS.RESULTS).appendRow([today, variantId, media, n[0], n[1], n[2], n[3], n[4], store || '']);
   updateReport();
   ui.alert('記録してレポートを更新しました');
 }

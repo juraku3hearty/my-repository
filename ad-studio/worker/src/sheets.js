@@ -14,7 +14,7 @@ export const SHEET = {
 export const JOB_COL = {
   ID: 0, TYPE: 1, STATUS: 2, SCRIPT_ID: 3, MATERIAL_IDS: 4, VIDEO_PROMPT: 5,
   VOICE_ID: 6, OUT_DRIVE_ID: 7, OUT_URL: 8, COST: 9, ERROR: 10,
-  CREATED: 11, UPDATED: 12, MEMO: 13,
+  CREATED: 11, UPDATED: 12, MEMO: 13, END_MATERIAL_ID: 14,
 };
 
 const auth = new google.auth.GoogleAuth({

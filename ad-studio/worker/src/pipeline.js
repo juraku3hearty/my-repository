@@ -55,12 +55,21 @@ export async function processJob(job) {
     if (gen.note) notes.push(gen.note);
   }
 
-  if (!clips.length) {
+  // --- 店舗別エンドカード(あれば必ず最後に配置) ---
+  let endClipPath = null;
+  const endMaterialId = row[JOB_COL.END_MATERIAL_ID];
+  if (endMaterialId) {
+    const [endMat] = await getMaterials(endMaterialId);
+    endClipPath = await downloadFile(endMat.driveFileId);
+    notes.push(`エンド:${endMat.id}`);
+  }
+
+  if (!clips.length && !endClipPath) {
     throw new Error('映像素材がありません。素材IDか動画プロンプトのどちらかは必要です');
   }
 
   // --- 合成 ---
-  const finalPath = await assemble(clips, voice.filePath);
+  const finalPath = await assemble(clips, voice.filePath, endClipPath);
   const up = await uploadOutput(finalPath, `ad-${row[JOB_COL.ID]}.mp4`);
   await updateVariantUrl(row[JOB_COL.ID], up.url);
 

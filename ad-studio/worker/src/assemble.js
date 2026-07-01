@@ -39,42 +39,74 @@ async function normalizeClip(input, index) {
 /**
  * @param {string[]} clipPaths - 撮影素材・AI生成クリップのローカルパス(表示順)
  * @param {string} voicePath - ナレーション音声(mp3)
+ * @param {string|null} endClipPath - 店舗別エンドカード。指定時は必ず動画の最後に配置される
  * @returns {Promise<string>} 完成mp4のパス
  */
-export async function assemble(clipPaths, voicePath) {
-  if (!clipPaths.length) throw new Error('合成するクリップが1つもありません');
+export async function assemble(clipPaths, voicePath, endClipPath = null) {
+  if (!clipPaths.length && !endClipPath) throw new Error('合成するクリップが1つもありません');
 
   const voiceDur = await ffprobeDuration(voicePath);
   if (voiceDur > 150) {
     throw new Error(`ナレーションが${Math.round(voiceDur)}秒あります。このシステムは120秒までの短尺特化です。台本を短くしてください`);
   }
 
-  // 正規化
-  const normalized = [];
-  for (let i = 0; i < clipPaths.length; i++) {
-    normalized.push(await normalizeClip(clipPaths[i], i));
+  const tmp = [];
+
+  // エンドカード(店舗情報)は尺を固定で最後に確保し、本体はその手前まで
+  let endClip = null;
+  let endDur = 0;
+  if (endClipPath) {
+    endClip = await normalizeClip(endClipPath, 'end');
+    tmp.push(endClip);
+    endDur = Math.min(await ffprobeDuration(endClip), voiceDur);
+  }
+  const bodyTarget = voiceDur - endDur;
+
+  // 本体: 正規化してナレーション残り時間をループで埋め、ピッタリにトリム
+  let bodyPath = null;
+  if (bodyTarget > 0.5) {
+    if (!clipPaths.length) throw new Error('本体クリップがありません(素材IDか動画プロンプトが必要)');
+    const normalized = [];
+    for (let i = 0; i < clipPaths.length; i++) {
+      normalized.push(await normalizeClip(clipPaths[i], i));
+    }
+    tmp.push(...normalized);
+
+    const playlist = [];
+    let total = 0;
+    let i = 0;
+    while (total < bodyTarget + 1) {
+      const clip = normalized[i % normalized.length];
+      playlist.push(clip);
+      total += await ffprobeDuration(clip);
+      i++;
+      if (i > 200) throw new Error('クリップが短すぎます(ループ上限)');
+    }
+
+    const bodyList = path.join(config.workDir, `concat-body-${Date.now()}.txt`);
+    await fs.writeFile(bodyList, playlist.map((p) => `file '${p}'`).join('\n'));
+    tmp.push(bodyList);
+
+    bodyPath = path.join(config.workDir, `body-${Date.now()}.mp4`);
+    tmp.push(bodyPath);
+    await run('ffmpeg', [
+      '-y', '-f', 'concat', '-safe', '0', '-i', bodyList,
+      '-t', String(bodyTarget.toFixed(2)),
+      '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-an',
+      bodyPath,
+    ]);
   }
 
-  // ナレーション長を満たすまでクリップ列をループで積む
-  const playlist = [];
-  let total = 0;
-  let i = 0;
-  while (total < voiceDur + 1) {
-    const clip = normalized[i % normalized.length];
-    playlist.push(clip);
-    total += await ffprobeDuration(clip);
-    i++;
-    if (i > 200) throw new Error('クリップが短すぎます(ループ上限)');
-  }
-
-  // concat リスト
-  const listPath = path.join(config.workDir, `concat-${Date.now()}.txt`);
-  await fs.writeFile(listPath, playlist.map((p) => `file '${p}'`).join('\n'));
+  // 本体 + エンドカード を連結し、ナレーションを重ねる
+  const finalList = path.join(config.workDir, `concat-final-${Date.now()}.txt`);
+  const parts = [bodyPath, endClip].filter(Boolean);
+  await fs.writeFile(finalList, parts.map((p) => `file '${p}'`).join('\n'));
+  tmp.push(finalList);
 
   const out = path.join(config.workDir, `ad-${Date.now()}.mp4`);
   await run('ffmpeg', [
     '-y',
-    '-f', 'concat', '-safe', '0', '-i', listPath,
+    '-f', 'concat', '-safe', '0', '-i', finalList,
     '-i', voicePath,
     '-map', '0:v', '-map', '1:a',
     '-t', String(voiceDur.toFixed(2)), // 音声の長さでスパッと終える
@@ -85,7 +117,7 @@ export async function assemble(clipPaths, voicePath) {
   ]);
 
   // 中間ファイル掃除
-  for (const f of [...normalized, listPath]) {
+  for (const f of tmp) {
     await fs.unlink(f).catch(() => {});
   }
   return out;

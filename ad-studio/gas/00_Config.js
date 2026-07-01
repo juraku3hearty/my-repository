@@ -33,12 +33,14 @@ const ADS = {
   SHEETS: {
     CATEGORIES: '事業カテゴリ',
     VOICES: 'ボイス一覧',
+    STORES: '店舗一覧',
     MATERIALS: '素材ライブラリ',
     SCRIPTS: '台本',
     JOBS: 'ジョブ',
     VARIANTS: 'バリアント',
     RESULTS: 'AB結果',
     REPORT: 'ABレポート',
+    REPORT_STORES: '店舗比較',
     SETTINGS: '設定',
   },
 };
