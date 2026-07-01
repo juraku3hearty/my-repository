@@ -36,11 +36,12 @@ function initialize() {
 
   const settings = createSheetIfMissing_(ss, ADS.SHEETS.SETTINGS, ['キー', '値', '説明']);
   if (settings.getLastRow() === 1) {
-    settings.getRange(2, 1, 4, 3).setValues([
+    settings.getRange(2, 1, 5, 3).setValues([
       ['院名', 'じゅらく整骨院', '台本生成に使用'],
       ['デフォルトボイスID', '', 'Fish Audio の reference_id(声モデルID)'],
       ['動画の長さ(秒)', '90', '広告1本の目安(90〜120秒の短尺特化)'],
       ['アスペクト比', '9:16', '縦型(リール/ショート向け)'],
+      ['台本LLM', 'gemini', 'gemini(無料) / claude(高品質・要ANTHROPIC_API_KEY)'],
     ]);
   }
 

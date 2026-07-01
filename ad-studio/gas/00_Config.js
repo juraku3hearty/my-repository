@@ -1,7 +1,8 @@
 /**
  * 広告動画工房 — 設定
  * スクリプトプロパティ:
- *   GEMINI_API_KEY   … Google AI Studio のAPIキー(台本生成に使用)
+ *   GEMINI_API_KEY   … Google AI Studio のAPIキー(台本生成のデフォルト)
+ *   ANTHROPIC_API_KEY … (任意) 台本LLMをclaudeにする場合のみ
  *   SPREADSHEET_ID   … 管理用スプレッドシートのID
  *   LINE_CHANNEL_ACCESS_TOKEN … (任意) 完成通知をLINEに送る場合
  *   LINE_USER_ID              … (任意) 通知先ユーザーID
