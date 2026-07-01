@@ -49,10 +49,20 @@
 3. Fish Audio でボイスモデル作成 → **モデルID(reference_id)** を控える
 4. スプレッドシートの設定シート「デフォルトボイスID」に貼る
 
-### C. Higgsfield(10分)
+### C. Higgsfield(10分)— 2つの使い方
 
-1. [Higgsfield](https://higgsfield.ai/) で APIキー/シークレット を取得
-2. APIがまだ使えない/変わった場合は `.env` で `VIDEO_PROVIDER=manual` にすれば、プロンプトだけ出力して手動生成→素材登録の運用に切り替わる(システムは止まらない)
+**C-1. 公式MCP(おすすめ・まずこっち)**
+
+Higgsfield 公式のMCPサーバー(`https://mcp.higgsfield.ai/mcp`)を Claude に繋ぐと、会話しながらAI動画クリップを生成できる。APIキー不要、Higgsfieldアカウントで認証、プランのクレジットがそのまま使える(無料枠は月150クレジット)。
+
+- Claude Code: このリポジトリ直下の `.mcp.json` に登録済み。初回にブラウザ認証するだけ
+- Claude(Web/デスクトップ): 設定 → コネクタ → カスタムコネクタ追加 → URL に `https://mcp.higgsfield.ai/mcp`
+
+運用: Claudeに「施術ベッドで骨盤矯正している明るい院内の5秒クリップを作って」と頼む → 生成された動画をDriveに保存 → 素材ライブラリに登録 → ジョブ発行。ワーカー側は `.env` で `VIDEO_PROVIDER=manual` にしておく(合成のみ担当)。
+
+**C-2. Cloud API(完全自動化したくなったら)**
+
+[Higgsfield Cloud](https://cloud.higgsfield.ai/) で APIキー/シークレットを取得して `.env` に設定、`VIDEO_PROVIDER=higgsfield`。ジョブ発行だけで動画生成まで全自動になる。エンドポイントが変わっていたら `worker/src/providers/video/higgsfield.js` の `ENDPOINTS` を公式ドキュメントに合わせて修正。
 
 ### D. VPSワーカー(30分)
 

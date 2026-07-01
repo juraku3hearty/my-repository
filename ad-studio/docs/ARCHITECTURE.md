@@ -49,6 +49,16 @@ GASメニュー「② 動画ジョブを発行」
 - 単価は概算。実際の請求額に合わせて `.env` で調整する
 - ABレポートで `総コスト = 広告費 + 作成コスト`、`CPA = 総コスト ÷ 予約数`
 
+## Higgsfield との接続は2系統
+
+| 系統 | 認証 | 向き | ワーカー設定 |
+|---|---|---|---|
+| 公式MCP (`https://mcp.higgsfield.ai/mcp`) | Higgsfieldアカウント(OAuth) | Claudeと会話しながらクリップ生成。プランのクレジット消費 | `VIDEO_PROVIDER=manual`(合成のみ) |
+| Cloud API (`cloud.higgsfield.ai`) | APIキー/シークレット | ジョブ発行だけの完全自動 | `VIDEO_PROVIDER=higgsfield` |
+
+MCPはエージェント(Claude)用の口なので、常駐ワーカーからは使わずREST(Cloud API)を使う。
+まずMCP+manualで運用を始めて、量産が軌道に乗ったらCloud APIで全自動化する、の順がコスト安全。
+
 ## 既知の割り切り(v1)
 
 - ワーカーは1プロセス・逐次処理(自院用途では十分。並列化はキュー競合制御が必要になるので保留)
