@@ -32,7 +32,7 @@ export const config = {
   veo: {
     apiKey: process.env.GEMINI_API_KEY || '',
     apiBase: process.env.VEO_API_BASE || 'https://generativelanguage.googleapis.com',
-    model: process.env.VEO_MODEL || 'veo-3.1-fast-generate-001',
+    model: process.env.VEO_MODEL || 'veo-3.1-fast-generate-preview', // 実測で確認済みの現行モデル名
   },
   higgsfield: {
     apiKey: process.env.HIGGSFIELD_API_KEY || '',

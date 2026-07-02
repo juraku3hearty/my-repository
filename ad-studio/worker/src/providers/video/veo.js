@@ -13,9 +13,13 @@ import { config } from '../../config.js';
 const POLL_INTERVAL_MS = 10000;
 const TIMEOUT_MS = 10 * 60 * 1000;
 
-export async function generate({ prompt, durationSec = 5, aspectRatio = '9:16' }) {
+export async function generate({ prompt, durationSec = 6, aspectRatio = '9:16' }) {
   const { apiKey, apiBase, model } = config.veo;
   if (!apiKey) throw new Error('GEMINI_API_KEY が .env に未設定です(Veoアダプタに必要)');
+
+  // Veoは4/6/8秒のみ受け付ける(実測)。一番近い値に丸める
+  const duration = [4, 6, 8].reduce((a, b) =>
+    Math.abs(b - durationSec) < Math.abs(a - durationSec) ? b : a);
 
   // 生成ジョブ作成(長時間実行オペレーション)
   const res = await fetch(`${apiBase}/v1beta/models/${model}:predictLongRunning?key=${apiKey}`, {
@@ -25,9 +29,8 @@ export async function generate({ prompt, durationSec = 5, aspectRatio = '9:16' }
       instances: [{ prompt }],
       parameters: {
         aspectRatio,
-        durationSeconds: durationSec,
+        durationSeconds: duration,
         sampleCount: 1,
-        personGeneration: 'allow_adult',
       },
     }),
   });
