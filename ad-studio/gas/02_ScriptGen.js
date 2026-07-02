@@ -39,9 +39,8 @@ function generateScripts(category, target, appeal) {
     '- サービス内容: ' + cat.desc,
     '- このカテゴリのNG表現・注意点(必ず守る): ' + cat.ng,
     '',
-    '# 広告全体の方針(最優先)',
-    '- ' + getSetting_('広告の方針', '仕組みを全部説明しない。「それってなんだろう?」という好奇心を残し、続きは体験で確かめたくなる構成にする'),
-    '- 独自ワード(例: 24時間骨盤ホールド等)は「名前だけ出して中身は明かさない」引きとして使ってよい',
+    '# この広告の方針(最優先)',
+    '- ' + (cat.policy || getSetting_('広告の方針', 'ターゲットに響く自然な構成にする')),
     '',
     '# 条件',
     '- 院名: ' + clinicName,
@@ -114,6 +113,7 @@ function getCategory_(name) {
         strengths: values[i][2] || '',
         ng: values[i][3] || '特になし',
         voiceId: values[i][4] || '',
+        policy: values[i][5] || '',
       };
     }
   }
