@@ -27,7 +27,8 @@ const ADS = {
     return sh;
   },
 
-  GEMINI_MODEL: 'gemini-2.0-flash-lite',
+  // 旧モデルは無料枠の割り当てが消えて429になることがある。エラー時はここを現行モデルに更新
+  GEMINI_MODEL: 'gemini-3.5-flash',
 
   // シート名(ワーカー側 worker/src/sheets.js と一致させること)
   SHEETS: {
