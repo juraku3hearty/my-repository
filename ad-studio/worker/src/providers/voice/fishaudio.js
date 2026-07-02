@@ -11,12 +11,15 @@ export async function synthesize({ text, voiceId }) {
   if (!config.fishAudio.apiKey) throw new Error('FISH_AUDIO_API_KEY が未設定です');
   if (!voiceId) throw new Error('ボイスID(Fish Audioのreference_id)が未設定です。設定シートの「デフォルトボイスID」を入れてください');
 
+  const headers = {
+    Authorization: `Bearer ${config.fishAudio.apiKey}`,
+    'Content-Type': 'application/json',
+  };
+  if (config.fishAudio.model) headers.model = config.fishAudio.model;
+
   const res = await fetch(`${config.fishAudio.apiBase}/v1/tts`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.fishAudio.apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       text,
       reference_id: voiceId,
