@@ -29,6 +29,11 @@ export const config = {
     apiBase: process.env.FISH_AUDIO_API_BASE || 'https://api.fish.audio',
     model: process.env.FISH_AUDIO_MODEL || '', // 空=APIデフォルト。例: s2.1-pro-free(無料) / s2.1-pro
   },
+  veo: {
+    apiKey: process.env.GEMINI_API_KEY || '',
+    apiBase: process.env.VEO_API_BASE || 'https://generativelanguage.googleapis.com',
+    model: process.env.VEO_MODEL || 'veo-3.1-fast-generate-001',
+  },
   higgsfield: {
     apiKey: process.env.HIGGSFIELD_API_KEY || '',
     apiSecret: process.env.HIGGSFIELD_API_SECRET || '',

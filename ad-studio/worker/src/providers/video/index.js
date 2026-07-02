@@ -8,10 +8,12 @@
 import { config } from '../../config.js';
 import * as higgsfield from './higgsfield.js';
 import * as manual from './manual.js';
+import * as veo from './veo.js';
 
 const registry = {
   higgsfield,
   manual,
+  veo,
 };
 
 export function getVideoProvider() {
