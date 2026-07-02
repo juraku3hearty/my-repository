@@ -75,7 +75,12 @@ export async function getMaterials(materialIds) {
   return wanted.map((id) => {
     const r = rows.find((row, i) => i > 0 && row[0] === id);
     if (!r) throw new Error(`素材が見つかりません: ${id}`);
-    return { id: r[0], name: r[1], driveFileId: r[2], kind: r[3] };
+    return {
+      id: r[0], name: r[1], driveFileId: r[2], kind: r[3],
+      // 長い動画の一部だけ使う場合(開始秒/終了秒列)。0や空欄は「切らない」
+      startSec: Number(r[8]) || 0,
+      endSec: Number(r[9]) || 0,
+    };
   });
 }
 

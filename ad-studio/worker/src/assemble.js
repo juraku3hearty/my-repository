@@ -23,6 +23,16 @@ async function ffprobeDuration(file) {
   return parseFloat(stdout.trim());
 }
 
+/** 長い動画から指定区間だけ切り出す(開始秒/終了秒。endSec=0なら末尾まで) */
+export async function trimClip(input, startSec, endSec) {
+  const out = path.join(config.workDir, `trim-${Date.now()}-${Math.floor(startSec)}.mp4`);
+  const args = ['-y', '-ss', String(startSec), '-i', input];
+  if (endSec > startSec) args.push('-t', String(endSec - startSec));
+  args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-an', out);
+  await run('ffmpeg', args);
+  return out;
+}
+
 /** クリップを縦型に正規化(拡大クロップ・無音化) */
 async function normalizeClip(input, index) {
   const out = path.join(config.workDir, `norm-${Date.now()}-${index}.mp4`);

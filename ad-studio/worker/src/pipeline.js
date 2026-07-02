@@ -7,7 +7,7 @@ import { config } from './config.js';
 import { JOB_COL, getScript, getMaterials, getSetting, updateVariantUrl } from './sheets.js';
 import { getVoiceProvider } from './providers/voice/index.js';
 import { getVideoProvider } from './providers/video/index.js';
-import { assemble } from './assemble.js';
+import { assemble, trimClip } from './assemble.js';
 import { downloadFile, uploadOutput } from './drive.js';
 
 export async function processJob(job) {
@@ -52,8 +52,14 @@ export async function processJob(job) {
 
   const materials = await getMaterials(row[JOB_COL.MATERIAL_IDS]);
   for (const m of materials) {
-    clips.push(await downloadFile(m.driveFileId));
-    notes.push(`素材:${m.id}`);
+    let filePath = await downloadFile(m.driveFileId);
+    if (m.startSec || m.endSec) {
+      filePath = await trimClip(filePath, m.startSec, m.endSec);
+      notes.push(`素材:${m.id}(${m.startSec}-${m.endSec || '末尾'}秒)`);
+    } else {
+      notes.push(`素材:${m.id}`);
+    }
+    clips.push(filePath);
   }
 
   // --- 店舗別エンドカード(あれば必ず最後に配置) ---

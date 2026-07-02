@@ -35,8 +35,9 @@ function initialize() {
   // 例: xxxxxxxx | スタッフA | 女性 | 明るく親しみやすい | 受付担当
 
   createSheetIfMissing_(ss, ADS.SHEETS.MATERIALS, [
-    '素材ID', 'ファイル名', 'DriveファイルID', '種類', 'タグ', '長さ(秒)', 'メモ', '登録日',
+    '素材ID', 'ファイル名', 'DriveファイルID', '種類', 'タグ', '長さ(秒)', 'メモ', '登録日', '開始秒', '終了秒',
   ]);
+  // 開始秒/終了秒: 長い動画の一部だけ使う時に指定(空欄=全体を使う)
   // 種類の例: 施術風景 / 院内 / 外観 / 受付 / スタッフ / その他
 
   createSheetIfMissing_(ss, ADS.SHEETS.SCRIPTS, [
