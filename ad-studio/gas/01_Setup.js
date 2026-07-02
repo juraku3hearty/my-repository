@@ -74,13 +74,15 @@ function initialize() {
 
   const settings = createSheetIfMissing_(ss, ADS.SHEETS.SETTINGS, ['キー', '値', '説明']);
   if (settings.getLastRow() === 1) {
-    settings.getRange(2, 1, 6, 3).setValues([
+    settings.getRange(2, 1, 8, 3).setValues([
       ['院名', 'じゅらく整骨院', '台本生成に使用'],
       ['デフォルトボイスID', '', 'Fish Audio の reference_id(声モデルID)'],
       ['動画の長さ(秒)', '90', '広告1本の目安(90〜120秒の短尺特化)'],
       ['アスペクト比', '9:16', '縦型(リール/ショート向け)'],
       ['台本LLM', 'gemini', 'gemini(無料) / claude(高品質・要ANTHROPIC_API_KEY)'],
-      ['広告の方針', '仕組みを全部説明しない。「それってなんだろう?」という好奇心を残し、続きは体験で確かめたくなる構成にする', '全台本生成に適用される全体方針'],
+      ['広告の方針', '', 'カテゴリ側の方針が空の時に使う予備(通常は事業カテゴリシートの「広告の方針」列を使う)'],
+      ['BGMのDriveファイルID', '', '商用可のBGM(mp3)をDriveに置いてIDを記入。空=BGMなし'],
+      ['BGM音量', '0.15', 'ナレーションに対するBGMの音量(0.1〜0.3推奨)'],
     ]);
   }
 

@@ -75,8 +75,19 @@ export async function processJob(job) {
     throw new Error('映像素材がありません。素材IDか動画プロンプトのどちらかは必要です');
   }
 
+  // --- BGM(設定シートにDriveファイルIDがあれば全動画に自動で敷く) ---
+  let bgm = null;
+  const bgmFileId = await getSetting('BGMのDriveファイルID', '');
+  if (bgmFileId) {
+    bgm = {
+      path: await downloadFile(bgmFileId),
+      volume: Number(await getSetting('BGM音量', '0.15')) || 0.15,
+    };
+    notes.push('BGMあり');
+  }
+
   // --- 合成 ---
-  const finalPath = await assemble(clips, voice.filePath, endClipPath);
+  const finalPath = await assemble(clips, voice.filePath, endClipPath, bgm);
   const up = await uploadOutput(finalPath, `ad-${row[JOB_COL.ID]}.mp4`);
   await updateVariantUrl(row[JOB_COL.ID], up.url);
 

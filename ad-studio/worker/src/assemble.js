@@ -50,9 +50,10 @@ async function normalizeClip(input, index) {
  * @param {string[]} clipPaths - 撮影素材・AI生成クリップのローカルパス(表示順)
  * @param {string} voicePath - ナレーション音声(mp3)
  * @param {string|null} endClipPath - 店舗別エンドカード。指定時は必ず動画の最後に配置される
+ * @param {{path: string, volume: number}|null} bgm - BGM。ナレーションの下に小音量で自動ループ
  * @returns {Promise<string>} 完成mp4のパス
  */
-export async function assemble(clipPaths, voicePath, endClipPath = null) {
+export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = null) {
   if (!clipPaths.length && !endClipPath) throw new Error('合成するクリップが1つもありません');
 
   const voiceDur = await ffprobeDuration(voicePath);
@@ -116,17 +117,28 @@ export async function assemble(clipPaths, voicePath, endClipPath = null) {
   tmp.push(finalList);
 
   const out = path.join(config.workDir, `ad-${Date.now()}.mp4`);
-  await run('ffmpeg', [
+  const args = [
     '-y',
     '-f', 'concat', '-safe', '0', '-i', finalList,
     '-i', voicePath,
-    '-map', '0:v', '-map', '1:a',
+  ];
+  if (bgm) {
+    // BGMは自動ループでナレーションの下に敷く(duration=firstでナレーション長に揃う)
+    args.push('-stream_loop', '-1', '-i', bgm.path);
+    args.push('-filter_complex',
+      `[2:a]volume=${bgm.volume}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0[aout]`);
+    args.push('-map', '0:v', '-map', '[aout]');
+  } else {
+    args.push('-map', '0:v', '-map', '1:a');
+  }
+  args.push(
     '-t', String(voiceDur.toFixed(2)), // 音声の長さでスパッと終える
     '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
     '-c:a', 'aac', '-b:a', '192k',
     '-movflags', '+faststart',
     out,
-  ]);
+  );
+  await run('ffmpeg', args);
 
   // 中間ファイル掃除
   for (const f of tmp) {
