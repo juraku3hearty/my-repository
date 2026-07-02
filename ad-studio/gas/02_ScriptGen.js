@@ -16,9 +16,10 @@ function generateScriptsFromMenu() {
 }
 
 function generateScripts(category, target, appeal) {
-  const clinicName = getSetting_('院名', '当院');
   const duration = Number(getSetting_('動画の長さ(秒)', 90));
   const cat = getCategory_(category);
+  // 名乗り: カテゴリ側の指定を優先(分院・店名未定などに対応)。空なら設定シートの院名
+  const clinicName = cat.brandName || getSetting_('院名', '当院');
   const effectiveAppeal = appeal || cat.strengths;
   const voices = getVoiceList_();
 
@@ -114,6 +115,7 @@ function getCategory_(name) {
         ng: values[i][3] || '特になし',
         voiceId: values[i][4] || '',
         policy: values[i][5] || '',
+        brandName: values[i][6] || '',
       };
     }
   }

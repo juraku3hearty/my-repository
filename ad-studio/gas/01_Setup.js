@@ -7,6 +7,7 @@ function initialize() {
 
   const categories = createSheetIfMissing_(ss, ADS.SHEETS.CATEGORIES, [
     'カテゴリ', 'サービス内容', '強み・訴求の軸', 'NG表現・注意点', 'ボイスID(空=デフォルト)', '広告の方針',
+    '名乗り(空=設定の院名)',
   ]);
   if (categories.getLastRow() === 1) {
     categories.getRange(2, 1, 3, 6).setValues([
