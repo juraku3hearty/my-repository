@@ -7,7 +7,7 @@ function createJobFromMenu() {
   const scriptId = ui.prompt('使う台本IDは?(台本シート参照)').getResponseText();
   if (!scriptId) return;
   const materialIds = ui.prompt('使う素材IDは?(カンマ区切り・空欄でAI動画のみ)').getResponseText();
-  const videoPrompt = ui.prompt('AI動画の追加プロンプト(空欄可。例: 明るい院内、施術ベッド、柔らかい光)').getResponseText();
+  const videoPrompt = ui.prompt('AI動画プロンプト(空欄=台本の「推奨AIシーン」を自動使用。使わない場合は none と入力)').getResponseText();
   const stores = ui.prompt('配信する店舗は?(カンマ区切りで複数可・空欄=店舗共通1本。店舗一覧シート参照)').getResponseText();
 
   const storeList = stores ? stores.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [''];
@@ -28,6 +28,13 @@ function createJobFromMenu() {
 function createJob(type, scriptId, materialIds, videoPrompt, store) {
   const script = findScript_(scriptId);
   if (!script && type !== 'assemble') throw new Error('台本が見つかりません: ' + scriptId);
+
+  // AI動画プロンプト: 空欄なら台本の推奨AIシーン(フック)を自動採用。'none' で明示的に無効化
+  if (String(videoPrompt).toLowerCase() === 'none') {
+    videoPrompt = '';
+  } else if (!videoPrompt && script && script.hookScene) {
+    videoPrompt = script.hookScene;
+  }
 
   // 店舗指定があればエンド素材IDを引く
   let endMaterialId = '';
@@ -85,6 +92,7 @@ function findScript_(scriptId) {
       return {
         hook: values[i][4], body: values[i][5], cta: values[i][6],
         category: values[i][9] || '', recommendedVoiceId: values[i][10] || '',
+        hookScene: values[i][12] || '',
       };
     }
   }

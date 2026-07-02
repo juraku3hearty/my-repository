@@ -31,14 +31,8 @@ export async function processJob(job) {
     return { fileId: up.fileId, url: up.url, cost, note: notes.join(' / ') };
   }
 
-  // --- 映像クリップ収集: 撮影素材 + AI生成 ---
+  // --- 映像クリップ収集: AI生成(フック=冒頭) + 撮影素材(本体) ---
   const clips = [];
-
-  const materials = await getMaterials(row[JOB_COL.MATERIAL_IDS]);
-  for (const m of materials) {
-    clips.push(await downloadFile(m.driveFileId));
-    notes.push(`素材:${m.id}`);
-  }
 
   const videoPrompt = row[JOB_COL.VIDEO_PROMPT];
   if (videoPrompt) {
@@ -49,10 +43,17 @@ export async function processJob(job) {
       aspectRatio: aspect,
     });
     if (gen.filePath) {
+      // 悩み再現などの演技シーンはフックとして必ず冒頭に置く
       clips.push(gen.filePath);
       cost += config.cost.videoPerGeneration;
     }
     if (gen.note) notes.push(gen.note);
+  }
+
+  const materials = await getMaterials(row[JOB_COL.MATERIAL_IDS]);
+  for (const m of materials) {
+    clips.push(await downloadFile(m.driveFileId));
+    notes.push(`素材:${m.id}`);
   }
 
   // --- 店舗別エンドカード(あれば必ず最後に配置) ---
@@ -76,12 +77,15 @@ export async function processJob(job) {
   return { fileId: up.fileId, url: up.url, cost, note: notes.join(' / ') };
 }
 
-/** 整骨院広告向けの生成プロンプト共通味付け */
+/**
+ * 生成プロンプト共通味付け。
+ * シーン内容(悩み再現・ライフスタイル等)は台本AIの hook_scene が担うので、
+ * ここでは品質・構図の指定だけ足す(院内描写は実写素材の役目なので入れない)。
+ */
 function buildVideoPrompt(userPrompt) {
   return [
     userPrompt,
-    'Japanese osteopathic clinic (seikotsuin) advertisement footage,',
-    'clean bright interior, professional and trustworthy atmosphere,',
-    'soft natural lighting, high quality, vertical composition',
+    'realistic cinematic footage, natural skin tones, high quality,',
+    'vertical 9:16 composition, no text overlays',
   ].join(' ');
 }

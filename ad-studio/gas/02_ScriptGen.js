@@ -49,8 +49,15 @@ function generateScripts(category, target, appeal) {
     '- 3パターンは切り口を変える: A=共感型(悩みに寄り添う) / B=実績・信頼型 / C=オファー型(特典訴求)',
   ].concat(voiceSection).concat([
     '',
+    '# フック映像シーン',
+    '各台本の冒頭(フック)には、ターゲットの悩みを再現する演技シーンをAI動画で生成して使う。',
+    'そのための動画生成プロンプトを hook_scene として英語で書くこと。',
+    '条件: 日本人の人物、縦型(9:16)構図、5秒で伝わる1シーン、院内や施術は含めない(実写を使うため)。',
+    '例: "Japanese man in his 30s looking at his beard in the bathroom mirror with a troubled expression, morning light, vertical composition"',
+    '',
     '# 出力形式(JSONのみ、コードブロック不要)',
     '{"scripts":[{"variant":"A","hook":"冒頭2秒のつかみ一文","body":"本文ナレーション","cta":"締めの行動喚起一文",' +
+    '"hook_scene":"フック用AI動画生成プロンプト(英語)",' +
     '"recommended_voice":"ボイス一覧から選んだ名前(一覧が無ければ空文字)","voice_reason":"その声を選んだ理由(一覧が無ければ空文字)"}, ...]}',
   ]).join('\n');
 
@@ -65,7 +72,7 @@ function generateScripts(category, target, appeal) {
     const voiceNote = voice ? voice.name + ' — ' + (p.voice_reason || '') : '';
     sheet.appendRow([
       id, today, target, effectiveAppeal, p.hook, p.body, p.cta, duration, '未使用', cat.name,
-      voice ? voice.id : '', voiceNote,
+      voice ? voice.id : '', voiceNote, p.hook_scene || '',
     ]);
     ids.push(id);
   });
@@ -156,10 +163,11 @@ const CLAUDE_SCRIPT_SCHEMA = {
           hook: { type: 'string' },
           body: { type: 'string' },
           cta: { type: 'string' },
+          hook_scene: { type: 'string' },
           recommended_voice: { type: 'string' },
           voice_reason: { type: 'string' },
         },
-        required: ['variant', 'hook', 'body', 'cta', 'recommended_voice', 'voice_reason'],
+        required: ['variant', 'hook', 'body', 'cta', 'hook_scene', 'recommended_voice', 'voice_reason'],
         additionalProperties: false,
       },
     },

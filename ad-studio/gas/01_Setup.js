@@ -37,7 +37,7 @@ function initialize() {
 
   createSheetIfMissing_(ss, ADS.SHEETS.SCRIPTS, [
     '台本ID', '作成日', 'ターゲット', '訴求ポイント', 'フック(冒頭)', '本文', 'CTA', '秒数目安', 'ステータス', 'カテゴリ',
-    '推奨ボイスID', '推奨ボイス(名前・理由)',
+    '推奨ボイスID', '推奨ボイス(名前・理由)', '推奨AIシーン(フック用)',
   ]);
   // 注: 列順はワーカー(worker/src/sheets.js)が参照するため、追加は末尾のみ
 
