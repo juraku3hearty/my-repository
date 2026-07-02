@@ -17,7 +17,7 @@ export const JOB_COL = {
   CREATED: 11, UPDATED: 12, MEMO: 13, END_MATERIAL_ID: 14,
 };
 
-const auth = new google.auth.GoogleAuth({
+export const googleAuth = new google.auth.GoogleAuth({
   keyFile: config.credentialsPath,
   scopes: [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -25,8 +25,7 @@ const auth = new google.auth.GoogleAuth({
   ],
 });
 
-export const sheetsApi = google.sheets({ version: 'v4', auth });
-export const driveApi = google.drive({ version: 'v3', auth });
+export const sheetsApi = google.sheets({ version: 'v4', auth: googleAuth });
 
 async function readSheet(name) {
   const res = await sheetsApi.spreadsheets.values.get({

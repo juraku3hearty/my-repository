@@ -35,6 +35,13 @@ export const config = {
     apiBase: process.env.HIGGSFIELD_API_BASE || 'https://platform.higgsfield.ai',
   },
 
+  // Drive書き込み用のユーザーOAuth(サービスアカウントは容量ゼロでアップロード不可のため必須)
+  googleOAuth: {
+    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || '',
+    refreshToken: process.env.GOOGLE_OAUTH_REFRESH_TOKEN || '',
+  },
+
   cost: {
     voicePer1kChars: Number(process.env.COST_VOICE_PER_1K_CHARS || 15),
     videoPerGeneration: Number(process.env.COST_VIDEO_PER_GENERATION || 80),
