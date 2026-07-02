@@ -53,12 +53,14 @@ export async function assemble(clipPaths, voicePath, endClipPath = null) {
   const tmp = [];
 
   // エンドカード(店舗情報)は尺を固定で最後に確保し、本体はその手前まで
+  // 長い素材(外観の長回し等)を登録してもいいように、先頭6秒だけ使う
+  const END_MAX_SEC = 6;
   let endClip = null;
   let endDur = 0;
   if (endClipPath) {
     endClip = await normalizeClip(endClipPath, 'end');
     tmp.push(endClip);
-    endDur = Math.min(await ffprobeDuration(endClip), voiceDur);
+    endDur = Math.min(await ffprobeDuration(endClip), END_MAX_SEC, voiceDur);
   }
   const bodyTarget = voiceDur - endDur;
 
