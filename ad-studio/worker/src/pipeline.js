@@ -68,6 +68,9 @@ export async function processJob(job) {
   if (endMaterialId) {
     const [endMat] = await getMaterials(endMaterialId);
     endClipPath = await downloadFile(endMat.driveFileId);
+    if (endMat.startSec || endMat.endSec) {
+      endClipPath = await trimClip(endClipPath, endMat.startSec, endMat.endSec);
+    }
     notes.push(`エンド:${endMat.id}`);
   }
 
