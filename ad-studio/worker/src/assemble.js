@@ -51,9 +51,10 @@ async function normalizeClip(input, index) {
  * @param {string} voicePath - ナレーション音声(mp3)
  * @param {string|null} endClipPath - 店舗別エンドカード。指定時は必ず動画の最後に配置される
  * @param {{path: string, volume: number}|null} bgm - BGM。ナレーションの下に小音量で自動ループ
+ * @param {string|null} subtitlePath - 焼き込む字幕(SRT)。nullなら字幕なし
  * @returns {Promise<string>} 完成mp4のパス
  */
-export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = null) {
+export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = null, subtitlePath = null) {
   if (!clipPaths.length && !endClipPath) throw new Error('合成するクリップが1つもありません');
 
   const voiceDur = await ffprobeDuration(voicePath);
@@ -122,12 +123,22 @@ export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = n
     '-f', 'concat', '-safe', '0', '-i', finalList,
     '-i', voicePath,
   ];
+
+  // 字幕焼き込み(SNSは音声OFF視聴が多いため)。日本語フォントはVPSに要インストール(fonts-noto-cjk)
+  const subFilter = subtitlePath
+    ? `subtitles=${subtitlePath}:force_style='FontName=Noto Sans CJK JP,FontSize=14,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,MarginV=60,Alignment=2'`
+    : null;
+
   if (bgm) {
     // BGMは自動ループでナレーションの下に敷く(duration=firstでナレーション長に揃う)
     args.push('-stream_loop', '-1', '-i', bgm.path);
+    const vChain = subFilter ? `[0:v]${subFilter}[vout];` : '';
     args.push('-filter_complex',
-      `[2:a]volume=${bgm.volume}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0[aout]`);
-    args.push('-map', '0:v', '-map', '[aout]');
+      `${vChain}[2:a]volume=${bgm.volume}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0[aout]`);
+    args.push('-map', subFilter ? '[vout]' : '0:v', '-map', '[aout]');
+  } else if (subFilter) {
+    args.push('-filter_complex', `[0:v]${subFilter}[vout]`);
+    args.push('-map', '[vout]', '-map', '1:a');
   } else {
     args.push('-map', '0:v', '-map', '1:a');
   }

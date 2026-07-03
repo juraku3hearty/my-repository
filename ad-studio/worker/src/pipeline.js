@@ -26,6 +26,23 @@ export async function processJob(job) {
   cost += Math.ceil(voice.chars / 1000) * config.cost.voicePer1kChars;
   notes.push(`音声${voice.chars}文字`);
 
+  // --- 字幕(音声OFF視聴対策。設定シート「字幕」= off で無効化) ---
+  let subtitlePath = null;
+  if ((await getSetting('字幕', 'on')).toLowerCase() !== 'off' && type !== 'voice') {
+    try {
+      const provider = await import('./providers/voice/fishaudio.js');
+      const segments = await provider.transcribe({ filePath: voice.filePath });
+      if (segments.length) {
+        const { buildSrt } = await import('./subtitle.js');
+        subtitlePath = await buildSrt(segments);
+        notes.push('字幕あり');
+      }
+    } catch (err) {
+      // 字幕は失敗しても動画自体は作る(エラーで全体を止めない)
+      notes.push(`字幕スキップ(${String(err.message).slice(0, 80)})`);
+    }
+  }
+
   if (type === 'voice') {
     const up = await uploadOutput(voice.filePath, `voice-${row[JOB_COL.ID]}.mp3`);
     return { fileId: up.fileId, url: up.url, cost, note: notes.join(' / ') };
@@ -90,7 +107,7 @@ export async function processJob(job) {
   }
 
   // --- 合成 ---
-  const finalPath = await assemble(clips, voice.filePath, endClipPath, bgm);
+  const finalPath = await assemble(clips, voice.filePath, endClipPath, bgm, subtitlePath);
   const up = await uploadOutput(finalPath, `ad-${row[JOB_COL.ID]}.mp4`);
   await updateVariantUrl(row[JOB_COL.ID], up.url);
 
