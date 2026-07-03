@@ -131,10 +131,11 @@ export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = n
 
   if (bgm) {
     // BGMは自動ループでナレーションの下に敷く(duration=firstでナレーション長に揃う)
+    // 注: ffmpeg4系のamixは出力を入力数で割る(半減する)ため、先に2倍して相殺する
     args.push('-stream_loop', '-1', '-i', bgm.path);
     const vChain = subFilter ? `[0:v]${subFilter}[vout];` : '';
     args.push('-filter_complex',
-      `${vChain}[2:a]volume=${bgm.volume}[bg];[1:a][bg]amix=inputs=2:duration=first:dropout_transition=0[aout]`);
+      `${vChain}[1:a]volume=2.0[vo];[2:a]volume=${bgm.volume * 2}[bg];[vo][bg]amix=inputs=2:duration=first:dropout_transition=0[aout]`);
     args.push('-map', subFilter ? '[vout]' : '0:v', '-map', '[aout]');
   } else if (subFilter) {
     args.push('-filter_complex', `[0:v]${subFilter}[vout]`);
