@@ -73,7 +73,8 @@ export async function getMaterials(materialIds) {
   const wanted = materialIds.split(',').map((s) => s.trim()).filter(Boolean);
   const rows = await readSheet(SHEET.MATERIALS);
   return wanted.map((id) => {
-    const r = rows.find((row, i) => i > 0 && row[0] === id);
+    // セル側の前後スペース混入に耐える
+    const r = rows.find((row, i) => i > 0 && String(row[0]).trim() === id);
     if (!r) throw new Error(`素材が見つかりません: ${id}`);
     return {
       id: r[0], name: r[1], driveFileId: r[2], kind: r[3],
