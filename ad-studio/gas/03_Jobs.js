@@ -30,7 +30,8 @@ function createJob(type, scriptId, materialIds, videoPrompt, store) {
   if (!script && type !== 'assemble') throw new Error('台本が見つかりません: ' + scriptId);
 
   // AI動画プロンプト: 空欄なら台本の推奨AIシーン(フック)を自動採用。'none' で明示的に無効化
-  if (String(videoPrompt).toLowerCase() === 'none') {
+  videoPrompt = String(videoPrompt || '').trim();
+  if (videoPrompt.toLowerCase() === 'none' || videoPrompt === 'なし') {
     videoPrompt = '';
   } else if (!videoPrompt && script && script.hookScene) {
     videoPrompt = script.hookScene;
