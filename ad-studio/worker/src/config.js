@@ -52,6 +52,9 @@ export const config = {
     videoPerGeneration: Number(process.env.COST_VIDEO_PER_GENERATION || 80),
   },
 
+  // テロップ・注意書き用の日本語フォント(fonts-noto-cjk のパス。環境で変わる場合は .env で上書き)
+  fontFile: process.env.FONT_FILE || '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+
   line: {
     token: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
     userId: process.env.LINE_USER_ID || '',

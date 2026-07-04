@@ -27,12 +27,22 @@ export async function processJob(job) {
   notes.push(`音声${voice.chars}文字`);
 
   // --- 字幕(音声OFF視聴対策。台本テキスト+音声尺から生成。設定シート「字幕」= off で無効化) ---
+  // 「読み」と「表示」を分ける: 設定「字幕置換」に "いつき鍼灸整骨院=樹鍼灸整骨院" のように書くと
+  // 音声はそのまま(いつき)、字幕だけ置換後(樹)で表示する。複数は改行かカンマ区切り。
   let subtitlePath = null;
   if ((await getSetting('字幕', 'on')).toLowerCase() !== 'off' && type !== 'voice') {
     try {
       const voiceDur = await ffprobeDuration(voice.filePath);
+      let subText = narration;
+      const rules = await getSetting('字幕置換', '');
+      for (const rule of rules.split(/[\n,、]/)) {
+        const m = rule.split(/[=＝→]/);
+        if (m.length === 2 && m[0].trim()) {
+          subText = subText.split(m[0].trim()).join(m[1].trim());
+        }
+      }
       const { buildSrtFromText } = await import('./subtitle.js');
-      subtitlePath = await buildSrtFromText(narration, voiceDur);
+      subtitlePath = await buildSrtFromText(subText, voiceDur);
       notes.push(subtitlePath ? '字幕あり' : '字幕スキップ(生成結果なし)');
     } catch (err) {
       // 字幕は失敗しても動画自体は作る(エラーで全体を止めない)
@@ -45,7 +55,7 @@ export async function processJob(job) {
     return { fileId: up.fileId, url: up.url, cost, note: notes.join(' / ') };
   }
 
-  // --- 映像クリップ収集: AI生成(フック=冒頭) + 撮影素材(本体) ---
+  // --- 映像クリップ収集: AI生成(フック=冒頭) + 撮影素材(本体)。各クリップは{path,label} ---
   const clips = [];
 
   const videoPrompt = row[JOB_COL.VIDEO_PROMPT];
@@ -58,7 +68,7 @@ export async function processJob(job) {
     });
     if (gen.filePath) {
       // 悩み再現などの演技シーンはフックとして必ず冒頭に置く
-      clips.push(gen.filePath);
+      clips.push({ path: gen.filePath, label: '' });
       cost += config.cost.videoPerGeneration;
     }
     if (gen.note) notes.push(gen.note);
@@ -69,11 +79,11 @@ export async function processJob(job) {
     let filePath = await downloadFile(m.driveFileId);
     if (m.startSec || m.endSec) {
       filePath = await trimClip(filePath, m.startSec, m.endSec);
-      notes.push(`素材:${m.id}(${m.startSec}-${m.endSec || '末尾'}秒)`);
+      notes.push(`素材:${m.id}(${m.startSec}-${m.endSec || '末尾'}秒)${m.label ? '[' + m.label + ']' : ''}`);
     } else {
       notes.push(`素材:${m.id}`);
     }
-    clips.push(filePath);
+    clips.push({ path: filePath, label: m.label });
   }
 
   // --- 末尾クリップ: 店舗外観エンドカード → 共通CTA(LINEタップ等)の順で必ず最後に配置 ---
@@ -102,6 +112,10 @@ export async function processJob(job) {
     throw new Error('映像素材がありません。素材IDか動画プロンプトのどちらかは必要です');
   }
 
+  // --- 注意書き(医療広告・Meta審査対策。設定「注意書き」。空なら既定文、"off"で無し) ---
+  const disclaimerRaw = await getSetting('注意書き', '効果には個人差があります');
+  const disclaimer = disclaimerRaw.toLowerCase() === 'off' ? '' : disclaimerRaw;
+
   // --- BGM(設定シートにDriveファイルIDがあれば全動画に自動で敷く) ---
   let bgm = null;
   const bgmFileId = await getSetting('BGMのDriveファイルID', '');
@@ -114,7 +128,7 @@ export async function processJob(job) {
   }
 
   // --- 合成 ---
-  const finalPath = await assemble(clips, voice.filePath, tailClipPaths, bgm, subtitlePath);
+  const finalPath = await assemble(clips, voice.filePath, tailClipPaths, bgm, subtitlePath, disclaimer);
   const up = await uploadOutput(finalPath, `ad-${row[JOB_COL.ID]}.mp4`);
   await updateVariantUrl(row[JOB_COL.ID], up.url);
 

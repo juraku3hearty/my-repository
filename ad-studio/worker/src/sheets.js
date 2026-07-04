@@ -81,6 +81,8 @@ export async function getMaterials(materialIds) {
       // 長い動画の一部だけ使う場合(開始秒/終了秒列)。0や空欄は「切らない」
       startSec: Number(r[8]) || 0,
       endSec: Number(r[9]) || 0,
+      // K列: このカットの上部に焼くテロップ(「施術前」「施術後」等)。空なら無し
+      label: String(r[10] ?? '').trim(),
     };
   });
 }

@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from './config.js';
 
-const MAX_CHARS = 18;
+const MAX_CHARS = 13; // 1080px幅に収まる1行の目安(はみ出し防止)
 
 function fmtTime(sec) {
   const ms = Math.max(0, Math.round(sec * 1000));

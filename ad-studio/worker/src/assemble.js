@@ -33,29 +33,66 @@ export async function trimClip(input, startSec, endSec) {
   return out;
 }
 
-/** クリップを縦型に正規化(拡大クロップ・無音化) */
-async function normalizeClip(input, index) {
+/** ffmpeg フィルタ用のエスケープ(パス・特殊文字) */
+function escFilterPath(p) {
+  return p.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+}
+
+/** 日本語テロップ用の drawtext を作る。textfile方式でエスケープ地獄を回避 */
+async function drawtextFilter(text, { size, y, boxAlpha = 0.5 }) {
+  const txtPath = path.join(config.workDir, `txt-${Date.now()}-${Math.floor(Math.random() * 1e6)}.txt`);
+  await fs.writeFile(txtPath, text);
+  const parts = [
+    `fontfile='${escFilterPath(config.fontFile)}'`,
+    `textfile='${escFilterPath(txtPath)}'`,
+    `fontsize=${size}`,
+    'fontcolor=white',
+    'box=1', `boxcolor=black@${boxAlpha}`, 'boxborderw=12',
+    'x=(w-text_w)/2', `y=${y}`,
+  ].join(':');
+  return { filter: `drawtext=${parts}`, txtPath };
+}
+
+/**
+ * クリップを縦型に正規化(拡大クロップ・無音化)。
+ * label があれば上部に「施術前」等のテロップを、disclaimer があれば下部に注意書きを焼く。
+ */
+async function normalizeClip(input, index, label = '', disclaimer = '') {
   const out = path.join(config.workDir, `norm-${Date.now()}-${index}.mp4`);
+  const vf = [`scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS},format=yuv420p`];
+  const txtFiles = [];
+  if (label) {
+    const d = await drawtextFilter(label, { size: 72, y: 120, boxAlpha: 0.55 });
+    vf.push(d.filter);
+    txtFiles.push(d.txtPath);
+  }
+  if (disclaimer) {
+    const d = await drawtextFilter(disclaimer, { size: 30, y: 'h-70', boxAlpha: 0.45 });
+    vf.push(d.filter);
+    txtFiles.push(d.txtPath);
+  }
   await run('ffmpeg', [
     '-y', '-i', input,
-    '-vf', `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS},format=yuv420p`,
+    '-vf', vf.join(','),
     '-an',
     '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
     out,
   ]);
+  for (const f of txtFiles) await fs.unlink(f).catch(() => {});
   return out;
 }
 
 /**
- * @param {string[]} clipPaths - 撮影素材・AI生成クリップのローカルパス(表示順)
+ * @param {Array<{path:string,label?:string}>} bodyClips - 本体クリップ(表示順)。labelがあれば上部にテロップを焼く
  * @param {string} voicePath - ナレーション音声(mp3)
  * @param {string[]} tailClipPaths - 動画の末尾に順番どおり固定配置するクリップ(店舗外観→LINE CTA 等。事前トリム済み)
  * @param {{path: string, volume: number}|null} bgm - BGM。ナレーションの下に小音量で自動ループ
  * @param {string|null} subtitlePath - 焼き込む字幕(SRT)。nullなら字幕なし
+ * @param {string} disclaimer - 全カットの下部に常時表示する注意書き(「効果には個人差があります」等)。空なら無し
  * @returns {Promise<string>} 完成mp4のパス
  */
-export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = null, subtitlePath = null) {
-  if (!clipPaths.length && !tailClipPaths.length) throw new Error('合成するクリップが1つもありません');
+export async function assemble(bodyClips, voicePath, tailClipPaths = [], bgm = null, subtitlePath = null, disclaimer = '') {
+  if (!bodyClips.length && !tailClipPaths.length) throw new Error('合成するクリップが1つもありません');
 
   const voiceDur = await ffprobeDuration(voicePath);
   if (voiceDur > 150) {
@@ -68,7 +105,7 @@ export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = n
   const tailClips = [];
   let endDur = 0;
   for (let i = 0; i < tailClipPaths.length; i++) {
-    const n = await normalizeClip(tailClipPaths[i], `tail${i}`);
+    const n = await normalizeClip(tailClipPaths[i], `tail${i}`, '', disclaimer);
     tmp.push(n);
     endDur += await ffprobeDuration(n);
     tailClips.push(n);
@@ -80,10 +117,10 @@ export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = n
   // ナレーション尺との差はクリップの再生速度の微調整で埋める。同じ映像は二度と出さない。
   let bodyPath = null;
   if (bodyTarget > 0.5) {
-    if (!clipPaths.length) throw new Error('本体クリップがありません(素材IDか動画プロンプトが必要)');
+    if (!bodyClips.length) throw new Error('本体クリップがありません(素材IDか動画プロンプトが必要)');
     const normalized = [];
-    for (let i = 0; i < clipPaths.length; i++) {
-      normalized.push(await normalizeClip(clipPaths[i], i));
+    for (let i = 0; i < bodyClips.length; i++) {
+      normalized.push(await normalizeClip(bodyClips[i].path, i, bodyClips[i].label || '', disclaimer));
     }
     tmp.push(...normalized);
 
@@ -131,8 +168,9 @@ export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = n
   ];
 
   // 字幕焼き込み(SNSは音声OFF視聴が多いため)。日本語フォントはVPSに要インストール(fonts-noto-cjk)
+  // 1080x1920に枠内収めるためPlayResを実解像度に合わせ、フォント・左右マージンを指定
   const subFilter = subtitlePath
-    ? `subtitles=${subtitlePath}:force_style='FontName=Noto Sans CJK JP,FontSize=14,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,MarginV=60,Alignment=2'`
+    ? `subtitles=${subtitlePath}:force_style='FontName=Noto Sans CJK JP,FontSize=42,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=3,Shadow=1,MarginV=140,MarginL=60,MarginR=60,Alignment=2,PlayResX=1080,PlayResY=1920'`
     : null;
 
   if (bgm) {
