@@ -7,7 +7,7 @@ import { config } from './config.js';
 import { JOB_COL, getScript, getMaterials, getSetting, updateVariantUrl } from './sheets.js';
 import { getVoiceProvider } from './providers/voice/index.js';
 import { getVideoProvider } from './providers/video/index.js';
-import { assemble, trimClip } from './assemble.js';
+import { assemble, trimClip, ffprobeDuration } from './assemble.js';
 import { downloadFile, uploadOutput } from './drive.js';
 
 export async function processJob(job) {
@@ -26,17 +26,14 @@ export async function processJob(job) {
   cost += Math.ceil(voice.chars / 1000) * config.cost.voicePer1kChars;
   notes.push(`音声${voice.chars}文字`);
 
-  // --- 字幕(音声OFF視聴対策。設定シート「字幕」= off で無効化) ---
+  // --- 字幕(音声OFF視聴対策。台本テキスト+音声尺から生成。設定シート「字幕」= off で無効化) ---
   let subtitlePath = null;
   if ((await getSetting('字幕', 'on')).toLowerCase() !== 'off' && type !== 'voice') {
     try {
-      const provider = await import('./providers/voice/fishaudio.js');
-      const segments = await provider.transcribe({ filePath: voice.filePath });
-      if (segments.length) {
-        const { buildSrt } = await import('./subtitle.js');
-        subtitlePath = await buildSrt(segments);
-        notes.push('字幕あり');
-      }
+      const voiceDur = await ffprobeDuration(voice.filePath);
+      const { buildSrtFromText } = await import('./subtitle.js');
+      subtitlePath = await buildSrtFromText(narration, voiceDur);
+      notes.push(subtitlePath ? '字幕あり' : '字幕スキップ(生成結果なし)');
     } catch (err) {
       // 字幕は失敗しても動画自体は作る(エラーで全体を止めない)
       notes.push(`字幕スキップ(${String(err.message).slice(0, 80)})`);

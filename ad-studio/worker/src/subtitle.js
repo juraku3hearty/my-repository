@@ -36,6 +36,33 @@ function splitText(text) {
 }
 
 /**
+ * 台本テキスト + 音声の総尺 から字幕を作る(ASR不要・確実)。
+ * 全文を読みやすい長さに分割し、各キューの時間を文字数比で按分する。
+ * @param {string} text - ナレーション全文
+ * @param {number} totalDur - 音声の総尺(秒)
+ * @returns {Promise<string|null>} SRTファイルのパス(生成不能ならnull)
+ */
+export async function buildSrtFromText(text, totalDur) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!clean || !(totalDur > 0)) return null;
+  const chunks = splitText(clean).filter(Boolean);
+  if (!chunks.length) return null;
+  const totalChars = chunks.reduce((a, c) => a + c.length, 0) || 1;
+  const cues = [];
+  let t = 0;
+  for (const c of chunks) {
+    const d = totalDur * (c.length / totalChars);
+    cues.push({ start: t, end: t + d, text: c });
+    t += d;
+  }
+  const srt = cues.map((c, i) =>
+    `${i + 1}\n${fmtTime(c.start)} --> ${fmtTime(c.end)}\n${c.text}\n`).join('\n');
+  const srtPath = path.join(config.workDir, `sub-${Date.now()}.srt`);
+  await fs.writeFile(srtPath, srt);
+  return srtPath;
+}
+
+/**
  * @param {Array<{start:number,end:number,text:string}>} segments
  * @returns {Promise<string>} SRTファイルのパス
  */

@@ -16,7 +16,7 @@ const W = 1080;
 const H = 1920;
 const FPS = 30;
 
-async function ffprobeDuration(file) {
+export async function ffprobeDuration(file) {
   const { stdout } = await run('ffprobe', [
     '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file,
   ]);
@@ -76,7 +76,8 @@ export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = n
   endDur = Math.min(endDur, voiceDur);
   const bodyTarget = voiceDur - endDur;
 
-  // 本体: 正規化してナレーション残り時間をループで埋め、ピッタリにトリム
+  // 本体: 各クリップを1回ずつ順番に(ループ・繰り返しは広告に致命的なので厳禁)。
+  // ナレーション尺との差はクリップの再生速度の微調整で埋める。同じ映像は二度と出さない。
   let bodyPath = null;
   if (bodyTarget > 0.5) {
     if (!clipPaths.length) throw new Error('本体クリップがありません(素材IDか動画プロンプトが必要)');
@@ -86,27 +87,32 @@ export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = n
     }
     tmp.push(...normalized);
 
-    const playlist = [];
-    let total = 0;
-    let i = 0;
-    while (total < bodyTarget + 1) {
-      const clip = normalized[i % normalized.length];
-      playlist.push(clip);
-      total += await ffprobeDuration(clip);
-      i++;
-      if (i > 200) throw new Error('クリップが短すぎます(ループ上限)');
-    }
-
+    // 全クリップを1回ずつ連結して実尺を測る
     const bodyList = path.join(config.workDir, `concat-body-${Date.now()}.txt`);
-    await fs.writeFile(bodyList, playlist.map((p) => `file '${p}'`).join('\n'));
+    await fs.writeFile(bodyList, normalized.map((p) => `file '${p}'`).join('\n'));
     tmp.push(bodyList);
+    const rawBody = path.join(config.workDir, `rawbody-${Date.now()}.mp4`);
+    tmp.push(rawBody);
+    await run('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', bodyList, '-c', 'copy', rawBody]);
+    const rawDur = await ffprobeDuration(rawBody);
+
+    // 速度で尺合わせ。factor>1=ゆっくり(伸ばす)/<1=速く(縮める)
+    let factor = bodyTarget / rawDur;
+    if (factor > 1.6) {
+      // ここまで足りないと不自然なスローになる。ループさせず、素材追加を促して止める
+      throw new Error(
+        `映像素材が約${Math.round(bodyTarget - rawDur)}秒不足しています。` +
+        `素材を追加するか台本を短くしてください(繰り返し再生は広告に不向きなので自動ループはしません)`);
+    }
+    factor = Math.max(0.6, Math.min(1.6, factor));
 
     bodyPath = path.join(config.workDir, `body-${Date.now()}.mp4`);
     tmp.push(bodyPath);
     await run('ffmpeg', [
-      '-y', '-f', 'concat', '-safe', '0', '-i', bodyList,
+      '-y', '-i', rawBody,
+      '-vf', `setpts=${factor.toFixed(4)}*PTS`,
       '-t', String(bodyTarget.toFixed(2)),
-      '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-an',
+      '-an', '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
       bodyPath,
     ]);
   }
