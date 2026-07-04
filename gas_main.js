@@ -1,5 +1,9 @@
+// 機密はコードに直書きしない。GASのスクリプトプロパティから読む。
+// 設定: プロジェクトの設定 > スクリプトプロパティ に LINE_CHANNEL_ACCESS_TOKEN を追加。
 const CONFIG = {
-  LINE_CHANNEL_ACCESS_TOKEN: 'XADFvO2Sv0X1Ac3eBBvunXWVEF7mI5ftzXcZN/+7U0ebXv7Qvj80Xr7FoJ+k6S3S/4PPQ+SKfHsNQXFK6ZMAv7fMYFxQA/Y/+AtrlaVL2Cowz0NTM70Y2ZiMkhZULHbHmaxzJnj5acq3FRBTaeRLbwdB04t89/1O/w1cDnyilFU=',
+  get LINE_CHANNEL_ACCESS_TOKEN() {
+    return PropertiesService.getScriptProperties().getProperty('LINE_CHANNEL_ACCESS_TOKEN') || '';
+  },
 };
 
 function doPost(e) {
