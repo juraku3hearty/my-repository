@@ -114,44 +114,59 @@ export async function assemble(bodyClips, voicePath, tailClipPaths = [], bgm = n
   const bodyTarget = voiceDur - endDur;
 
   // 本体: 各クリップを1回ずつ順番に(ループ・繰り返しは広告に致命的なので厳禁)。
-  // ナレーション尺との差はクリップの再生速度の微調整で埋める。同じ映像は二度と出さない。
+  // 「施術前」「施術後」等のラベル付きクリップは"見せ場"なので最低表示秒数を確保し、
+  // 一瞬で流れて変化が分からない事故を防ぐ。全体はナレーション尺にピッタリ合わせる。
   let bodyPath = null;
   if (bodyTarget > 0.5) {
     if (!bodyClips.length) throw new Error('本体クリップがありません(素材IDか動画プロンプトが必要)');
-    const normalized = [];
+
+    // 各クリップを正規化し、自然な尺を測る
+    const norm = [];
     for (let i = 0; i < bodyClips.length; i++) {
-      normalized.push(await normalizeClip(bodyClips[i].path, i, bodyClips[i].label || '', disclaimer));
+      const p = await normalizeClip(bodyClips[i].path, i, bodyClips[i].label || '', disclaimer);
+      tmp.push(p);
+      norm.push({ path: p, label: bodyClips[i].label || '', nat: await ffprobeDuration(p) });
     }
-    tmp.push(...normalized);
 
-    // 全クリップを1回ずつ連結して実尺を測る
-    const bodyList = path.join(config.workDir, `concat-body-${Date.now()}.txt`);
-    await fs.writeFile(bodyList, normalized.map((p) => `file '${p}'`).join('\n'));
-    tmp.push(bodyList);
-    const rawBody = path.join(config.workDir, `rawbody-${Date.now()}.mp4`);
-    tmp.push(rawBody);
-    await run('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', bodyList, '-c', 'copy', rawBody]);
-    const rawDur = await ffprobeDuration(rawBody);
+    // 目標尺: ラベル付き(見せ場=施術前/施術後など)は最低 MIN_KEY_DUR 秒を確保。
+    // その合計をナレーション尺に合わせて全クリップ比例調整する。ラベル付きは相対的に長く残り、
+    // ビフォー/アフターの違いをしっかり見せられる。
+    const MIN_KEY_DUR = 2.6; // "施術後が一瞬"対策。見せ場をこの秒数以上ホールドする下限
+    const targets = norm.map((c) => (c.label ? Math.max(c.nat, MIN_KEY_DUR) : c.nat));
+    const sum = targets.reduce((a, d) => a + d, 0) || 1;
+    const scale = bodyTarget / sum;
 
-    // 速度で尺合わせ。factor>1=ゆっくり(伸ばす)/<1=速く(縮める)
-    let factor = bodyTarget / rawDur;
-    if (factor > 1.6) {
-      // ここまで足りないと不自然なスローになる。ループさせず、素材追加を促して止める
+    // ナレーションが素材に対して長すぎると全編が不自然なスローになる。ループさせず素材追加を促す
+    if (scale > 2.0) {
       throw new Error(
-        `映像素材が約${Math.round(bodyTarget - rawDur)}秒不足しています。` +
+        `映像素材が約${Math.round(bodyTarget - sum)}秒不足しています。` +
         `素材を追加するか台本を短くしてください(繰り返し再生は広告に不向きなので自動ループはしません)`);
     }
-    factor = Math.max(0.6, Math.min(1.6, factor));
 
+    // 各クリップを目標尺へ個別に速度調整(見せ場は自然にスロー→しっかり見える)。
+    // factor>1=スロー(伸ばす)/<1=速く(縮める)
+    const fitted = [];
+    for (let i = 0; i < norm.length; i++) {
+      const target = targets[i] * scale;
+      const factor = Math.max(0.5, Math.min(3.0, target / norm[i].nat));
+      const f = path.join(config.workDir, `fit-${Date.now()}-${i}.mp4`);
+      tmp.push(f);
+      await run('ffmpeg', [
+        '-y', '-i', norm[i].path,
+        '-vf', `setpts=${factor.toFixed(4)}*PTS`,
+        '-t', String(target.toFixed(2)),
+        '-an', '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
+        f,
+      ]);
+      fitted.push(f);
+    }
+
+    const bodyList = path.join(config.workDir, `concat-body-${Date.now()}.txt`);
+    await fs.writeFile(bodyList, fitted.map((p) => `file '${p}'`).join('\n'));
+    tmp.push(bodyList);
     bodyPath = path.join(config.workDir, `body-${Date.now()}.mp4`);
     tmp.push(bodyPath);
-    await run('ffmpeg', [
-      '-y', '-i', rawBody,
-      '-vf', `setpts=${factor.toFixed(4)}*PTS`,
-      '-t', String(bodyTarget.toFixed(2)),
-      '-an', '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
-      bodyPath,
-    ]);
+    await run('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', bodyList, '-c', 'copy', bodyPath]);
   }
 
   // 本体 + 末尾クリップ(店舗外観→LINE CTA)を連結し、ナレーションを重ねる
