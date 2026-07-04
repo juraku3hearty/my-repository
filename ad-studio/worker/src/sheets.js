@@ -85,11 +85,12 @@ export async function getMaterials(materialIds) {
   });
 }
 
-/** 設定シートから値を読む */
+/** 設定シートから値を読む(キー・値の前後スペース混入に耐える) */
 export async function getSetting(key, fallback = '') {
   const rows = await readSheet(SHEET.SETTINGS);
-  const r = rows.find((row, i) => i > 0 && row[0] === key && row[1] !== '');
-  return r ? String(r[1]) : fallback;
+  const r = rows.find((row, i) =>
+    i > 0 && String(row[0]).trim() === key && String(row[1] ?? '').trim() !== '');
+  return r ? String(r[1]).trim() : fallback;
 }
 
 /** ジョブIDに紐づくバリアント行に出力URLを反映 */

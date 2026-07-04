@@ -79,19 +79,29 @@ export async function processJob(job) {
     clips.push(filePath);
   }
 
-  // --- 店舗別エンドカード(あれば必ず最後に配置) ---
-  let endClipPath = null;
+  // --- 末尾クリップ: 店舗外観エンドカード → 共通CTA(LINEタップ等)の順で必ず最後に配置 ---
+  const tailClipPaths = [];
+
   const endMaterialId = row[JOB_COL.END_MATERIAL_ID];
   if (endMaterialId) {
     const [endMat] = await getMaterials(endMaterialId);
-    endClipPath = await downloadFile(endMat.driveFileId);
-    if (endMat.startSec || endMat.endSec) {
-      endClipPath = await trimClip(endClipPath, endMat.startSec, endMat.endSec);
-    }
+    let p = await downloadFile(endMat.driveFileId);
+    if (endMat.startSec || endMat.endSec) p = await trimClip(p, endMat.startSec, endMat.endSec);
+    tailClipPaths.push(p);
     notes.push(`エンド:${endMat.id}`);
   }
 
-  if (!clips.length && !endClipPath) {
+  // 共通CTA素材(設定シート「共通CTA素材ID」)。全カテゴリ・全店舗で使い回す最後の行動喚起カット
+  const ctaMaterialId = await getSetting('共通CTA素材ID', '');
+  if (ctaMaterialId) {
+    const [ctaMat] = await getMaterials(ctaMaterialId);
+    let p = await downloadFile(ctaMat.driveFileId);
+    if (ctaMat.startSec || ctaMat.endSec) p = await trimClip(p, ctaMat.startSec, ctaMat.endSec);
+    tailClipPaths.push(p);
+    notes.push(`CTA:${ctaMat.id}`);
+  }
+
+  if (!clips.length && !tailClipPaths.length) {
     throw new Error('映像素材がありません。素材IDか動画プロンプトのどちらかは必要です');
   }
 
@@ -107,7 +117,7 @@ export async function processJob(job) {
   }
 
   // --- 合成 ---
-  const finalPath = await assemble(clips, voice.filePath, endClipPath, bgm, subtitlePath);
+  const finalPath = await assemble(clips, voice.filePath, tailClipPaths, bgm, subtitlePath);
   const up = await uploadOutput(finalPath, `ad-${row[JOB_COL.ID]}.mp4`);
   await updateVariantUrl(row[JOB_COL.ID], up.url);
 

@@ -49,13 +49,13 @@ async function normalizeClip(input, index) {
 /**
  * @param {string[]} clipPaths - 撮影素材・AI生成クリップのローカルパス(表示順)
  * @param {string} voicePath - ナレーション音声(mp3)
- * @param {string|null} endClipPath - 店舗別エンドカード。指定時は必ず動画の最後に配置される
+ * @param {string[]} tailClipPaths - 動画の末尾に順番どおり固定配置するクリップ(店舗外観→LINE CTA 等。事前トリム済み)
  * @param {{path: string, volume: number}|null} bgm - BGM。ナレーションの下に小音量で自動ループ
  * @param {string|null} subtitlePath - 焼き込む字幕(SRT)。nullなら字幕なし
  * @returns {Promise<string>} 完成mp4のパス
  */
-export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = null, subtitlePath = null) {
-  if (!clipPaths.length && !endClipPath) throw new Error('合成するクリップが1つもありません');
+export async function assemble(clipPaths, voicePath, tailClipPaths = [], bgm = null, subtitlePath = null) {
+  if (!clipPaths.length && !tailClipPaths.length) throw new Error('合成するクリップが1つもありません');
 
   const voiceDur = await ffprobeDuration(voicePath);
   if (voiceDur > 150) {
@@ -64,16 +64,16 @@ export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = n
 
   const tmp = [];
 
-  // エンドカード(店舗情報)は尺を固定で最後に確保し、本体はその手前まで
-  // 長い素材(外観の長回し等)を登録してもいいように、先頭6秒だけ使う
-  const END_MAX_SEC = 6;
-  let endClip = null;
+  // 末尾クリップ(店舗外観→LINE CTA 等)は尺を確保して必ず最後に置き、本体はその手前まで
+  const tailClips = [];
   let endDur = 0;
-  if (endClipPath) {
-    endClip = await normalizeClip(endClipPath, 'end');
-    tmp.push(endClip);
-    endDur = Math.min(await ffprobeDuration(endClip), END_MAX_SEC, voiceDur);
+  for (let i = 0; i < tailClipPaths.length; i++) {
+    const n = await normalizeClip(tailClipPaths[i], `tail${i}`);
+    tmp.push(n);
+    endDur += await ffprobeDuration(n);
+    tailClips.push(n);
   }
+  endDur = Math.min(endDur, voiceDur);
   const bodyTarget = voiceDur - endDur;
 
   // 本体: 正規化してナレーション残り時間をループで埋め、ピッタリにトリム
@@ -111,9 +111,9 @@ export async function assemble(clipPaths, voicePath, endClipPath = null, bgm = n
     ]);
   }
 
-  // 本体 + エンドカード を連結し、ナレーションを重ねる
+  // 本体 + 末尾クリップ(店舗外観→LINE CTA)を連結し、ナレーションを重ねる
   const finalList = path.join(config.workDir, `concat-final-${Date.now()}.txt`);
-  const parts = [bodyPath, endClip].filter(Boolean);
+  const parts = [bodyPath, ...tailClips].filter(Boolean);
   await fs.writeFile(finalList, parts.map((p) => `file '${p}'`).join('\n'));
   tmp.push(finalList);
 
