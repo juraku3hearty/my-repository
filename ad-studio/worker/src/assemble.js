@@ -184,8 +184,10 @@ export async function assemble(bodyClips, voicePath, tailClipPaths = [], bgm = n
 
   // 字幕焼き込み(SNSは音声OFF視聴が多いため)。日本語フォントはVPSに要インストール(fonts-noto-cjk)
   // 1080x1920に枠内収めるためPlayResを実解像度に合わせ、フォント・左右マージンを指定
+  // 縦動画(Reels/TikTok/Shorts)風の字幕: 大きめ・太字・強い縁取り・画面下すぎない位置。
+  // 映画字幕(最下部に細く)ではなく、縦動画のキャプション然とした見た目にする。
   const subFilter = subtitlePath
-    ? `subtitles=${subtitlePath}:force_style='FontName=Noto Sans CJK JP,FontSize=42,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=3,Shadow=1,MarginV=140,MarginL=60,MarginR=60,Alignment=2,PlayResX=1080,PlayResY=1920'`
+    ? `subtitles=${subtitlePath}:force_style='FontName=Noto Sans CJK JP,FontSize=52,Bold=1,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,BorderStyle=1,Outline=5,Shadow=2,MarginV=430,MarginL=70,MarginR=70,Alignment=2,PlayResX=1080,PlayResY=1920'`
     : null;
 
   if (bgm) {

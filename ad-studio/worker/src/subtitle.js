@@ -6,7 +6,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from './config.js';
 
-const MAX_CHARS = 13; // 1080px幅に収まる1行の目安(はみ出し防止)
+const MAX_CHARS = 14; // 縦動画字幕の1行目安(大きめフォントでも1080px幅に収まる長さ)
+
+// この文字の"直後"なら改行してよい(句読点・閉じ括弧)。単語の途中で切らないため
+const BREAK_AFTER = '、。！？!?…」』）】〉》';
+// 文節の切れ目になりやすい助詞(次点の改行位置。単語の途中よりはるかにマシ)
+const PARTICLE = 'はがをにへでともものやかねよねぞぜわさ';
 
 function fmtTime(sec) {
   const ms = Math.max(0, Math.round(sec * 1000));
@@ -17,16 +22,27 @@ function fmtTime(sec) {
   return `${h}:${m}:${s},${mmm}`;
 }
 
-/** 長いテキストを句読点優先で分割 */
+/**
+ * 長いテキストを"言葉をぶった切らない"よう分割する。
+ * 優先度: ①句読点・閉じ括弧の直後 → ②助詞の直後(文節の切れ目) → ③どうしても無ければ長さで
+ */
 function splitText(text) {
   const parts = [];
   let rest = text;
   while (rest.length > MAX_CHARS) {
-    // 句読点で切れる位置を探す(なければ強制分割)
+    const hi = Math.min(MAX_CHARS, rest.length - 1);
     let cut = -1;
-    for (let i = MAX_CHARS; i > 5; i--) {
-      if ('、。!?!?…'.includes(rest[i])) { cut = i + 1; break; }
+    // ① 句読点・閉じ括弧の直後で切る(最優先=一番自然)
+    for (let i = hi; i > 4; i--) {
+      if (BREAK_AFTER.includes(rest[i])) { cut = i + 1; break; }
     }
+    // ② 無ければ助詞の直後で切る。ただし直後が句読点なら孤立させない
+    if (cut === -1) {
+      for (let i = hi; i > 4; i--) {
+        if (PARTICLE.includes(rest[i]) && !BREAK_AFTER.includes(rest[i + 1] || '')) { cut = i + 1; break; }
+      }
+    }
+    // ③ 最後の手段(ここまで来ることは稀)
     if (cut === -1) cut = MAX_CHARS;
     parts.push(rest.slice(0, cut));
     rest = rest.slice(cut);
