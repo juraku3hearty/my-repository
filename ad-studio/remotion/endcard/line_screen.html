@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:720px; height:1480px; background:#ffffff; font-family:'IPAGothic','IPAPGothic',sans-serif; }
+  .bar { height:56px; display:flex; align-items:center; justify-content:space-between;
+         padding:0 28px; color:#111; font-size:26px; font-weight:700; }
+  .bar .right { letter-spacing:2px; }
+  .head { padding:22px 28px 0; }
+  .head .line { color:#06C755; font-size:40px; font-weight:900; letter-spacing:1px; }
+  .center { display:flex; flex-direction:column; align-items:center; justify-content:center;
+            height:760px; }
+  .icon { width:190px; height:190px; border-radius:44px; background:#06C755;
+          display:flex; align-items:center; justify-content:center;
+          box-shadow:0 12px 30px rgba(6,199,85,0.35); }
+  .icon .bubble { width:120px; height:112px; background:#fff; border-radius:50% 50% 50% 8px;
+                  display:flex; align-items:center; justify-content:center; }
+  .icon .bubble span { color:#06C755; font-size:40px; font-weight:900; letter-spacing:1px; margin-top:-6px; }
+  .msg { margin-top:44px; text-align:center; color:#222; font-size:40px; font-weight:700; line-height:1.5; }
+  .btns { padding:0 40px 60px; }
+  .btn { height:104px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+         font-size:36px; font-weight:900; margin-top:26px; }
+  .btn.primary { background:#06C755; color:#fff; }
+  .btn.ghost { background:#fff; color:#111; border:2px solid #d9d9d9; }
+  .foot { display:flex; justify-content:center; align-items:center; height:70px; }
+  .foot .dot { width:44px; height:44px; border-radius:50%; border:3px solid #bbb; }
+</style>
+</head>
+<body>
+  <div class="bar"><div class="left">0:11</div><div class="right">🔋 70%</div></div>
+  <div class="head"><div class="line">LINE</div></div>
+  <div class="center">
+    <div class="icon"><div class="bubble"><span>LINE</span></div></div>
+    <div class="msg">LINEアプリを開いて<br>続行して下さい。</div>
+  </div>
+  <div class="btns">
+    <div class="btn primary">LINEアプリを開く</div>
+    <div class="btn ghost">LINEアプリをダウンロード</div>
+  </div>
+</body>
+</html>
