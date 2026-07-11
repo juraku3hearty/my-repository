@@ -21,11 +21,13 @@
     },
     {
       "video": "bg/05.mp4",
-      "durationInFrames": 71
+      "durationInFrames": 71,
+      "noBanner": true
     },
     {
       "video": "bg/06.mp4",
-      "durationInFrames": 71
+      "durationInFrames": 71,
+      "noBanner": true
     },
     {
       "video": "bg/07.mp4",
@@ -128,5 +130,6 @@
       ],
       "place": "low"
     }
-  ]
+  ],
+  "topBanner": "リニューアル記念 体験会"
 }

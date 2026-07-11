@@ -11,6 +11,7 @@ import {
 } from "remotion";
 import { Scene } from "./Scene";
 import { Telop } from "./Telop";
+import { TELOP_FONT } from "./font";
 
 export type SceneProps = {
   video: string; // 例: "bg/01.mp4"(AIフックや実写)
@@ -18,6 +19,7 @@ export type SceneProps = {
   telop?: string; // シーンに直接持たせる場合。captions を使う時は省略
   telopStyle?: "normal" | "paren";
   raw?: boolean; // 完成デザイン(締めカード等)をそのまま出す
+  noBanner?: boolean; // 上の帯を出さない(焼き込みラベル=施術前/後 と干渉する区間)
   durationInFrames: number; // Root.tsx が音声の長さから自動計算して入れる
 };
 
@@ -33,6 +35,7 @@ export type CaptionProps = {
 
 export type ShortProps = {
   accountName: string;
+  topBanner?: string; // 上に常時出す帯の文言(キャンペーン告知等)。無ければ accountName
   bgm?: string; // 例: "bgm/track.mp3"
   bgmVolume?: number;
   voiceover?: string; // 全編1本の連続ナレーション(既存動画の音声を丸ごと流す等)
@@ -57,6 +60,7 @@ const Bgm: React.FC<{ src: string; volume: number }> = ({ src, volume }) => {
 /** 全シーンを順につなぎ、BGMとアカウント名を重ねる */
 export const ShortVideo: React.FC<ShortProps> = ({
   accountName,
+  topBanner,
   bgm,
   bgmVolume = 0.12,
   voiceover,
@@ -64,10 +68,16 @@ export const ShortVideo: React.FC<ShortProps> = ({
   scenes,
   captions,
 }) => {
-  // 完成デザイン(raw)の締めシーンではアカウント名を出さない(カードのデザインを尊重)
-  const total = scenes.reduce((a, s) => a + s.durationInFrames, 0);
-  const last = scenes[scenes.length - 1];
-  const accountUntil = last?.raw ? total - last.durationInFrames : total;
+  const bannerText = topBanner || accountName;
+  // 上の帯を出す区間 = raw(締めカード)でも noBanner(施術前/後)でもないシーン
+  const bannerRanges: { from: number; dur: number }[] = [];
+  {
+    let off = 0;
+    for (const s of scenes) {
+      if (!s.raw && !s.noBanner) bannerRanges.push({ from: off, dur: s.durationInFrames });
+      off += s.durationInFrames;
+    }
+  }
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <Series>
@@ -98,27 +108,39 @@ export const ShortVideo: React.FC<ShortProps> = ({
 
       {bgm ? <Bgm src={bgm} volume={bgmVolume} /> : null}
 
-      {/* 画面上部に薄くアカウント名(締めカードでは非表示) */}
-      <Sequence from={0} durationInFrames={Math.max(accountUntil, 1)}>
-        <AbsoluteFill
-          style={{
-            justifyContent: "flex-start",
-            alignItems: "center",
-            paddingTop: 64,
-          }}
-        >
-          <div
+      {/* 上部の帯(キャンペーン告知/院名)。施術前後の焼き込みラベルと締めカードでは非表示 */}
+      {bannerRanges.map((r, i) => (
+        <Sequence key={i} from={r.from} durationInFrames={r.dur}>
+          <AbsoluteFill
             style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: 34,
-              fontWeight: 700,
-              letterSpacing: 1,
+              justifyContent: "flex-start",
+              alignItems: "center",
+              paddingTop: 56,
             }}
           >
-            {accountName}
-          </div>
-        </AbsoluteFill>
-      </Sequence>
+            <div
+              style={{
+                fontFamily: `${TELOP_FONT}, sans-serif`,
+                color: "#ffffff",
+                fontSize: 40,
+                fontWeight: 900,
+                letterSpacing: 2,
+                padding: "12px 30px",
+                borderRadius: 999,
+                background: "rgba(6,90,60,0.72)",
+                // どんな明るい背景でも読めるよう黒フチ+影(モヤっと消えない)
+                textShadow: [
+                  "-2px -2px 0 #000", "2px -2px 0 #000",
+                  "-2px 2px 0 #000", "2px 2px 0 #000",
+                  "0 3px 12px rgba(0,0,0,0.5)",
+                ].join(", "),
+              }}
+            >
+              {bannerText}
+            </div>
+          </AbsoluteFill>
+        </Sequence>
+      ))}
     </AbsoluteFill>
   );
 };
