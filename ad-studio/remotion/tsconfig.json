@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["src", "props.example.json"]
+  "include": ["src", "props.example.json", "props.reuse.json"]
 }

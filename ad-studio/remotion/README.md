@@ -27,6 +27,9 @@ npm install
 - `public/bg/01.mp4, 02.mp4, ...` … 背景になる動画（**AIフック・実写をそのまま**。順番＝シーン順）
 - `public/audio/01.wav, 02.wav, ...` … 各シーンのナレーション（**Fish Audioで作った音声**）
 - `public/bgm/track.mp3` … BGM（1曲）
+- `public/fonts/jp-gothic.ttf` … **テロップのフォント**（好きな日本語フォントの `.ttf` をこの名前で置く）
+  - おすすめ＝丸くて太いやつ（例: Zen Maru Gothic を1回落として置く）。無くても動くが sans-serif で代替される
+  - Google Fontsには取りに行かない＝オフラインでも・どのMacでも同じ仕上がりになる
 
 ### ④ 台本ファイルを作る
 `props.example.json` をコピーして `props.json` を作り、シーンぶんだけ中身を書く（telop＝画面の文字）。
@@ -46,6 +49,22 @@ npm run studio
 npm run render
 ```
 → 完成品が `out/video.mp4` にできる。それを再生して確認。
+
+---
+
+## おまけ: 既存動画を"組み直す"モード（ShortReuse）
+
+もう出来上がってる動画（ffmpeg版）はあるけど字幕や組み立てだけ直したい時用。
+- 音声は**元動画の音声を丸ごと1本**で流す（`voiceover`）＝BGMも息継ぎも途切れない
+- 背景は元動画をシーンごとに切ったクリップ（`public/bg/01.mp4〜`）
+- テロップだけ新しく（`props.reuse.json` の各シーンの `telop`）
+- 各シーンの尺は `props.reuse.json` に**フレーム数**で直接書く（音声を読まない）
+
+書き出し:
+```
+npx remotion render ShortReuse out/reuse.mp4
+```
+※ 元動画の下に焼き込まれた字幕は、切り出す時に下側をクロップして消しておくこと。
 
 ---
 

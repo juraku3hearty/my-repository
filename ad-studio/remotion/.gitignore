@@ -6,4 +6,5 @@ public/bg/*
 public/audio/*
 public/bgm/*
 public/se/*
+public/fonts/*
 !public/**/.gitkeep

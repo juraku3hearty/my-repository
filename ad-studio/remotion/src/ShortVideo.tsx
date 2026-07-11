@@ -12,7 +12,7 @@ import { Scene } from "./Scene";
 
 export type SceneProps = {
   video: string; // 例: "bg/01.mp4"(AIフックや実写)
-  audio: string; // 例: "audio/01.wav"(Fish Audioのナレーション)
+  audio?: string; // 例: "audio/01.wav"(Fish Audioのナレーション)。連続VO時は省略
   telop: string;
   telopStyle?: "normal" | "paren";
   durationInFrames: number; // Root.tsx が音声の長さから自動計算して入れる
@@ -22,6 +22,8 @@ export type ShortProps = {
   accountName: string;
   bgm?: string; // 例: "bgm/track.mp3"
   bgmVolume?: number;
+  voiceover?: string; // 全編1本の連続ナレーション(既存動画の音声を丸ごと流す等)
+  voiceoverVolume?: number;
   scenes: SceneProps[];
 };
 
@@ -43,6 +45,8 @@ export const ShortVideo: React.FC<ShortProps> = ({
   accountName,
   bgm,
   bgmVolume = 0.12,
+  voiceover,
+  voiceoverVolume = 1,
   scenes,
 }) => {
   return (
@@ -59,6 +63,11 @@ export const ShortVideo: React.FC<ShortProps> = ({
           </Series.Sequence>
         ))}
       </Series>
+
+      {/* 全編1本の連続ナレーション(シーンで割らない=BGMや息継ぎが途切れない) */}
+      {voiceover ? (
+        <Audio src={staticFile(voiceover)} volume={voiceoverVolume} />
+      ) : null}
 
       {bgm ? <Bgm src={bgm} volume={bgmVolume} /> : null}
 

@@ -9,9 +9,9 @@ import {
   interpolate,
   spring,
 } from "remotion";
-import { loadFont } from "@remotion/google-fonts/ZenMaruGothic";
+import { TELOP_FONT } from "./font";
 
-const { fontFamily } = loadFont();
+const fontFamily = `${TELOP_FONT}, sans-serif`;
 
 /**
  * 1シーン ＝ 背景クリップ(ゆっくりズーム) + 上下グラデ + テロップ(フワッと出る) + そのシーンの音声。
@@ -19,7 +19,7 @@ const { fontFamily } = loadFont();
  */
 export const Scene: React.FC<{
   video: string;
-  audio: string;
+  audio?: string; // シーンごとの音声。連続VO(ShortVideo側で一括再生)の時は省略
   telop: string;
   telopStyle?: "normal" | "paren";
 }> = ({ video, audio, telop, telopStyle = "normal" }) => {
@@ -86,8 +86,8 @@ export const Scene: React.FC<{
         </div>
       </AbsoluteFill>
 
-      {/* このシーンのナレーション音声(Fish Audio で作った 01.wav 等) */}
-      <Audio src={staticFile(audio)} />
+      {/* このシーンのナレーション音声(Fish Audio で作った 01.wav 等)。連続VO時は無し */}
+      {audio ? <Audio src={staticFile(audio)} /> : null}
     </AbsoluteFill>
   );
 };
