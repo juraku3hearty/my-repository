@@ -1,0 +1,9 @@
+node_modules
+out
+.remotion
+# 素材ファイルはリポジトリに入れない(各自ローカルのpublic/に置く)
+public/bg/*
+public/audio/*
+public/bgm/*
+public/se/*
+!public/**/.gitkeep

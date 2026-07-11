@@ -1,0 +1,31 @@
+{
+  "accountName": "@itsuki_seikotsu",
+  "bgm": "bgm/track.mp3",
+  "bgmVolume": 0.12,
+  "scenes": [
+    {
+      "video": "bg/01.mp4",
+      "audio": "audio/01.wav",
+      "telop": "夕方、もうぐったり",
+      "telopStyle": "normal"
+    },
+    {
+      "video": "bg/02.mp4",
+      "audio": "audio/02.wav",
+      "telop": "原因は骨盤",
+      "telopStyle": "normal"
+    },
+    {
+      "video": "bg/03.mp4",
+      "audio": "audio/03.wav",
+      "telop": "その場で体感",
+      "telopStyle": "normal"
+    },
+    {
+      "video": "bg/04.mp4",
+      "audio": "audio/04.wav",
+      "telop": "公式LINEで予約",
+      "telopStyle": "paren"
+    }
+  ]
+}

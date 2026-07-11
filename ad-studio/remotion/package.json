@@ -1,0 +1,22 @@
+{
+  "name": "remotion-short-assembler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "素材(AIフック+実写+Fish Audio音声+BGM)を、動的ズーム・キネティック字幕で縦型ショートに組み立てるRemotionプロジェクト",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Short out/video.mp4 --props=props.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.290",
+    "@remotion/google-fonts": "4.0.290",
+    "@remotion/media-utils": "4.0.290",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.290"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.1",
+    "typescript": "5.4.5"
+  }
+}
