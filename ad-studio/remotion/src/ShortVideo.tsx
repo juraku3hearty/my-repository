@@ -17,6 +17,7 @@ export type SceneProps = {
   audio?: string; // 例: "audio/01.wav"(Fish Audioのナレーション)。連続VO時は省略
   telop?: string; // シーンに直接持たせる場合。captions を使う時は省略
   telopStyle?: "normal" | "paren";
+  raw?: boolean; // 完成デザイン(締めカード等)をそのまま出す
   durationInFrames: number; // Root.tsx が音声の長さから自動計算して入れる
 };
 
@@ -25,6 +26,7 @@ export type CaptionProps = {
   text: string; // \n で改行可(言葉をぶった切らない)
   telopStyle?: "normal" | "paren" | "title";
   colors?: string[]; // 行ごとの色(強調語のある行だけ赤/金など)
+  place?: "low" | "mid"; // 縦位置。既定mid(真ん中やや下=Meta広告CTAと被らない)
   fromFrame: number; // 出る開始フレーム
   durationInFrames: number; // 出してる長さ(フレーム)
 };
@@ -62,6 +64,10 @@ export const ShortVideo: React.FC<ShortProps> = ({
   scenes,
   captions,
 }) => {
+  // 完成デザイン(raw)の締めシーンではアカウント名を出さない(カードのデザインを尊重)
+  const total = scenes.reduce((a, s) => a + s.durationInFrames, 0);
+  const last = scenes[scenes.length - 1];
+  const accountUntil = last?.raw ? total - last.durationInFrames : total;
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
       <Series>
@@ -72,6 +78,7 @@ export const ShortVideo: React.FC<ShortProps> = ({
               audio={s.audio}
               telop={s.telop}
               telopStyle={s.telopStyle}
+              raw={s.raw}
             />
           </Series.Sequence>
         ))}
@@ -80,7 +87,7 @@ export const ShortVideo: React.FC<ShortProps> = ({
       {/* 音声同期テロップ: 実際に喋ってる言葉・タイミングで出す(シーンとは独立) */}
       {captions?.map((c, i) => (
         <Sequence key={i} from={c.fromFrame} durationInFrames={c.durationInFrames}>
-          <Telop text={c.text} telopStyle={c.telopStyle} colors={c.colors} />
+          <Telop text={c.text} telopStyle={c.telopStyle} colors={c.colors} place={c.place} />
         </Sequence>
       ))}
 
@@ -91,25 +98,27 @@ export const ShortVideo: React.FC<ShortProps> = ({
 
       {bgm ? <Bgm src={bgm} volume={bgmVolume} /> : null}
 
-      {/* 画面上部に薄くアカウント名 */}
-      <AbsoluteFill
-        style={{
-          justifyContent: "flex-start",
-          alignItems: "center",
-          paddingTop: 64,
-        }}
-      >
-        <div
+      {/* 画面上部に薄くアカウント名(締めカードでは非表示) */}
+      <Sequence from={0} durationInFrames={Math.max(accountUntil, 1)}>
+        <AbsoluteFill
           style={{
-            color: "rgba(255,255,255,0.5)",
-            fontSize: 34,
-            fontWeight: 700,
-            letterSpacing: 1,
+            justifyContent: "flex-start",
+            alignItems: "center",
+            paddingTop: 64,
           }}
         >
-          {accountName}
-        </div>
-      </AbsoluteFill>
+          <div
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              fontSize: 34,
+              fontWeight: 700,
+              letterSpacing: 1,
+            }}
+          >
+            {accountName}
+          </div>
+        </AbsoluteFill>
+      </Sequence>
     </AbsoluteFill>
   );
 };

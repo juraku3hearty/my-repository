@@ -19,14 +19,17 @@ export const Scene: React.FC<{
   audio?: string; // シーンごとの音声。連続VO(ShortVideo側で一括再生)の時は省略
   telop?: string; // 省略時はテロップ無し(背景のみ)
   telopStyle?: "normal" | "paren";
-}> = ({ video, audio, telop, telopStyle = "normal" }) => {
+  raw?: boolean; // 完成デザインをそのまま出す(ズーム/グラデ/テロップ無し)
+}> = ({ video, audio, telop, telopStyle = "normal", raw = false }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
 
-  // 背景をゆっくり拡大(1.0 → 1.12)。のっぺり感を消す
-  const scale = interpolate(frame, [0, durationInFrames], [1.0, 1.12], {
-    extrapolateRight: "clamp",
-  });
+  // 背景をゆっくり拡大(1.0 → 1.12)。のっぺり感を消す。raw時はズーム無し
+  const scale = raw
+    ? 1
+    : interpolate(frame, [0, durationInFrames], [1.0, 1.12], {
+        extrapolateRight: "clamp",
+      });
 
   return (
     <AbsoluteFill>
@@ -39,16 +42,18 @@ export const Scene: React.FC<{
         />
       </AbsoluteFill>
 
-      {/* 上下の暗転グラデ(文字を読みやすくする) */}
-      <AbsoluteFill
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.8) 100%)",
-        }}
-      />
+      {/* 上下の暗転グラデ(文字を読みやすくする)。raw時は無し(デザインを尊重) */}
+      {raw ? null : (
+        <AbsoluteFill
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.8) 100%)",
+          }}
+        />
+      )}
 
-      {/* テロップ(このシーンに直接持たせる場合) */}
-      {telop ? <Telop text={telop} telopStyle={telopStyle} /> : null}
+      {/* テロップ(このシーンに直接持たせる場合)。raw時は無し */}
+      {!raw && telop ? <Telop text={telop} telopStyle={telopStyle} /> : null}
 
       {/* このシーンのナレーション音声(Fish Audio で作った 01.wav 等)。連続VO時は無し */}
       {audio ? <Audio src={staticFile(audio)} /> : null}

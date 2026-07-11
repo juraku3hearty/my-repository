@@ -34,13 +34,17 @@ export const Telop: React.FC<{
   text: string;
   telopStyle?: "normal" | "paren" | "title";
   colors?: string[]; // 行ごとの色。省略や不足分は白
-}> = ({ text, telopStyle = "normal", colors }) => {
+  place?: "low" | "mid"; // mid=真ん中やや下(広告CTAと被らない) / low=下(QR等を避けたい時)
+}> = ({ text, telopStyle = "normal", colors, place = "mid" }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const isParen = telopStyle === "paren";
   const isTitle = telopStyle === "title";
   const lines = text.split("\n");
+
+  // 下からの位置。mid=画面下から約700px(≒真ん中やや下)。low=下寄り
+  const padBottom = place === "low" ? (isParen ? 360 : 300) : 720;
 
   const baseSize = (line: string) => {
     if (isTitle) return line.length <= 6 ? 96 : 78;
@@ -53,7 +57,7 @@ export const Telop: React.FC<{
       style={{
         justifyContent: "flex-end",
         alignItems: "center",
-        paddingBottom: isParen ? 380 : 320,
+        paddingBottom: padBottom,
         paddingLeft: 64,
         paddingRight: 64,
       }}
