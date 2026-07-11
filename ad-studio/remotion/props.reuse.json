@@ -3,13 +3,28 @@
   "voiceover": "audio/full.wav",
   "voiceoverVolume": 1,
   "scenes": [
-    { "video": "bg/01.mp4", "telop": "夕方、もうぐったり", "durationInFrames": 83 },
-    { "video": "bg/02.mp4", "telop": "肩も腰も、重だるい", "durationInFrames": 83 },
-    { "video": "bg/03.mp4", "telop": "もんでも すぐ戻る…", "durationInFrames": 166 },
-    { "video": "bg/04.mp4", "telop": "その重さ、骨盤かも", "durationInFrames": 166 },
-    { "video": "bg/05.mp4", "telop": "国家資格者が骨盤を分析", "durationInFrames": 71 },
-    { "video": "bg/06.mp4", "telop": "その場で スッと軽い", "durationInFrames": 71 },
-    { "video": "bg/07.mp4", "telop": "リニューアル記念 体験会", "durationInFrames": 120 },
-    { "video": "bg/08.mp4", "telop": "公式LINEで受付中", "telopStyle": "paren", "durationInFrames": 181 }
+    { "video": "bg/01.mp4", "durationInFrames": 83 },
+    { "video": "bg/02.mp4", "durationInFrames": 83 },
+    { "video": "bg/03.mp4", "durationInFrames": 166 },
+    { "video": "bg/04.mp4", "durationInFrames": 166 },
+    { "video": "bg/05.mp4", "durationInFrames": 71 },
+    { "video": "bg/06.mp4", "durationInFrames": 71 },
+    { "video": "bg/07.mp4", "durationInFrames": 120 },
+    { "video": "bg/08.mp4", "durationInFrames": 181 }
+  ],
+  "captions": [
+    { "text": "夕方になると、もう…", "fromFrame": 18, "durationInFrames": 54 },
+    { "text": "ぐったりして\nいませんか？", "fromFrame": 74, "durationInFrames": 73 },
+    { "text": "マッサージに行っても\nすぐ戻る…", "fromFrame": 149, "durationInFrames": 82 },
+    { "text": "その重だるさの原因は", "fromFrame": 233, "durationInFrames": 40 },
+    { "text": "骨盤の傾きに\nあるかもしれません", "fromFrame": 275, "durationInFrames": 91 },
+    { "text": "樹鍼灸整骨院では", "fromFrame": 368, "durationInFrames": 49 },
+    { "text": "国家資格を持つプロが\nあなたの骨盤を分析", "fromFrame": 419, "durationInFrames": 91 },
+    { "text": "24時間\n骨盤ホールドシステムで", "fromFrame": 512, "durationInFrames": 70 },
+    { "text": "正しい位置に\n保ち続けます", "fromFrame": 584, "durationInFrames": 82 },
+    { "text": "リニューアル記念の", "fromFrame": 668, "durationInFrames": 52 },
+    { "text": "ウェブ限定体験会", "fromFrame": 722, "durationInFrames": 61 },
+    { "text": "あなたの骨盤を\nチェックしませんか？", "fromFrame": 785, "durationInFrames": 61 },
+    { "text": "公式LINEから\n先着順で受付中", "fromFrame": 848, "durationInFrames": 93 }
   ]
 }

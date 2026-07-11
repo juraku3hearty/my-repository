@@ -7,36 +7,26 @@ import {
   useCurrentFrame,
   useVideoConfig,
   interpolate,
-  spring,
 } from "remotion";
-import { TELOP_FONT } from "./font";
-
-const fontFamily = `${TELOP_FONT}, sans-serif`;
+import { Telop } from "./Telop";
 
 /**
- * 1シーン ＝ 背景クリップ(ゆっくりズーム) + 上下グラデ + テロップ(フワッと出る) + そのシーンの音声。
- * telopStyle="paren" は補足トーン(少し小さめ・括弧付き)。
+ * 1シーン ＝ 背景クリップ(ゆっくりズーム) + 上下グラデ + (任意)テロップ + (任意)そのシーンの音声。
+ * telop を省略すると背景だけ(テロップは上のレイヤーで時刻同期して出す時に使う)。
  */
 export const Scene: React.FC<{
   video: string;
   audio?: string; // シーンごとの音声。連続VO(ShortVideo側で一括再生)の時は省略
-  telop: string;
+  telop?: string; // 省略時はテロップ無し(背景のみ)
   telopStyle?: "normal" | "paren";
 }> = ({ video, audio, telop, telopStyle = "normal" }) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { durationInFrames } = useVideoConfig();
 
   // 背景をゆっくり拡大(1.0 → 1.12)。のっぺり感を消す
   const scale = interpolate(frame, [0, durationInFrames], [1.0, 1.12], {
     extrapolateRight: "clamp",
   });
-
-  // テロップを最初の12フレームでフワッとフェードイン+少し上へ
-  const appear = spring({ frame, fps, config: { damping: 200 }, durationInFrames: 12 });
-  const telopOpacity = interpolate(appear, [0, 1], [0, 1]);
-  const telopY = interpolate(appear, [0, 1], [36, 0]);
-
-  const isParen = telopStyle === "paren";
 
   return (
     <AbsoluteFill>
@@ -57,34 +47,8 @@ export const Scene: React.FC<{
         }}
       />
 
-      {/* テロップ: 中央〜下、極太フォント・黒フチ */}
-      <AbsoluteFill
-        style={{
-          justifyContent: "flex-end",
-          alignItems: "center",
-          paddingBottom: isParen ? 380 : 340,
-          paddingLeft: 72,
-          paddingRight: 72,
-        }}
-      >
-        <div
-          style={{
-            fontFamily,
-            fontWeight: 900,
-            fontSize: isParen ? 58 : 78,
-            color: "#ffffff",
-            textAlign: "center",
-            lineHeight: 1.32,
-            opacity: telopOpacity,
-            transform: `translateY(${telopY}px)`,
-            WebkitTextStroke: "9px #000000",
-            paintOrder: "stroke fill",
-            textShadow: "0 4px 22px rgba(0,0,0,0.6)",
-          }}
-        >
-          {isParen ? `（${telop}）` : telop}
-        </div>
-      </AbsoluteFill>
+      {/* テロップ(このシーンに直接持たせる場合) */}
+      {telop ? <Telop text={telop} telopStyle={telopStyle} /> : null}
 
       {/* このシーンのナレーション音声(Fish Audio で作った 01.wav 等)。連続VO時は無し */}
       {audio ? <Audio src={staticFile(audio)} /> : null}
