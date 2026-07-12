@@ -25,3 +25,16 @@ Macは `chrome` の代わりに `"/Applications/Google Chrome.app/Contents/MacOS
 ## 差し替えポイント
 - 予約の実リンクは**広告のCTAボタン側**に持たせる(固定リンク→飛び先だけ移行時に変更)
 - 背景色やスマホの形は end_card.html のCSSで調整可
+
+## オファー投下の効果音(se/pop.wav)
+価格スタンプの瞬間に鳴らす"チャリーン✨"。ffmpegで生成済み(public/se/pop.wav・コミット済)。
+作り直す例:
+```
+ffmpeg -y \
+ -f lavfi -i "sine=frequency=1318:duration=0.5" \
+ -f lavfi -i "sine=frequency=1760:duration=0.5" \
+ -f lavfi -i "sine=frequency=2637:duration=0.5" \
+ -filter_complex "[0]afade=t=out:st=0:d=0.32,volume=0.9[a];[1]adelay=85|85,afade=t=out:st=0.085:d=0.36,volume=0.9[b];[2]adelay=85|85,afade=t=out:st=0.085:d=0.30,volume=0.35[c];[a][b][c]amix=inputs=3:normalize=0,volume=3.4,alimiter=limit=0.98[o]" \
+ -map "[o]" -ac 2 -ar 44100 -t 0.55 public/se/pop.wav
+```
+props: offerFrom(投下フレーム) / offerSe:"se/pop.wav" / offerSeVolume

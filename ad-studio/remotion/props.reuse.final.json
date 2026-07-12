@@ -147,5 +147,8 @@
       }
     ],
     "highlight": "実質11,000円お得！"
-  }
+  },
+  "offerFrom": 280,
+  "offerSe": "se/pop.wav",
+  "offerSeVolume": 0.8
 }

@@ -8,3 +8,4 @@ public/bgm/*
 public/se/*
 public/fonts/*
 !public/**/.gitkeep
+!public/se/pop.wav

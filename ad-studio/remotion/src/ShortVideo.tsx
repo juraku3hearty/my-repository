@@ -50,7 +50,10 @@ export type OfferProps = {
 export type ShortProps = {
   accountName: string;
   topBanner?: string; // 上に常時出す帯の文言(キャンペーン告知等)。無ければ accountName
-  offer?: OfferProps; // 価格オファーを左上に常時表示(あれば上帯は出さない)
+  offer?: OfferProps; // 価格オファーを左上に表示(あれば上帯は出さない)
+  offerFrom?: number; // オファーを出し始めるフレーム(フック後に投下。既定0)
+  offerSe?: string; // オファー投下の瞬間に鳴らす効果音 例: "se/pop.wav"
+  offerSeVolume?: number;
   bgm?: string; // 例: "bgm/track.mp3"
   bgmVolume?: number;
   voiceover?: string; // 全編1本の連続ナレーション(既存動画の音声を丸ごと流す等)
@@ -132,6 +135,9 @@ export const ShortVideo: React.FC<ShortProps> = ({
   accountName,
   topBanner,
   offer,
+  offerFrom = 0,
+  offerSe,
+  offerSeVolume = 0.6,
   bgm,
   bgmVolume = 0.12,
   voiceover,
@@ -192,11 +198,26 @@ export const ShortVideo: React.FC<ShortProps> = ({
 
       {/* 価格オファー(左上・常時)。締めカード以外ずっと出す。焼き込みラベルは上中央なので左上は被らない */}
       {offer &&
-        offerRanges.map((r, i) => (
-          <Sequence key={`of${i}`} from={r.from} durationInFrames={r.dur}>
-            <OfferPanel offer={offer} />
-          </Sequence>
-        ))}
+        offerRanges
+          .map((r) => {
+            // offerFrom 以降だけ表示(フック後に投下)
+            const from = Math.max(r.from, offerFrom);
+            const dur = r.from + r.dur - from;
+            return { from, dur };
+          })
+          .filter((r) => r.dur > 0)
+          .map((r, i) => (
+            <Sequence key={`of${i}`} from={r.from} durationInFrames={r.dur}>
+              <OfferPanel offer={offer} />
+            </Sequence>
+          ))}
+
+      {/* オファー投下の効果音(スタンプの瞬間) */}
+      {offer && offerSe ? (
+        <Sequence from={offerFrom} durationInFrames={30}>
+          <Audio src={staticFile(offerSe)} volume={offerSeVolume} />
+        </Sequence>
+      ) : null}
 
       {/* 上部の帯(キャンペーン告知/院名)。オファー表示時は出さない。施術前後の焼き込みラベルと締めカードでは非表示 */}
       {!offer &&
