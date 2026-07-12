@@ -8,6 +8,7 @@ import {
   useVideoConfig,
   useCurrentFrame,
   interpolate,
+  spring,
 } from "remotion";
 import { Scene } from "./Scene";
 import { Telop } from "./Telop";
@@ -33,10 +34,17 @@ export type CaptionProps = {
   durationInFrames: number; // 出してる長さ(フレーム)
 };
 
-/** 常時出す価格オファーのパネル(左上) */
+/** 常時出す価格オファーの"セール札"(左上) */
+export type OfferItem = {
+  label: string; // 例: "カウンセリング"
+  was: string; // 元値 例: "5,500円"(取り消し線)
+  now: string; // 特別価格 例: "無料"(大きく赤)
+};
 export type OfferProps = {
-  lines: string[]; // 例: ["カウンセリング 5,500円→無料", "施術 7,700円→2,200円"]
-  highlight?: string; // 例: "実質11,000円お得！"(大きく黄色で)
+  tag?: string; // 煽りタグ 例: "＼今だけ／体験会限定"
+  items: OfferItem[];
+  highlight?: string; // 例: "実質11,000円お得！"(黄色・脈打つ)
+  note?: string; // 補足 例: "＼今だけの体験価格／"
 };
 
 export type ShortProps = {
@@ -64,6 +72,61 @@ const Bgm: React.FC<{ src: string; volume: number }> = ({ src, volume }) => {
   return <Audio src={staticFile(src)} loop volume={volume * fade} />;
 };
 
+/** 価格オファーのセール札(左上・登場でスタンプ→常時わずかに脈打つ) */
+const OfferPanel: React.FC<{ offer: OfferProps }> = ({ offer }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const font = `${TELOP_FONT}, sans-serif`;
+  const stamp = spring({ frame, fps, from: 0, to: 1, durationInFrames: 14, config: { damping: 12, stiffness: 220 } });
+  const appear = interpolate(stamp, [0, 1], [0.7, 1]);
+  const pulse = 1 + 0.045 * Math.sin(frame / 7); // ゆっくり脈打つ
+  const stroke = [
+    "-2px -2px 0 #000", "2px -2px 0 #000",
+    "-2px 2px 0 #000", "2px 2px 0 #000",
+    "0 3px 12px rgba(0,0,0,0.5)",
+  ].join(", ");
+  return (
+    <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "flex-start", padding: "140px 0 0 30px" }}>
+      <div
+        style={{
+          transform: `scale(${appear})`,
+          transformOrigin: "top left",
+          background: "rgba(12,12,14,0.66)",
+          border: "3px solid #ffd23b",
+          borderRadius: 22,
+          padding: "16px 22px 20px",
+          display: "inline-flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 8,
+        }}
+      >
+        {offer.tag ? (
+          <div style={{ fontFamily: font, background: "#ff3b3b", color: "#fff", fontSize: 30, fontWeight: 900, padding: "5px 16px", borderRadius: 10, letterSpacing: 1 }}>
+            {offer.tag}
+          </div>
+        ) : null}
+        {offer.items.map((it, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 10, fontFamily: font }}>
+            <span style={{ color: "#fff", fontSize: 30, fontWeight: 900, textShadow: stroke }}>{it.label}</span>
+            <span style={{ color: "#cfcfcf", fontSize: 30, fontWeight: 700, textDecoration: "line-through", textDecorationColor: "#ff3b3b" }}>{it.was}</span>
+            <span style={{ color: "#fff", fontSize: 30, fontWeight: 900 }}>→</span>
+            <span style={{ color: "#ff4141", fontSize: 46, fontWeight: 900, textShadow: stroke }}>{it.now}</span>
+          </div>
+        ))}
+        {offer.highlight ? (
+          <div style={{ transform: `scale(${pulse})`, transformOrigin: "left center", fontFamily: font, color: "#ffd23b", fontSize: 52, fontWeight: 900, letterSpacing: 1, marginTop: 2, textShadow: stroke }}>
+            {offer.highlight}
+          </div>
+        ) : null}
+        {offer.note ? (
+          <div style={{ fontFamily: font, color: "#fff", fontSize: 26, fontWeight: 700, textShadow: stroke }}>{offer.note}</div>
+        ) : null}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 /** 全シーンを順につなぎ、BGMとアカウント名を重ねる */
 export const ShortVideo: React.FC<ShortProps> = ({
   accountName,
@@ -79,15 +142,23 @@ export const ShortVideo: React.FC<ShortProps> = ({
   const bannerText = topBanner || accountName;
   // 上の帯を出す区間 = raw(締めカード)でも noBanner(施術前/後)でもないシーン
   const bannerRanges: { from: number; dur: number }[] = [];
-  // 価格オファーを出す区間 = raw(締めカード)以外のすべて(左上=焼き込みラベルと被らないので施術前後も出す)
+  // 価格オファーを出す区間 = raw(締めカード)以外を連続したブロックにまとめる(登場スタンプが1回で済む)
   const offerRanges: { from: number; dur: number }[] = [];
   {
     let off = 0;
+    let cur: { from: number; dur: number } | null = null;
     for (const s of scenes) {
       if (!s.raw && !s.noBanner) bannerRanges.push({ from: off, dur: s.durationInFrames });
-      if (!s.raw) offerRanges.push({ from: off, dur: s.durationInFrames });
+      if (!s.raw) {
+        if (cur) cur.dur += s.durationInFrames;
+        else cur = { from: off, dur: s.durationInFrames };
+      } else if (cur) {
+        offerRanges.push(cur);
+        cur = null;
+      }
       off += s.durationInFrames;
     }
+    if (cur) offerRanges.push(cur);
   }
   return (
     <AbsoluteFill style={{ backgroundColor: "black" }}>
@@ -123,58 +194,7 @@ export const ShortVideo: React.FC<ShortProps> = ({
       {offer &&
         offerRanges.map((r, i) => (
           <Sequence key={`of${i}`} from={r.from} durationInFrames={r.dur}>
-            <AbsoluteFill
-              style={{
-                justifyContent: "flex-start",
-                alignItems: "flex-start",
-                padding: "150px 0 0 34px",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: `${TELOP_FONT}, sans-serif`,
-                  background: "rgba(10,10,12,0.62)",
-                  borderRadius: 22,
-                  padding: "20px 26px",
-                  display: "inline-flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
-                {offer.lines.map((ln, j) => (
-                  <div
-                    key={j}
-                    style={{
-                      color: "#ffffff",
-                      fontSize: 34,
-                      fontWeight: 900,
-                      letterSpacing: 1,
-                      textShadow: "0 2px 6px rgba(0,0,0,0.6)",
-                    }}
-                  >
-                    {ln}
-                  </div>
-                ))}
-                {offer.highlight ? (
-                  <div
-                    style={{
-                      marginTop: 6,
-                      color: "#ffd23b",
-                      fontSize: 52,
-                      fontWeight: 900,
-                      letterSpacing: 1,
-                      textShadow: [
-                        "-2px -2px 0 #000", "2px -2px 0 #000",
-                        "-2px 2px 0 #000", "2px 2px 0 #000",
-                        "0 3px 12px rgba(0,0,0,0.5)",
-                      ].join(", "),
-                    }}
-                  >
-                    {offer.highlight}
-                  </div>
-                ) : null}
-              </div>
-            </AbsoluteFill>
+            <OfferPanel offer={offer} />
           </Sequence>
         ))}
 
