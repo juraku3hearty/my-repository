@@ -33,9 +33,16 @@ export type CaptionProps = {
   durationInFrames: number; // 出してる長さ(フレーム)
 };
 
+/** 常時出す価格オファーのパネル(左上) */
+export type OfferProps = {
+  lines: string[]; // 例: ["カウンセリング 5,500円→無料", "施術 7,700円→2,200円"]
+  highlight?: string; // 例: "実質11,000円お得！"(大きく黄色で)
+};
+
 export type ShortProps = {
   accountName: string;
   topBanner?: string; // 上に常時出す帯の文言(キャンペーン告知等)。無ければ accountName
+  offer?: OfferProps; // 価格オファーを左上に常時表示(あれば上帯は出さない)
   bgm?: string; // 例: "bgm/track.mp3"
   bgmVolume?: number;
   voiceover?: string; // 全編1本の連続ナレーション(既存動画の音声を丸ごと流す等)
@@ -61,6 +68,7 @@ const Bgm: React.FC<{ src: string; volume: number }> = ({ src, volume }) => {
 export const ShortVideo: React.FC<ShortProps> = ({
   accountName,
   topBanner,
+  offer,
   bgm,
   bgmVolume = 0.12,
   voiceover,
@@ -71,10 +79,13 @@ export const ShortVideo: React.FC<ShortProps> = ({
   const bannerText = topBanner || accountName;
   // 上の帯を出す区間 = raw(締めカード)でも noBanner(施術前/後)でもないシーン
   const bannerRanges: { from: number; dur: number }[] = [];
+  // 価格オファーを出す区間 = raw(締めカード)以外のすべて(左上=焼き込みラベルと被らないので施術前後も出す)
+  const offerRanges: { from: number; dur: number }[] = [];
   {
     let off = 0;
     for (const s of scenes) {
       if (!s.raw && !s.noBanner) bannerRanges.push({ from: off, dur: s.durationInFrames });
+      if (!s.raw) offerRanges.push({ from: off, dur: s.durationInFrames });
       off += s.durationInFrames;
     }
   }
@@ -108,8 +119,68 @@ export const ShortVideo: React.FC<ShortProps> = ({
 
       {bgm ? <Bgm src={bgm} volume={bgmVolume} /> : null}
 
-      {/* 上部の帯(キャンペーン告知/院名)。施術前後の焼き込みラベルと締めカードでは非表示 */}
-      {bannerRanges.map((r, i) => (
+      {/* 価格オファー(左上・常時)。締めカード以外ずっと出す。焼き込みラベルは上中央なので左上は被らない */}
+      {offer &&
+        offerRanges.map((r, i) => (
+          <Sequence key={`of${i}`} from={r.from} durationInFrames={r.dur}>
+            <AbsoluteFill
+              style={{
+                justifyContent: "flex-start",
+                alignItems: "flex-start",
+                padding: "150px 0 0 34px",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: `${TELOP_FONT}, sans-serif`,
+                  background: "rgba(10,10,12,0.62)",
+                  borderRadius: 22,
+                  padding: "20px 26px",
+                  display: "inline-flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {offer.lines.map((ln, j) => (
+                  <div
+                    key={j}
+                    style={{
+                      color: "#ffffff",
+                      fontSize: 34,
+                      fontWeight: 900,
+                      letterSpacing: 1,
+                      textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {ln}
+                  </div>
+                ))}
+                {offer.highlight ? (
+                  <div
+                    style={{
+                      marginTop: 6,
+                      color: "#ffd23b",
+                      fontSize: 52,
+                      fontWeight: 900,
+                      letterSpacing: 1,
+                      textShadow: [
+                        "-2px -2px 0 #000", "2px -2px 0 #000",
+                        "-2px 2px 0 #000", "2px 2px 0 #000",
+                        "0 3px 12px rgba(0,0,0,0.5)",
+                      ].join(", "),
+                    }}
+                  >
+                    {offer.highlight}
+                  </div>
+                ) : null}
+              </div>
+            </AbsoluteFill>
+          </Sequence>
+        ))}
+
+      {/* 上部の帯(キャンペーン告知/院名)。オファー表示時は出さない。施術前後の焼き込みラベルと締めカードでは非表示 */}
+      {!offer &&
+        bannerRanges.map((r, i) => (
         <Sequence key={i} from={r.from} durationInFrames={r.dur}>
           <AbsoluteFill
             style={{
