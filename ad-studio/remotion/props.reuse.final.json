@@ -42,8 +42,8 @@
   "captions": [
     {
       "text": "夕方になると、もう…",
-      "fromFrame": 18,
-      "durationInFrames": 54,
+      "fromFrame": 6,
+      "durationInFrames": 66,
       "telopStyle": "title"
     },
     {
@@ -148,7 +148,7 @@
     ],
     "highlight": "実質11,000円お得！"
   },
-  "offerFrom": 280,
+  "offerFrom": 368,
   "offerSe": "se/pop.wav",
-  "offerSeVolume": 0.8
+  "offerSeVolume": 1.0
 }
