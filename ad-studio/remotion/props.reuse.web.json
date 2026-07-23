@@ -1,0 +1,144 @@
+{
+  "accountName": "樹鍼灸整骨院",
+  "voiceover": "audio/full_web.wav",
+  "voiceoverVolume": 1,
+  "scenes": [
+    {
+      "video": "bg/01.mp4",
+      "durationInFrames": 83
+    },
+    {
+      "video": "bg/02.mp4",
+      "durationInFrames": 83
+    },
+    {
+      "video": "bg/03.mp4",
+      "durationInFrames": 166
+    },
+    {
+      "video": "bg/04.mp4",
+      "durationInFrames": 166
+    },
+    {
+      "video": "bg/05.mp4",
+      "durationInFrames": 71,
+      "noBanner": true
+    },
+    {
+      "video": "bg/06.mp4",
+      "durationInFrames": 71,
+      "noBanner": true
+    },
+    {
+      "video": "bg/07.mp4",
+      "durationInFrames": 120
+    },
+    {
+      "video": "bg/08web.mp4",
+      "durationInFrames": 181,
+      "raw": true
+    }
+  ],
+  "captions": [
+    {
+      "text": "夕方になると、もう…",
+      "fromFrame": 6,
+      "durationInFrames": 66,
+      "telopStyle": "title"
+    },
+    {
+      "text": "ぐったりして\nいませんか？",
+      "fromFrame": 74,
+      "durationInFrames": 73
+    },
+    {
+      "text": "マッサージに行っても\nすぐ戻る…",
+      "fromFrame": 149,
+      "durationInFrames": 82,
+      "colors": [
+        "#ffffff",
+        "#ff3b3b"
+      ]
+    },
+    {
+      "text": "その重だるさの原因は",
+      "fromFrame": 233,
+      "durationInFrames": 40
+    },
+    {
+      "text": "骨盤の傾きに\nあるかもしれません",
+      "fromFrame": 275,
+      "durationInFrames": 91,
+      "colors": [
+        "#ff3b3b",
+        "#ffffff"
+      ]
+    },
+    {
+      "text": "樹鍼灸整骨院では",
+      "fromFrame": 368,
+      "durationInFrames": 49
+    },
+    {
+      "text": "国家資格を持つプロが\nあなたの骨盤を分析",
+      "fromFrame": 419,
+      "durationInFrames": 91,
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ]
+    },
+    {
+      "text": "24時間\n骨盤ホールドシステムで",
+      "fromFrame": 512,
+      "durationInFrames": 70,
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ]
+    },
+    {
+      "text": "正しい位置に\n保ち続けます",
+      "fromFrame": 584,
+      "durationInFrames": 82
+    },
+    {
+      "text": "リニューアル記念の",
+      "fromFrame": 668,
+      "durationInFrames": 52
+    },
+    {
+      "text": "ウェブ限定体験会",
+      "fromFrame": 722,
+      "durationInFrames": 61,
+      "colors": [
+        "#ff3b3b"
+      ]
+    },
+    {
+      "text": "あなたの骨盤を\nチェックしませんか？",
+      "fromFrame": 785,
+      "durationInFrames": 61
+    }
+  ],
+  "topBanner": "リニューアル記念 体験会",
+  "offer": {
+    "tag": "＼今だけ／体験会限定",
+    "items": [
+      {
+        "label": "カウンセリング",
+        "was": "5,500円",
+        "now": "無料"
+      },
+      {
+        "label": "施術",
+        "was": "7,700円",
+        "now": "2,200円"
+      }
+    ],
+    "highlight": "実質11,000円お得！"
+  },
+  "offerFrom": 368,
+  "offerSe": "se/pop.wav",
+  "offerSeVolume": 1.0
+}

@@ -38,3 +38,9 @@ ffmpeg -y \
  -map "[o]" -ac 2 -ar 44100 -t 0.55 public/se/pop.wav
 ```
 props: offerFrom(投下フレーム) / offerSe:"se/pop.wav" / offerSeVolume
+
+## 締めのWEB予約カード（LINEの代わり／コンバージョン計測版）
+`end_card_web.html` ＝ 予約画面(日時選択)を入れたスマホ＋「24時間ネット予約OK/タップして希望の日時を選ぶだけ」。LINE無し。
+広告CTA「予約する」→ sekkotsu-appの予約URL(?m=..&c=施策ID)へ。予約完了でMetaコンバージョン(Schedule)発火。
+作り方はLINE版と同じ（chromiumで1080x1920書き出し→ public/bg/08web.mp4）。
+音声は「公式ラインから…」を除去した full_web.wav を使う（afade out）。props は props.reuse.web.json。
