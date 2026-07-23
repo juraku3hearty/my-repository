@@ -8,42 +8,45 @@
     font-family:'IPAGothic','IPAPGothic',sans-serif; }
   .bg { position:absolute; inset:0;
     background:
-      radial-gradient(circle at 50% 30%, rgba(38,132,255,0.20), rgba(38,132,255,0) 46%),
-      linear-gradient(165deg, #14213a 0%, #0e1830 55%, #0a1120 100%); }
+      radial-gradient(circle at 50% 30%, rgba(244,114,140,0.16), rgba(244,114,140,0) 46%),
+      linear-gradient(165deg, #2a2440 0%, #201a33 55%, #171226 100%); }
   .glow { position:absolute; left:50%; top:31%; width:760px; height:760px;
     transform:translate(-50%,-50%); border-radius:50%;
     background:radial-gradient(circle, rgba(255,255,255,0.14), rgba(255,255,255,0) 62%); }
-  .phone { position:absolute; left:50%; top:210px; transform:translateX(-50%);
-    width:560px; height:1130px; background:#0b0b0d; border-radius:70px;
+  .phone { position:absolute; left:50%; top:180px; transform:translateX(-50%);
+    width:560px; height:1150px; background:#0b0b0d; border-radius:70px;
     padding:20px; box-shadow:0 40px 90px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.06) inset; }
   .notch { position:absolute; left:50%; top:40px; transform:translateX(-50%);
     width:150px; height:34px; background:#0b0b0d; border-radius:20px; z-index:2; }
-  .screen { width:100%; height:100%; border-radius:52px; overflow:hidden; background:#f4f6f9;
+  .screen { width:100%; height:100%; border-radius:52px; overflow:hidden; background:#f7f8fa;
     display:flex; flex-direction:column; }
-  .sbar { height:50px; display:flex; align-items:center; justify-content:space-between;
-    padding:0 34px; color:#111; font-size:24px; font-weight:700; }
-  .head { background:#2684ff; color:#fff; padding:20px 26px; font-size:34px; font-weight:900; letter-spacing:1px; }
-  .lead { padding:20px 26px 6px; color:#333; font-size:28px; font-weight:700; }
-  .dates { display:flex; gap:12px; padding:8px 26px 4px; }
-  .date { flex:1; text-align:center; padding:12px 0; border-radius:14px; font-size:24px; font-weight:800;
-    background:#e7edf5; color:#345; }
-  .date.on { background:#2684ff; color:#fff; }
-  .slots { padding:14px 26px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .slot { display:flex; align-items:center; justify-content:space-between;
-    padding:18px 20px; border-radius:16px; font-size:30px; font-weight:800; background:#fff;
-    border:2px solid #e2e8f0; color:#223; }
-  .slot .mk { font-size:30px; }
-  .slot.ok .mk { color:#16a34a; }
-  .slot.ng { color:#9aa4b2; }
-  .slot.ng .mk { color:#c9d2dc; }
-  .btn { margin:6px 26px 0; background:#16a34a; color:#fff; text-align:center;
-    padding:26px 0; border-radius:18px; font-size:36px; font-weight:900;
-    box-shadow:0 12px 24px rgba(22,163,74,0.35); }
-  /* カード下部の見出し */
-  .cta { position:absolute; left:0; right:0; bottom:150px; text-align:center; }
-  .cta .big { color:#ffffff; font-size:76px; font-weight:900; letter-spacing:1px;
+  .sbar { height:44px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 34px; color:#111; font-size:22px; font-weight:700; }
+  .title { text-align:center; padding:6px 0 2px; }
+  .title .n { color:#1b2330; font-size:34px; font-weight:900; }
+  .title .s { color:#9aa4b2; font-size:22px; font-weight:700; letter-spacing:2px; }
+  .sec { color:#3b4453; font-size:24px; font-weight:900; padding:18px 26px 8px; }
+  .menu { margin:0 22px; background:#fff; border:3px solid #f2879f; border-radius:16px;
+    padding:18px 20px; display:flex; justify-content:space-between; align-items:flex-start;
+    box-shadow:0 6px 16px rgba(242,135,159,0.18); }
+  .menu .l .t { color:#1b2330; font-size:27px; font-weight:800; }
+  .menu .l .d { color:#9aa4b2; font-size:20px; font-weight:700; margin-top:4px; }
+  .menu .p { color:#1b2330; font-size:27px; font-weight:900; }
+  .days { display:flex; gap:12px; padding:0 22px; }
+  .day { flex:1; text-align:center; padding:14px 0; border-radius:14px; background:#fff;
+    border:2px solid #e6eaf0; }
+  .day.on { border-color:#f2879f; background:#fff1f4; }
+  .day .d { color:#1b2330; font-size:23px; font-weight:900; }
+  .day .k { color:#f2879f; font-size:18px; font-weight:800; margin-top:4px; }
+  .day.on .k { color:#e5537a; }
+  .times { display:flex; flex-wrap:wrap; gap:12px; padding:0 22px; }
+  .time { padding:14px 22px; border-radius:12px; background:#fff; border:2px solid #e6eaf0;
+    color:#1b2330; font-size:26px; font-weight:800; }
+  .pw { text-align:center; color:#c3cad4; font-size:18px; font-weight:700; margin-top:auto; padding:14px 0 18px; }
+  .cta { position:absolute; left:0; right:0; bottom:120px; text-align:center; }
+  .cta .big { color:#ffffff; font-size:74px; font-weight:900; letter-spacing:1px;
     text-shadow:-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,3px 3px 0 #000,0 6px 18px rgba(0,0,0,.5); }
-  .cta .sub { margin-top:16px; color:#ffe14d; font-size:46px; font-weight:900;
+  .cta .sub { margin-top:14px; color:#ffd23b; font-size:44px; font-weight:900;
     text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000; }
 </style>
 </head>
@@ -54,23 +57,27 @@
     <div class="notch"></div>
     <div class="screen">
       <div class="sbar"><span>9:41</span><span>🔋</span></div>
-      <div class="head">ご予約</div>
-      <div class="lead">ご希望の日時をお選びください</div>
-      <div class="dates">
-        <div class="date on">今日</div>
-        <div class="date">明日</div>
-        <div class="date">木</div>
-        <div class="date">金</div>
+      <div class="title"><div class="n">樹鍼灸整骨院</div><div class="s">WEB予約</div></div>
+      <div class="sec">メニューを選ぶ</div>
+      <div class="menu">
+        <div class="l"><div class="t">Instagram用初回体験</div><div class="d">約60分</div></div>
+        <div class="p">¥2,200</div>
       </div>
-      <div class="slots">
-        <div class="slot ok"><span>10:00</span><span class="mk">○</span></div>
-        <div class="slot ok"><span>11:00</span><span class="mk">○</span></div>
-        <div class="slot ng"><span>13:00</span><span class="mk">×</span></div>
-        <div class="slot ok"><span>15:00</span><span class="mk">○</span></div>
-        <div class="slot ok"><span>17:00</span><span class="mk">○</span></div>
-        <div class="slot ng"><span>18:30</span><span class="mk">×</span></div>
+      <div class="sec">日にちを選ぶ</div>
+      <div class="days">
+        <div class="day on"><div class="d">7/24(金)</div><div class="k">空き5枠</div></div>
+        <div class="day"><div class="d">7/25(土)</div><div class="k">空き5枠</div></div>
+        <div class="day"><div class="d">7/27(月)</div><div class="k">空き3枠</div></div>
       </div>
-      <div class="btn">この日時で予約する</div>
+      <div class="sec">時間を選ぶ</div>
+      <div class="times">
+        <div class="time">14:30</div>
+        <div class="time">14:45</div>
+        <div class="time">15:00</div>
+        <div class="time">15:15</div>
+        <div class="time">15:30</div>
+      </div>
+      <div class="pw">powered by sekkotsu-app</div>
     </div>
   </div>
   <div class="cta">
