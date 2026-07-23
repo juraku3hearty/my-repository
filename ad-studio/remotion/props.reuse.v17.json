@@ -1,0 +1,111 @@
+{
+  "accountName": "樹鍼灸整骨院",
+  "voiceover": "audio/narration_final.mp3",
+  "voiceoverVolume": 1,
+  "bgm": "bgm/track.mp3",
+  "bgmVolume": 0.15,
+  "offer": {
+    "tag": "＼今だけ／体験会限定",
+    "items": [
+      {
+        "label": "カウンセリング",
+        "was": "5,500円",
+        "now": "無料"
+      },
+      {
+        "label": "施術",
+        "was": "7,700円",
+        "now": "2,200円"
+      }
+    ],
+    "highlight": "実質11,000円お得！"
+  },
+  "offerFrom": 311,
+  "offerSe": "se/pop.wav",
+  "offerSeVolume": 1.0,
+  "scenes": [
+    {
+      "video": "bg/0102s.mp4",
+      "durationInFrames": 210
+    },
+    {
+      "video": "bg/03.mp4",
+      "durationInFrames": 99
+    },
+    {
+      "video": "bg/04s.mp4",
+      "durationInFrames": 183
+    },
+    {
+      "video": "bg/05.mp4",
+      "durationInFrames": 45
+    },
+    {
+      "video": "bg/06.mp4",
+      "durationInFrames": 45
+    },
+    {
+      "video": "bg/07.mp4",
+      "durationInFrames": 114
+    },
+    {
+      "video": "bg/08web.mp4",
+      "durationInFrames": 150,
+      "raw": true
+    }
+  ],
+  "captions": [
+    {
+      "text": "夕方になると、もう…\n肩も腰も重だるい",
+      "telopStyle": "title",
+      "fromFrame": 6,
+      "durationInFrames": 96
+    },
+    {
+      "text": "マッサージに行っても\nすぐ戻ってしまう…",
+      "fromFrame": 113,
+      "durationInFrames": 94
+    },
+    {
+      "text": "その原因は\n骨盤のゆがみかも",
+      "colors": [
+        "#ffffff",
+        "#ff3b3b"
+      ],
+      "fromFrame": 211,
+      "durationInFrames": 92
+    },
+    {
+      "text": "樹鍼灸整骨院では",
+      "fromFrame": 311,
+      "durationInFrames": 55
+    },
+    {
+      "text": "国家資格を持つプロが\nあなたの骨盤を分析",
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ],
+      "fromFrame": 372,
+      "durationInFrames": 111
+    },
+    {
+      "text": "24時間\n正しい位置に保ち続けます",
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ],
+      "fromFrame": 492,
+      "durationInFrames": 96
+    },
+    {
+      "text": "リニューアル記念の\nウェブ限定体験会",
+      "colors": [
+        "#ff3b3b",
+        "#ffffff"
+      ],
+      "fromFrame": 617,
+      "durationInFrames": 76
+    }
+  ]
+}

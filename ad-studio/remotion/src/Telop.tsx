@@ -43,8 +43,8 @@ export const Telop: React.FC<{
   const isTitle = telopStyle === "title";
   const lines = text.split("\n");
 
-  // 下からの位置。mid=画面下から約700px(≒真ん中やや下)。low=下寄り
-  const padBottom = place === "low" ? (isParen ? 360 : 300) : 720;
+  // 下からの位置。mid=中央付近(Meta広告の下部CTA/予約マークと被らない)。low=下寄り
+  const padBottom = place === "low" ? (isParen ? 360 : 300) : 830;
 
   const baseSize = (line: string) => {
     if (isTitle) return line.length <= 6 ? 96 : 78;
