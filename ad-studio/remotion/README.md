@@ -75,3 +75,14 @@ npx remotion render ShortReuse out/reuse.mp4
 - Fish Audio音声は `public/audio/` の wav を各シーンで再生するだけ（TTSの種類は問わない）
 
 エラーが出たら赤い文字を貼れば直します。
+
+---
+
+## 音声の作り直し〜受け渡しの正規ルート（毎回これ）
+1. **生成はVPS**（キーとボイスIDは `/root/ad-studio/.env` と `test-voice.js` にある）。
+   1行コマンドで Fish Audio TTS → `/root/ad-studio/narration.mp3`
+   ※bashの `!` は禁物（event not found になる）。node -e のワンライナーは `!` 無しで書く
+2. **VPS→Googleドライブ**：`node --input-type=module -e "import('./src/drive.js').then(async d=>{const r=await d.uploadOutput('/root/ad-studio/narration.mp3','narration.mp3');console.log('OK',r.url)})"`
+3. **クラウドClaude側**：Google Drive連携(download_file_content)で取得→base64デコード→`public/audio/`へ
+4. 無音検出(silencedetect)で文の切れ目→captions/scenes/offerFromを新タイミングに組み直し→レンダリング
+※外部アップローダ(tmpfiles等)はプロキシで403になるため使わない。scpはMac側で打つ(VPS内で打たない)
