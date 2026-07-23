@@ -1,0 +1,115 @@
+{
+  "accountName": "樹鍼灸整骨院",
+  "voiceover": "audio/narration_bright.mp3",
+  "voiceoverVolume": 1,
+  "bgm": "bgm/track.mp3",
+  "bgmVolume": 0.15,
+  "offer": {
+    "tag": "＼今だけ／体験会限定",
+    "items": [
+      {
+        "label": "カウンセリング",
+        "was": "5,500円",
+        "now": "無料"
+      },
+      {
+        "label": "施術",
+        "was": "7,700円",
+        "now": "2,200円"
+      }
+    ],
+    "highlight": "実質11,000円お得！"
+  },
+  "offerFrom": 303,
+  "offerSe": "se/pop.wav",
+  "offerSeVolume": 1.0,
+  "scenes": [
+    {
+      "video": "bg/01.mp4",
+      "durationInFrames": 105
+    },
+    {
+      "video": "bg/02.mp4",
+      "durationInFrames": 102
+    },
+    {
+      "video": "bg/03.mp4",
+      "durationInFrames": 96
+    },
+    {
+      "video": "bg/04.mp4",
+      "durationInFrames": 177
+    },
+    {
+      "video": "bg/05.mp4",
+      "durationInFrames": 45
+    },
+    {
+      "video": "bg/06.mp4",
+      "durationInFrames": 45
+    },
+    {
+      "video": "bg/07.mp4",
+      "durationInFrames": 108
+    },
+    {
+      "video": "bg/08web.mp4",
+      "durationInFrames": 147,
+      "raw": true
+    }
+  ],
+  "captions": [
+    {
+      "text": "夕方になると、もう…\n肩も腰も重だるい",
+      "telopStyle": "title",
+      "fromFrame": 6,
+      "durationInFrames": 93
+    },
+    {
+      "text": "マッサージに行っても\nすぐ戻ってしまう…",
+      "fromFrame": 110,
+      "durationInFrames": 94
+    },
+    {
+      "text": "その原因は\n骨盤のゆがみかも",
+      "colors": [
+        "#ffffff",
+        "#ff3b3b"
+      ],
+      "fromFrame": 208,
+      "durationInFrames": 89
+    },
+    {
+      "text": "樹鍼灸整骨院では",
+      "fromFrame": 303,
+      "durationInFrames": 54
+    },
+    {
+      "text": "国家資格を持つプロが\nあなたの骨盤を分析",
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ],
+      "fromFrame": 361,
+      "durationInFrames": 107
+    },
+    {
+      "text": "24時間\n正しい位置に保ち続けます",
+      "colors": [
+        "#ffd23b",
+        "#ffffff"
+      ],
+      "fromFrame": 479,
+      "durationInFrames": 88
+    },
+    {
+      "text": "リニューアル記念の\nウェブ限定体験会",
+      "colors": [
+        "#ff3b3b",
+        "#ffffff"
+      ],
+      "fromFrame": 598,
+      "durationInFrames": 77
+    }
+  ]
+}
