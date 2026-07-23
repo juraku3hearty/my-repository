@@ -86,3 +86,4 @@ npx remotion render ShortReuse out/reuse.mp4
 3. **クラウドClaude側**：Google Drive連携(download_file_content)で取得→base64デコード→`public/audio/`へ
 4. 無音検出(silencedetect)で文の切れ目→captions/scenes/offerFromを新タイミングに組み直し→レンダリング
 ※外部アップローダ(tmpfiles等)はプロキシで403になるため使わない。scpはMac側で打つ(VPS内で打たない)
+※TTSの読み間違い対策：固有名詞はひらがなで台本に書く（例：樹鍼灸整骨院→「いつき鍼灸整骨院」。字幕は漢字のままでOK）
