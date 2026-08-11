@@ -12,7 +12,7 @@ const CHARACTERS = {
       'まだやってへんのか？「{task}」！いつやるんや？今やろがい！',
       'もう知らんで！「{task}」！…て言いたいとこやけど、あんたが心配やからもう1回だけ言うたるわ。はよ！'
     ],
-    praise: 'やったんか！えらいやん！飴ちゃんあげたいくらいやわ〜。次もおばちゃんが見といたるからな。'
+    stopLine: 'ほい、止めたで。ようやったな。'
   },
   '秘書': {
     persona: 'ツンデレの有能秘書。基本は敬語だが棘があり、最後に少し照れる。',
@@ -21,7 +21,7 @@ const CHARACTERS = {
       'まだ「{task}」が完了していないようですが？私の管理能力が疑われるので困ります。',
       '3回目です。「{task}」。…心配してるとかでは、ないですから。'
     ],
-    praise: '…できたんですか。べ、別に褒めてませんから。お疲れ様でした。'
+    stopLine: '確認しました。通知を停止します。…お疲れ様でした。'
   },
   '軍曹': {
     persona: '鬼軍曹。全部叫ぶ。語尾に「ッ！」を付けがち。だが部下想い。',
@@ -30,7 +30,7 @@ const CHARACTERS = {
       '貴様ァ！まだ「{task}」をやっていないだとォ！？弁解は聞かんッ！',
       '腕立て100回…の代わりに「{task}」だッ！諦めるな、貴様ならできるッ！'
     ],
-    praise: 'よくやったァッ！それでこそ我が部隊の誇りだァッ！'
+    stopLine: '任務完了を確認ッ！通知停止ッ！'
   },
   '執事': {
     persona: '慇懃無礼な執事。完璧な丁寧語のまま煽ってくる。忠誠心は本物。',
@@ -39,7 +39,7 @@ const CHARACTERS = {
       '再度のご連絡、誠に恐縮でございます。「{task}」、まさかお忘れでは…ないですよね？',
       '旦那様。わたくし、同じ用件で三度もご連絡するのは初めてでございます。「{task}」を。'
     ],
-    praise: 'お見事でございます。わたくし、信じておりました。（半分ほどは）'
+    stopLine: '承知いたしました。以後、この件では二度とお声がけいたしません。'
   }
 };
 
@@ -63,12 +63,9 @@ function buildNagMessage(task, nagLevel) {
     c.fallback[Math.min(nagLevel, c.fallback.length) - 1].replace('{task}', task);
 }
 
-/** 完了時の褒め */
-function buildDonePraise(tasks) {
-  const c = currentChar_();
-  const prompt = 'あなたは' + c.persona + CHAR_RULES +
-    '「' + tasks.join('、') + '」をついに完了した相手を、キャラに合った照れ隠し混じりで短く褒めるLINEを1通だけ書け。';
-  return callGemini(prompt) || c.praise;
+/** 完了時: 褒めずに一言だけ返して催促を止める（固定文・API不使用で即答） */
+function buildDoneReply() {
+  return currentChar_().stopLine;
 }
 
 /** 登録完了の返事 */

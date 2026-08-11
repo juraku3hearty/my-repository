@@ -6,7 +6,8 @@
 function checkReminders() {
   const now = new Date();
   getDue(now).forEach(r => {
-    pushText(buildNagMessage(r.task, r.nags + 1));
+    // 催促の下に「✅ やった」ボタンを付ける（タップで即ストップ）
+    pushText(buildNagMessage(r.task, r.nags + 1), ['✅ やった', '📋 リスト']);
     recordNag(r, now);
   });
 }

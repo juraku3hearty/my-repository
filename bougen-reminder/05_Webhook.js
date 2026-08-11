@@ -25,11 +25,11 @@ function handleLineEvent_(ev) {
 function handleCommand_(text) {
   let m;
 
-  // 完了報告
-  if (/^(やった|やったで|完了|done|できた)/.test(text)) {
+  // 完了報告 → 催促ストップ（褒めない。一言だけ）
+  if (/^(やった|やったよ|やったで|完了|done|できた)/.test(text)) {
     const done = completeFired();
     if (done.length === 0) return 'ん？いま催促してるもんは無いで。「リスト」で確認しよか。';
-    return buildDonePraise(done.map(r => r.task));
+    return buildDoneReply();
   }
 
   // 一覧

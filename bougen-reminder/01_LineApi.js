@@ -11,16 +11,29 @@ function lineHeaders_() {
   };
 }
 
-function pushText(text) {
+/**
+ * Push送信。quickLabels を渡すとメッセージの下にボタンが並ぶ
+ * （タップするとそのテキストが送信される。クイックリプライは無料）
+ */
+function pushText(text, quickLabels) {
   const userId = PROPS.getProperty('USER_ID');
   if (!userId) {
     console.warn('USER_ID未登録。先にBotに何か話しかけてください。');
     return;
   }
+  const msg = { type: 'text', text: text };
+  if (quickLabels && quickLabels.length) {
+    msg.quickReply = {
+      items: quickLabels.map(label => ({
+        type: 'action',
+        action: { type: 'message', label: label, text: label.replace(/^[^ ]* /, '') }
+      }))
+    };
+  }
   UrlFetchApp.fetch(LINE_API_BASE + '/message/push', {
     method: 'post',
     headers: lineHeaders_(),
-    payload: JSON.stringify({ to: userId, messages: [{ type: 'text', text: text }] }),
+    payload: JSON.stringify({ to: userId, messages: [msg] }),
     muteHttpExceptions: true
   });
 }
