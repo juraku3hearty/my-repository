@@ -11,11 +11,16 @@ function lineHeaders_() {
   };
 }
 
-/** こちらから送る（無料枠を1通消費） */
+/**
+ * こちらから送る（無料枠を1通消費）
+ * LINE未設定（トークン or USER_ID なし）なら自動でメールに切り替わる
+ * → LINEのセットアップをしなくても「メール版鬼上司」として完全動作する
+ */
 function pushText(text) {
   const userId = PROPS.getProperty('USER_ID');
-  if (!userId) {
-    console.warn('USER_ID未登録。先にBotに何か話しかけてください。');
+  const token = PROPS.getProperty('LINE_CHANNEL_ACCESS_TOKEN');
+  if (!userId || !token) {
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), '【鬼頭課長】', text + '\n\n鬼頭');
     return;
   }
   UrlFetchApp.fetch(LINE_API_BASE + '/message/push', {
