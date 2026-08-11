@@ -30,10 +30,15 @@ function hourlyPatrol() {
   const windowHours = win.end - win.start;
 
   // ---- ちゃんと予定が入っている → 説教中だったら褒めて手打ち ----
+  // 褒めはメールで送る（LINE無料枠を消費しない。件名からして偉そうなのが逆に良い）
   if (free < windowHours / 2) {
     if (Number(getSetting('ESCALATION_LEVEL')) > 0 &&
         getSetting('LAST_PRAISE_DATE') !== todayKey) {
-      pushText(buildPraiseMessage());
+      MailApp.sendEmail(
+        Session.getEffectiveUser().getEmail(),
+        '【人事評価】見直した',
+        buildPraiseMessage() + '\n\n鬼頭'
+      );
       setSetting('ESCALATION_LEVEL', 0);
       setSetting('LAST_PRAISE_DATE', todayKey);
     }
