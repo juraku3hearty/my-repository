@@ -20,7 +20,7 @@ const SETTING_DEFAULTS = {
   ESCALATION_LEVEL: '0'  // 説教レベル（Botが自動管理）
 };
 
-const GEMINI_MODEL = 'gemini-2.0-flash-lite'; // 無料枠
+const GEMINI_MODEL = 'gemini-3.5-flash'; // 無料枠（gemini-2.0系は2026年に廃止済み）
 
 // 鬼上司が勝手に入れる予定の目印（空き時間計算から除外するため）
 const BOSS_EVENT_MARK = '鬼頭課長';
