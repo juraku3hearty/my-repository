@@ -13,17 +13,17 @@ function callGemini(prompt) {
       contentType: 'application/json',
       payload: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 1.0, maxOutputTokens: 1024 }
+        generationConfig: { temperature: 1.0, maxOutputTokens: 4096 }
       }),
       muteHttpExceptions: true
     });
     if (res.getResponseCode() !== 200) return null;
     const json = JSON.parse(res.getContentText());
-    const text = json.candidates &&
-      json.candidates[0] &&
-      json.candidates[0].content &&
-      json.candidates[0].content.parts &&
-      json.candidates[0].content.parts[0].text;
+    const cand = json.candidates && json.candidates[0];
+    // 思考トークンで上限に達して本文が途切れた場合は、中途半端な文を出さず固定セリフへ
+    if (!cand || cand.finishReason === 'MAX_TOKENS') return null;
+    const parts = (cand.content && cand.content.parts) || [];
+    const text = parts.filter(p => p.text).map(p => p.text).join('');
     return text ? text.trim() : null;
   } catch (err) {
     console.warn('Gemini呼び出し失敗: ' + err);
