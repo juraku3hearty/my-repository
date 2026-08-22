@@ -145,7 +145,7 @@ function scanMyReplies_() {
 function channelLabel_(ch) {
   const cache = PROPS.getProperty('CHNAME_' + ch);
   if (cache) return cache;
-  const json = slackApi_('conversations.info', { channel: ch }, ch.charAt(0) === 'D');
+  const json = slackApi_('conversations.info', { channel: ch }, true);
   let label = ch;
   if (json.ok && json.channel) {
     label = json.channel.is_im ? 'DM: ' + userName_(json.channel.user) : '#' + json.channel.name;

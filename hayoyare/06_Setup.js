@@ -41,11 +41,16 @@ function initialize() {
   console.log('WATCH_CHANNELS: ' + (getWatchChannels().join(', ') || '★未設定！listMyChannels()/listMyDms()で調べて設定してください'));
 }
 
-/** 監視候補: Botが参加しているチャンネル一覧（IDをWATCH_CHANNELSへ） */
+/** 監視候補: 自分が参加しているチャンネル一覧（IDをWATCH_CHANNELSへ） */
 function listMyChannels() {
-  const json = slackApi_('users.conversations', { types: 'public_channel,private_channel', limit: 100 });
+  const useUser = !!PROPS.getProperty('SLACK_USER_TOKEN');
+  const json = slackApi_('users.conversations', { types: 'public_channel,private_channel', limit: 200 }, useUser);
   (json.channels || []).forEach(c => console.log(c.id + '  #' + c.name));
-  if (!(json.channels || []).length) console.log('Botがまだどのチャンネルにも招待されていません。Slackで /invite @ハヨヤレ してください');
+  if (!(json.channels || []).length) {
+    console.log(useUser
+      ? 'チャンネルが取得できませんでした。User Token Scopesに channels:read / groups:read が入っているか確認してください'
+      : 'SLACK_USER_TOKEN未設定のためBotの参加チャンネルを表示します。Botをチャンネルに入れるか、ユーザートークンを設定してください');
+  }
 }
 
 /** 監視候補: 自分のDM一覧（ユーザートークン必須。上司とのDMのD…をWATCH_CHANNELSへ） */

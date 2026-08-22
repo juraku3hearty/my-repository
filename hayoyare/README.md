@@ -35,7 +35,8 @@ Slack API 無料・通数制限なし（LINEの月200通の壁が存在しない
 2. 左メニュー **OAuth & Permissions** → Bot Token Scopes に以下を追加:
    - `chat:write` `im:write` `im:read` `im:history`
    - `channels:read` `channels:history` `groups:read` `groups:history` `users:read`
-3. **上司とのDMも監視したい場合のみ** User Token Scopes に追加: `im:read` `im:history`
+3. **User Token Scopes** に追加: `im:read` `im:history` `channels:read` `channels:history` `groups:read` `groups:history`
+   （ユーザートークンがあると、Botをチャンネルに招待せずに「自分に見えている会話」を監視できる＝他のメンバーから完全に見えない。他人運営のコミュニティで自分用に使う場合はこの方式推奨）
 4. ページ上部 **Install to Workspace** → 許可
 5. **Bot User OAuth Token（xoxb-…）**をコピー（User Token Scopesを設定した場合は **User OAuth Token（xoxp-…）**も）
 6. 監視したいチャンネルで `/invite @ハヨヤレ`（チャンネル監視する場合）

@@ -15,11 +15,16 @@ function slackApi_(method, params, useUserToken) {
   return json;
 }
 
-/** 会話履歴を差分取得（新しい順で返る）。DM(D…)はユーザートークン優先 */
+/**
+ * 会話履歴を差分取得（新しい順で返る）
+ * SLACK_USER_TOKENがあれば常にユーザートークンで読む
+ * （＝Botをチャンネルに招待する必要がなく、他のメンバーからは完全に見えない。
+ *   読めるのは自分に見えている会話だけ）
+ */
 function fetchHistory_(channel, oldestTs) {
   const params = { channel: channel, limit: 100 };
   if (oldestTs) params.oldest = oldestTs; // oldestは含まれない＝前回の続きから
-  return slackApi_('conversations.history', params, channel.charAt(0) === 'D');
+  return slackApi_('conversations.history', params, true);
 }
 
 /** おばちゃん→自分のDMチャンネル（初回に開いてキャッシュ） */
