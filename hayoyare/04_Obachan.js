@@ -27,10 +27,16 @@ function fmtDue_(due) {
   return due ? Utilities.formatDate(due, 'Asia/Tokyo', 'M/d HH:mm') : '期限なし';
 }
 
-/** 拾った時の確認DM（固定文＝即答・API節約） */
-function buildCaughtMessage(bossName, task, due) {
+function truncate_(text, len) {
+  const t = String(text).replace(/\s+/g, ' ');
+  return t.length > len ? t.slice(0, len) + '…' : t;
+}
+
+/** 拾った時の確認DM（固定文＝即答・API節約）。元メッセージを引用表示 */
+function buildCaughtMessage(bossName, task, due, original) {
   return '👂 あんた、いま' + bossName + 'さんから来てたやつ、おばちゃん拾っといたで。\n' +
     '📌 ' + task + '（期限: ' + fmtDue_(due) + '）\n' +
+    '> ' + truncate_(original, 120) + '\n' +
     '登録しといたからな。違ってたら「ちゃう」て返しや。';
 }
 

@@ -46,8 +46,8 @@ function scanBosses_() {
         due.setHours(9, 0, 0, 0);
       }
       const bossName = userName_(m.user);
-      addTask(bossName, judged.task, due);
-      obaDm_(buildCaughtMessage(bossName, judged.task, due));
+      addTask(bossName, judged.task, due, m.text, ch);
+      obaDm_(buildCaughtMessage(bossName, judged.task, due, m.text));
       Utilities.sleep(1000);
     });
   });
@@ -86,11 +86,42 @@ function scanMyReplies_() {
       const open = listOpen();
       obaDm_(open.length
         ? '📋 いま抱えてるんはこれやで。\n' + open.map((t, i) =>
-            (i + 1) + '. ' + t.task + '（期限: ' + fmtDue_(t.due) + '）' + (t.status === 'nagging' ? '（催促中！）' : '')
+            (i + 1) + '. ' + t.task + '（期限: ' + fmtDue_(t.due) + '）— ' + t.boss + 'さんから' +
+            (t.status === 'nagging' ? '（催促中！）' : '') +
+            '\n> ' + truncate_(t.original || '（元メッセージなし）', 80)
           ).join('\n')
         : 'いま登録は無いわ。平和やねえ。');
+    } else if (text === '設定') {
+      const channels = getWatchChannels().map(channelLabel_);
+      const bosses = getBossIds().map(userName_);
+      obaDm_('⚙️ いまの見張り体制やで。\n' +
+        '・監視してる会話: ' + (channels.join('、') || '★未設定！') + '\n' +
+        '・上司リスト: ' + (bosses.join('、') || '（指定なし＝あんた以外の全員）') + '\n' +
+        '・巡回: ' + PATROL_MINUTES + '分ごと\n' +
+        '・催促: 期限60分前から' + NAG_STEP_MIN + '分おきに最大' + MAX_NAGS + '回（😗→😤→💢→👹）\n' +
+        '変更はGASのスクリプトプロパティ（WATCH_CHANNELS / BOSS_USER_IDS）でな。');
+    } else if (text === 'ヘルプ') {
+      obaDm_('おばちゃんへの言葉はこれだけ覚えとき。\n' +
+        '・やった … 催促ストップ（飴ちゃん出る）\n' +
+        '・ちゃう … 直前に拾ったやつを取り消し\n' +
+        '・リスト … 抱えてるタスク一覧（誰から来たか・元の本文つき）\n' +
+        '・設定 … いまの見張り体制\n' +
+        'あとは黙っててもおばちゃんが勝手に拾うから、あんたは仕事しとき。');
     }
   });
+}
+
+/** 会話IDを人が読める名前に（#チャンネル名 or DM:相手名） */
+function channelLabel_(ch) {
+  const cache = PROPS.getProperty('CHNAME_' + ch);
+  if (cache) return cache;
+  const json = slackApi_('conversations.info', { channel: ch }, ch.charAt(0) === 'D');
+  let label = ch;
+  if (json.ok && json.channel) {
+    label = json.channel.is_im ? 'DM: ' + userName_(json.channel.user) : '#' + json.channel.name;
+  }
+  PROPS.setProperty('CHNAME_' + ch, label);
+  return label;
 }
 
 /** 3. 期限60分前から30分おきに催促（最大4回） */
