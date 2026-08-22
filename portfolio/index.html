@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAYU | 思いついたら、数日で作る</title>
+<meta name="description" content="整骨院で働きながら独学でAI自動化ツールを作っています。笑えるやつも、商売に効くやつも、作り方は同じ。">
+<style>
+:root {
+  --bg: #14161c; --panel: #1d2027; --line: #2c303a;
+  --text: #e8eaee; --muted: #9aa0ac; --red: #ff5a4e; --amber: #ffd28a; --green: #7fd07f;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+  line-height: 1.8;
+}
+.wrap { max-width: 960px; margin: 0 auto; padding: 48px 20px 80px; }
+.hero { padding: 40px 0 8px; }
+.hero h1 { font-size: 2rem; line-height: 1.4; }
+.hero h1 .red { color: var(--red); }
+.hero .lead { color: var(--muted); margin-top: 14px; font-size: 1.02rem; }
+.hero .lead b { color: var(--amber); font-weight: normal; }
+.badges { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { font-size: .82rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; }
+h2 { font-size: 1.25rem; margin: 52px 0 18px; padding-left: 12px; border-left: 5px solid var(--red); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 8px;
+}
+.card .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.card h3 { font-size: 1.06rem; }
+.card .status { font-size: .74rem; white-space: nowrap; border-radius: 6px; padding: 2px 8px; }
+.status.live { background: #173a2a; color: var(--green); border: 1px solid #2c5c44; }
+.status.soon { background: #3a2f17; color: var(--amber); border: 1px solid #5c4a2c; }
+.card p { font-size: .92rem; color: #c9cfd9; flex: 1; }
+.card .result { font-size: .85rem; color: var(--amber); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tag { font-size: .74rem; color: var(--muted); background: #242730; border-radius: 5px; padding: 2px 8px; }
+.cta {
+  margin-top: 56px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 16px; padding: 30px 28px; text-align: center;
+}
+.cta h2 { border: none; padding: 0; margin: 0 0 10px; }
+.cta p { color: var(--muted); font-size: .95rem; }
+.cta .btn {
+  display: inline-block; margin-top: 18px; background: var(--red); color: #fff;
+  text-decoration: none; font-weight: bold; border-radius: 999px; padding: 12px 34px;
+}
+.cta .btn:hover { opacity: .88; }
+footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: .82rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <h1>思いついたら、<span class="red">数日で作る</span>。</h1>
+    <p class="lead">
+      MAYU ── 整骨院で働きながら、独学でAI自動化ツールを作っています。<br>
+      「難しそう」で触ってもらえないAIより、<b>笑えるのに、なぜか役に立つ</b>やつを。<br>
+      ふざけて見えても仕組みは真面目。笑えるやつも商売に効くやつも、作り方は同じです。
+    </p>
+    <div class="badges">
+      <span class="badge">🏥 整骨院スタッフ × 独学エンジニア</span>
+      <span class="badge">🎯 AI自動化を100人に無料提供する「100チャレ」主催</span>
+      <span class="badge">⚡ 隔週で新作リリース</span>
+    </div>
+  </section>
+
+  <h2>おもしろ業務効率化シリーズ</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="top"><h3>🔥 鬼上司Bot</h3><span class="status live">配布中</span></div>
+      <p>カレンダーが空いていると、AI鬼上司「鬼頭課長」から説教が届く。無視すると毎時メール、それでも放置すると勝手にカレンダーに【緊急】面談をねじ込んでくる。予定を入れると「できて当然だ」と認めてくれる。</p>
+      <div class="result">公開初投稿で1万ビュー超・利用費0円・導入5分</div>
+      <div class="tags"><span class="tag">GAS</span><span class="tag">Gemini</span><span class="tag">Googleカレンダー</span><span class="tag">Gmail</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>📢 ハヨヤレ</h3><span class="status soon">まもなく公開</span></div>
+      <p>上司からのSlack連絡を関西弁のおばちゃんが全自動で拾い、AIが「何を・いつまでに」を読み取って登録。期限が近づくと「まだやってへんのか？いつやるんや？」と4段階（😗→😤→💢→👹）で詰めてくる。完了したら飴ちゃんをくれる。</p>
+      <div class="result">手動登録ゼロ＝拾い忘れが存在しない・運用0円</div>
+      <div class="tags"><span class="tag">GAS</span><span class="tag">Slack API</span><span class="tag">Gemini</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>🤬 暴言リマインダー</h3><span class="status soon">準備中</span></div>
+      <p>LINEに「リマインド 明日15時 銀行」と送るだけ。時間が来るとキャラ（関西弁おばちゃん／ツンデレ秘書／鬼軍曹／慇懃無礼な執事）が催促してくる。放置すると30分おきに口調がエスカレート。</p>
+      <div class="result">AIが毎回文面を生成＝同じ暴言は二度と来ない</div>
+      <div class="tags"><span class="tag">GAS</span><span class="tag">LINE Bot</span><span class="tag">Gemini</span></div>
+    </div>
+  </div>
+
+  <h2>ガチの業務システム</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="top"><h3>💌 メルノキ</h3><span class="status live">本番稼働中</span></div>
+      <p>自作のメール配信システム。登録フォーム作成、確認メールの即時自動送信、ステップ配信、顧客リスト管理まで。鬼上司Botの配布基盤としても稼働中。</p>
+      <div class="tags"><span class="tag">Next.js</span><span class="tag">Supabase</span><span class="tag">Resend</span><span class="tag">Vercel</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>🧾 タイムカードOCR</h3><span class="status live">納品済み</span></div>
+      <p>弁護士の未払給料裁判案件。タイムカード画像をAIが読み取り、裁判所提出用Excelの時間計算書へ自動転記。手作業数十時間をワンクリックに。</p>
+      <div class="tags"><span class="tag">GAS</span><span class="tag">Gemini Vision</span><span class="tag">Excel VBA</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>🎥 動画自動アップロード</h3><span class="status live">本番稼働中</span></div>
+      <p>スポーツチーム向け。フォームから動画を受け取り、YouTubeへ自動アップロード。撮影担当は投げるだけ、公開作業ゼロ。</p>
+      <div class="tags"><span class="tag">Python</span><span class="tag">Flask</span><span class="tag">YouTube API</span><span class="tag">VPS</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>🍽 献立AIシステム</h3><span class="status live">提供中</span></div>
+      <p>LINEに話しかけると1ヶ月分の夕飯メニューをAIが自動生成。買い物リストはGoogleカレンダーに自動登録。「今日なに作ろう」を家庭から消す。</p>
+      <div class="tags"><span class="tag">GAS</span><span class="tag">LINE Bot</span><span class="tag">Gemini</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><h3>🤖 Claudecord</h3><span class="status live">有料提供中</span></div>
+      <p>AIコーディング環境「Claude Code」をDiscordから使えるようにする環境構築・運用サービス。非エンジニアの経営者でも、スマホからAIに開発を任せられる。</p>
+      <div class="tags"><span class="tag">Claude Code</span><span class="tag">Discord</span><span class="tag">VPS運用</span></div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h2>「うちの業務のこれ、なんとかならない？」</h2>
+    <p>そういう無茶ぶりから、上のツールは全部生まれました。<br>困りごとと思いつきの数だけ作れます。お気軽にどうぞ。</p>
+    <a class="btn" href="https://merunoki.com/form/04544826-917b-481c-8990-f4190eb2ce1b">鬼上司Botを受け取ってみる</a>
+    <p style="margin-top:14px; font-size:.85rem;">ご相談: X のDM または juraku.3hearty@gmail.com</p>
+  </div>
+
+  <footer>© MAYU ／ このページも含めて全部自作です</footer>
+</div>
+</body>
+</html>
