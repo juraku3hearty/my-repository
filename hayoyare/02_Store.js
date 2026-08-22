@@ -62,3 +62,25 @@ function cancelLatest() {
 function recordNag_(r) {
   getSheet_().getRange(r.row, 5, 1, 2).setValues([['nagging', r.nags + 1]]);
 }
+
+/** リスト表示のN番目（期限の早い順）を完了 */
+function completeByIndex(n) {
+  const open = listOpen();
+  if (n < 1 || n > open.length) return null;
+  getSheet_().getRange(open[n - 1].row, 5).setValue('done');
+  return open[n - 1];
+}
+
+/** リスト表示のN番目を取り消し（削除扱い） */
+function cancelByIndex(n) {
+  const open = listOpen();
+  if (n < 1 || n > open.length) return null;
+  getSheet_().getRange(open[n - 1].row, 5).setValue('cancelled');
+  return open[n - 1];
+}
+
+/** 内容・期限を修正して催促カウントをリセット（修正後の期限で詰め直す） */
+function updateTask(r, task, due) {
+  const sh = getSheet_();
+  sh.getRange(r.row, 3, 1, 4).setValues([[task, due, 'pending', 0]]);
+}

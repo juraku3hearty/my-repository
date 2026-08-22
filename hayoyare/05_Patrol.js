@@ -75,8 +75,36 @@ function scanMyReplies_() {
   json.messages.slice().reverse().forEach(m => {
     if (m.bot_id || m.user !== myUserId_() || !m.text) return;
     const text = m.text.trim();
+    let mt;
 
-    if (/^(やった|やったで|やったよ|完了|done|できた)/.test(text)) {
+    // 番号つきコマンドを先に判定（「やった 2」が素の「やった」に吸われないように）
+    if ((mt = text.match(/^(?:やった|完了|done|できた)\s+(\d+)/))) {
+      const done = completeByIndex(Number(mt[1]));
+      obaDm_(done ? buildDoneMessage([done]) : 'その番号は無いで。「リスト」で確認しよか。');
+    } else if ((mt = text.match(/^(?:消して|削除|消す)\s*(\d+)/))) {
+      const gone = cancelByIndex(Number(mt[1]));
+      obaDm_(gone ? '「' + gone.task + '」消しといたで。逃げたんとちゃうやろな？' : 'その番号は無いで。「リスト」で確認しよか。');
+    } else if ((mt = text.match(/^直して\s*(\d+)\s+([\s\S]+)/))) {
+      const open = listOpen();
+      const n = Number(mt[1]);
+      if (n < 1 || n > open.length) {
+        obaDm_('その番号は無いで。「リスト」で確認しよか。');
+      } else {
+        const target = open[n - 1];
+        const fixed = parseCorrection(mt[2], target.task, target.due, new Date());
+        if (!fixed || !fixed.task) {
+          obaDm_('すまん、直し方がよう分からんかったわ。「直して ' + n + ' 期限は金曜15時」みたいに言うてみ？');
+        } else {
+          let due = null;
+          if (fixed.due) {
+            due = new Date(String(fixed.due).replace(' ', 'T') + ':00+09:00');
+            if (isNaN(due.getTime())) due = target.due;
+          }
+          updateTask(target, fixed.task, due);
+          obaDm_('✏️ ほい、直しといたで。\n📌 ' + fixed.task + '（期限: ' + fmtDue_(due) + '）\nこれでええか？あかんかったらまた「直して ' + n + ' …」て言いや。');
+        }
+      }
+    } else if (/^(やった|やったで|やったよ|完了|done|できた)/.test(text)) {
       const done = completeTasks();
       obaDm_(done.length ? buildDoneMessage(done) : 'ん？いま追い込んでるもんは無いで。「リスト」で確認しよか。');
     } else if (/^(ちゃう|違う|ちがう)/.test(text)) {
@@ -102,9 +130,11 @@ function scanMyReplies_() {
         '変更はGASのスクリプトプロパティ（WATCH_CHANNELS / BOSS_USER_IDS）でな。');
     } else if (text === 'ヘルプ') {
       obaDm_('おばちゃんへの言葉はこれだけ覚えとき。\n' +
-        '・やった … 催促ストップ（飴ちゃん出る）\n' +
+        '・やった … 催促ストップ（飴ちゃん出る）／「やった 2」で番号指定\n' +
         '・ちゃう … 直前に拾ったやつを取り消し\n' +
-        '・リスト … 抱えてるタスク一覧（誰から来たか・元の本文つき）\n' +
+        '・消して 2 … リストの2番を消す\n' +
+        '・直して 2 期限は金曜15時 … おばちゃんの間違いを修正（内容でも期限でもOK）\n' +
+        '・リスト … 一覧（期限の早い順・誰から来たか・元の本文つき）\n' +
         '・設定 … いまの見張り体制\n' +
         'あとは黙っててもおばちゃんが勝手に拾うから、あんたは仕事しとき。');
     }

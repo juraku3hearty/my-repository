@@ -30,6 +30,30 @@ function callGemini(prompt) {
 }
 
 /**
+ * 「直して」の修正指示を解釈（内容・期限のどちらか片方でも、両方でもOK）
+ * 戻り値: {task, due('yyyy-MM-dd HH:mm'|null)} / null(解釈失敗)
+ */
+function parseCorrection(instruction, currentTask, currentDue, now) {
+  const nowStr = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm (E)');
+  const dueStr = currentDue ? Utilities.formatDate(currentDue, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm') : 'なし';
+  const prompt =
+    '現在日時: ' + nowStr + '\n' +
+    '登録済みタスク: 内容「' + currentTask + '」 期限「' + dueStr + '」\n' +
+    'ユーザーの修正指示:「' + instruction + '」\n' +
+    '修正後のタスクをJSONだけで返せ。指示に無い項目は元の値をそのまま使え。\n' +
+    '形式: {"task":"内容","due":"yyyy-MM-dd HH:mm"}（期限を「なし」にする指示なら due は null）\n' +
+    '過去日時になる場合は最も近い未来として解釈。';
+  const res = callGemini(prompt);
+  if (!res) return null;
+  try {
+    const m = res.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
  * 上司のメッセージが「自分への依頼」かをAIが判定
  * 戻り値: {is_task, task, due('yyyy-MM-dd HH:mm'|null)} / null(API失敗)
  */
