@@ -36,6 +36,7 @@ h2 { font-size: 1.25rem; margin: 52px 0 18px; padding-left: 12px; border-left: 5
 .status.live { background: #173a2a; color: var(--green); border: 1px solid #2c5c44; }
 .status.soon { background: #3a2f17; color: var(--amber); border: 1px solid #5c4a2c; }
 .card p { font-size: .92rem; color: #c9cfd9; flex: 1; }
+.card img.shot { width: 100%; border-radius: 8px; border: 1px solid var(--line); margin: 4px 0 2px; }
 .card .result { font-size: .85rem; color: var(--amber); }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .tag { font-size: .74rem; color: var(--muted); background: #242730; border-radius: 5px; padding: 2px 8px; }
@@ -74,6 +75,7 @@ footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: .
   <div class="grid">
     <div class="card">
       <div class="top"><h3>🔥 鬼上司Bot</h3><span class="status live">配布中</span></div>
+      <img class="shot" src="img/oni-inbox.png" alt="鬼頭課長からの説教メール一覧">
       <p>カレンダーが空いていると、AI鬼上司「鬼頭課長」から説教が届く。無視すると毎時メール、それでも放置すると勝手にカレンダーに【緊急】面談をねじ込んでくる。予定を入れると「できて当然だ」と認めてくれる。</p>
       <div class="result">公開初投稿で1万ビュー超・利用費0円・導入5分</div>
       <div class="tags"><span class="tag">GAS</span><span class="tag">Gemini</span><span class="tag">Googleカレンダー</span><span class="tag">Gmail</span></div>
@@ -95,29 +97,23 @@ footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: .
   <h2>ガチの業務システム</h2>
   <div class="grid">
     <div class="card">
-      <div class="top"><h3>💌 メルノキ</h3><span class="status live">本番稼働中</span></div>
-      <p>自作のメール配信システム。登録フォーム作成、確認メールの即時自動送信、ステップ配信、顧客リスト管理まで。鬼上司Botの配布基盤としても稼働中。</p>
-      <div class="tags"><span class="tag">Next.js</span><span class="tag">Supabase</span><span class="tag">Resend</span><span class="tag">Vercel</span></div>
+      <div class="top"><h3>🏥 整骨院 受付・患者管理システム</h3><span class="status live">本番稼働中</span></div>
+      <!-- 写真を入れる場合: img/ にファイルを置いて下の行のコメントを外す -->
+      <!-- <img class="shot" src="img/sekkotsu.jpg" alt="受付画面"> -->
+      <p>自院で毎日使っている受付・予約・患者管理・売上ダッシュボード。既存の有料サービスからのデータ移行込みで<b>他院2院への導入実績あり</b>。現場スタッフが本当に使える画面を、現場にいる人間が作っています。</p>
+      <div class="result">自院＋他院2院で本番稼働・既存サービスからの移行実績</div>
+      <div class="tags"><span class="tag">Next.js</span><span class="tag">Supabase</span><span class="tag">Vercel</span></div>
     </div>
     <div class="card">
-      <div class="top"><h3>🧾 タイムカードOCR</h3><span class="status live">納品済み</span></div>
-      <p>弁護士の未払給料裁判案件。タイムカード画像をAIが読み取り、裁判所提出用Excelの時間計算書へ自動転記。手作業数十時間をワンクリックに。</p>
-      <div class="tags"><span class="tag">GAS</span><span class="tag">Gemini Vision</span><span class="tag">Excel VBA</span></div>
+      <div class="top"><h3>💌 メルノキ</h3><span class="status live">本番稼働中</span></div>
+      <!-- <img class="shot" src="img/merunoki.png" alt="メルノキ管理画面"> -->
+      <p>自作のメール配信システム。登録フォーム作成、確認メールの即時自動送信、ステップ配信、顧客リスト管理まで。鬼上司Botの配布基盤としても稼働中。</p>
+      <div class="tags"><span class="tag">Next.js</span><span class="tag">Supabase</span><span class="tag">Resend</span><span class="tag">Vercel</span></div>
     </div>
     <div class="card">
       <div class="top"><h3>🎥 動画自動アップロード</h3><span class="status live">本番稼働中</span></div>
       <p>スポーツチーム向け。フォームから動画を受け取り、YouTubeへ自動アップロード。撮影担当は投げるだけ、公開作業ゼロ。</p>
       <div class="tags"><span class="tag">Python</span><span class="tag">Flask</span><span class="tag">YouTube API</span><span class="tag">VPS</span></div>
-    </div>
-    <div class="card">
-      <div class="top"><h3>🍽 献立AIシステム</h3><span class="status live">提供中</span></div>
-      <p>LINEに話しかけると1ヶ月分の夕飯メニューをAIが自動生成。買い物リストはGoogleカレンダーに自動登録。「今日なに作ろう」を家庭から消す。</p>
-      <div class="tags"><span class="tag">GAS</span><span class="tag">LINE Bot</span><span class="tag">Gemini</span></div>
-    </div>
-    <div class="card">
-      <div class="top"><h3>🤖 Claudecord</h3><span class="status live">有料提供中</span></div>
-      <p>AIコーディング環境「Claude Code」をDiscordから使えるようにする環境構築・運用サービス。非エンジニアの経営者でも、スマホからAIに開発を任せられる。</p>
-      <div class="tags"><span class="tag">Claude Code</span><span class="tag">Discord</span><span class="tag">VPS運用</span></div>
     </div>
   </div>
 
