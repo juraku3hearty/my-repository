@@ -39,7 +39,15 @@ function myDmChannel_() {
   return ch;
 }
 
-/** おばちゃんが自分にDMを送る */
+/**
+ * おばちゃんが自分にDMを送る（名前とアイコンを名乗る）
+ * username指定にはBotスコープ chat:write.customize が必要
+ */
 function obaDm_(text) {
-  slackApi_('chat.postMessage', { channel: myDmChannel_(), text: text });
+  slackApi_('chat.postMessage', {
+    channel: myDmChannel_(),
+    text: text,
+    username: 'ハヨヤレ',
+    icon_emoji: ':candy:'
+  });
 }

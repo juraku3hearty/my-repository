@@ -33,7 +33,7 @@ Slack API 無料・通数制限なし（LINEの月200通の壁が存在しない
 
 1. https://api.slack.com/apps → **Create New App** → From scratch → 名前「ハヨヤレ」、ワークスペース選択
 2. 左メニュー **OAuth & Permissions** → Bot Token Scopes に以下を追加:
-   - `chat:write` `im:write` `im:read` `im:history`
+   - `chat:write` `chat:write.customize` `im:write` `im:read` `im:history`
    - `channels:read` `channels:history` `groups:read` `groups:history` `users:read`
 3. **User Token Scopes** に追加: `im:read` `im:history` `channels:read` `channels:history` `groups:read` `groups:history`
    （ユーザートークンがあると、Botをチャンネルに招待せずに「自分に見えている会話」を監視できる＝他のメンバーから完全に見えない。他人運営のコミュニティで自分用に使う場合はこの方式推奨）
