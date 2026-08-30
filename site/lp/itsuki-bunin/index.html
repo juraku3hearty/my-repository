@@ -128,6 +128,20 @@
   .price td.per{color:var(--faint);font-size:13px;width:29%}
   .price tr:last-child th,.price tr:last-child td{border-bottom:none}
   .price .tax{text-align:center;font-size:11.5px;color:var(--faint);margin-top:12px}
+  .price .first{max-width:520px;margin:0 auto 14px;background:var(--card);border:1px solid var(--line);
+    padding:40px 30px;text-align:center}
+  .price .first .lb{font-size:12.5px;color:var(--sub);letter-spacing:.16em;margin-bottom:16px}
+  .price .first .amt{font-family:'Shippori Mincho',serif;font-size:clamp(36px,9.5vw,48px);
+    font-weight:600;line-height:1.15;letter-spacing:.02em}
+  .price .first .amt small{font-size:15px;font-weight:400;margin-left:7px;letter-spacing:.04em;color:var(--sub)}
+  .price .first p{font-size:13.5px;color:var(--sub);margin-top:20px;line-height:1.95}
+  .price .nopush{max-width:520px;margin:0 auto 46px;text-align:center;font-size:13.5px;
+    padding:18px 22px;border:1px dashed var(--accent);background:#fdfaf4;line-height:1.9}
+  .price .nopush b{font-family:'Shippori Mincho',serif;font-weight:600}
+  .price .cont{max-width:520px;margin:0 auto}
+  .price .ch{text-align:center;font-family:'Shippori Mincho',serif;font-size:15px;font-weight:600;
+    color:var(--sub);letter-spacing:.1em;margin-bottom:8px}
+  .price .cs{text-align:center;font-size:12.5px;color:var(--faint);margin-bottom:24px}
   .price .stance2{max-width:520px;margin:34px auto 0;border:1px solid var(--line);
     background:var(--card);padding:30px 28px;text-align:center}
   .price .stance2 .hd{font-family:'Shippori Mincho',serif;font-size:17px;font-weight:600;
@@ -171,6 +185,33 @@
     gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
   .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:500}
   .bar a.main{background:#06c755;color:#fff}
+
+  /* --- モーション --- */
+  .fade .st{opacity:0;transform:translateY(14px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+  .fade.on .st{opacity:1;transform:none}
+  .fade.on .st:nth-child(1){transition-delay:.06s}
+  .fade.on .st:nth-child(2){transition-delay:.14s}
+  .fade.on .st:nth-child(3){transition-delay:.22s}
+  .fade.on .st:nth-child(4){transition-delay:.30s}
+  .fade.on .st:nth-child(5){transition-delay:.38s}
+  .fade.on .st:nth-child(6){transition-delay:.46s}
+  .fade .en{position:relative}
+  .fade .en::after{content:"";position:absolute;left:50%;bottom:-14px;width:0;height:1px;
+    background:var(--accent);opacity:.5;transition:width 1.1s cubic-bezier(.22,.7,.3,1) .25s;transform:translateX(-50%)}
+  .fade.on .en::after{width:44px}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .hero .anim{opacity:0;transform:translateY(20px);animation:rise 1s cubic-bezier(.22,.7,.3,1) forwards}
+  @media (prefers-reduced-motion:reduce){
+    .fade,.fade .st,.hero .anim{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}
+    .fade.on .en::after{width:44px;transition:none}
+  }
+
+  .talk{background:var(--mist)}
+  .talk .box{max-width:560px;margin:0 auto;text-align:center}
+  .talk .box p{font-size:14.5px}
+  .talk .said2{font-family:'Shippori Mincho',serif;font-size:clamp(16px,4.1vw,19.5px);
+    color:var(--sub);line-height:2.15;letter-spacing:.05em;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:24px 0}
 </style>
 </head>
 <body>
@@ -191,19 +232,19 @@
 
 <header class="hero">
   <div class="wrap">
-    <p class="ey">PILATES SEITAI</p>
-    <h1>「よくなったのに、また戻る」を、<br><span class="mk">終わりにする。</span></h1>
-    <p class="cat">マシンピラティス × 整体｜完全マンツーマン</p>
-    <div class="stance">
+    <p class="anim ey" style="animation-delay:.05s">PILATES SEITAI</p>
+    <h1 class="anim" style="animation-delay:.18s">「よくなったのに、また戻る」を、<br><span class="mk">終わりにする。</span></h1>
+    <p class="anim cat" style="animation-delay:.30s">マシンピラティス × 整体｜完全マンツーマン</p>
+    <div class="anim stance" style="animation-delay:.42s">
       <div class="no">鍛えません。痩せません。</div>
       <p>自分の体がいま、<br>どれだけ動いていないかを知るための時間です。</p>
     </div>
-    <div class="photo">［ 写真：リフォーマー等のマシンと、指導している様子 ］<br>※マシンが写っていることが重要（マットのピラティスと誤解されないため）<br>顔出しは任意</div>
-    <div class="btns">
+    <div class="anim photo" style="animation-delay:.42s">［ 写真：リフォーマー等のマシンと、指導している様子 ］<br>※マシンが写っていることが重要（マットのピラティスと誤解されないため）<br>顔出しは任意</div>
+    <div class="anim btns" style="animation-delay:.54s">
       <a class="btn" href="#yoyaku">初回 7,700円で試す</a>
       <a class="btn ghost" href="#yoyaku">LINEで相談する</a>
     </div>
-    <p class="meta">【新住所の町名】｜駐車場あり｜完全予約制</p>
+    <p class="anim meta" style="animation-delay:.66s">【新住所の町名】｜駐車場あり｜完全予約制</p>
   </div>
 </header>
 
@@ -241,10 +282,23 @@
       </div>
       <p style="text-align:center;font-size:14px;color:var(--sub);margin:0 0 26px">この3つを、ひとつの時間の中で行います。</p>
       <ul class="vs">
-        <li>ピラティスだけ → 硬いところは硬いまま動かすことになります</li>
-        <li>整体だけ → 緩めても、動かし方が同じなら戻ります</li>
+        <li class="st">ピラティスだけ → 硬いところは硬いまま動かすことになります</li>
+        <li class="st">整体だけ → 緩めても、動かし方が同じなら戻ります</li>
       </ul>
       <p style="text-align:center;font-size:14px;margin-top:26px"><b>両方をひとりの担当が続けて行う</b>ので、その日の体に合わせて配分を変えられます。マンツーマンなのは、そのためです。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec talk fade">
+  <div class="wrap">
+    <h2>問診では、ありません。</h2>
+    <span class="en">Conversation</span>
+    <div class="box">
+      <p class="st">マンツーマンで、毎回おなじ担当がつきます。<br>体に触れながら話しているうちに、聞かれてもいないことまで、つい話してしまう。</p>
+      <p class="said2 st">「今週、こんなことがあって」<br>「そういえば、生理前がしんどくて」</p>
+      <p class="st">病院に行くほどではないけれど、なんとなく気になっていること。<br>話せる場所は、意外と少ないと思います。</p>
+      <p class="st">体の状態は、その週の過ごし方とつながっています。<br><b>雑談のようなその話が、いちばんの手がかりになります。</b></p>
     </div>
   </div>
 </section>
@@ -254,11 +308,11 @@
     <h2>こんな方に</h2>
     <span class="en">For You</span>
     <ul>
-      <li>施術を受けても、しばらくすると戻ってしまう</li>
-      <li>「歳のせい」で片づけたくない</li>
-      <li>運動が必要だと分かっているが、ジムは続かなかった</li>
-      <li>痛みは無いが、体が硬くなってきた自覚がある</li>
-      <li>産後、体の使い方が変わった気がする</li>
+      <li class="st">施術を受けても、しばらくすると戻ってしまう</li>
+      <li class="st">「歳のせい」で片づけたくない</li>
+      <li class="st">運動が必要だと分かっているが、ジムは続かなかった</li>
+      <li class="st">痛みは無いが、体が硬くなってきた自覚がある</li>
+      <li class="st">産後、体の使い方が変わった気がする</li>
     </ul>
   </div>
 </section>
@@ -267,11 +321,11 @@
   <div class="wrap">
     <h2>初回の流れ</h2>
     <span class="en">First Visit</span>
-    <div class="fs"><div class="nn">1</div><div class="tx"><b>カウンセリング</b><p>いまの状態と、これまでの経過をうかがいます。</p></div></div>
-    <div class="fs"><div class="nn">2</div><div class="tx"><b>動きのチェック</b><p>マシンの上で、いまどこが動いていないかを一緒に確認します。</p></div></div>
-    <div class="fs"><div class="nn">3</div><div class="tx"><b>整体</b><p>動かないところを緩めます。</p></div></div>
-    <div class="fs"><div class="nn">4</div><div class="tx"><b>ピラティス</b><p>緩んだ状態で、正しい動かし方を体に入れます。</p></div></div>
-    <div class="fs"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>何回くらいで、どこまで変わるか。今日から気をつけることを1つだけお伝えします。</p></div></div>
+    <div class="fs st"><div class="nn">1</div><div class="tx"><b>カウンセリング</b><p>いまの状態と、これまでの経過をうかがいます。</p></div></div>
+    <div class="fs st"><div class="nn">2</div><div class="tx"><b>動きのチェック</b><p>マシンの上で、いまどこが動いていないかを一緒に確認します。</p></div></div>
+    <div class="fs st"><div class="nn">3</div><div class="tx"><b>整体</b><p>動かないところを緩めます。</p></div></div>
+    <div class="fs st"><div class="nn">4</div><div class="tx"><b>ピラティス</b><p>緩んだ状態で、正しい動かし方を体に入れます。</p></div></div>
+    <div class="fs st"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>何回くらいで、どこまで変わるか。今日から気をつけることを1つだけお伝えします。</p></div></div>
     <p class="note">所要時間 <span class="tbd">分数を記入</span>／動きやすい服装でお越しください（お着替えの場所 <span class="tbd">あり／なし</span>）</p>
   </div>
 </section>
@@ -280,21 +334,12 @@
   <div class="wrap">
     <h2>料金</h2>
     <span class="en">Price</span>
-    <table>
-      <thead><tr><th></th><th style="text-align:right">料金</th><th style="text-align:right">1回あたり</th></tr></thead>
-      <tbody>
-        <tr><th>初回</th><td>7,700円</td><td class="per">7,700円</td></tr>
-        <tr><th>3回コース</th><td>21,000円</td><td class="per">7,000円</td></tr>
-        <tr><th>10回コース</th><td>72,000円</td><td class="per">7,200円</td></tr>
-        <tr><th>30回コース</th><td>210,000円</td><td class="per">7,000円</td></tr>
-      </tbody>
-    </table>
-    <p class="tax">※税込</p>
-    <div class="stance2">
-      <div class="hd">まとめ買いの割引では、ありません。</div>
-      <p>コースの1回あたりの金額は、ほとんど変わりません。<br>安くするための形ではなく、<b style="color:var(--ink)">続けるための形</b>だからです。<br>体の動かし方が変わるまでには、それだけの回数がかかります。</p>
+    <div class="first">
+      <div class="lb">まずは、初回</div>
+      <div class="amt">7,700<small>円（税込）</small></div>
+      <p>いまの体がどれだけ動いていないかを、確認するところから。<br>続けるかどうかは、受けてから決めていただけます。</p>
     </div>
-    <p class="note" style="text-align:center;font-size:13px;color:var(--sub);margin-top:22px">「何回で、どこまで」の目安 <span class="tbd">店長に確認して記入</span></p>
+    <p class="nopush"><b>初回に、その場で契約をお勧めすることはありません。</b><br>ご自宅で考えて、必要だと思われたときにお声がけください。<br><span class="tbd">この運用で合っているか要確認</span></p>
   </div>
 </section>
 
@@ -306,7 +351,7 @@
       <dt>運動が苦手ですが、大丈夫ですか。</dt>
       <dd>マンツーマンなので、その方に合わせて進めます。周りと比べられることはありません。体を動かすのが久しぶりという方がほとんどです。</dd>
       <dt>痩せますか。</dt>
-      <dd>痩せることを目的にはしていません。動かなくなっているところを動かすための時間です。結果として体つきが変わる方はいらっしゃいますが、そこをお約束はしていません。</dd>
+      <dd>痩せることを目的にはしていません。動かなくなっているところを動かすための時間です。<br>ただ、続けるうちに体重が落ちた方、体つきが引き締まった方はいらっしゃいます。姿勢が変わることで、以前より痩せて見えるようになる方もおられます。<br>目的にしていないだけで、起きないという意味ではありません。お約束はできない、ということです。</dd>
       <dt>何回くらい通えばいいですか。</dt>
       <dd><span class="tbd">実際の案内を記入（「3回で◯◯、10回で◯◯」と数字があると強い）</span></dd>
       <dt>痛みが強いときでも受けられますか。</dt>
