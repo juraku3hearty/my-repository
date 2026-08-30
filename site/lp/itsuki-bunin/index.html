@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>ピラティス整体｜いつき整体院（分院）</title>
+<meta name="description" content="マシンピラティス × 整体、完全マンツーマン。鍛えません。痩せません。自分の体がいま、どれだけ動いていないかを知るための時間です。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf8f4; --ink:#2b2926; --sub:#6d675e; --faint:#9a938a;
+    --accent:#a8825c; --deep:#2f2c27; --card:#ffffff;
+    --line:#e7e0d5; --mist:#f2eee6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);
+    line-height:2.05;-webkit-font-smoothing:antialiased;letter-spacing:.03em;font-size:15px;padding-bottom:60px}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:680px;margin:0 auto;padding:0 24px}
+  .sec{padding:76px 0}
+  h2{font-family:'Shippori Mincho',serif;font-weight:600;font-size:clamp(21px,4.9vw,27px);
+    text-align:center;line-height:1.75;margin-bottom:8px;letter-spacing:.04em}
+  .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;
+    font-size:13px;letter-spacing:.36em;color:var(--accent);margin-bottom:38px}
+  .lead{text-align:center;color:var(--sub);font-size:14px;margin-bottom:34px}
+  .tbd{display:inline-block;background:#f6efe4;border:1px dashed var(--accent);color:#8a6740;
+    border-radius:5px;padding:0 8px;font-size:.76em;letter-spacing:.02em;white-space:nowrap}
+  .fade{opacity:0;transform:translateY(22px);transition:opacity 1s ease,transform 1s ease}
+  .fade.on{opacity:1;transform:none}
+  p+p{margin-top:1.35em}
+
+  /* 移転バナー */
+  .movebar{background:var(--deep);color:#f0e9dc;text-align:center;padding:11px 18px;font-size:12.5px;letter-spacing:.05em}
+  .movebar b{color:#e2bf8e;font-weight:600}
+
+  /* ヘッダー */
+  .hdr{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;
+    padding:13px 20px;background:rgba(250,248,244,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .hdr .lg{font-family:'Shippori Mincho',serif;font-size:15px;letter-spacing:.08em;line-height:1.2}
+  .hdr .lg small{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;
+    font-size:8.5px;letter-spacing:.28em;color:var(--accent);margin-top:2px}
+  .hdr nav{display:flex;gap:20px}
+  .hdr nav a{font-size:12.5px;color:var(--sub)}
+  .hdr .resv{background:var(--deep);color:#fff;font-size:12px;padding:9px 17px;border-radius:2px;letter-spacing:.06em}
+  @media(max-width:720px){.hdr nav{display:none}}
+
+  /* ヒーロー */
+  .hero{padding:84px 0 76px;text-align:center;background:
+    radial-gradient(120% 70% at 50% 0%,#fffdf9,rgba(255,253,249,0) 70%),var(--bg)}
+  .hero .ey{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--accent);
+    font-size:13px;letter-spacing:.4em;margin-bottom:22px}
+  .hero h1{font-family:'Shippori Mincho',serif;font-size:clamp(25px,6.4vw,36px);
+    line-height:1.85;font-weight:600;letter-spacing:.03em;margin-bottom:26px}
+  .hero h1 .mk{border-bottom:1px solid var(--accent);padding-bottom:5px}
+  .hero .cat{font-size:13px;color:var(--sub);letter-spacing:.14em;margin-bottom:34px}
+  .hero .stance{display:inline-block;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:26px 0;margin-bottom:34px;max-width:520px}
+  .hero .stance .no{font-family:'Shippori Mincho',serif;font-size:clamp(19px,4.6vw,23px);
+    font-weight:600;letter-spacing:.09em;margin-bottom:12px}
+  .hero .stance p{font-size:14px;color:var(--sub);line-height:1.95;margin:0}
+  .hero .meta{font-size:12px;color:var(--faint);letter-spacing:.08em;margin-top:30px}
+  .photo{margin:0 auto 40px;max-width:560px;aspect-ratio:16/10;border:1px solid var(--line);
+    background:var(--mist);display:flex;align-items:center;justify-content:center;
+    color:var(--faint);font-size:11.5px;text-align:center;line-height:1.9;padding:20px}
+
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;background:var(--deep);color:#fff;font-weight:500;font-size:14px;
+    padding:16px 34px;border-radius:2px;letter-spacing:.06em;transition:.25s}
+  .btn:hover{background:#443f37}
+  .btn small{display:block;font-size:.72rem;font-weight:300;opacity:.8;margin-top:3px;letter-spacing:.04em}
+  .btn.line{background:#06c755}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+
+  /* 本文セクション */
+  .quiet{background:var(--card)}
+  .quiet p{font-size:15px}
+  .emph{font-family:'Shippori Mincho',serif;font-size:clamp(18px,4.3vw,21px);font-weight:600;
+    line-height:1.9;text-align:center;letter-spacing:.04em;margin:38px 0}
+  .emph em{font-style:normal;border-bottom:1px solid var(--accent);padding-bottom:4px}
+
+  /* 引用風の声 */
+  .said{max-width:520px;margin:0 auto 30px;text-align:center;font-family:'Shippori Mincho',serif;
+    font-size:clamp(17px,4.2vw,20px);color:var(--sub);line-height:1.9;letter-spacing:.04em}
+
+  /* 形（3点） */
+  .form .box{max-width:580px;margin:0 auto;background:var(--card);border:1px solid var(--line);padding:38px 32px}
+  .form .three{display:flex;flex-direction:column;gap:0;margin:26px 0 30px}
+  .form .three div{padding:15px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+  .form .three div:last-child{border-bottom:none}
+  .form .three b{font-family:'Shippori Mincho',serif;color:var(--accent);margin-right:10px}
+  .form .vs{max-width:520px;margin:0 auto}
+  .form .vs li{list-style:none;font-size:13.5px;color:var(--sub);padding:11px 0 11px 20px;
+    position:relative;border-bottom:1px solid var(--line)}
+  .form .vs li:last-child{border-bottom:none}
+  .form .vs li::before{content:"—";position:absolute;left:0;color:var(--faint)}
+
+  /* こんな方に */
+  .who ul{max-width:540px;margin:0 auto;list-style:none}
+  .who li{border-bottom:1px solid var(--line);padding:17px 0 17px 28px;position:relative;font-size:14.5px}
+  .who li:last-child{border-bottom:none}
+  .who li::before{content:"";position:absolute;left:4px;top:29px;width:9px;height:1px;background:var(--accent)}
+
+  /* 流れ */
+  .flow{background:var(--mist)}
+  .flow .fs{display:flex;gap:20px;align-items:flex-start;max-width:540px;margin:0 auto}
+  .flow .fs .nn{flex:none;width:32px;height:32px;border:1px solid var(--accent);color:var(--accent);
+    display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-size:1rem;
+    border-radius:50%;position:relative;background:var(--bg)}
+  .flow .fs:not(:last-child) .nn::after{content:"";position:absolute;top:33px;left:50%;width:1px;
+    height:44px;background:var(--line);transform:translateX(-50%)}
+  .flow .fs .tx{padding-bottom:30px}
+  .flow .fs .tx b{font-family:'Shippori Mincho',serif;font-size:15.5px;display:block;margin-bottom:3px}
+  .flow .fs .tx p{font-size:13.5px;color:var(--sub);margin:0;line-height:1.85}
+  .flow .note{text-align:center;font-size:13px;color:var(--sub);margin-top:12px}
+
+  /* 料金 */
+  .price table{width:100%;max-width:520px;margin:0 auto;border-collapse:collapse;background:var(--card)}
+  .price th,.price td{padding:16px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  .price thead th{background:var(--mist);font-family:'Shippori Mincho',serif;font-weight:600;font-size:12.5px;
+    letter-spacing:.08em;color:var(--sub)}
+  .price tbody th{text-align:left;font-weight:500}
+  .price td{text-align:right;font-variant-numeric:tabular-nums}
+  .price td.per{color:var(--faint);font-size:13px;width:29%}
+  .price tr:last-child th,.price tr:last-child td{border-bottom:none}
+  .price .tax{text-align:center;font-size:11.5px;color:var(--faint);margin-top:12px}
+  .price .stance2{max-width:520px;margin:34px auto 0;border:1px solid var(--line);
+    background:var(--card);padding:30px 28px;text-align:center}
+  .price .stance2 .hd{font-family:'Shippori Mincho',serif;font-size:17px;font-weight:600;
+    margin-bottom:12px;letter-spacing:.04em}
+  .price .stance2 p{font-size:13.5px;color:var(--sub);margin:0;line-height:1.95}
+
+  /* FAQ */
+  .faq{background:var(--card)}
+  .faq dl{max-width:560px;margin:0 auto}
+  .faq dt{font-family:'Shippori Mincho',serif;font-size:15.5px;font-weight:600;
+    padding:26px 0 8px;border-top:1px solid var(--line)}
+  .faq dt:first-of-type{border-top:none;padding-top:0}
+  .faq dd{font-size:13.5px;color:var(--sub);line-height:1.95;padding-bottom:4px}
+
+  /* アクセス */
+  .info{background:var(--mist)}
+  .info .moved{max-width:560px;margin:0 auto 26px;border:1px solid var(--accent);
+    background:var(--card);padding:22px 24px;text-align:center}
+  .info .moved b{font-family:'Shippori Mincho',serif;font-size:16px;display:block;margin-bottom:6px}
+  .info .moved p{font-size:13px;color:var(--sub);margin:0}
+  .info table{width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line)}
+  .info th,.info td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px}
+  .info tr:last-child th,.info tr:last-child td{border-bottom:none}
+  .info th{width:34%;font-weight:500;color:var(--sub);background:#fbf9f5}
+  .mapbtn{text-align:center;margin-top:18px}
+
+  /* 最後のCTA */
+  .last{background:var(--deep);color:#f2ece1;text-align:center;padding:78px 0}
+  .last h2{color:#fff}
+  .last .en{color:#c9a97e}
+  .last p{font-size:14px;color:#cdc3b4;margin-bottom:32px}
+  .last .btn{background:#fff;color:var(--deep)}
+  .last .btn:hover{background:#e9e0d1}
+  .last .btn.line{background:#06c755;color:#fff}
+
+  footer{background:#211f1c;color:#8d867c;text-align:center;padding:34px 24px;font-size:12px;line-height:2}
+  footer b{color:#e8e0d3;font-family:'Shippori Mincho',serif;font-weight:600}
+
+  .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1.4fr;
+    gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+  .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:500}
+  .bar a.main{background:#06c755;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="movebar">2026年8月、<b>【新住所の町名】</b>へ移転しました　<span class="tbd" style="background:rgba(255,255,255,.1);border-color:#8a7f6d;color:#e2bf8e">町名を記入</span></div>
+
+<div class="hdr">
+  <div class="lg">いつき整体院<small>PILATES × SEITAI</small></div>
+  <nav>
+    <a href="#why">戻る理由</a>
+    <a href="#form">ピラティス整体</a>
+    <a href="#flow">初回の流れ</a>
+    <a href="#price">料金</a>
+    <a href="#access">アクセス</a>
+  </nav>
+  <a href="./biyoshin" style="font-size:11.5px;color:#6d675e;margin-right:14px">美容鍼→</a><a class="resv" href="#yoyaku">ご予約</a>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="ey">PILATES SEITAI</p>
+    <h1>「よくなったのに、また戻る」を、<br><span class="mk">終わりにする。</span></h1>
+    <p class="cat">マシンピラティス × 整体｜完全マンツーマン</p>
+    <div class="stance">
+      <div class="no">鍛えません。痩せません。</div>
+      <p>自分の体がいま、<br>どれだけ動いていないかを知るための時間です。</p>
+    </div>
+    <div class="photo">［ 写真：リフォーマー等のマシンと、指導している様子 ］<br>※マシンが写っていることが重要（マットのピラティスと誤解されないため）<br>顔出しは任意</div>
+    <div class="btns">
+      <a class="btn" href="#yoyaku">初回 7,700円で試す</a>
+      <a class="btn ghost" href="#yoyaku">LINEで相談する</a>
+    </div>
+    <p class="meta">【新住所の町名】｜駐車場あり｜完全予約制</p>
+  </div>
+</header>
+
+<section class="sec quiet fade" id="why">
+  <div class="wrap">
+    <h2>なぜ、よくなってもまた戻るのか</h2>
+    <span class="en">Why</span>
+    <p>施術の直後は軽い。でも、しばらくすると元に戻る。そんな経験をされた方は多いと思います。</p>
+    <p>それは、施術が効いていないからではありません。<b>体が、元の動かし方に戻っているだけ</b>です。</p>
+    <p>何年もかけてできた動きの癖は、1回では変わりません。そして厄介なことに、<b>ご本人は「動いている」と思っています</b>。</p>
+  </div>
+</section>
+
+<section class="sec fade">
+  <div class="wrap">
+    <h2>マシンの上に乗ると、はっきりします</h2>
+    <span class="en">On the Machine</span>
+    <p class="said">「そんなに体は硬くないと思う」</p>
+    <p style="text-align:center;color:var(--sub);font-size:14px">そうおっしゃる方ほど、驚かれます。<br>簡単に見える動きが、できない。片側だけできない。<br>自分では気づけなかったことが、マシンの上では隠せません。</p>
+    <p class="emph">そこが分かると、<em>通う理由が変わります。</em></p>
+    <p style="text-align:center;color:var(--sub);font-size:14px;margin:0">痛いから来るのではなく、<b style="color:var(--ink)">動かなくなる前に来る</b>。<br>そうなった方は、もうぶり返しません。</p>
+  </div>
+</section>
+
+<section class="sec quiet form fade" id="form">
+  <div class="wrap">
+    <h2>ピラティス整体という形</h2>
+    <span class="en">Our Approach</span>
+    <div class="box">
+      <p style="text-align:center;font-size:14.5px;margin:0">当院のピラティスは、フィットネスではありません。</p>
+      <div class="three">
+        <div><b>1</b>動かなくなっているところを<b style="color:var(--ink);font-family:inherit;margin:0">見つけて</b></div>
+        <div><b>2</b>整体で<b style="color:var(--ink);font-family:inherit;margin:0">緩めて</b></div>
+        <div><b>3</b>動かし方を<b style="color:var(--ink);font-family:inherit;margin:0">体に覚えてもらう</b></div>
+      </div>
+      <p style="text-align:center;font-size:14px;color:var(--sub);margin:0 0 26px">この3つを、ひとつの時間の中で行います。</p>
+      <ul class="vs">
+        <li>ピラティスだけ → 硬いところは硬いまま動かすことになります</li>
+        <li>整体だけ → 緩めても、動かし方が同じなら戻ります</li>
+      </ul>
+      <p style="text-align:center;font-size:14px;margin-top:26px"><b>両方をひとりの担当が続けて行う</b>ので、その日の体に合わせて配分を変えられます。マンツーマンなのは、そのためです。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec who fade">
+  <div class="wrap">
+    <h2>こんな方に</h2>
+    <span class="en">For You</span>
+    <ul>
+      <li>施術を受けても、しばらくすると戻ってしまう</li>
+      <li>「歳のせい」で片づけたくない</li>
+      <li>運動が必要だと分かっているが、ジムは続かなかった</li>
+      <li>痛みは無いが、体が硬くなってきた自覚がある</li>
+      <li>産後、体の使い方が変わった気がする</li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec flow fade" id="flow">
+  <div class="wrap">
+    <h2>初回の流れ</h2>
+    <span class="en">First Visit</span>
+    <div class="fs"><div class="nn">1</div><div class="tx"><b>カウンセリング</b><p>いまの状態と、これまでの経過をうかがいます。</p></div></div>
+    <div class="fs"><div class="nn">2</div><div class="tx"><b>動きのチェック</b><p>マシンの上で、いまどこが動いていないかを一緒に確認します。</p></div></div>
+    <div class="fs"><div class="nn">3</div><div class="tx"><b>整体</b><p>動かないところを緩めます。</p></div></div>
+    <div class="fs"><div class="nn">4</div><div class="tx"><b>ピラティス</b><p>緩んだ状態で、正しい動かし方を体に入れます。</p></div></div>
+    <div class="fs"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>何回くらいで、どこまで変わるか。今日から気をつけることを1つだけお伝えします。</p></div></div>
+    <p class="note">所要時間 <span class="tbd">分数を記入</span>／動きやすい服装でお越しください（お着替えの場所 <span class="tbd">あり／なし</span>）</p>
+  </div>
+</section>
+
+<section class="sec price fade" id="price">
+  <div class="wrap">
+    <h2>料金</h2>
+    <span class="en">Price</span>
+    <table>
+      <thead><tr><th></th><th style="text-align:right">料金</th><th style="text-align:right">1回あたり</th></tr></thead>
+      <tbody>
+        <tr><th>初回</th><td>7,700円</td><td class="per">7,700円</td></tr>
+        <tr><th>3回コース</th><td>21,000円</td><td class="per">7,000円</td></tr>
+        <tr><th>10回コース</th><td>72,000円</td><td class="per">7,200円</td></tr>
+        <tr><th>30回コース</th><td>210,000円</td><td class="per">7,000円</td></tr>
+      </tbody>
+    </table>
+    <p class="tax">※税込</p>
+    <div class="stance2">
+      <div class="hd">まとめ買いの割引では、ありません。</div>
+      <p>コースの1回あたりの金額は、ほとんど変わりません。<br>安くするための形ではなく、<b style="color:var(--ink)">続けるための形</b>だからです。<br>体の動かし方が変わるまでには、それだけの回数がかかります。</p>
+    </div>
+    <p class="note" style="text-align:center;font-size:13px;color:var(--sub);margin-top:22px">「何回で、どこまで」の目安 <span class="tbd">店長に確認して記入</span></p>
+  </div>
+</section>
+
+<section class="sec faq fade">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <span class="en">Questions</span>
+    <dl>
+      <dt>運動が苦手ですが、大丈夫ですか。</dt>
+      <dd>マンツーマンなので、その方に合わせて進めます。周りと比べられることはありません。体を動かすのが久しぶりという方がほとんどです。</dd>
+      <dt>痩せますか。</dt>
+      <dd>痩せることを目的にはしていません。動かなくなっているところを動かすための時間です。結果として体つきが変わる方はいらっしゃいますが、そこをお約束はしていません。</dd>
+      <dt>何回くらい通えばいいですか。</dt>
+      <dd><span class="tbd">実際の案内を記入（「3回で◯◯、10回で◯◯」と数字があると強い）</span></dd>
+      <dt>痛みが強いときでも受けられますか。</dt>
+      <dd><span class="tbd">要記入（受けられる／その日は整体中心にする、など）</span></dd>
+      <dt>持ち物はありますか。</dt>
+      <dd><span class="tbd">要記入（動きやすい服・靴下など）</span></dd>
+    </dl>
+  </div>
+</section>
+
+<section class="sec info fade" id="access">
+  <div class="wrap">
+    <h2>アクセス</h2>
+    <span class="en">Access</span>
+    <div class="moved">
+      <b>移転しました</b>
+      <p>2026年8月より、下記に移転しております。</p>
+    </div>
+    <table>
+      <tr><th>住所</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>最寄り</th><td><span class="tbd">バス停・駅からの道順</span></td></tr>
+      <tr><th>駐車場</th><td><span class="tbd">台数・場所</span></td></tr>
+      <tr><th>営業時間</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>休診日</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>ご予約</th><td>完全予約制（ホットペッパー／LINE） <span class="tbd">URL記入</span></td></tr>
+    </table>
+    <div class="mapbtn"><a class="btn ghost" href="#" style="font-size:12.5px;padding:13px 26px">地図を開く <span class="tbd">URL記入</span></a></div>
+  </div>
+</section>
+
+<section class="last" id="yoyaku">
+  <div class="wrap">
+    <h2>まず1回だけ、どうぞ。</h2>
+    <span class="en">Reservation</span>
+    <p>「自分に合うか分からない」という方も、まず1回だけどうぞ。<br>続けるかどうかは、体感してから決めていただけます。</p>
+    <div class="btns">
+      <a class="btn" href="#">初回 7,700円で試す<small>ホットペッパー</small></a>
+      <a class="btn line" href="#">LINEで相談する</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <b>いつき整体院（分院）</b>｜ピラティス整体・整体・鍼灸・美容鍼<br>
+  2026年8月移転　<span class="tbd" style="background:rgba(255,255,255,.06);border-color:#6b6459;color:#c9bfae">新住所・電話・営業時間を記入</span><br>
+  © いつき整体院
+</footer>
+
+<div class="bar">
+  <a href="#access">アクセス</a>
+  <a class="main" href="#yoyaku">ご予約・ご相談</a>
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){
+    if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.1});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

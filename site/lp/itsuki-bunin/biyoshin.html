@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>美容鍼・化粧品カウンセリング｜いつき整体院（分院）</title>
+<meta name="description" content="鍼と、その後のスキンケアまで。コスメコンシェルジュが担当する美容鍼。目元・頭・首まで含めて整えます。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf7f5; --ink:#2e2826; --sub:#6f6560; --faint:#9d938d;
+    --accent:#a8756e; --deep:#332a28; --card:#ffffff;
+    --line:#ebe0dc; --mist:#f5eeeb;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);
+    line-height:2.05;-webkit-font-smoothing:antialiased;letter-spacing:.03em;font-size:15px;padding-bottom:60px}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:680px;margin:0 auto;padding:0 24px}
+  .sec{padding:76px 0}
+  h2{font-family:'Shippori Mincho',serif;font-weight:600;font-size:clamp(21px,4.9vw,27px);
+    text-align:center;line-height:1.75;margin-bottom:8px;letter-spacing:.04em}
+  .en{display:block;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;
+    font-size:13px;letter-spacing:.36em;color:var(--accent);margin-bottom:38px}
+  .tbd{display:inline-block;background:#f7ece9;border:1px dashed var(--accent);color:#8c5750;
+    border-radius:5px;padding:0 8px;font-size:.76em;letter-spacing:.02em;white-space:nowrap}
+  .fade{opacity:0;transform:translateY(22px);transition:opacity 1s ease,transform 1s ease}
+  .fade.on{opacity:1;transform:none}
+  p+p{margin-top:1.35em}
+
+  .movebar{background:var(--deep);color:#f2e9e6;text-align:center;padding:11px 18px;font-size:12.5px;letter-spacing:.05em}
+  .movebar b{color:#dda9a0;font-weight:600}
+
+  .hdr{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;
+    padding:13px 20px;background:rgba(251,247,245,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .hdr .lg{font-family:'Shippori Mincho',serif;font-size:15px;letter-spacing:.08em;line-height:1.2}
+  .hdr .lg small{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;
+    font-size:8.5px;letter-spacing:.28em;color:var(--accent);margin-top:2px}
+  .hdr nav{display:flex;gap:20px}
+  .hdr nav a{font-size:12.5px;color:var(--sub)}
+  .hdr .resv{background:var(--deep);color:#fff;font-size:12px;padding:9px 17px;border-radius:2px;letter-spacing:.06em}
+  @media(max-width:760px){.hdr nav{display:none}}
+
+  .hero{padding:84px 0 76px;text-align:center;background:
+    radial-gradient(120% 70% at 50% 0%,#fffcfb,rgba(255,252,251,0) 70%),var(--bg)}
+  .hero .ey{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--accent);
+    font-size:13px;letter-spacing:.4em;margin-bottom:22px}
+  .hero h1{font-family:'Shippori Mincho',serif;font-size:clamp(25px,6.4vw,36px);
+    line-height:1.85;font-weight:600;letter-spacing:.03em;margin-bottom:24px}
+  .hero h1 .mk{border-bottom:1px solid var(--accent);padding-bottom:5px}
+  .hero .cat{font-size:14px;color:var(--sub);letter-spacing:.1em;margin-bottom:36px}
+  .hero .meta{font-size:12px;color:var(--faint);letter-spacing:.08em;margin-top:30px}
+  .photo{margin:0 auto 40px;max-width:560px;aspect-ratio:16/10;border:1px solid var(--line);
+    background:var(--mist);display:flex;align-items:center;justify-content:center;
+    color:var(--faint);font-size:11.5px;text-align:center;line-height:1.9;padding:20px}
+
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;background:var(--deep);color:#fff;font-weight:500;font-size:14px;
+    padding:16px 34px;border-radius:2px;letter-spacing:.06em;transition:.25s}
+  .btn:hover{background:#4a3c39}
+  .btn small{display:block;font-size:.72rem;font-weight:300;opacity:.8;margin-top:3px;letter-spacing:.04em}
+  .btn.line{background:#06c755}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+
+  .quiet{background:var(--card)}
+  .who ul{max-width:540px;margin:0 auto;list-style:none}
+  .who li{border-bottom:1px solid var(--line);padding:17px 0 17px 28px;position:relative;font-size:14.5px}
+  .who li:last-child{border-bottom:none}
+  .who li::before{content:"";position:absolute;left:4px;top:29px;width:9px;height:1px;background:var(--accent)}
+  .who .close{text-align:center;margin-top:32px;font-size:14.5px}
+
+  .about .box{max-width:580px;margin:0 auto;background:var(--card);border:1px solid var(--line);padding:38px 32px}
+  .about .box p{font-size:14.5px;margin:0}
+  .about .fact{max-width:520px;margin:30px auto 0;text-align:center;font-family:'Shippori Mincho',serif;
+    font-size:clamp(17px,4.2vw,20px);font-weight:600;line-height:1.9;letter-spacing:.04em}
+  .about .fact span{display:block;font-family:'Noto Sans JP';font-size:13.5px;font-weight:400;
+    color:var(--sub);margin-top:12px;letter-spacing:.02em}
+
+  /* 資格 */
+  .cred{background:var(--mist)}
+  .cred .box{max-width:580px;margin:0 auto;background:var(--card);border:1px solid var(--line);padding:38px 32px}
+  .cred .who{text-align:center;border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:26px}
+  .cred .who .nm{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:600;margin-bottom:14px}
+  .cred .who .q{display:block;font-size:13px;color:var(--sub);line-height:2.1}
+  .cred .who .q b{color:var(--ink);font-weight:600}
+  .cred p{font-size:14.5px}
+  .cred .pull{text-align:center;font-family:'Shippori Mincho',serif;font-size:16px;
+    font-weight:600;line-height:1.9;margin-top:24px;letter-spacing:.03em}
+
+  .flow{background:var(--card)}
+  .flow .fs{display:flex;gap:20px;align-items:flex-start;max-width:540px;margin:0 auto}
+  .flow .fs .nn{flex:none;width:32px;height:32px;border:1px solid var(--accent);color:var(--accent);
+    display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-size:1rem;
+    border-radius:50%;position:relative;background:var(--card)}
+  .flow .fs:not(:last-child) .nn::after{content:"";position:absolute;top:33px;left:50%;width:1px;
+    height:44px;background:var(--line);transform:translateX(-50%)}
+  .flow .fs .tx{padding-bottom:30px}
+  .flow .fs .tx b{font-family:'Shippori Mincho',serif;font-size:15.5px;display:block;margin-bottom:3px}
+  .flow .fs .tx p{font-size:13.5px;color:var(--sub);margin:0;line-height:1.85}
+  .flow .note{text-align:center;font-size:13px;color:var(--sub);margin-top:12px}
+
+  .price table{width:100%;max-width:520px;margin:0 auto;border-collapse:collapse;background:var(--card)}
+  .price th,.price td{padding:16px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  .price thead th{background:var(--mist);font-family:'Shippori Mincho',serif;font-weight:600;font-size:12.5px;
+    letter-spacing:.08em;color:var(--sub)}
+  .price tbody th{text-align:left;font-weight:500}
+  .price td{text-align:right;font-variant-numeric:tabular-nums}
+  .price .sub th{padding-left:30px;color:var(--sub);font-weight:400;font-size:13.5px}
+  .price tr:last-child th,.price tr:last-child td{border-bottom:none}
+  .price .tax{text-align:center;font-size:11.5px;color:var(--faint);margin-top:12px;line-height:1.9}
+
+  /* 化粧品カウンセリング */
+  .counsel{background:var(--deep);color:#f3ebe8}
+  .counsel h2{color:#fff}
+  .counsel .en{color:#dda9a0}
+  .counsel .box{max-width:580px;margin:0 auto;border:1px solid #564743;padding:40px 32px;background:rgba(255,255,255,.03)}
+  .counsel .kicker{text-align:center;font-family:'Shippori Mincho',serif;font-size:clamp(19px,4.7vw,23px);
+    font-weight:600;line-height:1.8;letter-spacing:.03em;color:#fff;margin-bottom:10px}
+  .counsel .pr{text-align:center;font-size:14px;color:#dda9a0;letter-spacing:.06em;margin-bottom:30px}
+  .counsel .nosell{text-align:center;font-family:'Shippori Mincho',serif;font-size:clamp(18px,4.4vw,21px);
+    font-weight:600;color:#fff;border-top:1px solid #564743;border-bottom:1px solid #564743;
+    padding:24px 0;margin-bottom:30px;letter-spacing:.05em}
+  .counsel p{font-size:14px;color:#d6c9c5;margin:0}
+  .counsel ul{list-style:none;margin:26px 0 0}
+  .counsel li{font-size:13.5px;color:#d6c9c5;padding:11px 0 11px 20px;position:relative;border-bottom:1px solid #453936}
+  .counsel li:last-child{border-bottom:none}
+  .counsel li::before{content:"—";position:absolute;left:0;color:#8c7773}
+  .counsel .cq{text-align:center;font-size:13px;color:#c6b6b1;margin-top:28px;line-height:2}
+  .counsel .cq b{color:#fff}
+  .counsel .order{max-width:580px;margin:22px auto 0;border:1px dashed #564743;padding:24px 26px;text-align:center}
+  .counsel .order b{display:block;font-family:'Shippori Mincho',serif;color:#fff;font-size:15px;margin-bottom:10px}
+  .counsel .order p{font-size:13px;color:#c6b6b1}
+
+  .voice{background:var(--mist)}
+  .voice .card{max-width:560px;margin:0 auto 14px;background:var(--card);border:1px solid var(--line);padding:26px 28px}
+  .voice .card p{font-size:14px;color:var(--sub);margin:0}
+  .voice .card small{display:block;color:var(--faint);font-size:11.5px;margin-top:14px;text-align:right}
+  .voice .ph{border:1px dashed var(--accent);background:#fbf5f3;text-align:center;color:#8c5750;
+    font-size:13px;padding:34px 26px;max-width:560px;margin:0 auto;line-height:2}
+
+  .faq{background:var(--card)}
+  .faq dl{max-width:560px;margin:0 auto}
+  .faq dt{font-family:'Shippori Mincho',serif;font-size:15.5px;font-weight:600;
+    padding:26px 0 8px;border-top:1px solid var(--line)}
+  .faq dt:first-of-type{border-top:none;padding-top:0}
+  .faq dd{font-size:13.5px;color:var(--sub);line-height:1.95;padding-bottom:4px}
+
+  .info{background:var(--mist)}
+  .info .moved{max-width:560px;margin:0 auto 26px;border:1px solid var(--accent);
+    background:var(--card);padding:22px 24px;text-align:center}
+  .info .moved b{font-family:'Shippori Mincho',serif;font-size:16px;display:block;margin-bottom:6px}
+  .info .moved p{font-size:13px;color:var(--sub);margin:0}
+  .info table{width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line)}
+  .info th,.info td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px}
+  .info tr:last-child th,.info tr:last-child td{border-bottom:none}
+  .info th{width:34%;font-weight:500;color:var(--sub);background:#fdf9f8}
+  .mapbtn{text-align:center;margin-top:18px}
+
+  .last{background:var(--deep);color:#f3ebe8;text-align:center;padding:78px 0}
+  .last h2{color:#fff}
+  .last .en{color:#dda9a0}
+  .last p{font-size:14px;color:#cdbfbb;margin-bottom:32px}
+  .last .btn{background:#fff;color:var(--deep)}
+  .last .btn.line{background:#06c755;color:#fff}
+
+  footer{background:#241d1c;color:#8f8580;text-align:center;padding:34px 24px;font-size:12px;line-height:2}
+  footer b{color:#eae0dc;font-family:'Shippori Mincho',serif;font-weight:600}
+
+  .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1.4fr;
+    gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+  .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:500}
+  .bar a.main{background:#06c755;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="movebar">2026年8月、<b>【新住所の町名】</b>へ移転しました　<span class="tbd" style="background:rgba(255,255,255,.1);border-color:#8a706b;color:#dda9a0">町名を記入</span></div>
+
+<div class="hdr">
+  <div class="lg">いつき整体院<small>BEAUTY ACUPUNCTURE</small></div>
+  <nav>
+    <a href="#about">当院の美容鍼</a>
+    <a href="#cred">担当者</a>
+    <a href="#price">料金</a>
+    <a href="#counsel">化粧品相談</a>
+    <a href="#access">アクセス</a>
+  </nav>
+  <a href="./" style="font-size:11.5px;color:#6f6560;margin-right:14px">ピラティス整体→</a><a class="resv" href="#yoyaku">ご予約</a>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="ey">BEAUTY ACUPUNCTURE</p>
+    <h1>鍼と、その後の<br><span class="mk">スキンケアまで。</span></h1>
+    <p class="cat">コスメコンシェルジュが担当する美容鍼</p>
+    <div class="photo">［ 写真：施術中の手元、または院内 ］<br>顔出しは不要</div>
+    <div class="btns">
+      <a class="btn" href="#yoyaku">ご予約はこちら</a>
+      <a class="btn ghost" href="#yoyaku">LINEで相談する</a>
+    </div>
+    <p class="meta">【新住所の町名】｜駐車場あり｜完全予約制</p>
+  </div>
+</header>
+
+<section class="sec quiet who fade">
+  <div class="wrap">
+    <h2>こんなことはありませんか</h2>
+    <span class="en">Concern</span>
+    <ul>
+      <li>夕方になると、顔がぼんやりして見える</li>
+      <li>化粧のりが以前と違う</li>
+      <li>目の下や口もとが気になり始めた</li>
+      <li>スキンケアは変えていないのに、肌の調子が上がらない</li>
+    </ul>
+    <p class="close">年齢のせいだと片づける前に、<br>顔とつながっている<b>首・肩・頭</b>の状態を見てみませんか。</p>
+  </div>
+</section>
+
+<section class="sec about fade" id="about">
+  <div class="wrap">
+    <h2>当院の美容鍼</h2>
+    <span class="en">Our Approach</span>
+    <div class="box">
+      <p>顔だけを扱いません。<b>目元・頭・首まで含めて</b>整えます。</p>
+      <p>デスクワークやスマホで固まった首や、食いしばりで張った顔まわりは、顔の印象に直結します。</p>
+    </div>
+    <p class="fact">通ってくださっている方が多い施術です。<span>当院で受けた方の多くが、2回目以降も続けてくださっています。</span></p>
+  </div>
+</section>
+
+<section class="sec cred fade" id="cred">
+  <div class="wrap">
+    <h2>施術のあと、何を使えばいいかまで<br>相談できます</h2>
+    <span class="en">Cosme Concierge</span>
+    <div class="box">
+      <div class="who">
+        <div class="nm">担当　<span class="tbd">スタッフ名を記入</span></div>
+        <span class="q">
+          鍼灸師（国家資格）<br>
+          <b>日本化粧品検定協会認定 コスメコンシェルジュ</b><br>
+          （化粧品検定1級の上位にあたる認定資格）<br>
+          <b>美肌スペシャリスト</b><br>
+          <span class="tbd">資格の正式表記を認定証で確認</span>
+        </span>
+      </div>
+      <p>美容鍼で整えたあと、ご自宅で何をどう使えばいいのか。合わない化粧品を使っていないか。そこまで含めてご相談いただけます。</p>
+      <p class="pull">「高い化粧品に変えたほうがいいですか」<br>という質問にも、売るためではなくお答えします。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec flow fade">
+  <div class="wrap">
+    <h2>施術の流れ</h2>
+    <span class="en">Treatment</span>
+    <div class="fs"><div class="nn">1</div><div class="tx"><b>カウンセリング（約10分）</b><p>お悩みと、普段の姿勢・お仕事の様子をうかがいます。</p></div></div>
+    <div class="fs"><div class="nn">2</div><div class="tx"><b>首・肩の調整</b><p>顔の土台を先に整えます。</p></div></div>
+    <div class="fs"><div class="nn">3</div><div class="tx"><b>美容鍼</b><p>髪の毛ほどの細さの鍼を使います。</p></div></div>
+    <div class="fs"><div class="nn">4</div><div class="tx"><b>仕上げ・ご説明</b><p>次回までの過ごし方をお伝えします。</p></div></div>
+    <p class="note">所要時間 <span class="tbd">分数を記入</span>／お化粧のままお越しいただけます <span class="tbd">要確認</span></p>
+  </div>
+</section>
+
+<section class="sec price fade" id="price">
+  <div class="wrap">
+    <h2>料金</h2>
+    <span class="en">Price</span>
+    <table>
+      <thead><tr><th>メニュー</th><th style="text-align:right">料金</th></tr></thead>
+      <tbody>
+        <tr><th>美容鍼フルカバー（初回）</th><td>9,900円</td></tr>
+        <tr><th>美容鍼（2回目以降）</th><td>5,500円</td></tr>
+        <tr><th>化粧品カウンセリング（30分）</th><td>3,300円</td></tr>
+        <tr class="sub"><th>└ 美容鍼と同じ日</th><td>2,200円</td></tr>
+      </tbody>
+    </table>
+    <p class="tax">※税込<br><span class="tbd">金額は会計データからの推定。正しい金額に要修正</span></p>
+  </div>
+</section>
+
+<section class="sec counsel fade" id="counsel">
+  <div class="wrap">
+    <h2>化粧品カウンセリング</h2>
+    <span class="en">Cosmetics Counseling</span>
+    <div class="box">
+      <p class="kicker">コスメコンシェルジュが、<br>何も売らずに見直します</p>
+      <p class="pr">30分　3,300円</p>
+      <p class="nosell">化粧品を売る資格も知識もあります。<br>でも、この30分では何も売りません。</p>
+      <p>お手持ちのものを拝見して、<b style="color:#fff">使う順番・量・組み合わせ</b>をお伝えします。多くの場合、買い替えなくても変わります。</p>
+      <p style="margin-top:1.2em">「これを買ってください」とは申しません。市販で買えるものは、<b style="color:#fff">どこで買えるかをお伝えします。</b></p>
+      <ul>
+        <li>お手持ちの化粧品をお持ちください（写真でも構いません）</li>
+        <li>お化粧をしたままお越しいただけます</li>
+        <li>美容鍼と同じ日に受けていただくこともできます</li>
+      </ul>
+      <p class="cq">担当は<b>日本化粧品検定協会認定 コスメコンシェルジュ／美肌スペシャリスト</b>の<br>資格を持つ施術者です。</p>
+    </div>
+    <div class="order">
+      <b>お取り寄せ（ご希望の方のみ）</b>
+      <p>当院に在庫は置いていませんが、「これを試したい」というものがあれば<b style="color:#fff">定価でお取り寄せ</b>できます。ご希望があれば、とお声がけください。<br><b style="color:#fff">こちらからお勧めすることはありません。</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec voice fade">
+  <div class="wrap">
+    <h2>お客様の声</h2>
+    <span class="en">Voice</span>
+    <div class="ph">
+      ここに実際のお声を3件掲載します。<br>
+      <b>年代／来院のきっかけ／続けている理由</b> の3点が入る形で。<br>
+      「効果があった」より「通いやすい」「相談しやすい」の声のほうが安全で、実は響きます。<br>
+      <span class="tbd" style="margin-top:10px">実際のお声を3件いただいたら差し替え</span>
+    </div>
+  </div>
+</section>
+
+<section class="sec faq fade">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <span class="en">Questions</span>
+    <dl>
+      <dt>痛くありませんか。</dt>
+      <dd>髪の毛ほどの細い鍼を使います。ちくっとする程度で、痛みが苦手な方にも受けていただいています。</dd>
+      <dt>内出血はしますか。</dt>
+      <dd>まれに小さな内出血が出ることがあります。数日で消えますが、大事なご予定の前は事前にご相談ください。</dd>
+      <dt>どのくらいの間隔で通えばいいですか。</dt>
+      <dd><span class="tbd">実際の案内に合わせて記入</span></dd>
+      <dt>いま使っている化粧品を見てもらえますか。</dt>
+      <dd>はい。お持ちいただければ拝見します。使う順番や量だけで変わることもあります。</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="sec info fade" id="access">
+  <div class="wrap">
+    <h2>アクセス</h2>
+    <span class="en">Access</span>
+    <div class="moved">
+      <b>移転しました</b>
+      <p>2026年8月より、下記に移転しております。</p>
+    </div>
+    <table>
+      <tr><th>住所</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>最寄り</th><td><span class="tbd">バス停・駅からの道順</span></td></tr>
+      <tr><th>駐車場</th><td><span class="tbd">台数・場所</span></td></tr>
+      <tr><th>営業時間</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>休診日</th><td><span class="tbd">要記入</span></td></tr>
+      <tr><th>ご予約</th><td>完全予約制（ホットペッパー／LINE） <span class="tbd">URL記入</span></td></tr>
+    </table>
+    <div class="mapbtn"><a class="btn ghost" href="#" style="font-size:12.5px;padding:13px 26px">地図を開く <span class="tbd">URL記入</span></a></div>
+  </div>
+</section>
+
+<section class="last" id="yoyaku">
+  <div class="wrap">
+    <h2>「相談だけ」でも構いません。</h2>
+    <span class="en">Reservation</span>
+    <p>ご予約の日時が決まっていなくても、<br>LINEで「相談だけ」でも構いません。</p>
+    <div class="btns">
+      <a class="btn" href="#">ご予約はこちら<small>ホットペッパー</small></a>
+      <a class="btn line" href="#">LINEで相談する</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <b>いつき整体院（分院）</b>｜美容鍼・化粧品カウンセリング・整体・ピラティス整体<br>
+  2026年8月移転　<span class="tbd" style="background:rgba(255,255,255,.06);border-color:#6f625e;color:#cbbdb8">新住所・電話・営業時間を記入</span><br>
+  © いつき整体院
+</footer>
+
+<div class="bar">
+  <a href="#access">アクセス</a>
+  <a class="main" href="#yoyaku">ご予約・ご相談</a>
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){
+    if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.1});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
