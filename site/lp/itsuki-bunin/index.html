@@ -209,9 +209,17 @@
   .talk{background:var(--mist)}
   .talk .box{max-width:560px;margin:0 auto;text-align:center}
   .talk .box p{font-size:14.5px}
-  .talk .said2{font-family:'Shippori Mincho',serif;font-size:clamp(16px,4.1vw,19.5px);
-    color:var(--sub);line-height:2.15;letter-spacing:.05em;
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:24px 0}
+  .talk .asks{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:28px 0;margin:26px 0}
+  .talk .asks p{font-family:'Shippori Mincho',serif;font-size:clamp(16px,4.1vw,19.5px);
+    color:var(--ink);line-height:2.1;letter-spacing:.05em;margin:0}
+  .talk .says{list-style:none;max-width:440px;margin:26px auto;text-align:left}
+  .talk .says li{font-size:14px;color:var(--sub);padding:12px 0 12px 22px;position:relative;
+    border-bottom:1px dashed var(--line);line-height:1.85}
+  .talk .says li:last-child{border-bottom:none}
+  .talk .says li::before{content:"“";position:absolute;left:0;top:14px;color:var(--accent);
+    font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1}
+  .talk .cl{font-family:'Shippori Mincho',serif;font-size:clamp(16px,4vw,18.5px);font-weight:600;
+    line-height:1.95;letter-spacing:.04em;margin-top:30px}
 </style>
 </head>
 <body>
@@ -292,13 +300,22 @@
 
 <section class="sec talk fade">
   <div class="wrap">
-    <h2>問診では、ありません。</h2>
+    <h2>聞くのは、2つだけ。</h2>
     <span class="en">Conversation</span>
     <div class="box">
-      <p class="st">マンツーマンで、毎回おなじ担当がつきます。<br>体に触れながら話しているうちに、聞かれてもいないことまで、つい話してしまう。</p>
-      <p class="said2 st">「今週、こんなことがあって」<br>「そういえば、生理前がしんどくて」</p>
-      <p class="st">病院に行くほどではないけれど、なんとなく気になっていること。<br>話せる場所は、意外と少ないと思います。</p>
-      <p class="st">体の状態は、その週の過ごし方とつながっています。<br><b>雑談のようなその話が、いちばんの手がかりになります。</b></p>
+      <div class="asks st">
+        <p>「先週から、変わったことはありましたか」<br>「今日の体調は、どうですか」</p>
+      </div>
+      <p class="st">それだけです。あとは、自然と出てきます。</p>
+      <ul class="says st">
+        <li>頭痛がひどい日があって、痛み止めを飲みました</li>
+        <li>忙しくて、ジムに行けませんでした</li>
+        <li>会食が続いて、外食ばかりで</li>
+        <li>納期が迫っていて、寝不足です</li>
+      </ul>
+      <p class="st">問診ではありません。ただの雑談です。<br>でも、先週の過ごし方は、そのまま今日の体に出ています。</p>
+      <p class="st">病院に行くほどではないけれど、なんとなく気になっていること。<br>そういう話ができる場所は、意外と少ないと思います。</p>
+      <p class="cl st">その雑談が、いちばんの手がかりになります。</p>
     </div>
   </div>
 </section>
