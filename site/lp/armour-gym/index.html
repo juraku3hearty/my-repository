@@ -215,9 +215,13 @@
   .bar a.main{background:#06c755;color:#fff}
 
   /* 受付状況（body[data-status] で切替） */
-  .status{border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);text-align:center;padding:18px 20px;
-    font-size:12.5px;letter-spacing:.14em;background:var(--ink2)}
-  .status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:10px;vertical-align:middle}
+  .status{background:var(--ink2);text-align:center;padding:54px 24px;border-top:1px solid var(--hair)}
+  .status .box{max-width:520px;margin:0 auto;border:1px solid var(--gold);padding:30px 26px}
+  .status .lb{font-family:'Jost',sans-serif;font-weight:400;font-size:10.5px;letter-spacing:.42em;color:var(--gold);margin-bottom:12px}
+  .status .hd{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:clamp(16px,4.2vw,19px);
+    letter-spacing:.13em;line-height:1.9;color:#fff}
+  .status .sb{font-size:12.5px;color:var(--tx-d);margin-top:12px;line-height:2.1}
+  .status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:10px;vertical-align:middle;position:relative;top:-2px}
   .status .open .dot{background:#5ec27a}
   .status .wait .dot{background:var(--gold-l)}
   body[data-status="open"] .wait,body[data-status="wait"] .open{display:none}
@@ -258,8 +262,17 @@
 </header>
 
 <div class="status">
-  <span class="open"><span class="dot"></span>現在、新規の方を受け付けています</span>
-  <span class="wait"><span class="dot"></span>現在、新規はキャンセル待ちです ── LINEで順番待ちを承ります</span>
+  <div class="box">
+    <div class="lb">NOW</div>
+    <div class="open">
+      <div class="hd"><span class="dot"></span>現在、新規の方を受け付けています</div>
+      <p class="sb">会員数によっては、新規のお申し込みが<br>キャンセル待ちになることがあります。</p>
+    </div>
+    <div class="wait">
+      <div class="hd"><span class="dot"></span>現在、新規はキャンセル待ちです</div>
+      <p class="sb">空きが出しだい、順番にご案内します。<br>LINEでお待ちいただけます。</p>
+    </div>
+  </div>
 </div>
 
 <section class="sec trial body fade" id="taiken">
@@ -272,7 +285,7 @@
     <p class="st">そして、正直に書いておきます。<br>体験に時間を使うと、そのぶん<b>通ってくださっている方の時間が減ります</b>。<br>「とりあえず試したい」という方には、向いていません。</p>
     <p class="pull">続けるつもりで<br>来てくださる方に、<br><em>しっかり時間を使いたい</em>。</p>
     <div class="amt" style="margin-top:56px"><span class="tbd">体験料金を記入</span></div>
-    <p class="status-inline"><span class="open">受付状況：新規受付中</span><span class="wait">受付状況：キャンセル待ち（順番待ちはLINEで）</span></p>
+    <p class="status-inline"><span class="open">受付状況：新規受付中<br><span style="font-size:11.5px;letter-spacing:.06em">会員数によっては、キャンセル待ちになることがあります</span></span><span class="wait">受付状況：キャンセル待ち<br><span style="font-size:11.5px;letter-spacing:.06em">順番待ちはLINEで承ります</span></span></p>
     <div class="btns">
       <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
       <a class="btn wire" href="tel:0123294610">お電話で相談する</a>
