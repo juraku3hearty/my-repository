@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0d0c0b; --ink2:#141312;
+    --ink:#161513; --ink2:#1c1b19;
     --tx:#ece8e0; --tx-d:#b0a99e;
     --gold:#b0914f; --gold-l:#d5ba86;
     --hair:rgba(231,226,217,.13);
@@ -26,6 +26,13 @@
   .wrap{max-width:660px;margin:0 auto;padding:0 28px}
   .sec{padding:116px 0}
   .alt{background:var(--ink2)}
+  .lt{background:#f6f3ee;color:#1b1a18;--tx:#1b1a18;--tx-d:#5f5950;--gold-l:#8f7134;--hair:rgba(27,26,24,.14)}
+  .lt h2,.lt .pull,.lt .who .close{color:#1b1a18}
+  .lt .pull em{color:#8f7134}
+  .lt .btn.wire{border-color:rgba(27,26,24,.45);color:#1b1a18}
+  .lt .btn.wire:hover{background:#1b1a18;color:#f6f3ee}
+  .lt .tbd{color:#8f7134;border-color:#b0914f}
+  .lt .flow .nn{background:#f6f3ee}
   h2{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:clamp(20px,4.7vw,25px);
     text-align:center;line-height:2.05;letter-spacing:.15em;margin-bottom:16px}
   .en{display:block;text-align:center;font-family:'Jost',sans-serif;font-weight:400;font-size:11.5px;
@@ -47,7 +54,7 @@
 
   /* header */
   .hdr{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;
-    padding:14px 22px;background:rgba(13,12,11,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
+    padding:14px 22px;background:rgba(22,21,19,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--hair)}
   .hdr .lg{display:flex;align-items:center;gap:11px}
   .hdr .lg img{width:29px;height:29px;object-fit:contain;background:#fff}
   .hdr .lg b{font-family:'Jost',sans-serif;font-weight:400;font-size:12px;letter-spacing:.26em;line-height:1.35}
@@ -62,7 +69,7 @@
   /* hero */
   .hero{position:relative;min-height:96vh;display:flex;align-items:center;justify-content:center;
     text-align:center;overflow:hidden;
-    background:linear-gradient(rgba(9,8,7,.48),rgba(9,8,7,.8)),
+    background:linear-gradient(rgba(12,11,10,.26),rgba(12,11,10,.64)),
       url('https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535685_0.jpg') center/cover no-repeat}
   .hero .inner{position:relative;z-index:2;padding:116px 28px}
   .hero .mark{width:60px;margin:0 auto 42px;background:#fff;padding:7px}
@@ -186,7 +193,7 @@
   .mapbtn{text-align:center;margin-top:42px}
 
   .last{text-align:center;padding:132px 0;
-    background:linear-gradient(rgba(9,8,7,.7),rgba(9,8,7,.87)),
+    background:linear-gradient(rgba(12,11,10,.48),rgba(12,11,10,.76)),
       url('https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535683.jpg') center/cover}
   .last h2{color:#fff}
   .last p{font-size:14.5px;color:var(--tx-d);margin-bottom:46px;line-height:2.45}
@@ -201,7 +208,7 @@
     font-weight:400;letter-spacing:.18em;font-size:11.5px}
 
   .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1.5fr;
-    background:rgba(13,12,11,.96);backdrop-filter:blur(12px);border-top:1px solid var(--hair);z-index:100}
+    background:rgba(22,21,19,.96);backdrop-filter:blur(12px);border-top:1px solid var(--hair);z-index:100}
   .bar a{text-align:center;padding:13px 4px;font-size:12px;font-weight:500;color:var(--tx);letter-spacing:.11em;
     border-right:1px solid var(--hair)}
   .bar a:last-child{border-right:none}
@@ -258,7 +265,7 @@
   </div>
 </section>
 
-<section class="sec alt who fade" id="concern">
+<section class="sec lt who fade" id="concern">
   <div class="wrap">
     <h2>こんな方に</h2>
     <span class="en">For You</span>
@@ -276,7 +283,7 @@
 
 <div class="band studio"></div>
 
-<section class="sec body fade" id="studio">
+<section class="sec lt body fade" id="studio">
   <div class="wrap">
     <h2>本格的なマシンが、<br>揃っています</h2>
     <span class="en">Studio</span>
@@ -290,7 +297,7 @@
   </div>
 </section>
 
-<section class="sec alt body fade" id="self">
+<section class="sec body fade" id="self">
   <div class="wrap">
     <h2>教わるだけでは、<br>身につきません</h2>
     <span class="en">Personal &amp; Self</span>
@@ -301,7 +308,7 @@
   </div>
 </section>
 
-<section class="sec body fade" id="gym">
+<section class="sec alt body fade" id="gym">
   <div class="wrap">
     <h2>トレーニングジムも、併設</h2>
     <span class="en">Training Gym</span>
@@ -318,7 +325,7 @@
   </div>
 </section>
 
-<section class="sec alt body fade" id="kids">
+<section class="sec lt body fade" id="kids">
   <div class="wrap">
     <h2>レッスン中の、<br>お子さまのお預かり</h2>
     <span class="en">With Kids</span>
@@ -386,7 +393,7 @@
   </div>
 </section>
 
-<section class="sec flow fade">
+<section class="sec lt flow fade">
   <div class="wrap">
     <h2>はじめての方の流れ</h2>
     <span class="en">First Visit</span>
@@ -399,7 +406,7 @@
   </div>
 </section>
 
-<section class="sec alt voice fade" id="voice">
+<section class="sec voice fade" id="voice">
   <div class="wrap">
     <h2>通ってくださっている方の声</h2>
     <span class="en">Voice</span>
@@ -412,7 +419,7 @@
   </div>
 </section>
 
-<section class="sec faq fade">
+<section class="sec lt faq fade">
   <div class="wrap">
     <h2>よくある質問</h2>
     <span class="en">Questions</span>
@@ -441,7 +448,7 @@
   </div>
 </section>
 
-<section class="sec alt info fade" id="access">
+<section class="sec info fade" id="access">
   <div class="wrap">
     <h2>スタジオのご案内</h2>
     <span class="en">Access</span>
