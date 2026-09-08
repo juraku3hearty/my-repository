@@ -181,7 +181,7 @@
   footer{background:#211f1c;color:#8d867c;text-align:center;padding:34px 24px;font-size:12px;line-height:2}
   footer b{color:#e8e0d3;font-family:'Shippori Mincho',serif;font-weight:600}
 
-  .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1.4fr;
+  .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1.6fr;
     gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
   .bar a{background:#fff;text-align:center;padding:12px 4px;font-size:11.5px;color:var(--ink);font-weight:500}
   .bar a.main{background:#06c755;color:#fff}
@@ -238,6 +238,19 @@
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;margin:26px 0}
   .own .cl{font-family:'Shippori Mincho',serif;font-size:clamp(17px,4.2vw,20px);font-weight:600;
     line-height:1.95;letter-spacing:.04em;margin-top:32px}
+
+  /* 中盤CTA */
+  .midcta{background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    text-align:center;padding:58px 0}
+  .midcta .hd{font-family:'Shippori Mincho',serif;font-size:clamp(17px,4.2vw,20.5px);font-weight:600;
+    letter-spacing:.04em;line-height:1.9;margin-bottom:10px}
+  .midcta .s{font-size:13px;color:var(--sub);margin-bottom:28px}
+  /* お客様の声 */
+  .voice{background:var(--mist)}
+  .voice .ph{max-width:560px;margin:0 auto;border:1px dashed var(--accent);background:#fdfaf4;
+    text-align:center;color:#8a6740;font-size:13px;padding:34px 26px;line-height:2}
+  .last .btn.tel{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45)}
+  .last .btn.tel:hover{background:rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -250,6 +263,7 @@
     <a href="#why">戻る理由</a>
     <a href="#form">ピラティス整体</a>
     <a href="#flow">初回の流れ</a>
+    <a href="#voice">お客様の声</a>
     <a href="#price">料金</a>
     <a href="#access">アクセス</a>
   </nav>
@@ -365,6 +379,17 @@
   </div>
 </section>
 
+<section class="midcta fade">
+  <div class="wrap">
+    <p class="hd">まず1回、乗ってみてください。</p>
+    <p class="s">続けるかどうかは、そのあとで決めていただけます。</p>
+    <div class="btns">
+      <a class="btn" href="#yoyaku">初回 7,700円で試す</a>
+      <a class="btn ghost" href="#yoyaku">LINEで相談する</a>
+    </div>
+  </div>
+</section>
+
 <section class="sec who fade">
   <div class="wrap">
     <h2>こんな方に</h2>
@@ -389,6 +414,19 @@
     <div class="fs st"><div class="nn">4</div><div class="tx"><b>ピラティス</b><p>緩んだ状態で、正しい動かし方を体に入れます。</p></div></div>
     <div class="fs st"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>何回くらいで、どこまで変わるか。今日から気をつけることを1つだけお伝えします。</p></div></div>
     <p class="note">所要時間 <span class="tbd">分数を記入</span>／動きやすい服装でお越しください（お着替えの場所 <span class="tbd">あり／なし</span>）</p>
+  </div>
+</section>
+
+<section class="sec voice fade" id="voice">
+  <div class="wrap">
+    <h2>通ってくださっている方の声</h2>
+    <span class="en">Voice</span>
+    <div class="ph">
+      ここに実際のお声を掲載します。<br>
+      <b>「戻らなくなった」方の言葉</b>がいちばん効きます。<br>
+      30回・10回と続けてくださっている方に、一言いただけると理想的です。<br>
+      <span class="tbd" style="margin-top:10px">実際のお声をいただいたら差し替え</span>
+    </div>
   </div>
 </section>
 
@@ -454,6 +492,7 @@
     <div class="btns">
       <a class="btn" href="#">初回 7,700円で試す<small>ホットペッパー</small></a>
       <a class="btn line" href="#">LINEで相談する</a>
+      <a class="btn tel" href="#">お電話でご予約<small><span class="tbd" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4);color:#fff">番号を記入</span></small></a>
     </div>
   </div>
 </section>
@@ -465,6 +504,7 @@
 </footer>
 
 <div class="bar">
+  <a href="#">電話</a>
   <a href="#access">アクセス</a>
   <a class="main" href="#yoyaku">ご予約・ご相談</a>
 </div>
