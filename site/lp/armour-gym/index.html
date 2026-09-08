@@ -213,9 +213,18 @@
     border-right:1px solid var(--hair)}
   .bar a:last-child{border-right:none}
   .bar a.main{background:#06c755;color:#fff}
+
+  /* 受付状況（body[data-status] で切替） */
+  .status{border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);text-align:center;padding:18px 20px;
+    font-size:12.5px;letter-spacing:.14em;background:var(--ink2)}
+  .status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:10px;vertical-align:middle}
+  .status .open .dot{background:#5ec27a}
+  .status .wait .dot{background:var(--gold-l)}
+  body[data-status="open"] .wait,body[data-status="wait"] .open{display:none}
+  .status-inline{font-size:12.5px;letter-spacing:.12em;color:var(--tx-d);margin-top:-18px;margin-bottom:40px;text-align:center}
 </style>
 </head>
-<body>
+<body data-status="open"><!-- 受付状況: data-status を "open"（新規受付中）か "wait"（キャンセル待ち）に -->
 
 <div class="hdr">
   <div class="lg">
@@ -248,6 +257,11 @@
   <div class="scrollcue">SCROLL</div>
 </header>
 
+<div class="status">
+  <span class="open"><span class="dot"></span>現在、新規の方を受け付けています</span>
+  <span class="wait"><span class="dot"></span>現在、新規はキャンセル待ちです ── LINEで順番待ちを承ります</span>
+</div>
+
 <section class="sec trial body fade" id="taiken">
   <div class="wrap">
     <h2>体験用の、<br>決まったメニューはありません</h2>
@@ -258,6 +272,7 @@
     <p class="st">そして、正直に書いておきます。<br>体験に時間を使うと、そのぶん<b>通ってくださっている方の時間が減ります</b>。<br>「とりあえず試したい」という方には、向いていません。</p>
     <p class="pull">続けるつもりで<br>来てくださる方に、<br><em>しっかり時間を使いたい</em>。</p>
     <div class="amt" style="margin-top:56px"><span class="tbd">体験料金を記入</span></div>
+    <p class="status-inline"><span class="open">受付状況：新規受付中</span><span class="wait">受付状況：キャンセル待ち（順番待ちはLINEで）</span></p>
     <div class="btns">
       <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
       <a class="btn wire" href="tel:0123294610">お電話で相談する</a>
