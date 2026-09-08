@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>ARMOUR GYM pilates studio｜千歳のマシンピラティス＆ジム</title>
+<meta name="description" content="千歳市幸町のピラティススタジオ。CORE REVOのマシンを揃えたパーソナルピラティスと、本格的なトレーニングジムをひとつの場所で。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;1,300&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#171614; --sub:#6a655d; --faint:#9d968c;
+    --gold:#bf9b57; --gold-l:#d6b87c; --black:#141311; --soft:#f6f4f0;
+    --line:#e5e0d8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--bg);
+    line-height:1.95;-webkit-font-smoothing:antialiased;letter-spacing:.02em;font-size:15px;padding-bottom:60px}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  .wrap{max-width:700px;margin:0 auto;padding:0 24px}
+  .sec{padding:74px 0}
+  h2{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:clamp(21px,5.1vw,28px);
+    text-align:center;line-height:1.7;margin-bottom:8px;letter-spacing:.03em}
+  .en{display:block;text-align:center;font-family:'Jost',sans-serif;font-weight:300;font-style:italic;
+    font-size:12.5px;letter-spacing:.38em;color:var(--gold);text-transform:uppercase;margin-bottom:36px}
+  .lead{text-align:center;color:var(--sub);font-size:14px;margin-bottom:34px}
+  .tbd{display:inline-block;background:#fbf4e6;border:1px dashed var(--gold);color:#8f6c26;
+    border-radius:4px;padding:0 8px;font-size:.76em;white-space:nowrap}
+  .fade{opacity:0;transform:translateY(22px);transition:opacity .95s cubic-bezier(.22,.7,.3,1),transform .95s cubic-bezier(.22,.7,.3,1)}
+  .fade.on{opacity:1;transform:none}
+  .fade .st{opacity:0;transform:translateY(14px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+  .fade.on .st{opacity:1;transform:none}
+  .fade.on .st:nth-child(1){transition-delay:.06s}.fade.on .st:nth-child(2){transition-delay:.14s}
+  .fade.on .st:nth-child(3){transition-delay:.22s}.fade.on .st:nth-child(4){transition-delay:.30s}
+  .fade.on .st:nth-child(5){transition-delay:.38s}.fade.on .st:nth-child(6){transition-delay:.46s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .hero .anim{opacity:0;transform:translateY(20px);animation:rise 1.05s cubic-bezier(.22,.7,.3,1) forwards}
+  @media (prefers-reduced-motion:reduce){
+    .fade,.fade .st,.hero .anim{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}}
+
+  /* ヘッダー */
+  .hdr{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;
+    padding:10px 18px;background:rgba(20,19,17,.92);backdrop-filter:blur(10px)}
+  .hdr .lg{display:flex;align-items:center;gap:10px}
+  .hdr .lg img{width:34px;height:34px;object-fit:contain;background:#fff;border-radius:2px}
+  .hdr .lg span{font-family:'Jost',sans-serif;color:#fff;font-size:13px;letter-spacing:.16em;line-height:1.2}
+  .hdr .lg small{display:block;font-family:'Jost',sans-serif;font-size:8.5px;letter-spacing:.3em;color:var(--gold-l)}
+  .hdr nav{display:flex;gap:18px}
+  .hdr nav a{color:rgba(255,255,255,.82);font-size:12.5px}
+  .hdr .resv{background:var(--gold);color:#fff;font-weight:500;font-size:12px;padding:9px 16px;border-radius:2px;letter-spacing:.06em}
+  @media(max-width:820px){.hdr nav{display:none}}
+
+  /* ヒーロー */
+  .hero{position:relative;min-height:88vh;display:flex;align-items:center;justify-content:center;
+    text-align:center;overflow:hidden;
+    background:linear-gradient(rgba(15,14,12,.62),rgba(15,14,12,.72)),
+      url('https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535685_0.jpg') center/cover no-repeat}
+  .hero .inner{position:relative;z-index:2;padding:96px 24px}
+  .hero .mark{width:82px;margin:0 auto 26px;background:#fff;padding:8px;border-radius:2px}
+  .hero .ey{font-family:'Jost',sans-serif;font-weight:300;font-style:italic;color:var(--gold-l);
+    font-size:13px;letter-spacing:.4em;margin-bottom:18px}
+  .hero h1{font-family:'Zen Kaku Gothic New',sans-serif;color:#fff;font-size:clamp(25px,6.6vw,38px);
+    line-height:1.65;font-weight:700;letter-spacing:.03em;margin-bottom:20px;text-shadow:0 2px 20px rgba(0,0,0,.4)}
+  .hero h1 .mk{color:var(--gold-l)}
+  .hero .sub{color:rgba(255,255,255,.9);font-size:14.5px;max-width:540px;margin:0 auto 34px;
+    text-shadow:0 1px 10px rgba(0,0,0,.5)}
+  .hero .meta{margin-top:24px;font-size:11.5px;color:rgba(255,255,255,.62);letter-spacing:.08em}
+  .scrollcue{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,.6);font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.32em;z-index:2}
+
+  .btns{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;background:var(--gold);color:#fff;font-weight:500;font-size:14.5px;
+    padding:16px 32px;border-radius:2px;letter-spacing:.05em;transition:.22s}
+  .btn:hover{background:var(--gold-l)}
+  .btn small{display:block;font-size:.72rem;font-weight:300;opacity:.9;margin-top:3px}
+  .btn.line{background:#06c755}
+  .btn.tel{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}
+  .btn.tel:hover{background:rgba(255,255,255,.12)}
+  .btn.dark{background:var(--black)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn.ghost:hover{background:var(--ink);color:#fff}
+
+  /* 体験ボックス（ヒーロー直下） */
+  .trial{background:var(--black);color:#f3efe8;text-align:center;padding:56px 0}
+  .trial h2{color:#fff;margin-bottom:6px}
+  .trial .en{color:var(--gold-l)}
+  .trial .box{max-width:520px;margin:0 auto 26px;border:1px solid #3a352d;padding:32px 26px;background:rgba(255,255,255,.03)}
+  .trial .amt{font-family:'Jost',sans-serif;font-size:clamp(30px,8vw,42px);font-weight:400;
+    color:var(--gold-l);line-height:1.2;letter-spacing:.02em}
+  .trial .box p{font-size:13.5px;color:#c5bdb0;margin-top:14px;line-height:1.9}
+
+  /* 悩み */
+  .who{background:var(--soft)}
+  .who ul{max-width:540px;margin:0 auto;list-style:none}
+  .who li{background:#fff;border:1px solid var(--line);padding:16px 20px 16px 44px;margin-bottom:10px;
+    position:relative;font-size:14.5px}
+  .who li::before{content:"";position:absolute;left:20px;top:26px;width:11px;height:1px;background:var(--gold)}
+  .who .close{text-align:center;margin-top:30px;font-family:'Zen Kaku Gothic New',sans-serif;
+    font-weight:700;font-size:clamp(16px,4vw,19px);line-height:1.9}
+
+  /* 写真セクション */
+  .shot{width:100%;height:auto;border-radius:2px}
+  .figcap{text-align:center;font-size:11.5px;color:var(--faint);margin-top:10px;letter-spacing:.04em}
+  .studio .box{max-width:600px;margin:26px auto 0}
+  .studio p{font-size:14.5px}
+  .machines{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:560px;margin:26px auto 0}
+  .machines div{border:1px solid var(--line);padding:14px 16px;font-size:13px;background:#fff}
+  .machines div b{display:block;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;margin-bottom:2px}
+  @media(max-width:520px){.machines{grid-template-columns:1fr}}
+
+  /* ジム併設 */
+  .gym{background:var(--black);color:#f0ece5}
+  .gym h2{color:#fff}
+  .gym .en{color:var(--gold-l)}
+  .gym .two{display:flex;gap:26px;align-items:center;max-width:640px;margin:0 auto}
+  .gym .two img{width:42%;flex:none;border-radius:2px}
+  .gym .two p{font-size:14.5px;color:#cdc5b8}
+  .gym .two b{color:#fff}
+  .gym .pull{text-align:center;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;
+    font-size:clamp(17px,4.3vw,21px);line-height:1.85;margin-top:32px;color:#fff}
+  .gym .pull em{font-style:normal;color:var(--gold-l)}
+  @media(max-width:600px){.gym .two{flex-direction:column}.gym .two img{width:100%;max-width:340px}}
+
+  /* 料金 */
+  .price .grp{max-width:560px;margin:0 auto 34px}
+  .price .gh{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:16px;
+    text-align:center;margin-bottom:6px;letter-spacing:.04em}
+  .price .gs{text-align:center;font-size:12.5px;color:var(--sub);margin-bottom:20px}
+  .price table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line)}
+  .price th,.price td{padding:15px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  .price tbody th{text-align:left;font-weight:500}
+  .price tbody th small{display:block;font-size:11.5px;color:var(--faint);font-weight:400;margin-top:2px}
+  .price td{text-align:right;font-family:'Jost',sans-serif;font-size:16px;white-space:nowrap}
+  .price td small{display:block;font-family:'Noto Sans JP';font-size:11px;color:var(--faint);margin-top:2px}
+  .price tr:last-child th,.price tr:last-child td{border-bottom:none}
+  .price .reco{border:2px solid var(--gold)}
+  .price .rtag{display:inline-block;background:var(--gold);color:#fff;font-size:11px;padding:3px 12px;
+    letter-spacing:.08em;margin-bottom:-1px}
+  .price .tax{text-align:center;font-size:11.5px;color:var(--faint);margin-top:10px;line-height:1.9}
+
+  /* 流れ */
+  .flow{background:var(--soft)}
+  .flow .fs{display:flex;gap:18px;align-items:flex-start;max-width:520px;margin:0 auto}
+  .flow .fs .nn{flex:none;width:32px;height:32px;border:1px solid var(--gold);color:var(--gold);
+    display:grid;place-items:center;font-family:'Jost',sans-serif;font-size:14px;border-radius:50%;
+    position:relative;background:var(--soft)}
+  .flow .fs:not(:last-child) .nn::after{content:"";position:absolute;top:33px;left:50%;width:1px;
+    height:42px;background:var(--line);transform:translateX(-50%)}
+  .flow .fs .tx{padding-bottom:28px}
+  .flow .fs .tx b{font-family:'Zen Kaku Gothic New',sans-serif;font-size:15.5px;display:block;margin-bottom:2px}
+  .flow .fs .tx p{font-size:13.5px;color:var(--sub);margin:0;line-height:1.85}
+  .flow .note{text-align:center;font-size:13px;color:var(--sub);margin-top:10px}
+
+  /* 中盤CTA */
+  .midcta{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    text-align:center;padding:54px 0}
+  .midcta .hd{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;
+    font-size:clamp(17px,4.2vw,20px);margin-bottom:8px;line-height:1.85}
+  .midcta .s{font-size:13px;color:var(--sub);margin-bottom:26px}
+
+  /* 声 */
+  .voice{background:var(--soft)}
+  .voice .ph{max-width:560px;margin:0 auto;border:1px dashed var(--gold);background:#fffdf8;
+    text-align:center;color:#8f6c26;font-size:13px;padding:34px 26px;line-height:2}
+
+  /* FAQ */
+  .faq dl{max-width:560px;margin:0 auto}
+  .faq dt{font-family:'Zen Kaku Gothic New',sans-serif;font-size:15.5px;font-weight:700;
+    padding:24px 0 6px;border-top:1px solid var(--line)}
+  .faq dt:first-of-type{border-top:none;padding-top:0}
+  .faq dd{font-size:13.5px;color:var(--sub);line-height:1.95}
+
+  /* アクセス */
+  .info{background:var(--soft)}
+  .info table{width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:#fff;border:1px solid var(--line)}
+  .info th,.info td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px}
+  .info tr:last-child th,.info tr:last-child td{border-bottom:none}
+  .info th{width:32%;font-weight:500;color:var(--sub);background:#fbfaf7}
+  .mapbtn{text-align:center;margin-top:16px}
+
+  /* 最終CTA */
+  .last{background:linear-gradient(rgba(15,14,12,.78),rgba(15,14,12,.86)),
+    url('https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535683.jpg') center/cover;
+    color:#f2ede5;text-align:center;padding:82px 0}
+  .last h2{color:#fff}
+  .last .en{color:var(--gold-l)}
+  .last p{font-size:14px;color:#cec5b7;margin-bottom:30px}
+
+  footer{background:var(--black);color:#8b847a;text-align:center;padding:34px 24px;font-size:12px;line-height:2}
+  footer img{width:52px;margin:0 auto 14px;background:#fff;padding:6px;border-radius:2px}
+  footer b{color:#e8e1d5;font-family:'Jost',sans-serif;letter-spacing:.12em}
+  footer a{color:var(--gold-l)}
+
+  .bar{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr 1.5fr;
+    gap:1px;background:var(--line);border-top:1px solid var(--line);z-index:100}
+  .bar a{background:#fff;text-align:center;padding:11px 4px;font-size:11px;color:var(--ink);font-weight:500}
+  .bar a span{display:block;font-size:16px;margin-bottom:1px}
+  .bar a.main{background:#06c755;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="lg">
+    <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM">
+    <span>ARMOUR GYM<small>PILATES STUDIO</small></span>
+  </div>
+  <nav>
+    <a href="#concern">こんな方に</a>
+    <a href="#studio">スタジオ</a>
+    <a href="#gym">ジム</a>
+    <a href="#price">料金</a>
+    <a href="#access">アクセス</a>
+  </nav>
+  <a class="resv" href="#taiken">体験予約</a>
+</div>
+
+<header class="hero">
+  <div class="inner">
+    <img class="mark anim" style="animation-delay:.05s" src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM pilates studio">
+    <p class="ey anim" style="animation-delay:.16s">CHITOSE, HOKKAIDO</p>
+    <h1 class="anim" style="animation-delay:.28s">ピラティスで整えて、<br><span class="mk">ジムで動かす。</span></h1>
+    <p class="sub anim" style="animation-delay:.42s">千歳・幸町のピラティススタジオ。CORE REVOのマシンを揃えたパーソナル指導と、本格的なトレーニングジムが、ひとつの場所にあります。</p>
+    <div class="btns anim" style="animation-delay:.54s">
+      <a class="btn" href="#taiken">体験のご予約</a>
+      <a class="btn tel" href="tel:0123294610">📞 0123-29-4610</a>
+    </div>
+    <p class="meta anim" style="animation-delay:.66s">千歳市幸町3-15 エレガンスビル2F｜駐車場あり｜完全予約制</p>
+  </div>
+  <div class="scrollcue">SCROLL</div>
+</header>
+
+<section class="trial fade" id="taiken">
+  <div class="wrap">
+    <h2>まずは、体験から</h2>
+    <span class="en">Trial</span>
+    <div class="box">
+      <div class="amt"><span class="tbd" style="background:rgba(255,255,255,.08);border-color:#7d6a45;color:var(--gold-l)">体験料金を記入</span></div>
+      <p>マシンははじめて、という方がほとんどです。<br>体の状態をうかがったうえで、その方に合わせて進めます。<br><span class="tbd" style="background:rgba(255,255,255,.08);border-color:#7d6a45;color:var(--gold-l)">体験の有無・所要時間・持ち物を要確認</span></p>
+    </div>
+    <div class="btns">
+      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで予約・相談</a>
+      <a class="btn tel" href="tel:0123294610">📞 お電話でご予約</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec who fade" id="concern">
+  <div class="wrap">
+    <h2>こんな方に</h2>
+    <span class="en">For You</span>
+    <ul>
+      <li class="st">運動が必要だと分かっているが、ひとりだと続かなかった</li>
+      <li class="st">ジムに通ってみたが、何をすればいいか分からなかった</li>
+      <li class="st">肩や腰がつらい。でも、痛みが出るほどではない</li>
+      <li class="st">姿勢を指摘されることが増えた</li>
+      <li class="st">体を変えたいが、いきなりハードなことはしたくない</li>
+      <li class="st">産後、体の使い方が変わった気がする</li>
+    </ul>
+    <p class="close">はじめは、動かし方から。<br>そのあとに、動かす量を増やしていきます。</p>
+  </div>
+</section>
+
+<section class="sec studio fade" id="studio">
+  <div class="wrap">
+    <h2>本格的なマシンが、揃っています</h2>
+    <span class="en">Studio</span>
+    <img class="shot" src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535683.jpg" alt="ARMOUR GYM ピラティススタジオの内観" loading="lazy">
+    <p class="figcap">CORE REVO のマシンを複数台そろえたスタジオ</p>
+    <div class="machines">
+      <div><b>キャデラック</b>吊る・引く・支える。マットではできない動きが可能です</div>
+      <div><b>リフォーマー</b>スプリングが動きを助けるので、初めての方でも形が取れます</div>
+      <div><b>チェア</b>座る・立つに近い姿勢で、日常の動きに寄せて鍛えます</div>
+      <div><b>スプリングボード</b>壁面のスプリングで、負荷を細かく調整できます</div>
+    </div>
+    <div class="box">
+      <p>マシンピラティスは、マットより<b>マシンが動きを補助してくれる</b>ぶん、体が硬い方や運動が久しぶりの方のほうが取り組みやすい面があります。パーソナルなので、周りと比べられることもありません。</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec gym fade" id="gym">
+  <div class="wrap">
+    <h2>ピラティスだけでは、ありません。</h2>
+    <span class="en">Training Gym</span>
+    <div class="two">
+      <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535687_0.jpg" alt="ARMOUR GYM のトレーニングジム" loading="lazy">
+      <div>
+        <p>ダンベル・ベンチ・ラックを揃えた<b>トレーニングジム</b>を併設しています。</p>
+        <p style="margin-top:1.2em">パーソナルで動かし方を覚えたら、あとは<b>セルフでジムを使って</b>ご自身のペースで。「教わる」と「自分でやる」が同じ場所でできます。</p>
+      </div>
+    </div>
+    <p class="pull">整えるのはピラティス。<br>動かすのは、<em>ジム</em>。</p>
+    <p style="text-align:center;font-size:12px;color:#9d9488;margin-top:16px">
+      <span class="tbd" style="background:rgba(255,255,255,.08);border-color:#7d6a45;color:var(--gold-l)">「セルフ」の内容を要確認（ジムの自主利用／セルフでのマシン利用）</span></p>
+  </div>
+</section>
+
+<section class="midcta fade">
+  <div class="wrap">
+    <p class="hd">まずは1回、マシンに乗ってみてください。</p>
+    <p class="s">続けるかどうかは、そのあとで決めていただけます。</p>
+    <div class="btns">
+      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで予約・相談</a>
+      <a class="btn ghost" href="tel:0123294610">📞 0123-29-4610</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec price fade" id="price">
+  <div class="wrap">
+    <h2>料金</h2>
+    <span class="en">Price</span>
+
+    <div class="grp">
+      <div class="gh">月額プラン</div>
+      <p class="gs">パーソナル指導と、セルフ利用がセットになったプランです</p>
+      <table class="reco">
+        <tbody>
+          <tr><th>月2回パーソナル<small>＋ セルフ4回</small></th><td>17,000<small>円 / 月</small></td></tr>
+          <tr><th>月4回パーソナル<small>＋ セルフ2回</small></th><td>25,000<small>円 / 月</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grp">
+      <div class="gh">チケット</div>
+      <p class="gs">ご自身のペースで通いたい方に</p>
+      <table>
+        <tbody>
+          <tr><th>3回チケット<small>有効期限 1ヶ月</small></th><td>21,000<small>円</small></td></tr>
+          <tr><th>5回チケット<small>有効期限 2ヶ月</small></th><td>30,000<small>円</small></td></tr>
+          <tr><th>8回チケット<small>有効期限 2ヶ月</small></th><td>40,000<small>円</small></td></tr>
+          <tr><th>12回チケット<small>有効期限 2ヶ月</small></th><td>58,000<small>円</small></td></tr>
+        </tbody>
+      </table>
+      <p class="tax"><span class="tbd">税込／税別を要確認</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec flow fade">
+  <div class="wrap">
+    <h2>はじめての方の流れ</h2>
+    <span class="en">First Visit</span>
+    <div class="fs"><div class="nn">1</div><div class="tx"><b>ご予約</b><p>LINE、またはお電話で。ご希望の日時をお知らせください。</p></div></div>
+    <div class="fs"><div class="nn">2</div><div class="tx"><b>カウンセリング</b><p>お体の状態、これまでの運動歴、目指したいところをうかがいます。</p></div></div>
+    <div class="fs"><div class="nn">3</div><div class="tx"><b>体の動きをチェック</b><p>いまどこが動きにくいかを、一緒に確認します。</p></div></div>
+    <div class="fs"><div class="nn">4</div><div class="tx"><b>マシンピラティス</b><p>その方に合わせて、動かし方から進めていきます。</p></div></div>
+    <div class="fs"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>通い方のご提案をします。その場でお決めいただかなくて構いません。</p></div></div>
+    <p class="note">動きやすい服装でお越しください <span class="tbd">持ち物・お着替え場所を要確認</span></p>
+  </div>
+</section>
+
+<section class="sec voice fade" id="voice">
+  <div class="wrap">
+    <h2>通ってくださっている方の声</h2>
+    <span class="en">Voice</span>
+    <div class="ph">
+      ここに実際のお声を3件掲載します。<br>
+      <b>年代／通い始めたきっかけ／続けている理由</b>が入る形が理想です。<br>
+      「効果があった」より「通いやすい」「続けられている」の声のほうが響きます。<br>
+      <span class="tbd" style="margin-top:10px">実際のお声をいただいたら差し替え</span>
+    </div>
+  </div>
+</section>
+
+<section class="sec faq fade">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <span class="en">Questions</span>
+    <dl>
+      <dt>運動がまったく苦手ですが、大丈夫ですか。</dt>
+      <dd>パーソナルなので、その方に合わせて進めます。マシンが動きを助けてくれるぶん、体が硬い方のほうが取り組みやすいこともあります。</dd>
+      <dt>ピラティスは初めてです。</dt>
+      <dd>初めての方がほとんどです。動かし方の説明からお伝えしますので、そのままお越しください。</dd>
+      <dt>ジムだけ使うことはできますか。</dt>
+      <dd><span class="tbd">要確認（セルフ利用のみのプランがあるかどうか）</span></dd>
+      <dt>持ち物はありますか。</dt>
+      <dd>動きやすい服装でお越しください。<span class="tbd">シューズ・靴下・タオルの要否を要確認</span></dd>
+      <dt>駐車場はありますか。</dt>
+      <dd>グリーンベルトをご利用いただけます。<span class="tbd">台数・停め方を要確認</span></dd>
+      <dt>予約はどこからできますか。</dt>
+      <dd>公式LINE、またはお電話（0123-29-4610）から承っております。</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="sec info fade" id="access">
+  <div class="wrap">
+    <h2>スタジオのご案内</h2>
+    <span class="en">Access</span>
+    <table>
+      <tr><th>店名</th><td>ARMOUR GYM pilates studio</td></tr>
+      <tr><th>住所</th><td>〒066-0063<br>北海道千歳市幸町3-15 エレガンスビル2F</td></tr>
+      <tr><th>電話</th><td><a href="tel:0123294610" style="color:var(--gold)">0123-29-4610</a></td></tr>
+      <tr><th>営業時間</th><td>平日 9:00〜21:00<br>土日祝 9:00〜20:00</td></tr>
+      <tr><th>定休日</th><td><span class="tbd">要確認</span></td></tr>
+      <tr><th>駐車場</th><td>グリーンベルト</td></tr>
+      <tr><th>ご予約</th><td>公式LINE ／ お電話（完全予約制）</td></tr>
+      <tr><th>公式サイト</th><td><a href="https://www.armour-gym.com/index.html" target="_blank" rel="noopener" style="color:var(--gold)">armour-gym.com</a></td></tr>
+      <tr><th>Instagram</th><td><a href="https://www.instagram.com/pilates.armour.jp" target="_blank" rel="noopener" style="color:var(--gold)">@pilates.armour.jp</a></td></tr>
+    </table>
+    <div class="mapbtn"><a class="btn ghost" style="font-size:12.5px;padding:13px 26px" href="https://share.google/KWPTJcpRQmY3pKECZ" target="_blank" rel="noopener">▶ 地図を開く</a></div>
+  </div>
+</section>
+
+<section class="last" id="yoyaku">
+  <div class="wrap">
+    <h2>体のことは、<br>後回しにしがちです。</h2>
+    <span class="en">Reservation</span>
+    <p>「そのうち」と思っているうちに、動かない体に慣れていきます。<br>まずは1回、乗ってみてください。</p>
+    <div class="btns">
+      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで予約・相談</a>
+      <a class="btn tel" href="tel:0123294610">📞 0123-29-4610</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM">
+  <b>ARMOUR GYM pilates studio</b><br>
+  〒066-0063 北海道千歳市幸町3-15 エレガンスビル2F<br>
+  TEL <a href="tel:0123294610">0123-29-4610</a>／平日 9:00〜21:00・土日祝 9:00〜20:00<br>
+  <a href="https://www.instagram.com/pilates.armour.jp" target="_blank" rel="noopener">Instagram</a>
+  <a href="https://www.armour-gym.com/index.html" target="_blank" rel="noopener">公式サイト</a><br>
+  © ARMOUR GYM
+</footer>
+
+<div class="bar">
+  <a href="tel:0123294610"><span>📞</span>電話</a>
+  <a href="https://www.instagram.com/pilates.armour.jp" target="_blank" rel="noopener"><span>📷</span>Instagram</a>
+  <a class="main" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener"><span>💬</span>LINEで予約</a>
+</div>
+
+<script>
+(function(){
+  var els=document.querySelectorAll('.fade');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('on')});return}
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){
+    if(en.isIntersecting){en.target.classList.add('on');io.unobserve(en.target)}})},{threshold:.1});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
