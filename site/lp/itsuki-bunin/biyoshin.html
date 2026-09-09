@@ -234,12 +234,11 @@
     .last{padding:56px 0}
     .voice .card{padding:22px 20px}
     .counsel .order{padding:20px 18px}
-    /* 文中の手動改行を無効化（引用ブロック・締め・見出しは残す） */
-    .wrap p:not(.pt):not(.cl):not(.said2):not(.emph):not(.x10):not(.sum) br,
-    .talk .box p:not(.cl) br,.daily .box p:not(.pt):not(.cl) br,.own .box p:not(.pt):not(.cl) br,
-    .price .first p br,.price .nopush br,.price .stance2 p br,.cred p br,.cred .pull br,.about .fact br,
-    .counsel p br,.counsel .cq br,.counsel .order p br,.who .close br,.last p br,.flow .note br,.selfcare .sum br{display:none}
-    .talk .asks p br{display:inline}
+    /* 本文は左揃え（見出し・締め・引用は中央のまま） */
+    .talk .box p:not(.cl),.daily .box p:not(.pt):not(.cl),.own .box p:not(.pt):not(.cl),
+    .form .box > p,.price .stance2 p,.why .box p,.cred p:not(.pull),.about .box p,.counsel .box > p,.counsel .order p{text-align:left}
+    .sec p[style*="text-align:center"]:not(.lead){text-align:left!important}
+    .price .first p,.price .nopush,.lead,.said,.emph,.about .fact,.counsel .kicker,.counsel .pr,.counsel .nosell,.counsel .cq{text-align:center}
   }
 </style>
 </head>
