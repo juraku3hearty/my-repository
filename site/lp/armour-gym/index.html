@@ -225,7 +225,56 @@
   .status .open .dot{background:#5ec27a}
   .status .wait .dot{background:var(--gold-l)}
   body[data-status="open"] .wait,body[data-status="wait"] .open{display:none}
-  .status-inline{font-size:12.5px;letter-spacing:.12em;color:var(--tx-d);margin-top:-18px;margin-bottom:40px;text-align:center}
+  .status-inline{font-size:12.5px;letter-spacing:.12em;color:var(--tx-d);margin-top:-18px;margin-bottom:40px;text-align:center;line-height:2}
+  .status-inline span span{display:block}
+
+  /* ───── スマホ最適化 ───── */
+  .body p,.status .sb,.midcta .s,.last p,.trial p,.flow .note,.price .note,.gymrow p,.faq dd,.who li{text-wrap:pretty}
+  h1,h2,.pull,.status .hd,.midcta .hd,.who .close{text-wrap:balance}
+  @media(max-width:600px){
+    body{letter-spacing:.02em;font-size:15px;line-height:2}
+    .wrap{padding:0 22px}
+    .sec{padding:84px 0}
+    .hero .inner{padding:92px 22px 84px}
+    .hero h1{letter-spacing:.09em;line-height:1.85}
+    .hero .sub{font-size:14px;line-height:2.2}
+    .hero .meta{letter-spacing:.08em;line-height:2}
+    h2{letter-spacing:.09em;line-height:1.85}
+    .en{letter-spacing:.3em;margin-bottom:44px}
+    .pull{letter-spacing:.07em;line-height:2;margin-top:44px}
+    .body p{line-height:2.2;letter-spacing:.02em;font-size:14.5px}
+    .body p+p{margin-top:1.6em}
+    .rule{margin:40px auto}
+    .btn{letter-spacing:.1em;padding:16px 30px;font-size:13.5px;width:100%;max-width:340px;text-align:center}
+    .btns{gap:11px}
+    .tbd{white-space:normal;line-height:1.7}
+    .status{padding:44px 20px}
+    .status .box{padding:26px 20px}
+    .status .hd{letter-spacing:.07em;line-height:1.85}
+    .status .sb{line-height:2}
+    .midcta{padding:76px 0}
+    .midcta .hd{letter-spacing:.08em}
+    .who li{padding:18px 0 18px 26px;font-size:14px;line-height:1.95}
+    .who li::before{top:31px}
+    .who .close{letter-spacing:.06em;margin-top:40px}
+    .machines{margin-top:40px}
+    .price{padding:88px 0}
+    .price .grp{margin-bottom:52px}
+    .price .row{padding:20px 0;gap:14px}
+    .price .nm{font-size:14px;line-height:1.85}
+    .price .amt .y{font-size:19px}
+    .flow .fs{gap:18px}
+    .flow .tx{padding-bottom:28px}
+    .faq dt{letter-spacing:.05em;padding:26px 0 8px;line-height:1.85}
+    .faq dd{line-height:2.1}
+    .info .r{gap:16px;font-size:13.5px}
+    .info .k{width:74px;font-size:10.5px}
+    .last{padding:100px 0}
+    .last p{line-height:2.2}
+    footer{padding:52px 22px}
+    /* 文中の手動改行を無効化（見出し・締めは残す） */
+    .body p br,.status .sb br,.midcta .s br,.last p br,.trial p br,.flow .note br,.price .note br,.gymrow p br{display:none}
+  }
 </style>
 </head>
 <body data-status="open"><!-- 受付状況: data-status を "open"（新規受付中）か "wait"（キャンセル待ち）に -->
@@ -393,11 +442,11 @@
       <div class="gh">月額プラン</div>
       <p class="gs">パーソナル指導と、セルフ（予約制）がセットです</p>
       <div class="row">
-        <div class="nm">月2回パーソナル ＋ セルフ4回<small>月に6回通えます</small></div>
+        <div class="nm">月2回パーソナル＋セルフ4回<small>月に6回通えます</small></div>
         <div class="amt"><span class="y">¥17,000</span><span class="per">1回あたり 2,833円</span></div>
       </div>
       <div class="row">
-        <div class="nm">月4回パーソナル ＋ セルフ2回<small>月に6回通えます</small></div>
+        <div class="nm">月4回パーソナル＋セルフ2回<small>月に6回通えます</small></div>
         <div class="amt"><span class="y">¥25,000</span><span class="per">1回あたり 4,167円</span></div>
       </div>
       <p class="note">教わる回数をどれだけ増やすかで、お選びいただけます。</p>
