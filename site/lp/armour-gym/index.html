@@ -114,6 +114,9 @@
 
   /* リスト */
   .who ul{max-width:490px;margin:0 auto;list-style:none}
+  #env .gymrow ul{max-width:none;margin:0;flex:1}
+  #env .gymrow{align-items:flex-start}
+  .machines div b{text-align:center}
   .who li{border-bottom:1px solid var(--hair);padding:22px 0 22px 30px;position:relative;font-size:14.5px}
   .who li:first-child{border-top:1px solid var(--hair)}
   .who li::before{content:"";position:absolute;left:2px;top:36px;width:14px;height:1px;background:var(--gold)}
@@ -308,10 +311,10 @@
   <nav>
     <a href="#taiken">体験について</a>
     <a href="#personal">マンツーマン</a>
-    <a href="#studio">スタジオ</a>
-    <a href="#self">セルフ</a>
+    <a href="#self">教わる日・自分の日</a>
+    <a href="#studio">マシン</a>
     <a href="#price">料金</a>
-    <a href="#access">アクセス</a>
+    <a href="#env">環境</a>
   </nav>
   <a class="resv" href="#yoyaku">RESERVE</a>
 </div>
@@ -320,14 +323,15 @@
   <div class="inner">
     <img class="mark anim" style="animation-delay:.05s" src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM pilates studio">
     <p class="ey anim" style="animation-delay:.2s">CHITOSE, HOKKAIDO</p>
-    <h1 class="anim" style="animation-delay:.34s">あなたの体に、<br><em>合わせて組む。</em></h1>
-    <p class="sub anim" style="animation-delay:.5s">決まったメニューはありません。<br>初回から、お体の状態を見ながら、<br>その方に合わせて内容を組みます。</p>
-    <p class="sub anim" style="animation-delay:.56s;margin-top:-30px">千歳・幸町の、完全パーソナルの<br>マシンピラティススタジオです。</p>
-    <div class="btns anim" style="animation-delay:.64s">
-      <a class="btn solid" href="#taiken">体験について</a>
+    <h1 class="anim" style="animation-delay:.34s">みんなと同じことは、<br><em>しません。</em></h1>
+    <p class="sub anim" style="animation-delay:.5s">体の硬さも、動かしにくいところも、<br>これまでの運動経験も、人それぞれだから。</p>
+    <p class="sub anim" style="animation-delay:.56s;margin-top:-30px">決まったメニューをこなすのではなく、<br>その日の体を見て、その方に合わせて組みます。</p>
+    <p class="sub anim" style="animation-delay:.62s;margin-top:-30px"><b style="color:#fff;font-weight:700">初回から、完全パーソナル。</b><br>千歳・幸町のマシンピラティススタジオです。</p>
+    <div class="btns anim" style="animation-delay:.7s">
+      <a class="btn solid" href="#taiken">体験を予約・相談する</a>
       <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
     </div>
-    <p class="meta anim" style="animation-delay:.78s">千歳市幸町3-15 ／ 提携駐車場4時間無料 ／ 完全予約制</p>
+    <p class="meta anim" style="animation-delay:.8s">千歳市幸町3-15 ／ 提携駐車場4時間無料 ／ 完全予約制</p>
   </div>
   <div class="scrollcue">SCROLL</div>
 </header>
@@ -337,7 +341,7 @@
     <div class="lb">NOW</div>
     <div class="open">
       <div class="hd"><span class="dot"></span>現在、新規の方を受け付けています</div>
-      <p class="sb">会員数によっては、新規のお申し込みを<br>キャンセル待ちとさせていただく場合があります。</p>
+      <p class="sb">会員数によっては、<br>キャンセル待ちとなる場合があります。</p>
     </div>
     <div class="wait">
       <div class="hd"><span class="dot"></span>現在、新規はキャンセル待ちです</div>
@@ -350,21 +354,20 @@
   <div class="wrap">
     <h2>体験用の、<br>決まったメニューはありません</h2>
     <span class="en">About Trial</span>
-    <p class="st">体験だからといって、<br>全員に同じ「お試しメニュー」を行うわけではありません。</p>
+    <p class="st">体が硬くても。<br>運動が久しぶりでも。<br>何から始めればいいか分からなくても。</p>
     <p class="st">まず、お体の状態やこれまでの運動歴、<br>気になっていることをうかがいます。</p>
-    <p class="st">そのうえで、実際の動きを見ながら、<br>その方に合わせて内容を組みます。</p>
+    <p class="st">そのうえで実際の動きを見ながら、<br>その方に合わせて内容を組みます。</p>
     <p class="st"><b>初回から、通常と同じパーソナルです。</b><br>だから、体験だけを特別に安くはしていません。</p>
     <div class="rule"></div>
-    <p class="st">「一度だけ試してみたい」というより、</p>
+    <p class="st">一度だけ試してみたい、というより、</p>
     <p class="pull">これから自分の体と向き合って、<br><em>無理なく続けていきたい</em>。</p>
     <p class="st" style="margin-top:34px">そんな方の最初の一歩として、<br>しっかり時間を使いたいと考えています。</p>
-    <div class="amt" style="margin-top:56px"><span class="tbd">体験料金を記入</span></div>
+    <div class="amt" style="margin-top:56px"><span class="tbd">体験料金：〇〇円</span>　<span class="tbd">所要時間：〇〇分</span></div>
     <p class="status-inline"><span class="open">受付状況：新規受付中<br><span style="font-size:11.5px;letter-spacing:.06em">※会員数によっては、キャンセル待ちとなる場合があります。</span></span><span class="wait">受付状況：キャンセル待ち<br><span style="font-size:11.5px;letter-spacing:.06em">順番待ちはLINEで承ります</span></span></p>
     <div class="btns">
-      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
+      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで体験を相談する</a>
       <a class="btn wire" href="tel:0123294610">お電話で相談する</a>
     </div>
-    <p style="margin-top:36px;font-size:12px;text-align:center;color:var(--tx-d)">持ち物：動きやすい服装、滑り止め付きのピラティス用靴下<br>※靴下は店内でも販売しています。<br><span class="tbd">所要時間：〇分（要確認）</span></p>
   </div>
 </section>
 
@@ -386,86 +389,42 @@
 
 <section class="sec body fade" id="personal">
   <div class="wrap">
-    <h2>グループレッスンは、ありません</h2>
+    <h2>すべて、<br>マンツーマンです</h2>
     <span class="en">All Personal</span>
-    <p class="st">すべて、マンツーマンです。</p>
     <p class="st">呼吸のタイミング。<br>体の角度。<br>姿勢のわずかな違い。</p>
     <p class="st">一人ひとりの動きを見ながら、<br>その場で細かく調整していきます。</p>
     <p class="st">だから当スタジオでは、<br>グループレッスンではなく、<br>パーソナルでの指導を行っています。</p>
-    <p class="pull">「こんなに細かく見てもらえるんですね」<br><em>と驚かれることもあります。</em></p>
+  </div>
+</section>
+
+<section class="sec lt body fade" id="self">
+  <div class="wrap">
+    <h2>教わるだけで、<br>終わらせません</h2>
+    <span class="en">Personal &amp; Self</span>
+    <p class="st">パーソナルで動かし方を教わっても、<br>その日だけですべてが身につくわけではありません。</p>
+    <p class="st">だから当スタジオには、<br><b>「教わる日」と「自分でやる日」</b>があります。</p>
+    <p class="st">パーソナルでは、<br>その方の体に合わせて動かし方を確認。</p>
+    <p class="st">セルフでは、<br>教わった動きをご自身のペースで繰り返します。</p>
+    <p class="st">セルフ中の指導はありませんが、<br>スタッフは必ずおります。</p>
+    <p class="pull">教わって、やってみる。<br><em>また教わって、身につけていく。</em></p>
+    <p class="st" style="margin-top:34px">月額プランなら、<br>この両方を組み合わせて通えます。</p>
   </div>
 </section>
 
 <div class="band studio"></div>
 
-<section class="sec lt body fade" id="studio">
+<section class="sec body fade" id="studio">
   <div class="wrap">
-    <h2>本格的なマシンを、<br>その方に合わせて使います</h2>
+    <h2>本格的なマシンを、<br>その方に合わせて</h2>
     <span class="en">Studio</span>
-    <p class="st">マシンピラティスは、<br>マシンが動きを支えてくれるため、<br>体が硬い方や、運動が久しぶりの方でも取り組みやすいのが特徴です。</p>
-    <p class="st">使うマシンや動きも、<br>全員同じではありません。</p>
-    <p class="st">お体の状態や、その日の動きを見ながら選びます。</p>
+    <p class="st">体が硬い方や、<br>運動が久しぶりの方にも取り組みやすいよう、<br>マシンが動きを支えてくれます。</p>
     <div class="machines">
-      <div><b>キャデラック</b>吊る・引く・支える動きを使いながら、<br>マットだけでは難しい動きも行えます。</div>
-      <div><b>リフォーマー</b>スプリングの力で動きを助けながら、<br>正しい姿勢や動かし方を身につけていきます。</div>
-      <div><b>チェア</b>座る・立つといった日常に近い姿勢で、<br>体を支える力をつけていきます。</div>
+      <div><b>キャデラック</b></div>
+      <div><b>リフォーマー</b></div>
+      <div><b>チェア</b></div>
     </div>
-  </div>
-</section>
-
-<section class="sec body fade" id="self">
-  <div class="wrap">
-    <h2>教わる日と、<br>自分で動く日があります</h2>
-    <span class="en">Personal &amp; Self</span>
-    <p class="st">パーソナルでは、<br>その方の体に合わせて動かし方をお伝えします。</p>
-    <p class="st">でも、教わったその日だけで<br>すべてが身につくわけではありません。</p>
-    <p class="st">そこで当スタジオでは、<br>パーソナルに加えて「セルフ」の時間を設けています。</p>
-    <p class="st">セルフは、<br>パーソナルで教わった動きを<br>ご自身のペースで繰り返す時間です。</p>
-    <p class="st">指導は行いませんが、<br>スタッフは必ずおります。</p>
-    <p class="pull">教わる日と、<em>自分でやってみる日</em>。</p>
-    <p class="st" style="margin-top:34px">その両方をつくることで、<br>少しずつ自分で体を動かせるようになることを目指します。</p>
-    <p class="st">月額プランは、<br>パーソナルとセルフがセットです。</p>
-    <p class="st">たとえば、<br>月2回パーソナル＋セルフ4回なら、<br><b>月に6回</b>通えます。</p>
-  </div>
-</section>
-
-<section class="sec alt body fade" id="gym">
-  <div class="wrap">
-    <h2>もっと動きたい方には、<br>トレーニングジムも</h2>
-    <span class="en">Training Gym</span>
-    <div class="gymrow">
-      <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535687_0.jpg" alt="ARMOUR GYM のトレーニングジム" loading="lazy">
-      <div>
-        <p>スタジオには、<br>ダンベル・ベンチ・ラックをはじめ、<br>本格的なトレーニングマシンを備えたジムも併設しています。</p>
-        <p>ピラティスで体の使い方を確認したあと、<br>さらに筋力をつけたい方や、<br>しっかり体を動かしたい方にご利用いただけます。</p>
-        <p><b>ジムの利用は別料金です。</b><br>ピラティスのプランには含まれていません。</p>
-        <p style="margin-top:1.2em"><span class="tbd">ジム利用料金：要確認</span></p>
-      </div>
-    </div>
-    <div class="rule"></div>
-    <p class="st">ロッカールーム・シャワールームもあります。</p>
-    <p class="st">平日は21時まで営業しているため、<br>仕事帰りに通って、そのままシャワーを浴びて帰ることもできます。</p>
-  </div>
-</section>
-
-<section class="sec lt body fade" id="kids">
-  <div class="wrap">
-    <h2>お子さまがいる方も、<br>まずはご相談ください</h2>
-    <span class="en">With Kids</span>
-    <p class="st">レッスン中、<br>お子さまをお預かりできる仕組みがあります。</p>
-    <p class="st">「預け先がなくて通えない」<br>という方も、まずはご相談ください。</p>
-    <p class="st" style="font-size:12.5px"><span class="tbd">対応できる曜日・時間・料金：要確認</span></p>
-  </div>
-</section>
-
-<section class="midcta fade">
-  <div class="wrap">
-    <p class="hd">無理なく続けながら、<br>自分の体と向き合いたい方へ</p>
-    <p class="s">一度だけ頑張るのではなく、<br>その方のペースで続けられる方法を一緒に考えます。<br>初回から、<br>あなたの体に合わせたパーソナルです。</p>
-    <div class="btns">
-      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
-      <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
-    </div>
+    <p class="st" style="margin-top:40px">使うマシンも、行う動きも、<br>全員同じではありません。</p>
+    <p class="st">その日の体の状態を見ながら選びます。</p>
   </div>
 </section>
 
@@ -473,43 +432,28 @@
   <div class="wrap">
     <h2>料金</h2>
     <span class="en">Price</span>
-
     <div class="grp">
       <div class="gh">月額プラン</div>
-      <p class="gs">パーソナル指導と、<br>セルフ利用がセットになったプランです。</p>
+      <p class="gs">パーソナルとセルフがセットです</p>
       <div class="row">
-        <div class="nm">月2回パーソナル＋セルフ4回<small>月に6回通えます</small></div>
-        <div class="amt"><span class="y">¥17,000</span><span class="per">1回あたり 2,833円</span></div>
+        <div class="nm">月2回パーソナル＋セルフ4回<small>月6回</small></div>
+        <div class="amt"><span class="y">¥17,000</span></div>
       </div>
       <div class="row">
-        <div class="nm">月4回パーソナル＋セルフ2回<small>月に6回通えます</small></div>
-        <div class="amt"><span class="y">¥25,000</span><span class="per">1回あたり 4,167円</span></div>
+        <div class="nm">月4回パーソナル＋セルフ2回<small>月6回</small></div>
+        <div class="amt"><span class="y">¥25,000</span></div>
       </div>
-      <p class="note">「どれくらい教わりながら進めたいか」で、<br>お選びいただけます。</p>
+      <p class="note">「どれくらい教わりながら進めたいか」で<br>お選びいただけます。</p>
     </div>
-
     <div class="grp">
       <div class="gh">チケット</div>
       <p class="gs">ご自身のペースで通いたい方へ</p>
-      <div class="row">
-        <div class="nm">3回<small>有効期限 1ヶ月</small></div>
-        <div class="amt"><span class="y">¥21,000</span><span class="per">1回あたり 7,000円</span></div>
-      </div>
-      <div class="row">
-        <div class="nm">5回<small>有効期限 2ヶ月</small></div>
-        <div class="amt"><span class="y">¥30,000</span><span class="per">1回あたり 6,000円</span></div>
-      </div>
-      <div class="row">
-        <div class="nm">8回<small>有効期限 2ヶ月</small></div>
-        <div class="amt"><span class="y">¥40,000</span><span class="per">1回あたり 5,000円</span></div>
-      </div>
-      <div class="row">
-        <div class="nm">12回<small>有効期限 2ヶ月</small></div>
-        <div class="amt"><span class="y">¥58,000</span><span class="per">1回あたり 4,834円</span></div>
-      </div>
-      <p class="note">お支払いは、<br>現金・クレジットカードに対応しています。<br><span class="tbd" style="color:#8a6a2c">税込／税別：要確認</span></p>
+      <div class="row"><div class="nm">3回<small>有効期限 1ヶ月</small></div><div class="amt"><span class="y">¥21,000</span></div></div>
+      <div class="row"><div class="nm">5回<small>有効期限 2ヶ月</small></div><div class="amt"><span class="y">¥30,000</span></div></div>
+      <div class="row"><div class="nm">8回<small>有効期限 2ヶ月</small></div><div class="amt"><span class="y">¥40,000</span></div></div>
+      <div class="row"><div class="nm">12回<small>有効期限 2ヶ月</small></div><div class="amt"><span class="y">¥58,000</span></div></div>
+      <p class="note"><span class="tbd" style="color:#8a6a2c">税込／税別：要確認</span></p>
     </div>
-
     <div class="btns">
       <a class="btn dark" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
       <a class="btn darkwire" href="tel:0123294610">0123-29-4610</a>
@@ -522,28 +466,29 @@
     <h2>はじめての方の流れ</h2>
     <span class="en">First Visit</span>
     <div class="fs"><div class="nn">1</div><div class="tx"><b>ご相談・ご予約</b><p>LINEまたはお電話で、<br>ご希望の日時をお知らせください。</p></div></div>
-    <div class="fs"><div class="nn">2</div><div class="tx"><b>カウンセリング</b><p>お体の状態やこれまでの運動歴、<br>これからどうなりたいかをうかがいます。</p></div></div>
+    <div class="fs"><div class="nn">2</div><div class="tx"><b>カウンセリング</b><p>お体の状態や運動歴、<br>これからどうなりたいかをうかがいます。</p></div></div>
     <div class="fs"><div class="nn">3</div><div class="tx"><b>体の動きを確認</b><p>いま動かしにくいところや、<br>体の使い方を一緒に確認します。</p></div></div>
-    <div class="fs"><div class="nn">4</div><div class="tx"><b>マシンピラティス</b><p>確認した内容をもとに、<br>その方に合わせた内容で進めます。<br>初回から、<br>通常と同じパーソナルです。</p></div></div>
-    <div class="fs"><div class="nn">5</div><div class="tx"><b>通い方のご案内</b><p>お体の状態や生活に合わせて、<br>無理なく続けやすい通い方をご提案します。<br>その場でお決めいただく必要はありません。</p></div></div>
-    <div class="items">
-      <b>持ち物</b>
-      <p>・動きやすい服装<br>・滑り止め付きのピラティス用靴下</p>
-      <p>シューズは不要です。<br>靴下・ウェアは店内でも販売しています。<br>お着替えは鍵付きロッカーをご利用いただけます。</p>
-    </div>
+    <div class="fs"><div class="nn">4</div><div class="tx"><b>マシンピラティス</b><p>確認した内容をもとに、<br>その方に合わせて進めます。<br>初回から通常と同じパーソナルです。</p></div></div>
+    <div class="fs"><div class="nn">5</div><div class="tx"><b>通い方のご案内</b><p>お体の状態や生活に合わせて、<br>続けやすい通い方をご提案します。<br>その場でお決めいただく必要はありません。</p></div></div>
   </div>
 </section>
 
-<section class="sec voice fade" id="voice">
+<section class="sec who body fade" id="env">
   <div class="wrap">
-    <h2>通ってくださっている方の声</h2>
-    <span class="en">Voice</span>
-    <div class="ph">
-      ここに実際のお声を3件掲載します。<br>
-      年代／通い始めたきっかけ／続けている理由 が入る形が理想です。<br>
-      「効果があった」より「通いやすい」「続けられている」の声のほうが響きます。<br>
-      <span class="tbd" style="margin-top:12px">実際のお声をいただいたら差し替え</span>
+    <h2>通いやすい環境も、<br>整えています</h2>
+    <span class="en">Facilities</span>
+    <div class="gymrow" style="margin-bottom:40px">
+      <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535687_0.jpg" alt="ARMOUR GYM のトレーニングジム" loading="lazy">
+      <ul>
+        <li class="st">トレーニングジム併設 <span class="tbd">別料金</span></li>
+        <li class="st">ロッカールーム・鍵付きロッカー</li>
+        <li class="st">シャワールーム</li>
+        <li class="st">お子さまのお預かり <span class="tbd">詳細要確認</span></li>
+        <li class="st">提携駐車場 4時間無料</li>
+        <li class="st">平日21時まで営業</li>
+      </ul>
     </div>
+    <p class="st">仕事帰りや、<br>お子さまがいる方もご相談ください。</p>
   </div>
 </section>
 
@@ -580,31 +525,13 @@
   </div>
 </section>
 
-<section class="sec info fade" id="access">
-  <div class="wrap">
-    <h2>スタジオのご案内</h2>
-    <span class="en">Access</span>
-    <div class="r"><div class="k">STUDIO</div><div class="v">ARMOUR GYM pilates studio</div></div>
-    <div class="r"><div class="k">ADDRESS</div><div class="v">〒066-0063<br>北海道千歳市幸町3-15 エレガンスビル2F</div></div>
-    <div class="r"><div class="k">TEL</div><div class="v"><a href="tel:0123294610">0123-29-4610</a></div></div>
-    <div class="r"><div class="k">HOURS</div><div class="v">平日 9:00〜21:00<br>土日祝 9:00〜20:00</div></div>
-    <div class="r"><div class="k">CLOSED</div><div class="v"><span class="tbd">要確認</span></div></div>
-    <div class="r"><div class="k">PARKING</div><div class="v">千歳市グリーンベルト地下駐車場（提携）<br>4時間まで無料 ／ スタジオまで徒歩約5分<br><a href="https://www.city.chitose.lg.jp/c70/1002771/1002776/1002786/1005349.html" target="_blank" rel="noopener" style="font-size:12px">駐車場のご案内（千歳市）→</a></div></div>
-    <div class="r"><div class="k">FACILITY</div><div class="v">ロッカールーム（鍵付きロッカーあり）／ シャワールーム</div></div>
-    <div class="r"><div class="k">PAYMENT</div><div class="v">現金 ／ クレジットカード</div></div>
-    <div class="r"><div class="k">RESERVE</div><div class="v">公式LINE ／ お電話（完全予約制）</div></div>
-    <div class="r"><div class="k">WEB</div><div class="v"><a href="https://www.armour-gym.com/index.html" target="_blank" rel="noopener">armour-gym.com</a><br><a href="https://www.instagram.com/pilates.armour.jp" target="_blank" rel="noopener">@pilates.armour.jp</a></div></div>
-    <div class="mapbtn"><a class="btn wire" href="https://share.google/KWPTJcpRQmY3pKECZ" target="_blank" rel="noopener">地図を開く</a></div>
-  </div>
-</section>
-
 <section class="last" id="yoyaku">
   <div class="wrap">
-    <h2>体のことは、<br>後回しにしがちです。</h2>
+    <h2>無理なく続けながら、<br>自分の体と向き合いたい方へ</h2>
     <span class="en">Reservation</span>
-    <p>「そのうち」と思っているうちに、<br>動かない体のほうに慣れていきます。<br>はじめるなら、早いほうがいい。</p>
+    <p>初回から、<br>あなたの体に合わせて組みます。<br>まずは今のお体のこと、<br>気になっていることをお聞かせください。</p>
     <div class="btns">
-      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
+      <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで体験を相談する</a>
       <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
     </div>
   </div>
@@ -612,10 +539,12 @@
 
 <footer>
   <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM">
-  <b>ARMOUR GYM</b>
+  <b>ARMOUR GYM PILATES STUDIO</b>
   〒066-0063 北海道千歳市幸町3-15 エレガンスビル2F<br>
   TEL <a href="tel:0123294610">0123-29-4610</a><br>
-  平日 9:00〜21:00 ／ 土日祝 9:00〜20:00
+  平日 9:00〜21:00 ／ 土日祝 9:00〜20:00<br>
+  提携駐車場：千歳市グリーンベルト地下駐車場（4時間まで無料 ／ スタジオまで徒歩約5分）<br>
+  <a href="https://share.google/KWPTJcpRQmY3pKECZ" target="_blank" rel="noopener">地図を開く</a>
   <div class="sns">
     <a href="https://www.instagram.com/pilates.armour.jp" target="_blank" rel="noopener">INSTAGRAM</a>
     <a href="https://www.armour-gym.com/index.html" target="_blank" rel="noopener">WEBSITE</a>
