@@ -281,6 +281,21 @@
     .trial p[style*="text-align:center"]{text-align:center!important}
     /* 文中の手動改行を無効化（見出し・締めは残す） */
   }
+
+  /* ───── PC：文中の改行を外して行を長く、余白を締める ───── */
+  @media(min-width:601px){
+    .body p br,.status .sb br,.gymrow p br,.who .close br,.hero .sub br,.midcta .s br,.last p br,.machines div br,.flow .tx p br,.faq dd br,.price .gs br,.price .note br,.flow .items p:last-child br{display:none}
+    .body p{line-height:2.3;max-width:600px;text-wrap:balance}
+    .status .box{max-width:560px}
+    .status .sb,.trial > .wrap > p,.midcta .s,.last p,.who .close{text-wrap:balance}
+    .body p+p{margin-top:1.35em}
+    .sec{padding:96px 0}
+    .rule{margin:40px auto}
+    .pull{margin-top:44px}
+    .hero .sub{max-width:520px;margin-bottom:38px}
+    .status{padding:44px 24px}
+    .midcta{padding:80px 0}
+  }
 </style>
 </head>
 <body data-status="open"><!-- 受付状況: data-status を "open"（新規受付中）か "wait"（キャンセル待ち）に -->
@@ -306,7 +321,8 @@
     <img class="mark anim" style="animation-delay:.05s" src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535686_0.jpg" alt="ARMOUR GYM pilates studio">
     <p class="ey anim" style="animation-delay:.2s">CHITOSE, HOKKAIDO</p>
     <h1 class="anim" style="animation-delay:.34s">あなたの体に、<br><em>合わせて組む。</em></h1>
-    <p class="sub anim" style="animation-delay:.5s">決まったメニューはありません。<br>初回から、お体の状態を見ながら、<br>その方に合わせて内容を組みます。<br><br>千歳・幸町の、完全パーソナルの<br>マシンピラティススタジオです。</p>
+    <p class="sub anim" style="animation-delay:.5s">決まったメニューはありません。<br>初回から、お体の状態を見ながら、<br>その方に合わせて内容を組みます。</p>
+    <p class="sub anim" style="animation-delay:.56s;margin-top:-30px">千歳・幸町の、完全パーソナルの<br>マシンピラティススタジオです。</p>
     <div class="btns anim" style="animation-delay:.64s">
       <a class="btn solid" href="#taiken">体験について</a>
       <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
@@ -384,58 +400,68 @@
 
 <section class="sec lt body fade" id="studio">
   <div class="wrap">
-    <h2>本格的なマシンが、揃っています</h2>
+    <h2>本格的なマシンを、<br>その方に合わせて使います</h2>
     <span class="en">Studio</span>
-    <p class="st">マシンピラティスは、マットより<b>マシンが動きを補助してくれる</b>ぶん、体が硬い方や運動が久しぶりの方のほうが取り組みやすい面があります。パーソナルなので、周りと比べられることもありません。</p>
+    <p class="st">マシンピラティスは、<br>マシンが動きを支えてくれるため、<br>体が硬い方や、運動が久しぶりの方でも取り組みやすいのが特徴です。</p>
+    <p class="st">使うマシンや動きも、<br>全員同じではありません。</p>
+    <p class="st">お体の状態や、その日の動きを見ながら選びます。</p>
     <div class="machines">
-      <div><b>キャデラック</b>吊る・引く・支える。マットではできない動きができます</div>
-      <div><b>リフォーマー</b>スプリングが動きを助けるので、はじめてでも形が取れます</div>
-      <div><b>チェア</b>座る・立つに近い姿勢で、日常の動きに寄せて鍛えます</div>
+      <div><b>キャデラック</b>吊る・引く・支える動きを使いながら、<br>マットだけでは難しい動きも行えます。</div>
+      <div><b>リフォーマー</b>スプリングの力で動きを助けながら、<br>正しい姿勢や動かし方を身につけていきます。</div>
+      <div><b>チェア</b>座る・立つといった日常に近い姿勢で、<br>体を支える力をつけていきます。</div>
     </div>
   </div>
 </section>
 
 <section class="sec body fade" id="self">
   <div class="wrap">
-    <h2>教わるだけでは、<br>身につきません</h2>
+    <h2>教わる日と、<br>自分で動く日があります</h2>
     <span class="en">Personal &amp; Self</span>
-    <p class="st">パーソナルでは、その方の体に合わせて動かし方をお伝えします。ただ、教わったその日だけでは、体は変わりません。</p>
-    <p class="st"><b>セルフ</b>は、ご予約いただいた時間の中で、ご自身のペースでマシンを使っていただく時間です。指導はしませんが、スタッフは必ずいます。教わった動きを、自分のものにしていきます。</p>
-    <p class="pull">教わる日と、自分でやる日。<br><em>その両方</em>があります。</p>
-    <p class="st" style="margin-top:46px;font-size:12.5px">月額プランは、パーソナルとセルフがセット。<br>月2回パーソナル＋セルフ4回なら、<b>月に6回</b>通える計算になります。</p>
+    <p class="st">パーソナルでは、<br>その方の体に合わせて動かし方をお伝えします。</p>
+    <p class="st">でも、教わったその日だけで<br>すべてが身につくわけではありません。</p>
+    <p class="st">そこで当スタジオでは、<br>パーソナルに加えて「セルフ」の時間を設けています。</p>
+    <p class="st">セルフは、<br>パーソナルで教わった動きを<br>ご自身のペースで繰り返す時間です。</p>
+    <p class="st">指導は行いませんが、<br>スタッフは必ずおります。</p>
+    <p class="pull">教わる日と、<em>自分でやってみる日</em>。</p>
+    <p class="st" style="margin-top:34px">その両方をつくることで、<br>少しずつ自分で体を動かせるようになることを目指します。</p>
+    <p class="st">月額プランは、<br>パーソナルとセルフがセットです。</p>
+    <p class="st">たとえば、<br>月2回パーソナル＋セルフ4回なら、<br><b>月に6回</b>通えます。</p>
   </div>
 </section>
 
 <section class="sec alt body fade" id="gym">
   <div class="wrap">
-    <h2>トレーニングジムも、併設</h2>
+    <h2>もっと動きたい方には、<br>トレーニングジムも</h2>
     <span class="en">Training Gym</span>
     <div class="gymrow">
       <img src="https://link-hokkaido.com/wp-content/uploads/2026/09/S__94535687_0.jpg" alt="ARMOUR GYM のトレーニングジム" loading="lazy">
       <div>
-        <p>ダンベル・ベンチ・ラックに加えて、本格的なトレーニングマシンも揃えた<b>トレーニングジム</b>を併設しています（写真は一部です）。</p>
-        <p>ピラティスで動かし方を整えたうえで、さらにしっかり動かしたい方へ。<b>ご希望の方は別料金でご利用いただけます</b>（ピラティスのプランには含まれません）。</p>
-        <p style="margin-top:1.2em"><span class="tbd">ジムの利用料金を要確認</span></p>
+        <p>スタジオには、<br>ダンベル・ベンチ・ラックをはじめ、<br>本格的なトレーニングマシンを備えたジムも併設しています。</p>
+        <p>ピラティスで体の使い方を確認したあと、<br>さらに筋力をつけたい方や、<br>しっかり体を動かしたい方にご利用いただけます。</p>
+        <p><b>ジムの利用は別料金です。</b><br>ピラティスのプランには含まれていません。</p>
+        <p style="margin-top:1.2em"><span class="tbd">ジム利用料金：要確認</span></p>
       </div>
     </div>
     <div class="rule"></div>
-    <p class="st" style="font-size:14px"><b>ロッカールーム・シャワールーム</b>があります（鍵付きロッカーあり）。<br>平日は21時まで。仕事帰りに寄って、シャワーを浴びて帰れます。</p>
+    <p class="st">ロッカールーム・シャワールームもあります。</p>
+    <p class="st">平日は21時まで営業しているため、<br>仕事帰りに通って、そのままシャワーを浴びて帰ることもできます。</p>
   </div>
 </section>
 
 <section class="sec lt body fade" id="kids">
   <div class="wrap">
-    <h2>レッスン中の、お子さまのお預かり</h2>
+    <h2>お子さまがいる方も、<br>まずはご相談ください</h2>
     <span class="en">With Kids</span>
-    <p class="st">レッスンの間、お子さまをお預かりする仕組みがあります。<br>預け先がなくて通えない、という方はご相談ください。</p>
-    <p class="st" style="font-size:12px"><span class="tbd">掲載の可否・対応できる曜日や時間・料金を要確認</span><br>（常時ご対応できない場合は、その旨を明記します）</p>
+    <p class="st">レッスン中、<br>お子さまをお預かりできる仕組みがあります。</p>
+    <p class="st">「預け先がなくて通えない」<br>という方も、まずはご相談ください。</p>
+    <p class="st" style="font-size:12.5px"><span class="tbd">対応できる曜日・時間・料金：要確認</span></p>
   </div>
 </section>
 
 <section class="midcta fade">
   <div class="wrap">
-    <p class="hd">本気で、体を変えたい方へ。</p>
-    <p class="s">続けるつもりで来てくださる方に、<br>しっかり時間を使います。</p>
+    <p class="hd">無理なく続けながら、<br>自分の体と向き合いたい方へ</p>
+    <p class="s">一度だけ頑張るのではなく、<br>その方のペースで続けられる方法を一緒に考えます。<br>初回から、<br>あなたの体に合わせたパーソナルです。</p>
     <div class="btns">
       <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで相談する</a>
       <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
@@ -450,7 +476,7 @@
 
     <div class="grp">
       <div class="gh">月額プラン</div>
-      <p class="gs">パーソナル指導と、セルフ（予約制）がセットです</p>
+      <p class="gs">パーソナル指導と、<br>セルフ利用がセットになったプランです。</p>
       <div class="row">
         <div class="nm">月2回パーソナル＋セルフ4回<small>月に6回通えます</small></div>
         <div class="amt"><span class="y">¥17,000</span><span class="per">1回あたり 2,833円</span></div>
@@ -459,12 +485,12 @@
         <div class="nm">月4回パーソナル＋セルフ2回<small>月に6回通えます</small></div>
         <div class="amt"><span class="y">¥25,000</span><span class="per">1回あたり 4,167円</span></div>
       </div>
-      <p class="note">教わる回数をどれだけ増やすかで、お選びいただけます。</p>
+      <p class="note">「どれくらい教わりながら進めたいか」で、<br>お選びいただけます。</p>
     </div>
 
     <div class="grp">
       <div class="gh">チケット</div>
-      <p class="gs">ご自身のペースで通いたい方に</p>
+      <p class="gs">ご自身のペースで通いたい方へ</p>
       <div class="row">
         <div class="nm">3回<small>有効期限 1ヶ月</small></div>
         <div class="amt"><span class="y">¥21,000</span><span class="per">1回あたり 7,000円</span></div>
@@ -481,7 +507,7 @@
         <div class="nm">12回<small>有効期限 2ヶ月</small></div>
         <div class="amt"><span class="y">¥58,000</span><span class="per">1回あたり 4,834円</span></div>
       </div>
-      <p class="note">お支払いは現金・クレジットカードに対応しています。<br><span class="tbd" style="color:#8a6a2c">税込／税別を要確認</span></p>
+      <p class="note">お支払いは、<br>現金・クレジットカードに対応しています。<br><span class="tbd" style="color:#8a6a2c">税込／税別：要確認</span></p>
     </div>
 
     <div class="btns">
@@ -495,12 +521,16 @@
   <div class="wrap">
     <h2>はじめての方の流れ</h2>
     <span class="en">First Visit</span>
-    <div class="fs"><div class="nn">1</div><div class="tx"><b>ご相談・ご予約</b><p>LINE、またはお電話で。ご希望の日時をお知らせください。</p></div></div>
-    <div class="fs"><div class="nn">2</div><div class="tx"><b>カウンセリング</b><p>お体の状態、これまでの運動歴、目指したいところをうかがいます。</p></div></div>
-    <div class="fs"><div class="nn">3</div><div class="tx"><b>体の動きをチェック</b><p>いまどこが動きにくいかを、一緒に確認します。</p></div></div>
-    <div class="fs"><div class="nn">4</div><div class="tx"><b>マシンピラティス</b><p>その方に合わせて組んだ内容で進めます。初回から本番と同じです。</p></div></div>
-    <div class="fs"><div class="nn">5</div><div class="tx"><b>ご説明</b><p>通い方のご提案をします。その場でお決めいただかなくて構いません。</p></div></div>
-    <p class="note">動きやすい服装と、滑り止め付きのピラティス用靴下で。シューズは不要です。<br>靴下・ウェアは店内販売もあります。お着替えはロッカールームで（鍵付きロッカーあり）。</p>
+    <div class="fs"><div class="nn">1</div><div class="tx"><b>ご相談・ご予約</b><p>LINEまたはお電話で、<br>ご希望の日時をお知らせください。</p></div></div>
+    <div class="fs"><div class="nn">2</div><div class="tx"><b>カウンセリング</b><p>お体の状態やこれまでの運動歴、<br>これからどうなりたいかをうかがいます。</p></div></div>
+    <div class="fs"><div class="nn">3</div><div class="tx"><b>体の動きを確認</b><p>いま動かしにくいところや、<br>体の使い方を一緒に確認します。</p></div></div>
+    <div class="fs"><div class="nn">4</div><div class="tx"><b>マシンピラティス</b><p>確認した内容をもとに、<br>その方に合わせた内容で進めます。<br>初回から、<br>通常と同じパーソナルです。</p></div></div>
+    <div class="fs"><div class="nn">5</div><div class="tx"><b>通い方のご案内</b><p>お体の状態や生活に合わせて、<br>無理なく続けやすい通い方をご提案します。<br>その場でお決めいただく必要はありません。</p></div></div>
+    <div class="items">
+      <b>持ち物</b>
+      <p>・動きやすい服装<br>・滑り止め付きのピラティス用靴下</p>
+      <p>シューズは不要です。<br>靴下・ウェアは店内でも販売しています。<br>お着替えは鍵付きロッカーをご利用いただけます。</p>
+    </div>
   </div>
 </section>
 
@@ -522,30 +552,30 @@
     <h2>よくある質問</h2>
     <span class="en">Questions</span>
     <dl>
-      <dt>運動がまったく苦手ですが、大丈夫ですか。</dt>
-      <dd>パーソナルなので、その方に合わせて進めます。マシンが動きを助けてくれるぶん、体が硬い方のほうが取り組みやすいこともあります。</dd>
+      <dt>運動が苦手でも大丈夫ですか？</dt>
+      <dd>はい。<br>パーソナルなので、その方の状態に合わせて進めます。<br>マシンが動きを支えてくれるため、<br>体が硬い方や、運動が久しぶりの方にも取り組んでいただけます。</dd>
       <dt>ピラティスは初めてです。</dt>
-      <dd>初めての方がほとんどです。動かし方の説明からお伝えしますので、そのままお越しください。</dd>
-      <dt>体験だけ受けることはできますか。</dt>
-      <dd>はい、もちろんです。</dd>
-      <dt>体験が安くないのは、なぜですか。</dt>
-      <dd>通常と同じレッスンを、あなたに向けた内容でやるからです。決まった体験用のメニューは作っていません。初回から、ちゃんとパーソナルです。</dd>
-      <dt>セルフとは何ですか。</dt>
-      <dd>ご予約いただいた時間の中で、ご自身のペースでマシンを使ってピラティスをしていただく時間です。パーソナルで教わった動きを、自分で反復できます。月額プランにはパーソナルとセルフの両方が含まれています。<span class="tbd">予約方法・利用できる時間帯を要確認</span></dd>
-      <dt>セルフは、ひとりでも大丈夫ですか。</dt>
-      <dd>スタッフは必ずおります。セルフの時間は指導はしませんが、マシンの扱いで困ったときなどは声をかけてください。</dd>
-      <dt>子どもを連れて行けますか。</dt>
-      <dd>レッスン中のお預かりの仕組みがあります。<span class="tbd">対応できる曜日・時間・料金を要確認</span></dd>
-      <dt>トレーニングジムは使えますか。</dt>
-      <dd>ご希望の方は、別料金でご利用いただけます。ピラティスのプランには含まれていません。<span class="tbd">利用料金を要確認</span></dd>
-      <dt>シャワーはありますか。</dt>
-      <dd>あります。鍵付きロッカーのあるロッカールームでお着替えいただけますので、お仕事帰りにそのままお越しいただけます。</dd>
-      <dt>持ち物はありますか。</dt>
-      <dd>動きやすい服装と、<b>滑り止めのついたピラティス用の靴下</b>をお持ちください。シューズは不要です。靴下・ウェアは店内でも販売しています。お着替えはロッカールームでどうぞ（鍵付きロッカーあり）。<span class="tbd">タオルの要否を要確認</span></dd>
-      <dt>支払い方法は何がありますか。</dt>
-      <dd>現金、クレジットカードがご利用いただけます。</dd>
-      <dt>駐車場はありますか。</dt>
-      <dd>提携の「千歳市グリーンベルト地下駐車場」が<b>4時間まで無料</b>でご利用いただけます。スタジオまで徒歩約5分です。<a href="https://www.city.chitose.lg.jp/c70/1002771/1002776/1002786/1005349.html" target="_blank" rel="noopener" style="color:var(--gold-l)">駐車場のご案内（千歳市）</a></dd>
+      <dd>初めての方も多くいらっしゃいます。<br>動かし方からお伝えしますので、<br>経験がなくてもそのままお越しください。</dd>
+      <dt>体験だけ受けることはできますか？</dt>
+      <dd>はい。<br>体験から始めていただけます。<br>ただし、体験用の簡易メニューではなく、<br>初回から通常と同じパーソナルを行います。</dd>
+      <dt>体験が安くないのは、なぜですか？</dt>
+      <dd>初回から、<br>その方のお体に合わせて内容を組むからです。<br>決まった体験用メニューではなく、<br>通常と同じように一人ひとりを見ながら進めます。</dd>
+      <dt>セルフとは何ですか？</dt>
+      <dd>パーソナルで教わった動きを、<br>ご自身のペースで繰り返す時間です。<br>セルフ中の指導は行いませんが、<br>スタッフは必ずおります。<br><span class="tbd">予約方法・利用できる時間帯：要確認</span></dd>
+      <dt>セルフは、ひとりでも大丈夫ですか？</dt>
+      <dd>はい。<br>スタッフは必ずおります。<br>マシンの扱いなどで困ったときは、<br>お声がけください。</dd>
+      <dt>子どもを連れて行けますか？</dt>
+      <dd>レッスン中に、<br>お子さまをお預かりできる仕組みがあります。<br><span class="tbd">対応できる曜日・時間・料金：要確認</span></dd>
+      <dt>トレーニングジムは使えますか？</dt>
+      <dd>はい。<br>ご希望の方は別料金でご利用いただけます。<br>ピラティスのプランには含まれていません。<br><span class="tbd">利用料金：要確認</span></dd>
+      <dt>シャワーはありますか？</dt>
+      <dd>はい。<br>ロッカールームとシャワールームがあります。<br>鍵付きロッカーもご利用いただけます。</dd>
+      <dt>持ち物はありますか？</dt>
+      <dd>動きやすい服装と、<br>滑り止め付きのピラティス用靴下をお持ちください。<br>シューズは不要です。<br>靴下・ウェアは店内でも販売しています。<br><span class="tbd">タオルの要否：要確認</span></dd>
+      <dt>支払い方法は？</dt>
+      <dd>現金・クレジットカードをご利用いただけます。</dd>
+      <dt>駐車場はありますか？</dt>
+      <dd>提携の「千歳市グリーンベルト地下駐車場」を<br>4時間まで無料でご利用いただけます。<br>スタジオまでは徒歩約5分です。<br><a href="https://www.city.chitose.lg.jp/c70/1002771/1002776/1002786/1005349.html" target="_blank" rel="noopener" style="color:var(--gold-l)">駐車場のご案内（千歳市）</a></dd>
     </dl>
   </div>
 </section>
