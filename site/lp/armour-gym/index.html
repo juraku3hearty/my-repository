@@ -300,6 +300,16 @@
     .status{padding:44px 24px}
     .midcta{padding:80px 0}
   }
+
+  /* アクセス（地図埋め込み） */
+  .access{padding:96px 0;background:var(--ink2)}
+  .access .map{max-width:660px;margin:0 auto 26px;border:1px solid var(--hair);background:#000}
+  .access .map iframe{display:block;width:100%;height:320px;border:0;filter:grayscale(.15) contrast(1.05)}
+  .access .ad{max-width:520px;margin:0 auto;text-align:center;font-size:14px;line-height:2.2;color:var(--tx-d)}
+  .access .ad b{color:var(--tx);font-weight:500;display:block;font-size:15px;margin-bottom:6px}
+  .access .ad a{color:var(--gold-l)}
+  .access .btns{margin-top:26px}
+  @media(max-width:600px){.access{padding:68px 0}.access .map iframe{height:260px}}
 </style>
 </head>
 <body data-status="open"><!-- 受付状況: data-status を "open"（新規受付中）か "wait"（キャンセル待ち）に -->
@@ -316,6 +326,7 @@
     <a href="#studio">マシン</a>
     <a href="#price">料金</a>
     <a href="#env">環境</a>
+    <a href="#access">アクセス</a>
   </nav>
   <a class="resv" href="#yoyaku">RESERVE</a>
 </div>
@@ -537,6 +548,23 @@
     <div class="btns">
       <a class="btn line" href="https://line.me/R/ti/p/@686rlers" target="_blank" rel="noopener">LINEで体験を相談する</a>
       <a class="btn wire" href="tel:0123294610">0123-29-4610</a>
+    </div>
+  </div>
+</section>
+
+<section class="access fade" id="access">
+  <div class="wrap">
+    <h2>アクセス</h2>
+    <span class="en">Access</span>
+    <div class="map"><iframe src="https://www.google.com/maps?q=%E5%8C%97%E6%B5%B7%E9%81%93%E5%8D%83%E6%AD%B3%E5%B8%82%E5%B9%B8%E7%94%BA3-15%20%E3%82%A8%E3%83%AC%E3%82%AC%E3%83%B3%E3%82%B9%E3%83%93%E3%83%AB&z=16&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="ARMOUR GYM の地図" allowfullscreen></iframe></div>
+    <div class="ad">
+      <b>ARMOUR GYM pilates studio</b>
+      〒066-0063 北海道千歳市幸町3-15 エレガンスビル2F<br>
+      平日 9:00〜21:00 ／ 土日祝 9:00〜20:00<br>
+      提携駐車場：千歳市グリーンベルト地下駐車場（4時間まで無料 ／ 徒歩約5分）
+    </div>
+    <div class="btns">
+      <a class="btn wire" href="https://share.google/KWPTJcpRQmY3pKECZ" target="_blank" rel="noopener">地図アプリで開く</a>
     </div>
   </div>
 </section>
