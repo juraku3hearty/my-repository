@@ -251,6 +251,44 @@
     text-align:center;color:#8a6740;font-size:13px;padding:34px 26px;line-height:2}
   .last .btn.tel{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45)}
   .last .btn.tel:hover{background:rgba(255,255,255,.1)}
+
+  /* ───── スマホ最適化 ───── */
+  .wrap p,.faq dd,.info td,.who li,.care .c p,.voice .card p{text-wrap:pretty}
+  h1,h2,.emph,.pull,.cl,.x10,.band .big,.hero .stance .no,.future .box .em{text-wrap:balance}
+  @media(max-width:600px){
+    body{letter-spacing:.015em;line-height:2}
+    .wrap{padding:0 20px}
+    .sec{padding:60px 0}
+    h2{font-size:clamp(20px,5.6vw,24px);letter-spacing:.02em;line-height:1.75}
+    .en{margin-bottom:28px;letter-spacing:.26em}
+    .lead{margin-bottom:26px}
+    .hero{padding:64px 0 60px}
+    .hero h1{letter-spacing:.01em;line-height:1.75}
+    .hero .stance{padding:20px 0;margin-bottom:28px}
+    .emph{letter-spacing:.02em;margin:28px 0}
+    .said{margin-bottom:22px}
+    .btn{width:100%;max-width:340px;text-align:center;padding:15px 24px}
+    .tbd{white-space:normal;line-height:1.7}
+    .form .box,.why .box,.cred .box,.about .box,.counsel .box{padding:28px 20px}
+    .talk .asks{padding:22px 0;margin:20px 0}
+    .talk .says{margin:20px auto}
+    .daily .pt,.own .pt{padding:20px 0;margin:20px 0}
+    .price .first{padding:32px 22px}
+    .price .nopush{margin-bottom:34px}
+    .flow .fs{gap:16px}
+    .flow .fs .tx{padding-bottom:24px}
+    .info th,.info td{padding:13px 14px;font-size:13px}
+    .midcta{padding:48px 0}
+    .last{padding:56px 0}
+    .voice .card{padding:22px 20px}
+    .counsel .order{padding:20px 18px}
+    /* 文中の手動改行を無効化（引用ブロック・締め・見出しは残す） */
+    .wrap p:not(.pt):not(.cl):not(.said2):not(.emph):not(.x10):not(.sum) br,
+    .talk .box p:not(.cl) br,.daily .box p:not(.pt):not(.cl) br,.own .box p:not(.pt):not(.cl) br,
+    .price .first p br,.price .nopush br,.price .stance2 p br,.cred p br,.cred .pull br,.about .fact br,
+    .counsel p br,.counsel .cq br,.counsel .order p br,.who .close br,.last p br,.flow .note br,.selfcare .sum br{display:none}
+    .talk .asks p br{display:inline}
+  }
 </style>
 </head>
 <body>
