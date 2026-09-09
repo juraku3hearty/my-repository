@@ -275,13 +275,13 @@
     .last{padding:100px 0}
     .last p{line-height:2.2}
     footer{padding:52px 22px}
-    /* 本文は左揃え（見出し・締め・状態表示は中央のまま） */
-    .body p{text-align:left;max-width:none}
-    .body p.pull,.trial .body-center{text-align:center}
-    .who .close,.midcta .s,.status .sb,.last p{text-align:center}
-    .trial > .wrap > p:not(.pull){text-align:left}
-    .trial > .wrap > p.status-inline{text-align:center}
-    .trial p[style*="text-align:center"]{text-align:center!important}
+    /* 整列ルール：見出し・数字・受付状況だけ中央、文章はすべて左 */
+    .sec p,.body p,.pull,.who .close,.midcta .s,.last p,.access .ad,
+    .flow .tx p,.flow .note,.gymrow p,.faq dd,.machines div,
+    .price .gs,.price .note{text-align:left;max-width:none}
+    h2,.en,.price .gh,.trial .amt,.status .hd,.status .sb,
+    .status-inline,.status .lb,.btns{text-align:center}
+    .status .sb{max-width:none}
     /* 文中の手動改行を無効化（見出し・締めは残す） */
   }
 
@@ -600,9 +600,6 @@
       〒066-0063 北海道千歳市幸町3-15 エレガンスビル2F<br>
       平日 9:00〜21:00 ／ 土日祝 9:00〜20:00<br>
       提携駐車場：千歳市グリーンベルト地下駐車場（4時間まで無料 ／ 徒歩約5分）
-    </div>
-    <div class="btns">
-      <a class="btn wire" href="https://share.google/KWPTJcpRQmY3pKECZ" target="_blank" rel="noopener">地図アプリで開く</a>
     </div>
   </div>
 </section>
