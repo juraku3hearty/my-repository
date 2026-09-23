@@ -32,25 +32,41 @@ def get_creds():
     return creds
 
 
+PENDING_FILE = '/root/upload/pending_line.json'
+
+
+def _push_line(text):
+    req.post('https://api.line.me/v2/bot/message/push',
+             headers={'Authorization': f'Bearer {LINE_TOKEN}', 'Content-Type': 'application/json'},
+             json={'to': LINE_GROUP_ID, 'messages': [{'type': 'text', 'text': text}]})
+
+
 def send_line(message):
     if not LINE_GROUP_ID:
         print("LINE GROUP ID未設定")
         return
     import datetime, json as _json
-    hour = datetime.datetime.now().hour
-    if 0 <= hour < 7:
+    if 0 <= datetime.datetime.now().hour < 7:
         pending = []
-        if os.path.exists('/root/upload/pending_line.json'):
-            with open('/root/upload/pending_line.json') as f:
+        if os.path.exists(PENDING_FILE):
+            with open(PENDING_FILE) as f:
                 pending = _json.load(f)
         pending.append(message)
-        with open('/root/upload/pending_line.json', 'w') as f:
+        with open(PENDING_FILE, 'w') as f:
             _json.dump(pending, f)
         print(f'深夜のため保留: {message}')
         return
-    req.post('https://api.line.me/v2/bot/message/push',
-             headers={'Authorization': f'Bearer {LINE_TOKEN}', 'Content-Type': 'application/json'},
-             json={'to': LINE_GROUP_ID, 'messages': [{'type': 'text', 'text': message}]})
+    # 深夜に保留した分が残っていれば先に送る
+    if os.path.exists(PENDING_FILE):
+        try:
+            with open(PENDING_FILE) as f:
+                for m in _json.load(f):
+                    _push_line(m)
+                    print(f'保留分を送信: {m}')
+            os.remove(PENDING_FILE)
+        except Exception as e:
+            print(f'保留分の送信失敗: {e}')
+    _push_line(message)
 
 
 def send_error(title, err):
