@@ -1,0 +1,204 @@
+{
+ "note": "汎用のAI・ツール名だけの初期辞書。自分の固有名詞・人名・商品名は vocabulary.local.json に足す（配布物には入れない）。",
+ "initial_prompt_terms": [
+  "Claude",
+  "Claude Code",
+  "Anthropic",
+  "ChatGPT",
+  "Codex",
+  "Gemini",
+  "GPT",
+  "Opus",
+  "Sonnet",
+  "Fable",
+  "YouTube",
+  "Instagram",
+  "Threads",
+  "note",
+  "Substack",
+  "Discord",
+  "Cloudflare",
+  "Obsidian",
+  "Remotion",
+  "Whisper",
+  "Canva",
+  "Figma",
+  "Notion",
+  "プロンプト",
+  "AI"
+ ],
+ "corrections": [
+  {
+   "pattern": "ジェミニ|ジェミナイ|ジェミーニ",
+   "replacement": "Gemini"
+  },
+  {
+   "pattern": "クロード[のー]?コ[ワア][ーァ]?ク|黒土コア|クロードのコワーク",
+   "replacement": "クロードコワーク"
+  },
+  {
+   "pattern": "クロードコード",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "スレッ[ツヅ]ス?|スレット|スレッド(?=で|に|を|が|は|も|から|だ|です|って|の)",
+   "replacement": "Threads"
+  },
+  {
+   "pattern": "サブスタッ?ク?(?=で|に|を|が|は|も|から|だ|です|って|の|さ)|サブスター(?=で|に|を|が|は|も|から|だ|です|って|の|さ)",
+   "replacement": "Substack"
+  },
+  {
+   "pattern": "クロード(?![\\s　・]?(?:オーパス|ソネット|ハイク|オパス|Opus|Sonnet|Haiku))",
+   "replacement": "Claude"
+  },
+  {
+   "pattern": "ブリュー(?!イング)",
+   "replacement": "Vrew"
+  },
+  {
+   "pattern": "ウィスパー",
+   "replacement": "Whisper"
+  },
+  {
+   "pattern": "オブ[セシ]デ[ィイ]?アン|オブシディアン",
+   "replacement": "Obsidian"
+  },
+  {
+   "pattern": "チャット\\s?GPT",
+   "replacement": "ChatGPT"
+  },
+  {
+   "pattern": "デスクストップ",
+   "replacement": "デスクトップ"
+  },
+  {
+   "pattern": "ゴールコード",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "ペイジ[ーー]?ズ",
+   "replacement": "Pages"
+  },
+  {
+   "pattern": "クロード(?!コ)",
+   "replacement": "Claude"
+  },
+  {
+   "pattern": "クラウドコード",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "コーデックス",
+   "replacement": "Codex"
+  },
+  {
+   "pattern": "ホームブ[リュ]{1,2}[ーュ]?|ホームVrew|ホームブルー",
+   "replacement": "Homebrew"
+  },
+  {
+   "pattern": "利先度|利先|リセンド|リセント",
+   "replacement": "Resend"
+  },
+  {
+   "pattern": "タイプレス",
+   "replacement": "Typeless"
+  },
+  {
+   "pattern": "クラウドフレア|クラウドグレイ|クラウドグレー",
+   "replacement": "Cloudflare"
+  },
+  {
+   "pattern": "クラウドフリア|クラウドフリヤ",
+   "replacement": "Cloudflare"
+  },
+  {
+   "pattern": "コデックス",
+   "replacement": "Codex"
+  },
+  {
+   "pattern": "クロドコード|クロード・コード",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "ディスコース(?=に|で|の|は|が|を|も|から|、|。)",
+   "replacement": "Discord"
+  },
+  {
+   "pattern": "クロウドフォード|クロウド(?=の|に|で|を|は|が|、|。)",
+   "replacement": "クロード"
+  },
+  {
+   "pattern": "クロトコード|フロードコード|黒どこコード",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "オブ[スセシ]デ[ィイ]?アン|オブシェア(?=[のとや])",
+   "replacement": "Obsidian"
+  },
+  {
+   "pattern": "ディスコード",
+   "replacement": "Discord"
+  },
+  {
+   "pattern": "フェイブル|フェーブル",
+   "replacement": "Fable"
+  },
+  {
+   "pattern": "パワーシェル",
+   "replacement": "PowerShell"
+  },
+  {
+   "pattern": "ソネット",
+   "replacement": "Sonnet"
+  },
+  {
+   "pattern": "黒床",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "CloudCode|CloudeCode",
+   "replacement": "Claude Code"
+  },
+  {
+   "pattern": "CloudDesktop",
+   "replacement": "Claude Desktop"
+  },
+  {
+   "pattern": "(?<![a-zA-Z])Sonet(?![a-zA-Z])",
+   "replacement": "Sonnet"
+  },
+  {
+   "pattern": "オプシジア|オブシディアン",
+   "replacement": "Obsidian"
+  },
+  {
+   "pattern": "クールオード",
+   "replacement": "Claude"
+  },
+  {
+   "pattern": "ディープスイック",
+   "replacement": "DeepSeek"
+  },
+  {
+   "pattern": "リモーション|リモーシャン|レモーション",
+   "replacement": "Remotion"
+  },
+  {
+   "pattern": "ファル(?=[^ー])|ＦＡＬ|FAL",
+   "replacement": "fal"
+  },
+  {
+   "pattern": "エージェンツ ?(md|MD|エムディー)|エージェンツドットエムディー",
+   "replacement": "AGENTS.md"
+  },
+  {
+   "pattern": "スレッチ",
+   "replacement": "スレッズ"
+  },
+  {
+   "pattern": "ロードコード",
+   "replacement": "Claude Code"
+  }
+ ]
+}

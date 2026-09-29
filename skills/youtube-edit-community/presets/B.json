@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "plan": "B",
+  "screen_mode": "auto",
+  "pip": {
+    "position": "right",
+    "size": "normal"
+  },
+  "caption": {
+    "color": "#ffffff",
+    "px": 56,
+    "bottom_px": 54,
+    "font": "NotoSansJP-ExtraBold",
+    "shadow": "soft"
+  },
+  "heading": {
+    "enabled": true,
+    "left_px": 94,
+    "top_px": 60,
+    "px": 44,
+    "enter_s": 0.46,
+    "hide_during_screen": true,
+    "position": "left",
+    "bg_color": "#ffffff",
+    "text_color": "#132129",
+    "style": "slant_band"
+  },
+  "face": {
+    "diameter_px": 280,
+    "small_px": 220,
+    "margin_x_px": 48,
+    "bottom_px": 215,
+    "crop_center": [
+      0.5,
+      0.42
+    ],
+    "crop_scale": 1.0
+  },
+  "output": {
+    "width": 1920,
+    "height": 1080,
+    "fps": "source",
+    "target_minutes": [
+      10,
+      15
+    ],
+    "video_bitrate": "8M"
+  },
+  "audio": {
+    "master": "auto",
+    "lufs": -14,
+    "true_peak": -1.5
+  }
+}
