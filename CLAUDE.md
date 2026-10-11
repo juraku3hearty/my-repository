@@ -76,12 +76,27 @@ MAYUが主催する取り組み。一人ひとりの業務課題をAIで自動�
 - **シートID:** `144VrJLm2dMBDwtB9uOHnYQBrnlaCuOB8mtZctQ_E3Dw`
 - **シート列構成:** A=投稿日, B=テキスト, C=画像URL, D=投稿済み
 - **コード場所:** `my-repository/sns-poster/`（ブランチ claude/blissful-allen-2qmefq）
-- **状態:** 実装・テスト済み（38件通過）。LINE/Cloudinary/GASの初期セットアップ待ち
-- **既知の課題:** B列の1テキストをInstagramとGoogle両方に流しているため、
-  Google側の投稿にInstagram専用の文面（@ハンドル、プロフィール誘導、
-  ハッシュタグ）が混入している。フッターを列で分ける対応が未着手
-- **注意:** 既存GASプロジェクト（gas_main.js）に別のdoPostがあるため、
-  別GASプロジェクト・別LINEチャネルとして分離している
+- **状態:** 🟢 本番稼働中（2026-10-11 Instagram・Google両方への初投稿成功）
+- **LINEチャネル:** 「樹鍼灸整骨院 SNS投稿Bot」。顧客向けLINEとは別の新規公式アカウント
+- **GAS WebApp URL:** `https://script.google.com/macros/s/AKfycbxnzuxcAaD5cDayK4ijzJDUvJk7TN-gCsiVS7tAZcSLfKl5L29gXoVcY1WNUrnhAQ97/exec`
+- **Cloudinary:** cloud name `dcbfytmzv` / 署名付きアップロード / フォルダ `sns-poster/`
+- **投稿者:** 院長がLINEで送る。MAYUは管理用に許可リストへ同居（`一覧` コマンドで確認可）
+- **Makeシナリオ構成:**
+  `Google Sheets(Search Rows)` → `Cloudinary(Upload a Resource)`
+  → `Google Business Profile(Create a Post)` → `Instagram for Business(Create a carousel post)`
+- **残課題:**
+  1. Threads追加 → **Threadsは本文500字制限**。現状の投稿文(1,500〜2,000字)は入らない。
+     Make側でsubstring（暫定）か、GeminiでThreads用要約を自動生成（本命）が必要
+  2. B列の1テキストをInstagramとGoogle両方に流しているため、Google側の投稿に
+     Instagram専用の文面（@ハンドル、プロフィール誘導、ハッシュタグ）が混入している。
+     フッターを列で分ける対応が未着手
+  3. Makeのスケジュールを毎日11:30に設定（タイムゾーンがAsia/Tokyoか要確認）
+  4. 過去行（5/23〜8/12）のアーカイブシートへの退避。季節ネタは毎年使い回せるので消さない
+- **注意点:**
+  - 既存GASプロジェクト（gas_main.js）に別のdoPostがあるため、別GASプロジェクト・
+    別LINEチャネルとして分離している
+  - Make内にもCloudinaryモジュールがあるため二重アップロードになるが**無害**。
+    Botが出すURLは既にJPEG変換・比率補正済みのため、むしろ安全側に働く。触らないこと
 
 ---
 
@@ -100,6 +115,22 @@ MAYUが個別トークでBotに送ったものだけが処理される最小構�
   検証できないため、この許可リストが唯一の保護になる
 
 採用案件: ペットサロン（→WordPress）、No.4 SNS投稿Bot（→Instagram/Google）
+
+### GAS + LINE のハマりどころ（毎回出る）
+
+- **LINEの［検証］ボタンで「302 Found」エラーが出るが、無視してよい。**
+  GASのウェブアプリはレスポンスを `script.googleusercontent.com` へリダイレクト
+  する仕様で、LINEの検証はリダイレクトを追わないため必ず302になる。
+  302が返る時点でスクリプトは実行済みであり、返信も届く。
+  実際に動いているかは GASの「実行数」画面で `doPost` が完了しているかで判断する
+- **Messaging APIチャネルはDevelopers Consoleから直接作れない。**
+  先にLINE公式アカウントを作り、Official Account Manager側で有効化する
+- **応答メッセージのオフは Official Account Manager の「応答設定」にある。**
+  オンのままだとBotの返信と定型文が二重で返る
+- **スクリプトプロパティの編集画面は、値が空の行があると保存できない。**
+  使わないプロパティは行ごと削除する
+- **900行級のコードは8ファイルに分けず1ファイルに連結して貼る方が事故が少ない。**
+  GASは全ファイルが同一スコープなので動作は変わらない（`build_all_in_one.sh` 参照）
 
 ---
 
