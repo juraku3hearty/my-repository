@@ -1,0 +1,10 @@
+# sns-poster は別GASプロジェクト。ルートのclasp pushに巻き込まない
+sns-poster/**
+# Vercel / Node 側のファイル
+api/**
+node_modules/**
+package.json
+package-lock.json
+vercel.json
+*.ttf
+*.md
