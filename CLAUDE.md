@@ -64,6 +64,43 @@ MAYUが主催する取り組み。一人ひとりの業務課題をAIで自動�
 - **状態:** 本番稼働中（OAuthを本番公開済み、2026-05-17）
 - **注意:** token.pickleが切れたらWindows側でauth.py実行 → SCP転送が必要
 
+#### No.4 SNS投稿Bot（樹鍼灸整骨院）
+- **依頼者:** 自院（樹鍼灸整骨院）
+- **課題:** Make製のInstagram/Google自動投稿は動いていたが、画像を
+  画像アップローダーサイトへ手動アップロードしてURLをシートに貼る工程が面倒
+- **内容:** LINEに画像と投稿文を送るだけでSNS投稿カレンダーに1行追加。
+  投稿の実行は従来通りMake側の「投稿日 == 今日」判定に任せる
+- **技術:** LINE Messaging API, GAS 8ファイル（00_Config〜07_Setup）,
+  Cloudinary（署名付きアップロード）
+- **構成:** パターンA（MAYUの個別トークをフック）
+- **シートID:** `144VrJLm2dMBDwtB9uOHnYQBrnlaCuOB8mtZctQ_E3Dw`
+- **シート列構成:** A=投稿日, B=テキスト, C=画像URL, D=投稿済み
+- **コード場所:** `my-repository/sns-poster/`（ブランチ claude/blissful-allen-2qmefq）
+- **状態:** 実装・テスト済み（38件通過）。LINE/Cloudinary/GASの初期セットアップ待ち
+- **既知の課題:** B列の1テキストをInstagramとGoogle両方に流しているため、
+  Google側の投稿にInstagram専用の文面（@ハンドル、プロフィール誘導、
+  ハッシュタグ）が混入している。フッターを列で分ける対応が未着手
+- **注意:** 既存GASプロジェクト（gas_main.js）に別のdoPostがあるため、
+  別GASプロジェクト・別LINEチャネルとして分離している
+
+---
+
+## よく使う構成パターン
+
+### パターンA：MAYUのLINEをフックにする単独運用
+
+MAYUが個別トークでBotに送ったものだけが処理される最小構成。
+ペットサロン案件（LINE → WordPress自動投稿）がこの形。
+
+- Botは1対1の個別トークで受ける。**グループは使わない**
+  （グループだと雑談が入力として誤認される）
+- 許可ユーザーは `ALLOWED_USER_IDS` にMAYUのLINE IDのみ登録
+- 後からスタッフを増やす場合は、IDをカンマ区切りで足すだけ。コード変更不要
+- Apps ScriptのdoPostはリクエストヘッダーを読めず `X-Line-Signature` を
+  検証できないため、この許可リストが唯一の保護になる
+
+採用案件: ペットサロン（→WordPress）、No.4 SNS投稿Bot（→Instagram/Google）
+
 ---
 
 ## インフラ構成（VPS）
