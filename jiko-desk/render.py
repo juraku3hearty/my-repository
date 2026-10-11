@@ -51,11 +51,11 @@ def collect_items(conn: sqlite3.Connection, statuses: tuple[str, ...],
                   only_publishable: bool = False) -> list[dict]:
     """カテゴリー順・動画順に項目を集め、Q番号と表示用の値を付ける。
 
-    only_publishable=True なら、自動品質チェックで「要目視」になった項目を外す。
+    only_publishable=True なら、院内確認を通り専門家確認もクリアした項目だけに絞る。
     """
     rows = db.list_items(conn, review_status=statuses)
     if only_publishable:
-        rows = [row for row in rows if quality.publishable(row)]
+        rows = [row for row in rows if db.publishable(row)]
     order = {c: i for i, c in enumerate(config.CATEGORIES)}
     rows = sorted(rows, key=lambda r: (order.get(r["category"], 99), r["video_id"], r["start_sec"] or 0))
 
@@ -82,6 +82,8 @@ def collect_items(conn: sqlite3.Connection, statuses: tuple[str, ...],
             "start_hms": tr.hms(row["start_sec"] or 0),
             "end_hms": tr.hms(row["end_sec"] or 0),
             "review_status": row["review_status"],
+            "internal_status": row["internal_status"] or config.InternalStatus.UNCHECKED,
+            "internal_reviewer": row["internal_reviewer"] or "",
             "expert_type": row["expert_type"] or "",
             "review_points": row["review_points"] or "",
             "outdated": bool(row["outdated"]),
@@ -202,7 +204,7 @@ def render_review_booklet(conn: sqlite3.Connection, out_dir: Path | None = None)
 CSV_HEADERS = [
     "ナレッジID", "Q番号", "カテゴリー", "質問", "回答", "関連キーワード",
     "解説PDFページ", "動画タイトル", "該当開始時刻", "該当終了時刻", "元動画URL(時刻付)",
-    "根拠テキスト", "確認ステータス", "担当専門家", "品質チェック", "品質メモ",
+    "根拠テキスト", "院内確認", "専門家確認", "担当専門家", "公開可否", "品質チェック", "品質メモ",
     "更新確認要", "要確認事項", "動画ID",
 ]
 
@@ -226,7 +228,11 @@ def export_index(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple
                 item["id"], item["q_no"], item["category"], item["question"], item["answer_short"],
                 "、".join(item["keywords"]), page_by_id.get(item["id"]) or "",
                 item["video_title"], item["start_hms"], item["end_hms"], item["timed_url"],
-                item["evidence"], item["review_status"], item["expert_type"],
+                item["evidence"], item["internal_status"], item["review_status"],
+                item["expert_type"],
+                "公開可" if (item["internal_status"] == config.InternalStatus.APPROVED
+                             and item["review_status"] in (config.ReviewStatus.NOT_REQUIRED,
+                                                           config.ReviewStatus.APPROVED)) else "非公開",
                 item["quality_status"], item["quality_notes"],
                 "要" if item["outdated"] else "", item["review_points"], item["video_id"],
             ])
@@ -243,8 +249,44 @@ def export_index(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple
 
 QC_HEADERS = [
     "ナレッジID", "カテゴリー", "質問", "回答", "根拠テキスト", "品質メモ",
-    "元動画URL(時刻付)", "確認ステータス",
+    "元動画URL(時刻付)", "院内確認", "専門家確認",
 ]
+
+INTERNAL_HEADERS = [
+    "ナレッジID", "優先", "動画タイトル", "該当開始時刻", "カテゴリー", "質問", "回答",
+    "根拠テキスト", "元動画URL(時刻付)", "品質メモ", "専門家確認", "担当専門家",
+    "院内判定", "確認者", "コメント",
+]
+
+
+def export_internal_review_list(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple[Path, int]:
+    """院内確認リスト（実務責任者が目を通す分）。
+
+    動画の流れ順に並べるので、元動画を見ながら上から確認できる。
+    「院内判定」列に 院内確認済 / 院内要修正 を書いて import-review で戻す。
+    """
+    out_dir = out_dir or config.OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    rows = db.list_items(conn)
+    pending = [r for r in rows
+               if (r["internal_status"] or config.InternalStatus.UNCHECKED) == config.InternalStatus.UNCHECKED]
+    pending.sort(key=lambda r: (r["video_id"], r["start_sec"] or 0))
+
+    path = out_dir / "院内確認リスト.csv"
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(INTERNAL_HEADERS)
+        for row in pending:
+            writer.writerow([
+                row["id"],
+                "★" if row["quality_status"] == quality.STATUS_CHECK else "",
+                row["video_title"], tr.hms(row["start_sec"] or 0), row["category"],
+                row["question"], row["answer_short"], row["evidence"] or "",
+                _timed_url(row["video_url"], row["start_sec"] or 0),
+                row["quality_notes"] or "", row["review_status"], row["expert_type"] or "",
+                "", "", "",
+            ])
+    return path, len(pending)
 
 
 def export_quality_list(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple[Path, int]:

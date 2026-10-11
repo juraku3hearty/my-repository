@@ -84,6 +84,8 @@
     {% elif item.review_status == '要修正' %}<span class="badge pending">要修正</span>
     {% else %}<span class="badge none">確認不要</span>{% endif %}
     {% if item.outdated %}<span class="badge outdated">更新確認要</span>{% endif %}
+    {% if item.internal_status != '院内確認済' %}<span class="badge pending">{{ item.internal_status }}</span>
+    {% else %}<span class="badge approved">院内確認済</span>{% endif %}
     <span class="badge none">{{ item.category }}</span>
   </div>
 

@@ -9,8 +9,9 @@
   python3 cli.py build                 ③④ ナレッジ生成と要確認の振り分け
   python3 cli.py qc                    公開前の自動品質チェック（根拠照合・数値照合）
   python3 cli.py render                PDF（本編・確認待ち別冊）とQ&A索引を出力
-  python3 cli.py review --item ID --judge 確認済
-  python3 cli.py import-review FILE.csv
+  python3 cli.py approve --item ID --by 院長        院内確認（実務責任者）の判定
+  python3 cli.py review  --item ID --judge 確認済    専門家確認の判定
+  python3 cli.py import-review FILE.csv              CSVでまとめて反映（両方の軸に対応）
   python3 cli.py sync-new              ⑤ 新着動画だけを同じ流れで処理
   python3 cli.py status                進捗を表示
 """
@@ -36,6 +37,7 @@ def _client() -> VimeoClient:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
+    """接続確認。実際に使うAPI操作を1つずつ試し、どこで止まるかを特定する。"""
     print("== 設定 ==")
     print(f"  DB            : {config.DB_PATH}")
     print(f"  出力先        : {config.OUT_DIR}")
@@ -43,25 +45,77 @@ def cmd_check(args: argparse.Namespace) -> int:
     print(f"  Vimeo取得元   : {config.VIMEO_SOURCE}")
     print(f"  Geminiモデル  : {config.GEMINI_MODEL}")
 
-    print("== Vimeo ==")
+    print("\n== Vimeo ==")
     try:
-        me = _client().whoami()
+        client = _client()
+    except SystemExit as e:
+        print(f"  {e}")
+        return 1
+
+    # 1) トークンのスコープ
+    try:
+        verified = client.verify_token()
+        scopes = (verified.get("scope") or "").split()
+        print(f"  [1] トークン検証 OK  スコープ: {', '.join(scopes) or '(なし)'}")
+        for needed in ("public", "private"):
+            print(f"      {needed}: {'あり' if needed in scopes else 'なし ← 必要です'}")
+        if "video_files" not in scopes:
+            print("      video_files: なし（字幕なし動画の音声DLをする場合のみ必要）")
+    except Exception as e:
+        print(f"  [1] トークン検証 失敗: {e}")
+        return 1
+
+    # 2) アカウントとプラン
+    try:
+        me = client.whoami()
         account = me.get("account", "?")
-        print(f"  接続OK: {me.get('name')}（プラン: {account}）")
-        if account in ("basic", "free"):
-            print("  注意: 無料/Basicプランは字幕の自動生成が使えません。既存の字幕のみ取得できます。")
+        print(f"  [2] アカウント OK: {me.get('name')}（プラン: {account}）")
+        if account in ("basic", "free", "plus"):
+            print("      注意: 字幕の自動生成はVimeoの対象プランの機能です。"
+                  "字幕が無い動画はWhisperなど別の方法で文字起こしします。")
+    except Exception as e:
+        print(f"  [2] アカウント取得 失敗: {e}")
+        return 1
+
+    # 3) 動画一覧
+    video = None
+    try:
+        videos = client.list_videos()
+        print(f"  [3] 動画一覧 OK: {len(videos)}本（取得元 {config.VIMEO_SOURCE}）")
+        for v in videos[:3]:
+            print(f"      {v.video_id}  {tr.hms(v.duration_sec)}  {v.title[:40]}")
+        video = videos[0] if videos else None
+        if not videos:
+            print("      0本でした。VIMEO_SOURCE の指定（me / folder:ID / showcase:ID）を見直してください。")
+    except Exception as e:
+        print(f"  [3] 動画一覧 失敗: {e}")
+        return 1
+
+    # 4) 字幕トラック（実際に使う操作そのものを試す）
+    target_id = args.video or (video.video_id if video else None)
+    if target_id:
+        try:
+            tracks = client.list_text_tracks(target_id)
+            print(f"  [4] 字幕トラック取得 OK: 動画{target_id} に {len(tracks)}件")
+            for t in tracks:
+                print(f"      type={t.get('type')} lang={t.get('language')} "
+                      f"active={t.get('active')} name={t.get('name')}")
+            if not tracks:
+                print("      この動画には字幕がありません。import-manual の経路を使います。")
+        except Exception as e:
+            print(f"  [4] 字幕トラック取得 失敗: {e}")
+            return 1
+
+    print("\n== Gemini ==")
+    try:
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
+        data = gemini.generate_json("ok に true を入れて返してください。", schema)
+        print(f"  接続OK: {data}（モデル {config.GEMINI_MODEL}）")
     except Exception as e:
         print(f"  失敗: {e}")
         return 1
 
-    print("== Gemini ==")
-    try:
-        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
-        data = gemini.generate_json("ok に true を入れて返してください。", schema)
-        print(f"  接続OK: {data}")
-    except Exception as e:
-        print(f"  失敗: {e}")
-        return 1
+    print("\nすべて通りました。次は python3 cli.py test-one で1本を通してください。")
     return 0
 
 
@@ -177,8 +231,26 @@ def cmd_render(args: argparse.Namespace) -> int:
     print(f"JSON   : {json_path}")
     qc_path, flagged = render.export_quality_list(conn)
     print(f"品質要目視: {qc_path}（{flagged}項目）")
+    internal_path, unchecked = render.export_internal_review_list(conn)
+    print(f"院内確認リスト: {internal_path}（未確認{unchecked}項目）")
     if count == 0:
-        print("\n注意: 確認済みの項目がまだ0件です。内部確認用には --draft を付けて出力してください。")
+        print("\n公開可能な項目はまだ0件です（自動生成しただけの項目は公開しません）。")
+        print("  1. out/院内確認リスト.csv を実務責任者が確認し、院内判定を記入")
+        print("  2. python3 cli.py import-review out/院内確認リスト.csv")
+        print("  3. 専門家確認待ちの項目は 確認待ち別冊PDF を専門家へ")
+        print("  内容を先に通して読むだけなら --draft 付きのドラフトPDFを使ってください。")
+    return 0
+
+
+def cmd_approve(args: argparse.Namespace) -> int:
+    """院内確認（実務責任者）の判定を1件反映する。"""
+    conn = db.connect()
+    judge = args.judge or config.InternalStatus.APPROVED
+    if judge not in (config.InternalStatus.APPROVED, config.InternalStatus.REJECTED):
+        print(f"判定は「{config.InternalStatus.APPROVED}」か「{config.InternalStatus.REJECTED}」を指定してください。")
+        return 1
+    db.apply_internal_review(conn, args.item, judge, args.by or "", args.comment or "")
+    print(f"{args.item} を {judge} にしました。")
     return 0
 
 
@@ -192,22 +264,56 @@ def cmd_review(args: argparse.Namespace) -> int:
     return 0
 
 
+INTERNAL_ALIASES = {
+    config.InternalStatus.APPROVED: config.InternalStatus.APPROVED,
+    config.InternalStatus.REJECTED: config.InternalStatus.REJECTED,
+    "確認済": config.InternalStatus.APPROVED,
+    "済": config.InternalStatus.APPROVED,
+    "OK": config.InternalStatus.APPROVED,
+    "○": config.InternalStatus.APPROVED,
+    "要修正": config.InternalStatus.REJECTED,
+    "NG": config.InternalStatus.REJECTED,
+    "×": config.InternalStatus.REJECTED,
+}
+
+
 def cmd_import_review(args: argparse.Namespace) -> int:
-    """専門家の確認結果をCSVで戻す（列: ナレッジID, 判定, 確認者, コメント）。"""
+    """確認結果をCSVで戻す。
+
+    院内確認リスト  : 列「院内判定」（院内確認済 / 院内要修正、済・OK・○ も可）
+    専門家の確認結果: 列「専門家判定」または「判定」（確認済 / 要修正）
+    どちらの列があっても処理する。確認者・コメント列は任意。
+    """
     conn = db.connect()
     path = Path(args.file)
-    applied = skipped = 0
+    internal = expert = skipped = 0
     with path.open(encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             item_id = (row.get("ナレッジID") or "").strip()
-            judge = (row.get("判定") or "").strip()
-            if not item_id or judge not in (config.ReviewStatus.APPROVED, config.ReviewStatus.REJECTED):
+            if not item_id:
                 skipped += 1
                 continue
-            db.apply_review(conn, item_id, judge,
-                            (row.get("確認者") or "").strip(), (row.get("コメント") or "").strip())
-            applied += 1
-    print(f"確認結果を反映: {applied}件（スキップ{skipped}件）")
+            reviewer = (row.get("確認者") or "").strip()
+            comment = (row.get("コメント") or "").strip()
+            touched = False
+
+            raw_internal = (row.get("院内判定") or "").strip()
+            if raw_internal:
+                judge = INTERNAL_ALIASES.get(raw_internal)
+                if judge:
+                    db.apply_internal_review(conn, item_id, judge, reviewer, comment)
+                    internal += 1
+                    touched = True
+
+            raw_expert = (row.get("専門家判定") or row.get("判定") or "").strip()
+            if raw_expert in (config.ReviewStatus.APPROVED, config.ReviewStatus.REJECTED):
+                db.apply_review(conn, item_id, raw_expert, reviewer, comment)
+                expert += 1
+                touched = True
+
+            if not touched:
+                skipped += 1
+    print(f"反映: 院内確認 {internal}件 / 専門家確認 {expert}件（判定の記入なし {skipped}件）")
     return 0
 
 
@@ -234,8 +340,21 @@ def cmd_sync_new(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     conn = db.connect()
     s = db.stats(conn)
-    print(f"動画 {s['videos']}本 / 字幕取得済 {s['transcribed']}本")
-    print(f"項目 {s['items']}件  （確認済 {s['approved']} / 確認不要 {s['not_required']} / 確認待ち {s['pending']}）")
+    print(f"動画 {s['videos']}本 / 字幕取得済 {s['transcribed']}本 / 項目 {s['items']}件")
+    print(f"  院内確認   : 確認済 {s['internal_approved']} / 未確認 {s['internal_unchecked']}")
+    print(f"  専門家確認 : 確認済 {s['expert_approved']} / 確認待ち {s['expert_pending']} / 不要 {s['expert_not_required']}")
+    print(f"  品質要目視 : {s['quality_check']}")
+    print(f"  → 会員へ公開可能: {s['publishable']}件")
+
+    history = db.approval_history(conn)
+    if any(row["approved"] or row["rejected"] for row in history):
+        print("\nカテゴリー別の院内確認実績（将来の自動承認の判断材料）:")
+        for row in history:
+            if not row["total"]:
+                continue
+            rate = f"{row['approved'] / row['total'] * 100:.0f}%" if row["total"] else "-"
+            print(f"  {row['category'] or '(未分類)':<24} 確認済 {row['approved']:>3}/{row['total']:<3}"
+                  f" (承認率 {rate})  要修正 {row['rejected']}")
     print("\n動画ごとの状態:")
     for row in db.list_videos(conn):
         print(f"  {row['video_id']}  {row['status']:<12} 字幕={row['caption_state'] or '-':<10} "
@@ -249,7 +368,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="交通事故実務デスク 動画ナレッジ化")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("check", help="接続確認").set_defaults(func=cmd_check)
+    p = sub.add_parser("check", help="接続確認")
+    p.add_argument("--video", help="字幕取得を試す動画ID（省略時は一覧の先頭）")
+    p.set_defaults(func=cmd_check)
     sub.add_parser("list-videos", help="① 動画一覧を取り込む").set_defaults(func=cmd_list_videos)
 
     p = sub.add_parser("test-one", help="最初の1本で検証")
@@ -278,7 +399,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--draft", action="store_true", help="確認待ちも含めた内部ドラフトを出す")
     p.set_defaults(func=cmd_render)
 
-    p = sub.add_parser("review", help="確認結果を1件反映")
+    p = sub.add_parser("approve", help="院内確認（実務責任者）の判定を1件反映")
+    p.add_argument("--item", required=True)
+    p.add_argument("--judge", help="院内確認済（既定） / 院内要修正")
+    p.add_argument("--by", help="確認者名")
+    p.add_argument("--comment")
+    p.set_defaults(func=cmd_approve)
+
+    p = sub.add_parser("review", help="専門家確認の結果を1件反映")
     p.add_argument("--item", required=True)
     p.add_argument("--judge", required=True, help="確認済 / 要修正")
     p.add_argument("--reviewer")

@@ -137,9 +137,19 @@ def main() -> None:
         db.set_video_fields(conn, video_id, item_count=len(responses),
                             knowledge_built_at=db.now(), status=config.VideoStatus.BUILT)
 
-    # 1件だけ専門家確認済みにして、本編と別冊の振り分けを確認する
+    # 公開には院内確認と専門家確認の両方が要ることを確認する
+    print("\n-- 公開判定の確認 --")
+    print(f"  生成直後に公開可能な項目: {db.stats(conn)['publishable']}件（0件であること）")
+
     db.apply_review(conn, "KB-900000002-001", config.ReviewStatus.APPROVED,
-                    reviewer="確認用ダミー", comment="内容確認済み")
+                    reviewer="確認用ダミー（専門家）", comment="内容確認済み")
+    print(f"  専門家確認だけ通した後 : {db.stats(conn)['publishable']}件（まだ0件であること）")
+
+    db.apply_internal_review(conn, "KB-900000002-001", config.InternalStatus.APPROVED,
+                             reviewer="確認用ダミー（院長）")
+    db.apply_internal_review(conn, "KB-900000002-002", config.InternalStatus.APPROVED,
+                             reviewer="確認用ダミー（院長）")
+    print(f"  院内確認も通した後     : {db.stats(conn)['publishable']}件")
 
     qc = quality.run(conn)
     print(f"\n自動品質チェック: OK {qc['ok']} / 要目視 {qc['check']}")
@@ -158,6 +168,8 @@ def main() -> None:
     print(f"Q&A索引CSV      : {csv_path}（{n}項目）")
     qc_path, flagged = render.export_quality_list(conn, out_dir=out_dir)
     print(f"品質要目視CSV   : {qc_path}（{flagged}項目）")
+    internal_path, unchecked = render.export_internal_review_list(conn, out_dir=out_dir)
+    print(f"院内確認リストCSV: {internal_path}（未確認{unchecked}項目）")
 
 
 if __name__ == "__main__":

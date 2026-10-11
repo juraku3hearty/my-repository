@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS items (
     start_sec        REAL,
     end_sec          REAL,
     review_status    TEXT,
+    internal_status  TEXT,
+    internal_reviewer TEXT,
+    internal_reviewed_at TEXT,
     expert_type      TEXT,
     review_points    TEXT,
     matched_keywords TEXT,
@@ -80,6 +83,7 @@ CREATE TABLE IF NOT EXISTS review_log (
     judged_at  TEXT,
     judgement  TEXT,
     comment    TEXT,
+    axis       TEXT,
     FOREIGN KEY (item_id) REFERENCES items (id)
 );
 
@@ -211,9 +215,10 @@ def insert_item(conn: sqlite3.Connection, item: dict) -> str:
     conn.execute(
         """INSERT INTO items (id, video_id, chunk_index, category, question, answer_short,
                               body_md, evidence, key_points, caveats, unknown_points, keywords,
-                              start_sec, end_sec, review_status, expert_type, review_points,
+                              start_sec, end_sec, review_status, internal_status,
+                              expert_type, review_points,
                               matched_keywords, outdated, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             item_id, item["video_id"], item.get("chunk_index"), item.get("category"),
             item["question"], item["answer_short"], item.get("body_md", ""),
@@ -221,7 +226,9 @@ def insert_item(conn: sqlite3.Connection, item: dict) -> str:
             dumps(item.get("key_points")), item.get("caveats", ""),
             dumps(item.get("unknown_points")), dumps(item.get("keywords")),
             item.get("start_sec"), item.get("end_sec"),
-            item.get("review_status"), item.get("expert_type", ""),
+            item.get("review_status"),
+            item.get("internal_status", config.InternalStatus.UNCHECKED),
+            item.get("expert_type", ""),
             item.get("review_points", ""), dumps(item.get("matched_keywords")),
             1 if item.get("outdated") else 0, now(), now(),
         ),
@@ -264,23 +271,62 @@ def set_quality(conn: sqlite3.Connection, item_id: str, status: str, notes: str)
 def migrate(conn: sqlite3.Connection) -> None:
     """既存DBに後から増えた列を足す（作り直し不要にする）。"""
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(items)").fetchall()}
-    for column, ddl in (("evidence", "TEXT"), ("quality_status", "TEXT"), ("quality_notes", "TEXT")):
+    for column, ddl in (
+        ("evidence", "TEXT"), ("quality_status", "TEXT"), ("quality_notes", "TEXT"),
+        ("internal_status", "TEXT"), ("internal_reviewer", "TEXT"), ("internal_reviewed_at", "TEXT"),
+    ):
         if column not in existing:
             conn.execute(f"ALTER TABLE items ADD COLUMN {column} {ddl}")
+    conn.execute(
+        "UPDATE items SET internal_status = ? WHERE internal_status IS NULL OR internal_status = ''",
+        (config.InternalStatus.UNCHECKED,),
+    )
+    log_columns = {row["name"] for row in conn.execute("PRAGMA table_info(review_log)").fetchall()}
+    if "axis" not in log_columns:
+        conn.execute("ALTER TABLE review_log ADD COLUMN axis TEXT")
     conn.commit()
 
 
 def apply_review(conn: sqlite3.Connection, item_id: str, judgement: str,
                  reviewer: str = "", comment: str = "") -> None:
+    """専門家確認の結果を反映する。"""
     conn.execute(
         "UPDATE items SET review_status = ?, updated_at = ? WHERE id = ?",
         (judgement, now(), item_id),
     )
     conn.execute(
-        "INSERT INTO review_log (item_id, reviewer, judged_at, judgement, comment) VALUES (?, ?, ?, ?, ?)",
-        (item_id, reviewer, now(), judgement, comment),
+        """INSERT INTO review_log (item_id, reviewer, judged_at, judgement, comment, axis)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (item_id, reviewer, now(), judgement, comment, "専門家"),
     )
     conn.commit()
+
+
+def apply_internal_review(conn: sqlite3.Connection, item_id: str, judgement: str,
+                          reviewer: str = "", comment: str = "") -> None:
+    """院内確認（実務責任者）の結果を反映する。"""
+    conn.execute(
+        """UPDATE items SET internal_status = ?, internal_reviewer = ?,
+                            internal_reviewed_at = ?, updated_at = ? WHERE id = ?""",
+        (judgement, reviewer, now(), now(), item_id),
+    )
+    conn.execute(
+        """INSERT INTO review_log (item_id, reviewer, judged_at, judgement, comment, axis)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (item_id, reviewer, now(), judgement, comment, "院内"),
+    )
+    conn.commit()
+
+
+def publishable(row: sqlite3.Row) -> bool:
+    """会員へ公開してよいか。
+
+    院内確認を通り、かつ専門家確認が不要または確認済であること。
+    自動生成しただけの項目や、品質チェックだけを通った項目は公開しない。
+    """
+    if (row["internal_status"] or config.InternalStatus.UNCHECKED) != config.InternalStatus.APPROVED:
+        return False
+    return row["review_status"] in (config.ReviewStatus.NOT_REQUIRED, config.ReviewStatus.APPROVED)
 
 
 def stats(conn: sqlite3.Connection) -> dict:
@@ -291,7 +337,28 @@ def stats(conn: sqlite3.Connection) -> dict:
         "videos": one("SELECT COUNT(*) FROM videos"),
         "transcribed": one("SELECT COUNT(*) FROM transcripts"),
         "items": one("SELECT COUNT(*) FROM items"),
-        "pending": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.PENDING),
-        "approved": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.APPROVED),
-        "not_required": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.NOT_REQUIRED),
+        "expert_pending": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.PENDING),
+        "expert_approved": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.APPROVED),
+        "expert_not_required": one("SELECT COUNT(*) FROM items WHERE review_status = ?", config.ReviewStatus.NOT_REQUIRED),
+        "internal_unchecked": one("SELECT COUNT(*) FROM items WHERE internal_status = ?", config.InternalStatus.UNCHECKED),
+        "internal_approved": one("SELECT COUNT(*) FROM items WHERE internal_status = ?", config.InternalStatus.APPROVED),
+        "quality_check": one("SELECT COUNT(*) FROM items WHERE quality_status = ?", "要目視"),
+        "publishable": one(
+            """SELECT COUNT(*) FROM items WHERE internal_status = ?
+               AND review_status IN (?, ?)""",
+            config.InternalStatus.APPROVED,
+            config.ReviewStatus.NOT_REQUIRED, config.ReviewStatus.APPROVED,
+        ),
     }
+
+
+def approval_history(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    """カテゴリー別の院内確認の実績。将来の自動承認の判断材料にする。"""
+    return conn.execute(
+        """SELECT category,
+                  COUNT(*) AS total,
+                  SUM(CASE WHEN internal_status = ? THEN 1 ELSE 0 END) AS approved,
+                  SUM(CASE WHEN internal_status = ? THEN 1 ELSE 0 END) AS rejected
+           FROM items GROUP BY category ORDER BY total DESC""",
+        (config.InternalStatus.APPROVED, config.InternalStatus.REJECTED),
+    ).fetchall()

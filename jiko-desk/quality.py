@@ -10,7 +10,10 @@
   重複検出 : 同じ質問が複数項目に分かれていないか
 
 結果は items.quality_status（OK / 要目視）と quality_notes に入る。
-本編PDFには「確認済」または「確認不要かつ品質OK」の項目だけを載せる。
+
+これは公開可否を決めるものではない。根拠照合は「文字起こしと一致するか」を見るだけで、
+実務上の正しさは保証しない。公開には必ず院内確認（実務責任者）を通す。
+品質チェックの結果は、院内確認で先に見るべき項目を示す優先度として使う。
 """
 from __future__ import annotations
 
@@ -125,11 +128,3 @@ def run(conn: sqlite3.Connection, video_ids: list[str] | None = None) -> dict:
             result["details"].append((row["id"], row["question"][:40], notes))
     conn.commit()
     return result
-
-
-def publishable(row: sqlite3.Row) -> bool:
-    """本編PDFに載せてよいか。確認済み、または確認不要かつ品質OK。"""
-    if row["review_status"] == config.ReviewStatus.APPROVED:
-        return True
-    return (row["review_status"] == config.ReviewStatus.NOT_REQUIRED
-            and (row["quality_status"] or STATUS_OK) == STATUS_OK)

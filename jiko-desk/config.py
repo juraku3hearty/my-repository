@@ -67,10 +67,22 @@ class CaptionState:
 
 
 class ReviewStatus:
+    """専門家確認（法律・保険・医療の判断）の軸。"""
     PENDING = "確認待ち"
     APPROVED = "確認済"
     REJECTED = "要修正"
     NOT_REQUIRED = "確認不要"
+
+
+class InternalStatus:
+    """院内確認（実務責任者＝院長）の軸。生成直後はすべて未確認から始まる。
+
+    自動生成された項目を会員へ自動公開しないための関門。根拠照合は文字起こしとの
+    一致を見るだけで、実務上の正しさは保証しないため、必ず人が一度通す。
+    """
+    UNCHECKED = "院内未確認"
+    APPROVED = "院内確認済"
+    REJECTED = "院内要修正"
 
 
 class VideoStatus:

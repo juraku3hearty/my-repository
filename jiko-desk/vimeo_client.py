@@ -94,6 +94,10 @@ class VimeoClient:
     def whoami(self) -> dict:
         return self.get("/me", params={"fields": "uri,name,account"})
 
+    def verify_token(self) -> dict:
+        """トークンに実際に付いているスコープを返す（推測せず本人に聞く）。"""
+        return self.get("/oauth/verify")
+
     # ---- 字幕 ----
     def list_text_tracks(self, video_id: str) -> list[dict]:
         data = self.get(f"/videos/{video_id}/texttracks")
