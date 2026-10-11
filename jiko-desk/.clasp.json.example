@@ -1,0 +1,16 @@
+{
+  "scriptId": "ここに交通事故実務デスク用GASのスクリプトIDを貼る",
+  "rootDir": "",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": true
+}
