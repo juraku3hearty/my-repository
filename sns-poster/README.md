@@ -50,16 +50,37 @@ Instagram Graph API は投稿画像を**公開URL**でしか受け取れない�
 
 ## セットアップ手順
 
-### 1. スタッフ用LINE Botを新規作成
+### 1. 専用のLINE Botを新規作成
 
-1. [LINE Developers Console](https://developers.line.biz/console/) で新規チャネル作成
-   - チャネルの種類: **Messaging API**
-   - チャネル名: 例「樹整骨院 SNS投稿Bot」
-2. 「Messaging API設定」タブで:
-   - **チャネルアクセストークン（長期）** を発行してコピー
-   - **応答メッセージ**: オフ
-   - **あいさつメッセージ**: オフ（任意）
-   - **Webhookの利用**: オン
+> **既存の院のLINE公式アカウントは使わないこと。**
+> 患者さんの予約が来ており、`gas_main.js` のWebhookも繋がっている可能性があるため、
+> 混ぜると既存システムが壊れる。必ず新規で作る。
+
+**LINE Developers Console から直接 Messaging API チャネルを作ることはできない。**
+先に LINE公式アカウントを作り、そこで Messaging API を有効化する流れになる。
+
+1. [LINE Developers Console](https://developers.line.biz/console/) で新規チャネル作成を開き、
+   案内に従って **「LINE公式アカウントを作成する」** に進む
+   （[LINE Official Account Manager](https://manager.line.biz/) から直接作ってもよい）
+2. アカウント情報を入力
+   - アカウント名: 例「樹整骨院 SNS投稿Bot」
+   - **認証済みアカウント（青バッジ）は不要。** 未認証のままで動く
+3. 作成後、LINE Official Account Manager で Messaging API を有効化
+   - 右上の **設定** → 左メニュー **Messaging API** → 「Messaging APIを利用する」
+   - プロバイダーを選択（既存のものがあればそれでよい）
+4. ここで LINE Developers Console にチャネルが現れる。
+   「Messaging API設定」タブで **チャネルアクセストークン（長期）** を発行してコピー
+5. 応答設定を変更する
+   - LINE Official Account Manager → 設定 → **応答設定**
+     - 応答モード: **Bot**
+     - **応答メッセージ: オフ**（オンのままだと定型文が返ってしまう）
+     - あいさつメッセージ: オフ（任意）
+   - LINE Developers Console → Messaging API設定 → **Webhookの利用: オン**
+
+> **料金はかからない。**
+> このBotが送るのは応答メッセージ（Reply API）のみで、
+> LINE公式アカウントの無料枠でカウントされるのは配信（プッシュ・一斉配信）。
+> 応答メッセージは課金対象外。
 
 ### 2. Cloudinaryの準備
 
