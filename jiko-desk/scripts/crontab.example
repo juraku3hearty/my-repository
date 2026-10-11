@@ -1,0 +1,6 @@
+# 新着動画の自動処理（毎日 朝6時7分）
+# crontab -e で以下を追加する。PATH と作業ディレクトリは実環境に合わせること。
+7 6 * * * cd /root/jiko-desk && /root/jiko-desk/.venv/bin/python cli.py sync-new >> /root/jiko-desk/data/sync.log 2>&1
+
+# 週1で確認待ち別冊を作り直す（月曜 朝7時13分）
+13 7 * * 1 cd /root/jiko-desk && /root/jiko-desk/.venv/bin/python cli.py render >> /root/jiko-desk/data/render.log 2>&1

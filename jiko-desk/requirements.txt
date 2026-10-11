@@ -1,0 +1,6 @@
+requests>=2.31
+Jinja2>=3.1
+WeasyPrint>=60
+Markdown>=3.5
+# 字幕が無い動画を自前で文字起こしする場合のみ（任意）
+# faster-whisper>=1.0

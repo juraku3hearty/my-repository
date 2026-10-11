@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{ title }}</title>
+<style>
+  @font-face {
+    font-family: NotoSerifJP;
+    src: url("file://{{ font_path }}");
+  }
+  h1 { string-set: doc-title content(); }
+</style>
+</head>
+<body>
+
+<!-- 表紙 -->
+<div class="cover">
+  <div class="eyebrow">{{ publisher }}</div>
+  <h1>{{ title }}</h1>
+  <div class="subtitle">{{ subtitle }}</div>
+  <div class="meta">
+    発行日：{{ issued_at }}<br>
+    収録項目：{{ items|length }}件／出典動画：{{ videos|length }}本<br>
+    {% if draft %}区分：内部ドラフト（専門家確認前の項目を含む）{% else %}区分：確認済み版{% endif %}
+  </div>
+  <div class="notice">
+    本書は講座動画で説明されている内容のみを整理したものです。動画で確認できない事項は記載していません。<br>
+    法律・保険・医療に関わる判断を含む項目は、担当の専門家の確認を経たものだけを「確認済」として収録しています。<br>
+    制度・取り扱いが変更されている可能性がある項目には「更新確認要」を付けています。実務では必ず原典と現行の取り扱いをご確認ください。
+  </div>
+  {% if draft %}<div class="draft-mark">確認前ドラフト — 会員配布不可</div>{% endif %}
+</div>
+
+<!-- 使い方 -->
+<div class="front">
+  <h2>この冊子の使い方</h2>
+  <ol class="howto">
+    <li>巻末またはQ&amp;A索引（CSV）で、実務で困っている言葉を検索します（例：「打ち切り」「同意書」「後遺障害」）。</li>
+    <li>見つかったQ番号のページを開きます。<strong>A（短い回答）</strong>で方向を確認し、<strong>解説</strong>で背景を読みます。</li>
+    <li>さらに詳しく確認したいときは、各項目末尾の<strong>出典</strong>から元の講座動画の該当時刻へ直接飛べます。</li>
+    <li>このPDFは本文がテキストとして埋め込まれているため、PDFビューアの検索（Ctrl+F / ⌘F）がそのまま使えます。</li>
+  </ol>
+  <div class="legend">
+    <dl>
+      <dt><span class="badge approved">確認済</span></dt>
+      <dd>担当の専門家が内容を確認した項目です。</dd>
+      <dt><span class="badge none">確認不要</span></dt>
+      <dd>法律・保険・医療の判断を含まない運用・手順の項目です。</dd>
+      <dt><span class="badge pending">確認待ち</span></dt>
+      <dd>専門家の確認待ちです。確認済み版には収録されません。</dd>
+      <dt><span class="badge outdated">更新確認要</span></dt>
+      <dd>制度や取り扱いが変わっている可能性があります。現行の内容かを確認してから使ってください。</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- 目次 -->
+<div class="toc">
+  <h2>目次</h2>
+  {% for chapter in chapters %}
+  <div class="chapter">{{ loop.index }}. {{ chapter.category }}（{{ chapter.entries|length }}件）</div>
+  <ul>
+    {% for item in chapter.entries %}
+    <li><a href="#{{ item.anchor }}"><span class="qno">Q{{ item.q_no }}</span>{{ item.question }}</a></li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+</div>
+
+<!-- 本編 -->
+{% for chapter in chapters %}
+<div class="chapter-head" data-title="{{ chapter.category }}">
+  <div class="label">第{{ loop.index }}章</div>
+  <h2>{{ chapter.category }}</h2>
+  <div class="count">{{ chapter.entries|length }}件</div>
+</div>
+
+{% for item in chapter.entries %}
+<section class="item" id="{{ item.anchor }}">
+  <h3><span class="qno">Q{{ item.q_no }}</span>{{ item.question }}</h3>
+  <div class="badges">
+    {% if item.review_status == '確認済' %}<span class="badge approved">確認済</span>
+    {% elif item.review_status == '確認待ち' %}<span class="badge pending">確認待ち（{{ item.expert_type or '要区分' }}）</span>
+    {% elif item.review_status == '要修正' %}<span class="badge pending">要修正</span>
+    {% else %}<span class="badge none">確認不要</span>{% endif %}
+    {% if item.outdated %}<span class="badge outdated">更新確認要</span>{% endif %}
+    <span class="badge none">{{ item.category }}</span>
+  </div>
+
+  <div class="answer"><span class="label">A</span>{{ item.answer_short }}</div>
+
+  {% if item.body_html %}<div class="body">{{ item.body_html|safe }}</div>{% endif %}
+
+  {% if item.key_points %}
+  <ul class="points">
+    {% for point in item.key_points %}<li>{{ point }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if item.caveats %}
+  <div class="caveat"><span class="label">注意</span>{{ item.caveats }}</div>
+  {% endif %}
+
+  {% if item.unknown_points %}
+  <div class="unknown"><span class="label">講座内で確認できない事項</span>
+    {{ item.unknown_points|join('／') }}
+  </div>
+  {% endif %}
+
+  <div class="source">
+    出典：{{ item.video_title }}　{{ item.start_hms }}〜{{ item.end_hms }}　
+    <a href="{{ item.timed_url }}">{{ item.timed_url }}</a>
+  </div>
+
+  {% if show_review_box and item.review_status in ('確認待ち', '要修正') %}
+  <div class="review-box">
+    <div class="q">専門家への確認依頼事項</div>
+    <div>{{ item.review_points }}</div>
+    {% if item.evidence %}
+    <div class="evidence"><span class="label">根拠（文字起こしの逐語引用）</span>{{ item.evidence }}</div>
+    {% endif %}
+    {% if item.quality_status == '要目視' %}
+    <div class="evidence"><span class="label">自動品質チェック</span>要目視：{{ item.quality_notes }}</div>
+    {% endif %}
+    <table>
+      <tr><td class="k">確認者</td><td></td><td class="k">確認日</td><td></td></tr>
+      <tr><td class="k">判定</td><td colspan="3">□ 確認済（この内容で公開可）　□ 要修正（下記コメント）</td></tr>
+      <tr><td class="k">コメント</td><td colspan="3" style="height: 20mm"></td></tr>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endfor %}
+
+<!-- 付録A キーワード索引 -->
+<div class="appendix">
+  <h2>付録A　キーワード索引</h2>
+  <ul class="index-list">
+    {% for keyword, qnos in keyword_index %}
+    <li><span class="kw">{{ keyword }}</span> … {% for q in qnos %}Q{{ q }}{% if not loop.last %}, {% endif %}{% endfor %}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- 付録B 出典動画一覧 -->
+<div class="appendix">
+  <h2>付録B　出典動画一覧</h2>
+  <table class="videos">
+    <tr><th>No.</th><th>動画タイトル</th><th>公開日</th><th>長さ</th><th>収録項目</th><th>URL</th></tr>
+    {% for video in videos %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ video.title }}</td>
+      <td>{{ video.published_at }}</td>
+      <td>{{ video.duration_hms }}</td>
+      <td>{{ video.item_count }}</td>
+      <td>{{ video.url }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+</body>
+</html>

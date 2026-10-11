@@ -1,3 +1,0 @@
-# jiko-desk は独立したGASプロジェクト（jiko-desk/.clasp.json で push する）
-jiko-desk/**
-node_modules/**

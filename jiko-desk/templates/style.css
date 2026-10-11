@@ -1,0 +1,206 @@
+/* 交通事故実務デスク 解説書のレイアウト */
+
+@page {
+  size: A4;
+  margin: 22mm 18mm 20mm 18mm;
+  @top-center {
+    content: string(doc-title);
+    font-size: 8.5pt;
+    color: #7a7a7a;
+    padding-bottom: 3mm;
+  }
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-size: 8.5pt;
+    color: #7a7a7a;
+  }
+}
+
+@page cover {
+  margin: 0;
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+
+body {
+  font-family: NotoSerifJP, serif;
+  font-size: 10.5pt;
+  line-height: 1.85;
+  color: #1c1c1c;
+}
+
+h1, h2, h3 { line-height: 1.5; }
+
+/* ---- 表紙 ---- */
+.cover {
+  page: cover;
+  page-break-after: always;
+  height: 297mm;
+  padding: 42mm 24mm 24mm;
+  box-sizing: border-box;
+  background: #14304a;
+  color: #ffffff;
+}
+.cover .eyebrow { font-size: 10pt; letter-spacing: .3em; color: #9dc0dd; }
+.cover h1 { font-size: 30pt; margin: 10mm 0 4mm; }
+.cover .subtitle { font-size: 13pt; color: #d5e5f2; margin-bottom: 18mm; }
+.cover .meta { font-size: 10pt; color: #cfe0ee; line-height: 2; }
+.cover .notice {
+  margin-top: 16mm;
+  padding: 6mm;
+  border: 1px solid #4c7aa0;
+  background: #1b3d5c;
+  font-size: 9pt;
+  line-height: 1.8;
+  color: #e8f2f9;
+}
+.cover .draft-mark {
+  margin-top: 8mm;
+  display: inline-block;
+  padding: 2mm 5mm;
+  background: #a8341f;
+  color: #fff;
+  font-size: 11pt;
+}
+
+/* ---- 前書き・凡例 ---- */
+.front h2 { font-size: 15pt; border-bottom: 2px solid #14304a; padding-bottom: 2mm; }
+.front, .toc, .appendix { page-break-after: always; }
+.howto li { margin-bottom: 2mm; }
+.legend { margin-top: 8mm; border: 1px solid #d5d5d5; padding: 5mm; font-size: 9.5pt; background: #fafafa; }
+.legend dt { font-weight: bold; margin-top: 3mm; }
+
+/* ---- 目次 ---- */
+.toc h2 { font-size: 15pt; border-bottom: 2px solid #14304a; padding-bottom: 2mm; }
+.toc .chapter { margin-top: 6mm; font-weight: bold; font-size: 11pt; color: #14304a; }
+.toc ul { list-style: none; padding-left: 0; margin: 2mm 0 0; }
+.toc li { font-size: 9.5pt; margin-bottom: 1.2mm; }
+.toc a { color: #1c1c1c; text-decoration: none; }
+.toc a::after {
+  content: " " leader('.') " " target-counter(attr(href), page);
+  color: #7a7a7a;
+}
+.toc .qno { color: #14304a; font-weight: bold; margin-right: 2mm; }
+
+/* ---- 章 ---- */
+.chapter-head {
+  page-break-before: always;
+  margin-bottom: 8mm;
+  padding-bottom: 3mm;
+  border-bottom: 3px solid #14304a;
+  string-set: chapter attr(data-title);
+}
+.chapter-head .label { font-size: 9pt; color: #7a7a7a; letter-spacing: .2em; }
+.chapter-head h2 { font-size: 18pt; margin: 2mm 0 0; color: #14304a; }
+.chapter-head .count { font-size: 9pt; color: #7a7a7a; }
+
+/* ---- 1項目 ---- */
+.item {
+  /* 長い解説は1ページに収まらないため改ページは許す。
+     ただし見出し・回答・出典が本文から切り離されないようにする。 */
+  margin-bottom: 9mm;
+  padding-bottom: 6mm;
+  border-bottom: 1px dashed #cccccc;
+  orphans: 3;
+  widows: 3;
+}
+.item h3, .badges, .answer { break-after: avoid; page-break-after: avoid; }
+.source, .review-box { break-before: avoid; page-break-before: avoid; }
+.item h3 {
+  font-size: 12.5pt;
+  margin: 0 0 2mm;
+  line-height: 1.6;
+}
+.item h3 .qno {
+  display: inline-block;
+  color: #ffffff;
+  background: #14304a;
+  padding: 0.4mm 2.4mm;
+  text-align: center;
+  font-size: 10pt;
+  margin-right: 2.5mm;
+  vertical-align: 0.4mm;
+}
+.badges { margin: 0 0 3mm; }
+.badges .badge:first-child { margin-left: 0; }
+.answer {
+  background: #f1f6fa;
+  border-left: 4px solid #14304a;
+  padding: 4mm 5mm;
+  margin-bottom: 4mm;
+  font-size: 10.5pt;
+}
+.answer .label {
+  display: inline-block;
+  background: #14304a;
+  color: #fff;
+  width: 6mm;
+  text-align: center;
+  margin-right: 2mm;
+  font-size: 9pt;
+}
+.body p { margin: 0 0 3mm; text-align: justify; }
+.points { margin: 3mm 0 3mm 6mm; padding: 0; }
+.points li { margin-bottom: 1mm; }
+.caveat, .unknown {
+  font-size: 9.5pt;
+  padding: 3mm 4mm;
+  margin-bottom: 3mm;
+}
+.caveat { background: #fdf6e3; border-left: 3px solid #c89b2c; }
+.unknown { background: #f6f6f6; border-left: 3px solid #9a9a9a; }
+.caveat .label, .unknown .label { font-weight: bold; margin-right: 2mm; }
+.source {
+  font-size: 9pt;
+  color: #4a4a4a;
+  margin-top: 3mm;
+  padding-top: 2mm;
+  border-top: 1px solid #ececec;
+}
+.source a { color: #14304a; }
+.badge {
+  display: inline-block;
+  font-size: 8pt;
+  padding: 0.6mm 2mm;
+  margin-left: 2mm;
+  border-radius: 2px;
+}
+.badge.approved { background: #e3f0e3; color: #2c6b2f; border: 1px solid #a9ccab; }
+.badge.pending { background: #fbe9e7; color: #9b3a24; border: 1px solid #e0b4a8; }
+.badge.none { background: #eef0f2; color: #4a5560; border: 1px solid #c3cbd2; }
+.badge.outdated { background: #fff3cd; color: #85621a; border: 1px solid #e0cc93; }
+
+/* ---- 専門家確認用の記入欄（別冊のみ） ---- */
+.review-box {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-top: 3mm;
+  border: 1px solid #c9c9c9;
+  padding: 4mm;
+  font-size: 9pt;
+  background: #fcfcfc;
+}
+.review-box .q { font-weight: bold; color: #9b3a24; }
+.review-box table { width: 100%; margin-top: 3mm; border-collapse: collapse; }
+.review-box td { border: 1px solid #c9c9c9; padding: 3mm; height: 9mm; }
+.review-box td.k { width: 26mm; background: #f2f2f2; }
+
+/* ---- 付録 ---- */
+.appendix h2 { font-size: 15pt; border-bottom: 2px solid #14304a; padding-bottom: 2mm; }
+.index-list { column-count: 2; column-gap: 8mm; font-size: 9pt; list-style: none; padding: 0; }
+.index-list li { margin-bottom: 1mm; break-inside: avoid; }
+.index-list .kw { font-weight: bold; }
+table.videos { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+table.videos th, table.videos td { border: 1px solid #d5d5d5; padding: 2mm; text-align: left; }
+table.videos th { background: #f2f2f2; }
+
+/* 根拠テキスト（別冊のみ） */
+.review-box .evidence {
+  margin-top: 3mm;
+  padding: 3mm;
+  background: #f4f6f8;
+  border-left: 3px solid #90a4b4;
+  font-size: 8.5pt;
+  line-height: 1.7;
+}
+.review-box .evidence .label { display: block; font-weight: bold; color: #4a5560; margin-bottom: 1mm; }

@@ -1,0 +1,8 @@
+.env
+.venv/
+data/
+out/
+tests/sample.sqlite3
+tests/sample_out/
+__pycache__/
+*.pyc
