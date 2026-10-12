@@ -98,6 +98,23 @@ class VimeoClient:
     def get_video(self, video_id: str) -> VimeoVideo | None:
         return _to_video(self.get(f"/videos/{video_id}", params={"fields": LIST_FIELDS}))
 
+    def list_folders(self) -> list[dict]:
+        """Vimeoの「フォルダ」（API上は projects）の一覧。"""
+        data = self.get("/me/projects", params={"per_page": 100, "fields": "uri,name"})
+        return [{"id": r["uri"].rsplit("/", 1)[-1], "name": r.get("name", "")}
+                for r in data.get("data", [])]
+
+    def list_folder_video_ids(self, folder_id: str) -> list[str]:
+        """1つのフォルダに入っている動画IDを全部返す。"""
+        ids: list[str] = []
+        path: str | None = f"/me/projects/{folder_id}/videos"
+        params = {"per_page": 100, "fields": "uri"}
+        while path:
+            data = self.get(path, params=params if "?" not in path else None)
+            ids.extend(r["uri"].rsplit("/", 1)[-1] for r in data.get("data", []))
+            path = (data.get("paging") or {}).get("next")
+        return ids
+
     def whoami(self) -> dict:
         return self.get("/me", params={"fields": "uri,name,account"})
 

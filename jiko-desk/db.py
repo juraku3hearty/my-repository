@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS videos (
     knowledge_built_at    TEXT,
     item_count            INTEGER DEFAULT 0,
     status                TEXT,
+    folder                TEXT,
     note                  TEXT,
     created_at            TEXT,
     updated_at            TEXT
@@ -277,6 +278,9 @@ def migrate(conn: sqlite3.Connection) -> None:
     ):
         if column not in existing:
             conn.execute(f"ALTER TABLE items ADD COLUMN {column} {ddl}")
+    video_columns = {row["name"] for row in conn.execute("PRAGMA table_info(videos)").fetchall()}
+    if "folder" not in video_columns:
+        conn.execute("ALTER TABLE videos ADD COLUMN folder TEXT")
     conn.execute(
         "UPDATE items SET internal_status = ? WHERE internal_status IS NULL OR internal_status = ''",
         (config.InternalStatus.UNCHECKED,),

@@ -131,6 +131,18 @@ def cmd_list_videos(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_folders(args: argparse.Namespace) -> int:
+    """各動画のフォルダ（Vimeoのプロジェクト）を記録する。"""
+    conn = db.connect()
+    result = knowledge.sync_folders(conn, _client())
+    print(f"フォルダ {result['folders']}件 / {result['videos']}本に記録しました\n")
+    rows = conn.execute("""SELECT folder, COUNT(*) c, SUM(CASE WHEN item_count>0 THEN 1 ELSE 0 END) built
+                           FROM videos GROUP BY folder ORDER BY c DESC""").fetchall()
+    for r in rows:
+        print(f"  {str(r['folder'] or '(フォルダなし)')[:34]:<36} {r['c']:>4}本  ナレッジ化済 {r['built']}")
+    return 0
+
+
 def cmd_test_one(args: argparse.Namespace) -> int:
     """一括化の前に、最初の1本で字幕取得とナレッジ生成が通ることを確認する。"""
     conn = db.connect()
@@ -388,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(func=cmd_fetch_captions)
 
     sub.add_parser("import-manual", help="手動/WhisperのVTTを取り込む").set_defaults(func=cmd_import_manual)
+    sub.add_parser("sync-folders", help="各動画のフォルダを記録する").set_defaults(func=cmd_sync_folders)
 
     p = sub.add_parser("build", help="③④ ナレッジ生成")
     p.add_argument("--video", action="append", help="動画ID（複数指定可）")

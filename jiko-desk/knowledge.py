@@ -32,6 +32,27 @@ def sync_video_list(conn: sqlite3.Connection, client: VimeoClient) -> tuple[int,
     return new_count, len(videos)
 
 
+def sync_folders(conn: sqlite3.Connection, client: VimeoClient) -> dict:
+    """各動画がどのフォルダに入っているかを記録する。
+
+    735本すべての字幕を保存したあと、「この講師の分だけナレッジ化する」
+    といった絞り込みをフォルダ単位でできるようにするため。
+    1本が複数フォルダに入っている場合は「A / B」のように連結する。
+    """
+    folders = client.list_folders()
+    mapping: dict[str, list[str]] = {}
+    for folder in folders:
+        for video_id in client.list_folder_video_ids(folder["id"]):
+            mapping.setdefault(video_id, []).append(folder["name"])
+
+    updated = 0
+    for video_id, names in mapping.items():
+        if db.get_video(conn, video_id):
+            db.set_video_fields(conn, video_id, folder=" / ".join(names))
+            updated += 1
+    return {"folders": len(folders), "videos": updated}
+
+
 # ---------------- ② 字幕取得 ----------------
 
 def fetch_captions(conn: sqlite3.Connection, client: VimeoClient,
