@@ -266,19 +266,30 @@ CREATE INDEX IF NOT EXISTS idx_rate ON rate_log(bucket, key, ts);
 """
 
 
-def rate_ok(conn, bucket: str, key: str) -> bool:
-    """超えていたら False を返す。記録は呼び出し時に行う。"""
+def rate_ok(conn, bucket: str, key: str, record: bool = True) -> bool:
+    """回数を数えて、超えていたら False を返す。
+
+    record=False にすると数えるだけで記録しない。
+    トークンの総当たり対策では「失敗した試行」だけを数える。成功まで数えると、
+    院内の共有IPから複数人が正しくログインしただけで打ち止めになってしまう。
+    """
     limit, minutes = RATE_LIMITS[bucket]
     since = (datetime.now() - timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
     conn.execute("DELETE FROM rate_log WHERE ts < ?",
                  ((datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),))
     n = conn.execute("SELECT COUNT(*) n FROM rate_log WHERE bucket=? AND key=? AND ts>=?",
                      (bucket, key, since)).fetchone()["n"]
-    conn.execute("INSERT INTO rate_log(bucket, key, ts) VALUES (?,?,?)", (bucket, key, now()))
     if n >= limit:
         alert(conn, "warn", "回数制限に達しました", f"{bucket} {key[:40]}")
         return False
+    if record:
+        conn.execute("INSERT INTO rate_log(bucket, key, ts) VALUES (?,?,?)", (bucket, key, now()))
     return True
+
+
+def rate_hit(conn, bucket: str, key: str) -> None:
+    """失敗した試行を1回数える。"""
+    conn.execute("INSERT INTO rate_log(bucket, key, ts) VALUES (?,?,?)", (bucket, key, now()))
 
 
 # ───────────── 決済通知の受け取り ─────────────

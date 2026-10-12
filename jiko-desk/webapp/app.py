@@ -313,11 +313,16 @@ def login_request():
 def login_consume():
     """フラグメントから渡されたトークンを1回だけ使う。"""
     conn = get_db()
-    if not mb.rate_ok(conn, "login_consume_ip", request.remote_addr or "?"):
+    ip = request.remote_addr or "?"
+    # 総当たり対策。失敗した試行だけを数えるので、正規の利用者が共有IPから
+    # 何度ログインしても打ち止めにならない。
+    if not mb.rate_ok(conn, "login_consume_ip", ip, record=False):
         conn.commit()
         return jsonify({"ok": False}), 429
     token = (request.form.get("t") or "").strip()
     member_id = mb.consume_login_token(conn, token)
+    if not member_id:
+        mb.rate_hit(conn, "login_consume_ip", ip)
     conn.commit()
     if not member_id:
         return jsonify({"ok": False}), 401

@@ -13,6 +13,10 @@ def code(*a):
 def member(path, *a): return sh("-b",CK,"-c",CK,B+path,*a)
 def mcode(path, *a):  return code("-b",CK,"-c",CK,B+path,*a)
 def q(w): return member("/?q="+urllib.parse.quote(w))
+def _clear_rate():
+    cc=sqlite3.connect(DB); cc.execute("DELETE FROM rate_log"); cc.commit(); cc.close()  # rate_log_clear
+_clear_rate()
+
 def db():
     c = sqlite3.connect(DB); c.row_factory = sqlite3.Row; return c
 def ok(label, cond, extra=""):

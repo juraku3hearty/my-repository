@@ -11,6 +11,7 @@ def ok(l,c,x=""):
 
 sh(B+"/join")
 c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
+c.execute("DELETE FROM rate_log"); c.commit()  # rate_log_clear
 E="sec@example.com"
 c.execute("DELETE FROM members WHERE email=?",(E,)); c.execute("DELETE FROM rate_log")
 c.execute("DELETE FROM payment_events WHERE gid LIKE '94%'"); c.commit()
