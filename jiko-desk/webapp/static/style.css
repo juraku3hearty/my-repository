@@ -123,3 +123,13 @@ details.src > div { font-size: 12px; color: var(--muted); margin-top: 7px; line-
 
 /* 紺地の中のボタンは白地にする（紺on紺で沈むため） */
 .askbox button[type=submit] { background: #fff; color: var(--navy); }
+
+/* 承認の状態と操作 */
+.approval { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.approval.ok { background: #eef7ee; border: 1px solid #a9ccab; color: var(--ok); }
+.approval.ng { background: #fdf0ec; border: 1px solid #e0b4a8; color: var(--warn); }
+.approval .tiny { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+.approval form.inline { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.approval input[type=text] { padding: 5px 8px; font-size: 12.5px; }
+.row-form textarea { min-height: 62px; font-size: 13.5px; }

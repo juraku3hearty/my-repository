@@ -31,9 +31,35 @@
     {% if i['supplement'] %}<br><strong>補足（{{ i['supplement_by'] }}）</strong>：{{ i['supplement'] }}{% endif %}
   </div>
 
+  {# 承認の状態。承認した版と今の本文が一致しているかで判定する #}
+  {% set approved = i['approval_state'] == '承認済'
+       and i['approved_version'] and i['approved_version'] == i['answer_version'] %}
+  <div class="approval {{ 'ok' if approved else 'ng' }}">
+    {% if approved %}
+      <b>承認済み</b>　{{ i['internal_reviewer'] }}／{{ i['internal_reviewed_at'] }}　
+      <span class="tiny">会員に表示されています</span>
+    {% elif i['approval_state'] == '再承認待ち' %}
+      <b>再承認待ち</b>　<span class="tiny">本文が修正されました。承認するまで会員には出ません</span>
+    {% else %}
+      <b>未承認</b>　<span class="tiny">会員には出ません</span>
+    {% endif %}
+    <form method="post" class="inline"
+          action="{{ url_for('approve', item_id=i['id'], q=keyword, status=status) }}">
+      {% if approved %}
+        <input type="hidden" name="action" value="revoke">
+        <button class="small ghost" type="submit">承認を取り消す</button>
+      {% else %}
+        <input type="hidden" name="action" value="approve">
+        <input type="text" name="reviewer" value="院長 平井" style="width:110px">
+        <button class="small" type="submit">この内容で承認する</button>
+      {% endif %}
+    </form>
+  </div>
+
   <form class="row-form" method="post"
         action="{{ url_for('manage_update', item_id=i['id'], q=keyword, status=status) }}"
         style="margin-top:12px">
+    <textarea name="answer" rows="3" style="margin-bottom:8px">{{ i['answer'] }}</textarea>
     <select name="internal_status">
       {% for s in ['院内未確認','院内確認済','院内要修正'] %}
       <option value="{{ s }}" {% if i['internal_status']==s %}selected{% endif %}>{{ s }}</option>{% endfor %}

@@ -14,6 +14,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import sqlite3
@@ -43,6 +44,11 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret-change-me")
 
 PUBLISHED = "公開可"
 NORMALIZE_RE = re.compile(r"[\s、。，．・「」『』（）()！？!?,.:：;；\-ー―‐]")
+
+
+def answer_hash(text: str) -> str:
+    """回答本文の版。seed_dummy.py と同じ計算にそろえる。"""
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
 
 
 def get_db() -> sqlite3.Connection:
@@ -319,11 +325,54 @@ def admin_settings():
     return redirect(url_for("manage"))
 
 
+@app.route("/admin/approve/<item_id>", methods=["POST"])
+def approve(item_id):
+    """いま表示されている本文を、その版ごと承認する／承認を取り消す。
+
+    承認は「どの版を承認したか」で持つ。本文を直すと answer_version が変わり、
+    approved_version と食い違って会員には出なくなる。ここで承認し直すと、
+    その時点の本文のハッシュを approved_version に入れ直す。
+    """
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    row = conn.execute("SELECT answer FROM items WHERE id = ?", (item_id,)).fetchone()
+    if row is None:
+        return redirect(url_for("manage"))
+    action = request.form.get("action")
+    if action == "approve":
+        reviewer = (request.form.get("reviewer") or "").strip() or "院長 平井"
+        conn.execute(
+            """UPDATE items SET approval_state = '承認済',
+               approved_version = ?, answer_version = ?,
+               internal_status = '院内確認済', internal_reviewer = ?,
+               internal_reviewed_at = date('now','localtime'),
+               updated_at = datetime('now','localtime') WHERE id = ?""",
+            (answer_hash(row["answer"]), answer_hash(row["answer"]), reviewer, item_id))
+    elif action == "revoke":
+        conn.execute(
+            """UPDATE items SET approval_state = '未承認', approved_version = '',
+               publish_status = '非公開', internal_status = '院内要修正',
+               updated_at = datetime('now','localtime') WHERE id = ?""", (item_id,))
+    conn.commit()
+    return redirect(url_for("manage", q=request.args.get("q", ""),
+                            status=request.args.get("status", "")))
+
+
 @app.route("/admin/knowledge/<item_id>", methods=["POST"])
 def manage_update(item_id):
     if not require_admin():
         return redirect(url_for("admin_login"))
     conn = get_db()
+    answer = request.form.get("answer")
+    if answer is not None:
+        # 本文を直したら版が変わる。承認済みだったものは再承認待ちに落とす。
+        new_version = answer_hash(answer)
+        conn.execute(
+            """UPDATE items SET answer = ?, answer_version = ?,
+               approval_state = CASE WHEN approved_version = ? THEN approval_state
+                                     ELSE '再承認待ち' END
+               WHERE id = ?""", (answer, new_version, new_version, item_id))
     conn.execute("""UPDATE items SET internal_status=?, expert_status=?, publish_status=?,
                     updated_at=datetime('now','localtime') WHERE id=?""",
                  (request.form.get("internal_status"), request.form.get("expert_status"),
