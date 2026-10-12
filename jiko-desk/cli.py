@@ -235,7 +235,7 @@ def cmd_render(args: argparse.Namespace) -> int:
     print(f"JSON   : {json_path}")
     qc_path, flagged = render.export_quality_list(conn)
     print(f"品質要目視: {qc_path}（{flagged}項目）")
-    internal_path, unchecked = render.export_internal_review_list(conn)
+    internal_path, unchecked = render.export_internal_review_list(conn, order=args.order)
     print(f"院内確認リスト: {internal_path}（未確認{unchecked}項目）")
     if count == 0:
         print("\n公開可能な項目はまだ0件です（自動生成しただけの項目は公開しません）。")
@@ -337,7 +337,7 @@ def cmd_sync_new(args: argparse.Namespace) -> int:
     built = knowledge.build_knowledge(conn, force=False)
     print(f"ナレッジ生成: {built['videos']}本 / {built['items']}項目（確認待ち{built['pending']}件）")
     if built["items"]:
-        cmd_render(argparse.Namespace(draft=args.draft))
+        cmd_render(argparse.Namespace(draft=args.draft, order="topic"))
     return 0
 
 
@@ -401,6 +401,8 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("render", help="PDFとQ&A索引を出力")
     p.add_argument("--draft", action="store_true", help="確認待ちも含めた内部ドラフトを出す")
+    p.add_argument("--order", choices=["topic", "video"], default="topic",
+                   help="院内確認リストの並び順（既定: topic＝近い話題を隣に）")
     p.set_defaults(func=cmd_render)
 
     p = sub.add_parser("approve", help="院内確認（実務責任者）の判定を1件反映")

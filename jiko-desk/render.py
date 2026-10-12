@@ -253,16 +253,55 @@ QC_HEADERS = [
 ]
 
 INTERNAL_HEADERS = [
-    "ナレッジID", "優先", "動画タイトル", "該当開始時刻", "カテゴリー", "質問", "回答",
-    "根拠テキスト", "元動画URL(時刻付)", "品質メモ", "専門家確認", "担当専門家",
+    "ナレッジID", "優先", "カテゴリー", "質問", "回答", "根拠テキスト",
+    "動画タイトル", "該当開始時刻", "元動画URL(時刻付)", "品質メモ", "専門家確認", "担当専門家",
     "院内判定", "確認者", "コメント",
 ]
 
 
-def export_internal_review_list(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple[Path, int]:
+def _bigrams(text: str) -> set[str]:
+    t = quality.normalize(text)
+    return {t[i:i + 2] for i in range(len(t) - 1)} or {t}
+
+
+def _similarity(a: str, b: str) -> float:
+    """文字2文字単位の重なり具合。表記ゆれに強く、辞書も外部ライブラリも要らない。"""
+    x, y = _bigrams(a), _bigrams(b)
+    return 2 * len(x & y) / (len(x) + len(y)) if x and y else 0.0
+
+
+def _group_by_topic(rows: list[sqlite3.Row]) -> list[sqlite3.Row]:
+    """近い話題が隣り合うように並べ替える。
+
+    同じ話題が複数の動画に出てくるため、動画順のままだと院長が同じ内容を
+    離れた場所で何度も読むことになる。カテゴリーでまとめ、その中では
+    質問文が似ているものを隣に置く（統合はしない。判断は人に残す）。
+    """
+    order = {c: i for i, c in enumerate(config.CATEGORIES)}
+    grouped: list[sqlite3.Row] = []
+    by_category: dict[str, list[sqlite3.Row]] = {}
+    for row in rows:
+        by_category.setdefault(row["category"] or "その他", []).append(row)
+
+    for category in sorted(by_category, key=lambda c: order.get(c, 99)):
+        bucket = by_category[category]
+        remaining = bucket[1:]
+        chain = [bucket[0]]
+        while remaining:
+            last = chain[-1]["question"]
+            nearest = max(remaining, key=lambda r: _similarity(last, r["question"]))
+            remaining.remove(nearest)
+            chain.append(nearest)
+        grouped.extend(chain)
+    return grouped
+
+
+def export_internal_review_list(conn: sqlite3.Connection, out_dir: Path | None = None,
+                                order: str = "topic") -> tuple[Path, int]:
     """院内確認リスト（実務責任者が目を通す分）。
 
-    動画の流れ順に並べるので、元動画を見ながら上から確認できる。
+    order="topic"（既定）: 近い話題が隣り合うように並べる。重複に気づきやすい。
+    order="video"        : 動画の流れ順。元動画を見ながら上から確認したいとき。
     「院内判定」列に 院内確認済 / 院内要修正 を書いて import-review で戻す。
     """
     out_dir = out_dir or config.OUT_DIR
@@ -270,7 +309,11 @@ def export_internal_review_list(conn: sqlite3.Connection, out_dir: Path | None =
     rows = db.list_items(conn)
     pending = [r for r in rows
                if (r["internal_status"] or config.InternalStatus.UNCHECKED) == config.InternalStatus.UNCHECKED]
-    pending.sort(key=lambda r: (r["video_id"], r["start_sec"] or 0))
+    if order == "video":
+        pending.sort(key=lambda r: (r["video_id"], r["start_sec"] or 0))
+    elif pending:
+        pending.sort(key=lambda r: (r["video_id"], r["start_sec"] or 0))
+        pending = _group_by_topic(pending)
 
     path = out_dir / "院内確認リスト.csv"
     with path.open("w", encoding="utf-8-sig", newline="") as f:
@@ -280,8 +323,8 @@ def export_internal_review_list(conn: sqlite3.Connection, out_dir: Path | None =
             writer.writerow([
                 row["id"],
                 "★" if row["quality_status"] == quality.STATUS_CHECK else "",
-                row["video_title"], tr.hms(row["start_sec"] or 0), row["category"],
-                row["question"], row["answer_short"], row["evidence"] or "",
+                row["category"], row["question"], row["answer_short"], row["evidence"] or "",
+                row["video_title"], tr.hms(row["start_sec"] or 0),
                 _timed_url(row["video_url"], row["start_sec"] or 0),
                 row["quality_notes"] or "", row["review_status"], row["expert_type"] or "",
                 "", "", "",
