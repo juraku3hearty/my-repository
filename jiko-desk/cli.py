@@ -161,6 +161,7 @@ def cmd_test_one(args: argparse.Namespace) -> int:
     print("-- ナレッジ生成（先頭1チャンクのみ）--")
     built = knowledge.build_knowledge(conn, [video_id], force=True, limit_chunks=1)
     print(f"  生成: {built['items']}項目（うち確認待ち {built['pending']}件）")
+    print(f"  Gemini使用量（実測）: {gemini.USAGE.summary()}")
     if built["error"]:
         print(f"  エラー: {built['details']}")
         return 2
@@ -201,8 +202,9 @@ def cmd_build(args: argparse.Namespace) -> int:
     conn = db.connect()
     result = knowledge.build_knowledge(conn, args.video, force=args.force,
                                        limit_chunks=args.limit_chunks, model=args.model)
+    print(f"\nGemini使用量（実測）: {gemini.USAGE.summary()}")
     qc = quality.run(conn, args.video)
-    print(f"\n自動品質チェック: OK {qc['ok']} / 要目視 {qc['check']}（全{qc['total']}件）")
+    print(f"自動品質チェック: OK {qc['ok']} / 要目視 {qc['check']}（全{qc['total']}件）")
     for item_id, question, notes in qc["details"][:10]:
         print(f"  {item_id} {question} … {notes}")
     print(f"\nナレッジ生成: {result['videos']}本 / {result['items']}項目 "

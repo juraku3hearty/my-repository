@@ -17,6 +17,43 @@ class GeminiError(RuntimeError):
     pass
 
 
+class Usage:
+    """実際に消費したトークンを積算する。
+
+    費用は推定ではなく実測で出す。思考（reasoning）トークンは出力として
+    課金されるため、ここを数えないと見積もりが大きく外れる。
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.prompt_tokens = 0
+        self.output_tokens = 0     # candidatesTokenCount
+        self.thought_tokens = 0    # thoughtsTokenCount（課金上は出力に含まれる）
+        self.total_tokens = 0
+        self.seconds = 0.0
+
+    def add(self, meta: dict, elapsed: float) -> None:
+        self.calls += 1
+        self.prompt_tokens += int(meta.get("promptTokenCount") or 0)
+        self.output_tokens += int(meta.get("candidatesTokenCount") or 0)
+        self.thought_tokens += int(meta.get("thoughtsTokenCount") or 0)
+        self.total_tokens += int(meta.get("totalTokenCount") or 0)
+        self.seconds += elapsed
+
+    @property
+    def billed_output(self) -> int:
+        """課金対象の出力トークン（回答＋思考）。"""
+        return self.output_tokens + self.thought_tokens
+
+    def summary(self) -> str:
+        return (f"呼び出し {self.calls}回 / 入力 {self.prompt_tokens:,} / "
+                f"出力 {self.output_tokens:,}（うち思考 {self.thought_tokens:,}）/ "
+                f"合計 {self.total_tokens:,}トークン / {self.seconds:.1f}秒")
+
+
+USAGE = Usage()
+
+
 def _endpoint(model: str) -> str:
     return f"{config.GEMINI_API_BASE}/{model}:generateContent"
 
@@ -43,6 +80,7 @@ def generate_json(prompt: str,
 
     last_error = ""
     for attempt in range(config.GEMINI_MAX_RETRY):
+        started = time.time()
         try:
             res = requests.post(
                 _endpoint(model),
@@ -56,7 +94,9 @@ def generate_json(prompt: str,
             continue
 
         if res.status_code == 200:
-            return _extract_json(res.json())
+            body = res.json()
+            USAGE.add(body.get("usageMetadata") or {}, time.time() - started)
+            return _extract_json(body)
 
         if res.status_code == 429:
             wait = max(config.GEMINI_SLEEP_SEC, 2 ** attempt * 5)
