@@ -3,6 +3,7 @@
 {% block content %}
 {% if processed %}<div class="notice">{{ processed }}件の通知を反映しました。</div>{% endif %}
 <form method="post" action="{{ url_for('admin_process_events') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
   <button class="small" type="submit">未処理の通知を反映する</button>
 </form>
 

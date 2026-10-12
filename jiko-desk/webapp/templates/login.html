@@ -3,6 +3,7 @@
 <div class="card">
   <h2>管理者ログイン</h2>
   <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
     <input type="password" name="password" placeholder="パスワード" autofocus>
     <button type="submit">ログイン</button>
   </form>

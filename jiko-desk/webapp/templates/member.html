@@ -44,6 +44,7 @@
 
     {% if primary['video_visible'] %}
     <form method="post" action="{{ url_for('video_click') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
       <input type="hidden" name="item_id" value="{{ primary['id'] }}">
       <button class="video" type="submit">▶ 関連動画を見る（{{ primary['start_hms'] }}〜）</button>
     </form>
@@ -51,12 +52,14 @@
 
     <div class="fb">
       <form method="post" action="{{ url_for('feedback') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
         <input type="hidden" name="item_id" value="{{ primary['id'] }}">
         <input type="hidden" name="q" value="{{ query }}">
         <input type="hidden" name="verdict" value="helpful">
         <button class="ghost small" type="submit">解決した</button>
       </form>
       <form method="post" action="{{ url_for('feedback') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
         <input type="hidden" name="item_id" value="{{ primary['id'] }}">
         <input type="hidden" name="q" value="{{ query }}">
         <input type="hidden" name="verdict" value="not_solved">

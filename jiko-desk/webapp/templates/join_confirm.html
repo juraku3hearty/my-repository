@@ -2,7 +2,7 @@
 {% block header_sub %} お支払いへ{% endblock %}
 {% block content %}
 
-{# 本番の会員にはこの画面を見せず、決済代行会社の画面へ自動で送る #}
+{# 外部サイトへのフォーム。自分のCSRFトークンは送らない #}
 <form id="pay" method="post" action="https://credit.j-payment.co.jp/link/creditcard">
   {% for k, v in fields %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
   <noscript><button type="submit">お支払い画面へ進む</button></noscript>
@@ -13,8 +13,7 @@
   <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
     自動で移動しない場合は、下のボタンを押してください。
   </div>
-  <button onclick="document.getElementById('pay').submit()" style="margin-top:14px">
-    お支払い画面へ進む</button>
+  <button id="pay-button" style="margin-top:14px">お支払い画面へ進む</button>
 </div>
 
 {# ── ここから下は開発用。APP_ENV=dev かつ ?debug=1 のときだけ表示する ── #}
@@ -29,9 +28,9 @@
     </table>
     <p>送信先：https://credit.j-payment.co.jp/link/creditcard<br>
        会員ID {{ member_id }} の status は <b>pending</b>。
-       決済完了の通知が届くまでQ&amp;Aは利用できません。
-       30分たっても通知が来ない場合は管理者に警告が出ます。</p>
+       決済完了の通知が届くまでQ&amp;Aは利用できません。</p>
   </div>
 </div>
 {% endif %}
+<script src="{{ url_for('static', filename='pay.js') }}"></script>
 {% endblock %}

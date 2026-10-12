@@ -28,6 +28,7 @@
 </div>
 
 <form method="post" style="margin-top:16px">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
   <input type="email" name="email" placeholder="メールアドレス" required
          value="{{ email or '' }}">
   <label class="agree">

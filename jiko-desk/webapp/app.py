@@ -23,27 +23,35 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from flask import (Flask, g, jsonify, redirect, render_template, request,
-                   session, url_for)
+                   send_from_directory, session, url_for)
 
 import applog
 import membership as mb
+import security as sec
 
 # ── 検証環境ガード ────────────────────────────────────────────
 # require_member() が未実装（常に通す）のため、本番公開を禁止する。
 # APP_ENV=dev 以外では起動させない。外部公開も 127.0.0.1 固定で防ぐ。
 APP_ENV = os.environ.get("APP_ENV", "dev")
-if APP_ENV != "dev":
-    raise SystemExit(
-        "この雛形は検証専用です。認証（require_member）が未実装のため本番では起動できません。")
+REQUIRE_HTTPS = os.environ.get("REQUIRE_HTTPS", "0") == "1"
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("APP_DB_PATH", BASE_DIR / "demo.sqlite3"))
 if DB_PATH.name != "demo.sqlite3":
     raise SystemExit("検証環境ではダミーデータ（demo.sqlite3）以外を開けません。")
+# 本番では平文のパスワードを使わない。ADMIN_PASSWORD_HASH（security.hash_password の出力）を使う。
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "demo")
+ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH", "")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret-change-me")
+sec.apply(app, APP_ENV)
+
+# 本番で危ない設定が残っていないか、起動時に点検する。
+# 1つでも残っていれば起動させない（「設定したつもり」で公開されるのを防ぐ）。
+_problems = sec.preflight(APP_ENV)
+if APP_ENV != "dev" and _problems:
+    raise SystemExit("本番で起動できません：\n  - " + "\n  - ".join(_problems))
 
 PUBLISHED = "公開可"
 NORMALIZE_RE = re.compile(r"[\s、。，．・「」『』（）()！？!?,.:：;；\-ー―‐]")
@@ -60,22 +68,34 @@ def get_db() -> sqlite3.Connection:
         g.db.row_factory = sqlite3.Row
         applog.init(g.db)
         mb.init(g.db)
+        sec.init(g.db)
     return g.db
+
+
+@app.before_request
+def force_https_and_csrf():
+    """HTTPSの強制と、POSTのCSRF確認。全リクエストがここを通る。"""
+    if REQUIRE_HTTPS:
+        proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+        if proto != "https":
+            return redirect(request.url.replace("http://", "https://", 1), code=301)
+    # 決済代行会社からの通知は外部から来るのでCSRFの対象外（別の方法で守る）
+    if request.method == "POST" and not request.path.startswith("/webhook/"):
+        if not sec.csrf_ok(session, request.form):
+            return ("<html>この操作は受け付けられませんでした。"
+                    "お手数ですが、画面を開き直してからお試しください。</html>"), 403
+    return None
+
+
+@app.context_processor
+def inject_csrf():
+    """すべてのテンプレートで {{ csrf() }} を使えるようにする。"""
+    return {"csrf": lambda: sec.csrf_token(session)}
 
 
 @app.after_request
 def harden(resp):
-    # ログインリンクやクエリが外部サイトへ渡らないようにする
-    resp.headers["Referrer-Policy"] = "no-referrer"
-    resp.headers["X-Content-Type-Options"] = "nosniff"
-    resp.headers["X-Frame-Options"] = "DENY"
-    # スクリプトとスタイルは自サイトのみ。外部への送信もしない。
-    resp.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-        "form-action 'self' https://credit.j-payment.co.jp; "
-        "frame-ancestors 'none'; base-uri 'none'")
-    return resp
+    return sec.headers(resp, REQUIRE_HTTPS)
 
 
 @app.teardown_appcontext
@@ -399,6 +419,94 @@ def billing():
                            reason=request.args.get("reason", ""))
 
 
+# ───────────── API（会員向け） ─────────────
+#
+# 画面と同じ関所を通す。資格が無い場合は画面に飛ばさず、JSONで状態コードだけ返す。
+#   401 未ログイン        … 誰か分からない
+#   403 資格なし          … 誰かは分かるが使えない（pending / suspended / cancelled）
+#   404 対象なし          … 非公開・未承認・存在しないID
+# いずれも本文に回答やURLを含めない。
+
+@app.route("/api/search")
+def api_search():
+    ok, resp = require_member_api()
+    if not ok:
+        return resp
+    conn = get_db()
+    query = (request.args.get("q") or "").strip()
+    if not query:
+        return jsonify({"results": []})
+    hits = search_items(conn, query)
+    primary = hits[0] if hits and hits[0]["score"] >= CONFIDENT else None
+    related = (hits[1:4] if primary else hits[:3])
+    return jsonify({
+        "answer": None if primary is None else {
+            "id": primary["id"], "question": primary["question"],
+            "answer": primary["answer"],
+            "reviewed_at": primary["internal_reviewed_at"],
+            "reviewer": primary["internal_reviewer"],
+        },
+        # 関連は質問だけ。回答本文は返さない。
+        "related": [{"id": r["id"], "question": r["question"]} for r in related],
+    })
+
+
+@app.route("/api/item/<item_id>")
+def api_item(item_id):
+    ok, resp = require_member_api()
+    if not ok:
+        return resp
+    row = get_db().execute(
+        "SELECT * FROM items WHERE id = ? AND publish_status = ? "
+        "AND approval_state = '承認済' AND approved_version = answer_version "
+        "AND approved_version <> ''", (item_id, PUBLISHED)).fetchone()
+    if row is None:
+        return jsonify({"error": "not_found"}), 404
+    return jsonify({"id": row["id"], "question": row["question"], "answer": row["answer"],
+                    "reviewed_at": row["internal_reviewed_at"]})
+
+
+@app.route("/api/status")
+def api_status():
+    """自分の資格だけを返す。他人の情報は返さない。"""
+    row = current_member_row()
+    if row is None:
+        return jsonify({"error": "unauthorized"}), 401
+    usable, reason = mb.can_use(row)
+    return jsonify({"usable": usable, "status": row["status"],
+                    "paid_through": row["paid_through"], "reason": reason})
+
+
+# ───────────── 書式ダウンロード（認証付き配信） ─────────────
+
+DOWNLOAD_DIR = BASE_DIR / "downloads"
+DOWNLOADS = {
+    "shojutsu-shomeisho": ("shojutsu-shomeisho.txt", "施術証明書（ひな形）.txt"),
+    "doisho": ("doisho.txt", "同意書（ひな形）.txt"),
+}
+
+
+@app.route("/downloads")
+def downloads():
+    ok, resp = require_member()
+    if not ok:
+        return resp
+    return render_template("downloads.html", files=DOWNLOADS)
+
+
+@app.route("/downloads/<key>")
+def download_file(key):
+    """Web公開領域に置かず、関所を通してから配信する。直リンクでは落とせない。"""
+    ok, resp = require_member()
+    if not ok:
+        return resp
+    item = DOWNLOADS.get(key)
+    if item is None:
+        return "<html>見つかりません</html>", 404
+    return send_from_directory(DOWNLOAD_DIR, item[0], as_attachment=True,
+                               download_name=item[1])
+
+
 # ───────────── 決済通知の受け口 ─────────────
 
 @app.route("/webhook/subscpay/<secret>", methods=["GET", "POST"])
@@ -490,15 +598,38 @@ def consult():
 # ---------------- 管理者 ----------------
 
 def require_admin():
+    """管理者の関所。IP制限とセッションの両方を見る。"""
+    if not sec.admin_ip_allowed(request.remote_addr or "?"):
+        return False
     return session.get("is_admin") is True
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    conn = get_db()
+    ip = request.remote_addr or "?"
+    if not sec.admin_ip_allowed(ip):
+        return "<html>この場所からは利用できません。</html>", 403
     error = ""
     if request.method == "POST":
-        if request.form.get("password") == ADMIN_PASSWORD:
+        if sec.admin_locked(conn, ip):
+            # 失敗が続いたらしばらく受け付けない。正誤を判定せず同じ応答にする。
+            conn.commit()
+            return render_template("login.html",
+                                   error=f"しばらく時間をおいてからお試しください"
+                                         f"（{sec.ADMIN_LOCK_MINUTES}分）"), 429
+        pw = request.form.get("password", "")
+        if ADMIN_PASSWORD_HASH:
+            ok = sec.verify_password(pw, ADMIN_PASSWORD_HASH)
+        else:
+            # ハッシュ未設定のときだけ平文と比較する。本番では起動時の点検で止まる。
+            ok = secrets.compare_digest(pw, ADMIN_PASSWORD)
+        sec.record_admin_login(conn, ip, ok)
+        conn.commit()
+        if ok:
+            session.clear()                       # セッション固定攻撃への備え
             session["is_admin"] = True
+            sec.csrf_token(session)
             return redirect(url_for("analytics"))
         error = "パスワードが違います"
     return render_template("login.html", error=error)

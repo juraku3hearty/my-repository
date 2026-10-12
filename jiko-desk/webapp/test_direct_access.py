@@ -4,6 +4,47 @@ B="http://127.0.0.1:5001"; SEC="demo-secret-please-change-0123456789"
 DB="/home/user/my-repository/jiko-desk/webapp/demo.sqlite3"
 CK="/tmp/direct_member.txt"; AK="/tmp/direct_admin.txt"
 subprocess.run(["rm","-f",CK,AK])
+
+# ── CSRF対応（テスト用）─────────────────────────────────────
+# 本体がPOSTにCSRFトークンを要求するようになったため、curlの呼び出しを
+# 横取りしてトークンを自動で付ける。webhook は対象外（外部から来るため）。
+_raw_run = subprocess.run
+_DEFAULT_JAR = "/tmp/_test_jar.txt"
+
+
+def _get_csrf(cookie):
+    # 管理者ログイン時にセッションを作り直すのでトークンが変わる。毎回取り直す。
+    h = _raw_run(["curl", "-s", "--noproxy", "*", "-c", cookie, "-b", cookie, B + "/login"],
+                 capture_output=True, text=True).stdout
+    m = re.search(r'name="_csrf" value="([^"]+)"', h)
+    return m.group(1) if m else ""
+
+
+def run(cmd, **kw):
+    if not cmd or cmd[0] != "curl":
+        return _raw_run(cmd, **kw)
+    joined = " ".join(cmd)
+    is_post = ("-d" in cmd) or ("-X" in cmd and "POST" in cmd)
+    url = next((a for a in cmd if a.startswith("http")), "")
+    if is_post and "/webhook/" not in url and "_csrf=" not in joined:
+        cookie = None
+        for flag in ("-b", "-c"):
+            if flag in cmd:
+                cookie = cmd[cmd.index(flag) + 1]
+                break
+        cmd = list(cmd)
+        if cookie is None:
+            cookie = _DEFAULT_JAR
+            cmd += ["-c", cookie]
+        if "-b" not in cmd:          # Cookieを送らないとセッションが渡らない
+            cmd += ["-b", cookie]
+        cmd += ["-d", "_csrf=" + _get_csrf(cookie)]
+    return _raw_run(cmd, **kw)
+
+
+subprocess.run = run
+# ──────────────────────────────────────────────────────────
+
 def sh(*a): return subprocess.run(["curl","-s","--noproxy","*"]+list(a),capture_output=True,text=True).stdout
 def mb(path,*a): return sh("-b",CK,"-c",CK,B+path,*a)
 def mcode(path,*a): return subprocess.run(
@@ -17,7 +58,7 @@ def ok(l,c,x=""):
 
 sh(B+"/join")
 c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
-c.execute("DELETE FROM rate_log"); c.commit()
+c.execute("DELETE FROM rate_log"); c.execute("DELETE FROM outbox"); c.commit()
 E="direct@example.com"; ACID=str(random.randint(1000000,9999999))
 c.execute("DELETE FROM members WHERE email=?",(E,)); c.execute("DELETE FROM payment_events WHERE gid LIKE '95%'"); c.commit()
 sh("-d","email="+E,"-d","agree=1", B+"/join")

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block header_sub %} 書式ダウンロード{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>書式ダウンロード</h2>
+  <div class="answer">白紙のひな形のみです。記入例や回答内容は含まれません。</div>
+  <div class="rel" style="margin-top:14px">
+    {% for key, f in files.items() %}
+    <a href="{{ url_for('download_file', key=key) }}">{{ f[1] }}<i>↓</i></a>
+    {% endfor %}
+  </div>
+</div>
+<div class="notice">
+  これらのファイルは会員の方だけがダウンロードできます。<br>
+  Q&amp;Aの回答本文をまとめて取得する機能はありません。
+</div>
+{% endblock %}

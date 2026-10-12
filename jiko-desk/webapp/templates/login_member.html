@@ -28,6 +28,7 @@
 
   {# 宛先はセッションから取る。生のメールアドレスをHTMLに出さない #}
   <form method="post" action="{{ url_for('login_request') }}" style="margin-top:14px">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
     <button class="ghost small" type="submit">もう一度送る</button>
   </form>
   <div style="font-size:11.5px;color:var(--muted);margin-top:8px">
@@ -46,6 +47,7 @@
   <p style="color:#c3d6e4;font-size:13px;margin:0 0 12px">
     ご登録のメールアドレスにログイン用のリンクをお送りします。パスワードは不要です。</p>
   <form method="post" action="{{ url_for('login_request') }}">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
     <input type="email" name="email" placeholder="メールアドレス" required style="margin-bottom:0">
     <button type="submit">ログインリンクを送る</button>
   </form>
@@ -55,6 +57,11 @@
 </div>
 {% endif %}
 
+{# トークンの受け取りは static/login.js が行う（CSPで 'unsafe-inline' を外すため） #}
+<div id="login-root"
+     data-csrf="{{ csrf() }}"
+     data-consume="{{ url_for('login_consume') }}"
+     data-home="{{ url_for('member_top') }}"></div>
 <div id="working" class="empty" style="display:none"><div>ログインしています…</div></div>
 <div id="failed" class="empty" style="display:none">
   <h2 style="margin:0 0 8px;font-size:17px">このリンクは使えません</h2>
@@ -63,26 +70,5 @@
   </div>
   <a href="{{ url_for('login_page') }}"><button style="margin-top:14px">ログイン画面へ</button></a>
 </div>
-
-<script>
-// トークンは URL のフラグメント（#）で渡される。
-// フラグメントはサーバーに送られないため、アクセスログにも Referer にも残らない。
-(function () {
-  var m = (location.hash || "").match(/[#&]t=([^&]+)/);
-  if (!m) return;
-  var token = m[1];
-  history.replaceState(null, "", location.pathname);   // URLから即座に消す
-  document.getElementById("working").style.display = "block";
-  var body = new FormData(); body.append("t", token);
-  fetch("{{ url_for('login_consume') }}", { method: "POST", body: body })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d.ok) { location.replace("{{ url_for('member_top') }}"); }
-      else {
-        document.getElementById("working").style.display = "none";
-        document.getElementById("failed").style.display = "block";
-      }
-    });
-})();
-</script>
+<script src="{{ url_for('static', filename='login.js') }}"></script>
 {% endblock %}
