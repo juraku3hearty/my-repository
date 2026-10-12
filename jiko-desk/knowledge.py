@@ -276,17 +276,22 @@ def normalize_item(raw: dict, video: sqlite3.Row, chunk: "tr.Chunk") -> dict | N
     ai_needs = bool(raw.get("needs_expert_review"))
     ai_type = raw.get("expert_type") if raw.get("expert_type") in config.EXPERT_TYPES else ""
 
-    needs_review = ai_needs or kw_needs
+    # 担当区分は辞書とAIの両方から決める（確認が必要になったとき誰に聞くか）
     expert_type = (ai_type if ai_type and ai_type != "なし" else "") or kw_type
+
+    outdated_flag = bool(raw.get("may_be_outdated")) or detect_outdated(haystack)
+
+    if config.TRUST_LECTURER:
+        # 講師本人が専門家なので、内容の妥当性は講師が担保しているとみなす。
+        # 確認に回すのは「講座の内容だけでは確定できないもの」に限る。
+        needs_review = bool(unknown_points) or outdated_flag
+    else:
+        needs_review = ai_needs or kw_needs
+
     if needs_review and not expert_type:
-        expert_type = "弁護士"  # 区分不明なら最も影響の大きい側に寄せる
+        expert_type = "弁護士"
 
-    if needs_review and not review_points:
-        review_points = "講座内容の要約として正確か、現在の取り扱いとして妥当かの確認をお願いします。"
-    if matched and needs_review:
-        review_points += f"（判定語: {', '.join(matched[:8])}）"
-
-    outdated = bool(raw.get("may_be_outdated")) or detect_outdated(haystack)
+    outdated = outdated_flag
     if outdated:
         note = "制度・取り扱いが変わっている可能性があるため、現行の内容かの更新確認が必要です。"
         review_points = (review_points + " " + note).strip()

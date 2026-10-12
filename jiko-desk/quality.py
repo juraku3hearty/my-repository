@@ -142,6 +142,13 @@ def run(conn: sqlite3.Connection, video_ids: list[str] | None = None) -> dict:
             transcripts[vid] = tr_row["body"] if tr_row else ""
         status, notes = check_item(row, transcripts[vid], duplicates)
         db.set_quality(conn, row["id"], status, notes)
+        # 要約がズレている疑いがあるものは、確認不要のままにしない
+        if status == STATUS_CHECK and row["review_status"] == config.ReviewStatus.NOT_REQUIRED:
+            conn.execute(
+                "UPDATE items SET review_status = ?, review_points = ? WHERE id = ?",
+                (config.ReviewStatus.PENDING,
+                 f"自動品質チェックで要確認: {notes}", row["id"]),
+            )
         result["total"] += 1
         if status == STATUS_OK:
             result["ok"] += 1
