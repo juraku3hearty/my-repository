@@ -20,6 +20,10 @@ SHORT_TIME_RE = re.compile(
     r"(?P<m2>\d{1,3}):(?P<s2>\d{2})(?:[.,](?P<ms2>\d{1,3}))?"
 )
 TAG_RE = re.compile(r"</?[^>]+>")
+# 日本語の文字と文字のあいだに入った空白（自動字幕が1文字ずつ区切るため）
+JP_CHAR = r"[\u3040-\u30FF\u4E00-\u9FFF々ー]"
+JP_SPACE_RE = re.compile(rf"(?<={JP_CHAR})[ \u3000]+(?={JP_CHAR})")
+DIGIT_SPACE_RE = re.compile(r"(?<=\d)[ \u3000]+(?=\d)")
 
 
 @dataclass
@@ -178,6 +182,29 @@ def _as_chunk(index: int, cues: list[Cue]) -> Chunk:
     return Chunk(index=index, start=cues[0].start, end=cues[-1].end, text=to_timed_text(cues))
 
 
+def normalize_caption(text: str) -> str:
+    """自動生成字幕の崩れを直す。
+
+    Vimeoの日本語自動字幕は1文字ずつ空白で区切られて届くため、そのままでは
+    「自賠責」「保険会社」のような語が文字列として存在しない。空白を詰めたうえで、
+    確実な誤認識だけを辞書で補正する。ここを通したテキストを保存し、
+    ナレッジ生成も根拠照合もキーワード判定もすべて同じテキストに対して行う。
+    """
+    if not text:
+        return text
+    text = JP_SPACE_RE.sub("", text)
+    text = DIGIT_SPACE_RE.sub("", text)
+    for wrong, right in config.CAPTION_CORRECTIONS.items():
+        text = text.replace(wrong, right)
+    return re.sub(r"[ \u3000]{2,}", " ", text).strip()
+
+
 def load_cues_from_text(raw: str) -> list[Cue]:
-    """字幕ファイルの文字列からキューを作る（細切れは結合する）。"""
-    return merge_cues(parse_cues(raw))
+    """字幕ファイルの文字列からキューを作る（細切れは結合し、崩れを正規化する）。"""
+    cues = merge_cues(parse_cues(raw))
+    normalized = []
+    for cue in cues:
+        body = normalize_caption(cue.text)
+        if body:
+            normalized.append(Cue(start=cue.start, end=cue.end, text=body))
+    return normalized
