@@ -43,9 +43,27 @@ WeasyPrint はPDF描画にシステムライブラリを使う。Windowsは
 
 | 項目 | 取得先 | 備考 |
 |---|---|---|
-| `VIMEO_ACCESS_TOKEN` | Vimeo Developer → My Apps → Generate token | スコープ **public private**（音声DLまでやるなら video_files も） |
-| `GEMINI_API_KEY` | Google AI Studio | 無料枠は分あたりのレート制限あり |
+| Vimeoトークン | Vimeo Developer → My Apps → Generate token | スコープ **public private**（音声DLまでやるなら video_files も） |
+| Gemini APIキー | Google AI Studio | 無料枠は分あたりのレート制限あり |
 | `VIMEO_SOURCE` | — | `me` / `folder:1234567` / `showcase:1234567` / `user:1234567` |
+
+### 認証情報の渡し方は2通り
+
+**A. 環境変数**（VPS・ローカルはこちら）
+
+`.env` に `VIMEO_ACCESS_TOKEN` と `GEMINI_API_KEY` を書く。コードが自分で認証ヘッダーを付ける。
+
+**B. ネットワークシークレット**（Claudeのクラウド環境はこちら）
+
+プロキシが通信時にヘッダーを付与する方式で、**コードは値を一切受け取らない**。
+環境変数が無ければ自動的にこちらの経路で動く（ヘッダーを自分では付けない）。
+
+| | 許可ウェブサイト | ヘッダー名 | プレフィックス |
+|---|---|---|---|
+| Vimeo | `api.vimeo.com` | `Authorization` | `Bearer` |
+| Gemini | `generativelanguage.googleapis.com` | `x-goog-api-key` | **空**（Bearerでは通らない） |
+
+`cli.py check` がどちらの経路で認証しているかを表示する。
 
 ---
 

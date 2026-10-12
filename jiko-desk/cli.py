@@ -48,6 +48,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     print("\n== Vimeo ==")
     try:
         client = _client()
+        print(f"  認証方式: {client.auth_mode}")
     except SystemExit as e:
         print(f"  {e}")
         return 1
@@ -107,6 +108,7 @@ def cmd_check(args: argparse.Namespace) -> int:
             return 1
 
     print("\n== Gemini ==")
+    print(f"  認証方式: {gemini.auth_mode()}")
     try:
         schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
         data = gemini.generate_json("ok に true を入れて返してください。", schema)

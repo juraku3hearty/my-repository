@@ -27,7 +27,9 @@ def generate_json(prompt: str,
                   temperature: float = 0.2,
                   max_output_tokens: int = 8192) -> Any:
     """プロンプトとスキーマを渡し、パース済みJSONを返す。"""
-    api_key = config.require("GEMINI_API_KEY", config.GEMINI_API_KEY)
+    # 環境変数にキーがあれば ?key= で送る。無ければネットワークシークレット
+    # （プロキシが x-goog-api-key ヘッダーを付与する）に委ねる。
+    api_key = config.GEMINI_API_KEY
     model = model or config.GEMINI_MODEL
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -44,7 +46,7 @@ def generate_json(prompt: str,
         try:
             res = requests.post(
                 _endpoint(model),
-                params={"key": api_key},
+                params={"key": api_key} if api_key else None,
                 json=payload,
                 timeout=180,
             )
@@ -69,8 +71,14 @@ def generate_json(prompt: str,
             raise GeminiError(
                 f"モデル {model} が見つかりません（404）。GEMINI_MODEL を見直してください。\n{res.text[:300]}"
             )
-        if res.status_code in (400, 403):
-            raise GeminiError(f"Gemini APIエラー {res.status_code}: {res.text[:500]}")
+        if res.status_code in (400, 401, 403):
+            hint = ""
+            if not api_key:
+                hint = ("\nAPIキーが環境変数に無いため、ネットワークシークレットでの付与を前提にしています。"
+                        "ヘッダー名が x-goog-api-key か（Authorization では通りません）、"
+                        "プレフィックスが空か、許可ウェブサイトが "
+                        "generativelanguage.googleapis.com かを確認してください。")
+            raise GeminiError(f"Gemini APIエラー {res.status_code}: {res.text[:400]}{hint}")
         last_error = f"{res.status_code}: {res.text[:200]}"
         time.sleep(2 ** attempt)
 
@@ -147,3 +155,8 @@ def item_schema() -> dict:
         },
         "required": ["items"],
     }
+
+
+def auth_mode() -> str:
+    """どちらの経路で認証しているかを表示用に返す。"""
+    return "環境変数" if config.GEMINI_API_KEY else "ネットワークシークレット（プロキシ付与）"

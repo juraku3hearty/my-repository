@@ -45,13 +45,20 @@ class VimeoVideo:
 
 class VimeoClient:
     def __init__(self, token: str | None = None, timeout: int = 60):
-        self.token = config.require("VIMEO_ACCESS_TOKEN", token or config.VIMEO_ACCESS_TOKEN)
+        """認証は2通り。
+
+        1. 環境変数 VIMEO_ACCESS_TOKEN がある → 自分で Authorization ヘッダーを付ける
+        2. 無い → ネットワークシークレット（プロキシがヘッダーを付与する）に委ねる
+           この場合コードはトークンの値を一切保持しない。
+        """
+        self.token = token or config.VIMEO_ACCESS_TOKEN
+        self.auth_mode = "環境変数" if self.token else "ネットワークシークレット（プロキシ付与）"
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.token}",
-            "Accept": config.VIMEO_API_VERSION,
-        })
+        headers = {"Accept": config.VIMEO_API_VERSION}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        self.session.headers.update(headers)
 
     # ---- 低レベル ----
     def get(self, path: str, params: dict | None = None, retry: int = 3) -> dict[str, Any]:
@@ -179,7 +186,9 @@ def _to_video(raw: dict) -> VimeoVideo | None:
 
 def _explain(status: int, url: str, body: str) -> str:
     hints = {
-        401: "トークンが無効か期限切れです。Vimeo Developer でトークンを再発行してください。",
+        401: "トークンが無効・期限切れか、認証ヘッダーが届いていません。"
+             "ネットワークシークレットを使っている場合は、許可ウェブサイトが api.vimeo.com か、"
+             "ヘッダーが Authorization / プレフィックス Bearer になっているか確認してください。",
         403: "権限不足です。トークンのスコープに private（音声DLなら video_files）が必要です。"
              "他人のアカウントの動画なら、その動画への権限も必要です。",
         404: "対象が見つかりません。動画ID / フォルダID / ショーケースID を確認してください。",
