@@ -1,0 +1,18 @@
+/* 会員サイト共通のデザイントークン
+   Cyfons側（add.css に取り込む）とQ&Aアプリ側で同じ値を使い、
+   画面が切り替わっても同じサイトに見えるようにする。 */
+:root {
+  --navy:   #14304a;   /* 主色。ヘッダー・ボタン */
+  --navy-d: #0d2236;   /* 濃い方。グラデーションの下 */
+  --accent: #1f7a8c;   /* 補助色。Q&Aの強調 */
+  --bg:     #f6f7f9;
+  --card:   #ffffff;
+  --line:   #e2e6ea;
+  --text:   #1c1c1c;
+  --muted:  #6b7681;
+  --ok:     #2c6b2f;
+  --warn:   #9b3a24;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(20,48,74,.07), 0 6px 18px rgba(20,48,74,.05);
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}
