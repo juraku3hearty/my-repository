@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>解決しない場合のご相談</h2>
+  <p style="font-size:14px">
+    お探しの内容は、まだナレッジになっていないか、個別の判断が必要な可能性があります。
+    いただいた質問は記録され、次回以降の講座テーマやナレッジ追加の検討材料になります。
+  </p>
+  {% if query %}<div class="answer">ご質問：{{ query }}</div>{% endif %}
+  <div class="meta" style="margin-top:16px">
+    <strong>相談先</strong><br>
+    ・制度や請求手続き … 担当の行政書士<br>
+    ・示談や過失割合 … 担当の弁護士<br>
+    ・施術の適否や診断 … 担当の医師
+  </div>
+  <a href="/"><button class="ghost" style="margin-top:16px">検索に戻る</button></a>
+</div>
+<div class="notice">
+  ※ この画面は雛形です。実際の連絡先・問い合わせフォームは、運用開始時に設定します。
+</div>
+{% endblock %}

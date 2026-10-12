@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block header_sub %} ナレッジ管理{% endblock %}
+{% block content %}
+<div class="stat-row">
+  {% for c in counts %}
+  <div class="stat"><div class="n">{{ c['c'] }}</div><div class="l">{{ c['s'] }}</div></div>
+  {% endfor %}
+</div>
+
+<form method="get" class="ask">
+  <input type="text" name="q" value="{{ keyword }}" placeholder="質問・回答・カテゴリーで絞る">
+  <select name="status">
+    <option value="">すべての公開状態</option>
+    <option value="公開可" {% if status=='公開可' %}selected{% endif %}>公開可</option>
+    <option value="非公開" {% if status=='非公開' %}selected{% endif %}>非公開</option>
+  </select>
+  <button type="submit">絞り込む</button>
+</form>
+
+{% for i in items %}
+<div class="card">
+  <h2>{{ i['question'] }}</h2>
+  <div class="answer" style="font-size:14px">{{ i['answer'][:160] }}{% if i['answer']|length > 160 %}…{% endif %}</div>
+  <div class="meta">
+    <span class="badge">{{ i['category'] }}</span>
+    <span class="badge {{ 'ok' if i['internal_status']=='院内確認済' else 'warn' }}">{{ i['internal_status'] }}</span>
+    <span class="badge {{ 'ok' if i['expert_status'] in ('確認済','不要') else 'warn' }}">専門家：{{ i['expert_status'] }}</span>
+    <span class="badge {{ 'ok' if i['publish_status']=='公開可' else '' }}">{{ i['publish_status'] }}</span>
+    {% if i['outdated'] %}<span class="badge warn">更新確認要</span>{% endif %}
+    <br>更新日 {{ i['updated_at'][:10] }}　出典 {{ i['video_title'] }} {{ i['start_hms'] }}
+    {% if i['supplement'] %}<br><strong>補足（{{ i['supplement_by'] }}）</strong>：{{ i['supplement'] }}{% endif %}
+  </div>
+
+  <form class="row-form" method="post"
+        action="{{ url_for('manage_update', item_id=i['id'], q=keyword, status=status) }}"
+        style="margin-top:12px">
+    <select name="internal_status">
+      {% for s in ['院内未確認','院内確認済','院内要修正'] %}
+      <option value="{{ s }}" {% if i['internal_status']==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <select name="expert_status">
+      {% for s in ['不要','確認待ち','確認済','要修正'] %}
+      <option value="{{ s }}" {% if i['expert_status']==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <select name="publish_status">
+      {% for s in ['非公開','公開可'] %}
+      <option value="{{ s }}" {% if i['publish_status']==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <button class="small" type="submit">保存</button>
+  </form>
+</div>
+{% endfor %}
+
+<div class="notice">
+  公開可にしたものだけが会員の検索結果に出ます。会員向けに一覧表示や一括取得の画面はありません。
+</div>
+{% endblock %}

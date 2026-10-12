@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block header_sub %} 分析{% endblock %}
+{% block content %}
+<div class="stat-row">
+  <div class="stat"><div class="n">{{ summary.searches }}</div><div class="l">検索数</div></div>
+  <div class="stat"><div class="n">{{ summary.views }}</div><div class="l">閲覧数</div></div>
+  <div class="stat"><div class="n">{{ summary.members }}</div><div class="l">利用会員数</div></div>
+  <div class="stat"><div class="n">{{ summary.zero_hits }}</div><div class="l">ヒット0件</div></div>
+  <div class="stat"><div class="n">{{ summary.clicks }}</div><div class="l">動画クリック</div></div>
+</div>
+
+<h3>よく検索される質問</h3>
+<div class="scroll"><table>
+  <tr><th>検索語（マスキング済）</th><th>回数</th></tr>
+  {% for r in top_queries %}<tr><td>{{ r['q'] }}</td><td>{{ r['c'] }}</td></tr>{% endfor %}
+</table></div>
+
+<h3>よく閲覧されるQ&amp;A と 評価</h3>
+<div class="scroll"><table>
+  <tr><th>質問</th><th>閲覧</th><th>役立った</th><th>解決せず</th></tr>
+  {% for r in top_items %}
+  <tr>
+    <td>{{ (r['question'] or r['item_id'])[:40] }}</td>
+    <td>{{ r['views'] }}</td><td>{{ r['helpful'] or 0 }}</td><td>{{ r['not_solved'] or 0 }}</td>
+  </tr>{% endfor %}
+</table></div>
+
+<h3>回答できなかった質問（次の講座テーマ候補）</h3>
+<div class="scroll"><table>
+  <tr><th>日時</th><th>質問</th><th>理由</th></tr>
+  {% for r in unanswered %}
+  <tr><td>{{ r['ts'][5:16] }}</td><td>{{ r['query_masked'] }}</td>
+      <td>{{ 'ヒット0件' if r['cause']=='zero_hit' else '解決せず' }}</td></tr>
+  {% endfor %}
+</table></div>
+
+<h3>元動画へのクリック</h3>
+<div class="scroll"><table>
+  <tr><th>質問</th><th>クリック</th></tr>
+  {% for r in clicks %}<tr><td>{{ (r['question'] or r['item_id'])[:40] }}</td><td>{{ r['clicks'] }}</td></tr>{% endfor %}
+</table></div>
+
+<h3>月別の利用状況</h3>
+<div class="scroll"><table>
+  <tr><th>月</th><th>検索数</th><th>ヒット0件</th></tr>
+  {% for r in monthly %}<tr><td>{{ r['m'] }}</td><td>{{ r['searches'] }}</td><td>{{ r['zero'] }}</td></tr>{% endfor %}
+</table></div>
+
+<div class="notice">
+  検索語は記録前にマスキングしています（電話番号・メール・住所・氏名らしき語）。<br>
+  会員IDは保存せず、ハッシュのみ記録します。生ログの保存期間は13か月の想定です。
+</div>
+{% endblock %}

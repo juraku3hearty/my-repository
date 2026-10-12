@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>管理者ログイン</h2>
+  <form method="post">
+    <input type="password" name="password" placeholder="パスワード" autofocus>
+    <button type="submit">ログイン</button>
+  </form>
+  {% if error %}<div class="meta" style="color:#9b3a24">{{ error }}</div>{% endif %}
+</div>
+{% endblock %}

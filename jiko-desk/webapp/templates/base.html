@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}交通事故実務デスク{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="title">交通事故実務デスク{% block header_sub %}{% endblock %}</div>
+  <div class="sub">
+    会員専用
+    {% if session.get('is_admin') %}
+      <a href="{{ url_for('analytics') }}">分析</a>
+      <a href="{{ url_for('manage') }}">ナレッジ管理</a>
+      <a href="{{ url_for('admin_logout') }}">ログアウト</a>
+    {% endif %}
+  </div>
+</header>
+<div class="wrap">{% block content %}{% endblock %}</div>
+</body>
+</html>

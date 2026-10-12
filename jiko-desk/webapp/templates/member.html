@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="ask" method="get" action="/">
+  <textarea name="q" placeholder="例：保険会社から打ち切りを言われたらどうする？">{{ query }}</textarea>
+  <button type="submit">調べる</button>
+</form>
+
+{% if query %}
+  {% if results %}
+    <div class="notice">{{ results|length }}件見つかりました</div>
+    {% for r in results %}
+    <div class="card">
+      <h2>{{ r['question'] }}</h2>
+      <div class="answer">{{ r['answer'] }}</div>
+
+      <div class="meta">
+        <span class="badge ok">確認済</span>
+        {% if r['expert_status'] == '確認済' %}<span class="badge ok">専門家確認済</span>{% endif %}
+        {% if r['outdated'] %}<span class="badge warn">制度変更の可能性あり</span>{% endif %}
+        <span class="badge">{{ r['category'] }}</span><br>
+        最終確認日 {{ r['updated_at'][:10] }}　出典：{{ r['video_title'] }} {{ r['start_hms'] }}
+      </div>
+
+      <form method="post" action="{{ url_for('video_click') }}">
+        <input type="hidden" name="item_id" value="{{ r['id'] }}">
+        <input type="hidden" name="video_id" value="{{ r['video_id'] }}">
+        <input type="hidden" name="start_sec" value="{{ r['start_sec'] }}">
+        <input type="hidden" name="url" value="{{ r['video_url'] }}">
+        <button class="video" type="submit">▶ この説明を動画で見る（{{ r['start_hms'] }}〜）</button>
+      </form>
+
+      <div class="fb">
+        <form method="post" action="{{ url_for('feedback') }}">
+          <input type="hidden" name="item_id" value="{{ r['id'] }}">
+          <input type="hidden" name="q" value="{{ query }}">
+          <input type="hidden" name="verdict" value="helpful">
+          <button class="ghost small" type="submit">役に立った</button>
+        </form>
+        <form method="post" action="{{ url_for('feedback') }}">
+          <input type="hidden" name="item_id" value="{{ r['id'] }}">
+          <input type="hidden" name="q" value="{{ query }}">
+          <input type="hidden" name="verdict" value="not_solved">
+          <button class="ghost small" type="submit">解決しなかった</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="empty" style="margin-top:18px">
+      <div>探していた内容が見つかりませんか？</div>
+      <a href="{{ url_for('consult', q=query) }}"><button class="ghost" style="margin-top:10px">相談する</button></a>
+    </div>
+  {% else %}
+    <div class="empty">
+      <strong>該当するナレッジが見つかりませんでした</strong>
+      <p style="font-size:13px;color:#6b7681">
+        確認済みの内容のみを検索しています。推測でお答えすることはありません。
+      </p>
+      <a href="{{ url_for('consult', q=query) }}"><button>相談する</button></a>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <strong>実務で困ったことを入力してください</strong>
+    <p style="font-size:13px;color:#6b7681">
+      講座で説明され、院内および専門家の確認を終えた内容だけをお返しします。
+    </p>
+  </div>
+{% endif %}
+
+<div class="notice">
+  回答はAIが作文したものではありません。講座の内容を整理し、人が確認した文章をそのまま表示しています。<br>
+  確認が済んでいない内容は表示されません。個別の事案の判断は、必ず担当の専門家にご相談ください。
+</div>
+{% endblock %}

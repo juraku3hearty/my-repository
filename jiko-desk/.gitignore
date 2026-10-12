@@ -6,3 +6,5 @@ tests/sample.sqlite3
 tests/sample_out/
 __pycache__/
 *.pyc
+webapp/demo.sqlite3
+webapp/*.sqlite3
