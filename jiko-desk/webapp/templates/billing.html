@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block header_sub %} お支払いについて{% endblock %}
+{% block content %}
+<div class="empty">
+  <h2 style="margin:0 0 8px;font-size:17px">
+    {% if row['status'] == 'cancelled' %}ご利用が終了しています
+    {% elif row['status'] == 'pending' %}お申し込みの手続きが完了していません
+    {% else %}お支払いが確認できていません{% endif %}
+  </h2>
+  <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
+    {{ reason }}<br>
+    {% if row['status'] in ['grace', 'suspended'] %}
+      決済代行会社から届いているメールのURLから、カード情報をご確認ください。
+    {% endif %}
+  </div>
+  <div class="notice" style="margin-top:14px;text-align:left">
+    会員ID {{ row['member_id'] }}　状態 {{ row['status'] }}<br>
+    {% if row['paid_through'] %}ご利用期限 {{ row['paid_through'] }}{% endif %}
+  </div>
+  <a href="{{ url_for('consult') }}"><button class="ghost" style="margin-top:12px">お問い合わせ</button></a>
+  <a href="{{ url_for('member_logout') }}"><button class="ghost" style="margin-top:8px">ログアウト</button></a>
+</div>
+<div class="notice">
+  この画面では、Q&amp;Aの検索結果は表示されません。
+</div>
+{% endblock %}

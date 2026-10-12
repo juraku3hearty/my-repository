@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block header_sub %} お申し込み{% endblock %}
+{% block content %}
+<div class="askbox">
+  <h1>交通事故実務デスク お申し込み</h1>
+  <p style="color:#c3d6e4;font-size:13px;margin:0 0 12px">月額 9,800円（税込）／いつでも解約できます</p>
+  <form method="post">
+    <input type="email" name="email" placeholder="メールアドレス" required
+           style="margin-bottom:0">
+    <button type="submit">お支払いに進む</button>
+  </form>
+  {% if error %}<div style="color:#ffd7cc;font-size:13px;margin-top:8px">{{ error }}</div>{% endif %}
+</div>
+<div class="notice">
+  お支払いは決済代行会社の画面で行います。カード情報は当方では保持しません。<br>
+  決済に関するメールは famitect@gaea.ocn.ne.jp から届きます。
+</div>
+{% endblock %}

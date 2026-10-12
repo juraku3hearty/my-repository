@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block header_sub %} ログイン{% endblock %}
+{% block content %}
+{% if sent %}
+<div class="empty">
+  <h2 style="margin:0 0 8px;font-size:17px">メールをお送りしました</h2>
+  <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
+    届いたメールのリンクを開いてください。<br>
+    リンクは15分間だけ有効で、1回しか使えません。
+  </div>
+</div>
+{% else %}
+<div class="askbox">
+  <h1>ログイン</h1>
+  <p style="color:#c3d6e4;font-size:13px;margin:0 0 12px">
+    ご登録のメールアドレスにログイン用のリンクをお送りします。パスワードは不要です。</p>
+  <form method="post" action="{{ url_for('login_request') }}">
+    <input type="email" name="email" placeholder="メールアドレス" required style="margin-bottom:0">
+    <button type="submit">ログインリンクを送る</button>
+  </form>
+</div>
+{% endif %}
+
+<div id="working" class="empty" style="display:none">
+  <div>ログインしています…</div>
+</div>
+<div id="failed" class="empty" style="display:none">
+  <h2 style="margin:0 0 8px;font-size:17px">このリンクは使えません</h2>
+  <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
+    期限が切れているか、すでに使用済みです。<br>もう一度お送りください。
+  </div>
+</div>
+
+<script>
+// ログイン用のトークンは URL のフラグメント（#）で渡される。
+// フラグメントはサーバーに送られないため、アクセスログにも Referer にも残らない。
+// ここで読み取って POST で送り、すぐにURLから消す。
+(function () {
+  var m = (location.hash || "").match(/[#&]t=([^&]+)/);
+  if (!m) return;
+  var token = m[1];
+  history.replaceState(null, "", location.pathname);   // URLから即座に消す
+  document.getElementById("working").style.display = "block";
+  var body = new FormData(); body.append("t", token);
+  fetch("{{ url_for('login_consume') }}", { method: "POST", body: body })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.ok) { location.replace("{{ url_for('member_top') }}"); }
+      else {
+        document.getElementById("working").style.display = "none";
+        document.getElementById("failed").style.display = "block";
+      }
+    });
+})();
+</script>
+{% endblock %}

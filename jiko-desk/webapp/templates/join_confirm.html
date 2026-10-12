@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block header_sub %} お申し込み（試作）{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>会員ID {{ member_id }} を仮登録しました</h2>
+  <div class="answer">
+    本番ではこのあと決済代行会社の画面に移動します。<br>
+    試作では、送信される値をここに表示します。
+  </div>
+  <details class="src" open>
+    <summary>送信される値</summary>
+    <div>
+      <table style="margin-top:6px">
+        <tr><th>項目</th><th>値</th></tr>
+        {% for k, v in fields %}<tr><td>{{ k }}</td><td>{{ v }}</td></tr>{% endfor %}
+      </table>
+      <div style="margin-top:8px">送信先：https://credit.j-payment.co.jp/link/creditcard</div>
+    </div>
+  </details>
+  <div class="notice" style="margin-top:14px">
+    この時点では status は <b>pending</b> です。決済が完了してキックバックが届くまで、
+    会員はQ&amp;Aを使えません。30分たっても通知が来ない場合は管理者に警告が出ます。
+  </div>
+</div>
+{% endblock %}

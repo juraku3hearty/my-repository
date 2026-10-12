@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block header_sub %} 会員管理{% endblock %}
+{% block content %}
+{% if processed %}<div class="notice">{{ processed }}件の通知を反映しました。</div>{% endif %}
+<form method="post" action="{{ url_for('admin_process_events') }}">
+  <button class="small" type="submit">未処理の通知を反映する</button>
+</form>
+
+<h3>会員</h3>
+<div class="scroll"><table>
+  <tr><th>会員ID</th><th>メール</th><th>状態</th><th>期限</th><th>acid</th></tr>
+  {% for m in members %}
+  <tr><td>{{ m['member_id'] }}</td><td>{{ m['email'] }}</td>
+      <td>{{ m['status'] }}</td><td>{{ m['paid_through'] or '-' }}</td>
+      <td>{{ m['robotpay_acid'] or '-' }}</td></tr>
+  {% endfor %}
+</table></div>
+
+<h3>受け取った通知</h3>
+<div class="scroll"><table>
+  <tr><th>受信</th><th>種別</th><th>gid</th><th>内容</th><th>結果</th></tr>
+  {% for e in events %}
+  <tr><td>{{ e['received_at'][5:16] }}</td><td>{{ e['kind'] }}</td><td>{{ e['gid'] }}</td>
+      <td style="font-size:11px">{{ e['raw'][:70] }}</td>
+      <td>{{ e['result'] or '未処理' }}</td></tr>
+  {% endfor %}
+</table></div>
+
+<h3>警告</h3>
+<div class="scroll"><table>
+  <tr><th>日時</th><th>区分</th><th>内容</th></tr>
+  {% for a in alerts %}
+  <tr><td>{{ a['ts'][5:16] }}</td><td>{{ a['level'] }}</td>
+      <td>{{ a['topic'] }}<br><span style="font-size:11px;color:var(--muted)">{{ a['detail'] }}</span></td></tr>
+  {% endfor %}
+</table></div>
+
+<h3>送信したメール（試作では実送信しません）</h3>
+<div class="scroll"><table>
+  <tr><th>日時</th><th>宛先</th><th>件名</th><th>本文</th></tr>
+  {% for o in outbox %}
+  <tr><td>{{ o['ts'][5:16] }}</td><td>{{ o['to_email'] }}</td><td>{{ o['subject'] }}</td>
+      <td style="font-size:11px;white-space:pre-wrap">{{ o['body'] }}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

@@ -17,13 +17,16 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import secrets
 import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
 
-from flask import (Flask, g, redirect, render_template, request, session, url_for)
+from flask import (Flask, g, jsonify, redirect, render_template, request,
+                   session, url_for)
 
 import applog
+import membership as mb
 
 # ── 検証環境ガード ────────────────────────────────────────────
 # require_member() が未実装（常に通す）のため、本番公開を禁止する。
@@ -56,7 +59,17 @@ def get_db() -> sqlite3.Connection:
         g.db = sqlite3.connect(DB_PATH)
         g.db.row_factory = sqlite3.Row
         applog.init(g.db)
+        mb.init(g.db)
     return g.db
+
+
+@app.after_request
+def harden(resp):
+    # ログインリンクやクエリが外部サイトへ渡らないようにする
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    return resp
 
 
 @app.teardown_appcontext
@@ -123,30 +136,56 @@ def search_items(conn, query: str, limit: int = 6) -> list[dict]:
 
 
 def current_member() -> str:
-    return session.get("member_id", "guest")
+    return session.get("member_id", "anonymous")
+
+
+def current_member_row():
+    """ログイン中の会員。セッションに member_id が無ければ None。"""
+    mid = session.get("member_id")
+    if not mid:
+        return None
+    return get_db().execute("SELECT * FROM members WHERE member_id = ?", (mid,)).fetchone()
 
 
 def require_member():
-    """会員向け画面の関所。ここ1か所を通れば、全経路で同じ判定になる。
+    """会員向け画面の関所。**既定は拒否**。認証が成立したときだけ通す。
 
-    雛形の段階では常に通す（認証は連携方式の確定後に実装する）。
-    本実装では次を満たす：
-      - 未ログイン        → ログイン画面へ
-      - 退会・停止        → 支払い/退会の案内へ（検索結果は一切返さない）
-      - URL直接アクセス   → 同じ判定を通るので素通りできない
-      - API直接呼び出し   → /api/* も同じ関数を通し、JSONで401を返す
-    判定の根拠は members.status と members.paid_through のみで、
-    Cyfons側のログイン状態は根拠にしない（Cyfonsが止められない場合があるため）。
+    判定の根拠は members.status と paid_through のみ。
+    Cyfonsのログイン状態は根拠にしない（Cyfonsを止められない場合があるため）。
+
+    戻り値：(通してよいか, 行かせ先のレスポンス)
+      - 未ログイン      → ログイン画面へ
+      - 停止・解約・期限切れ → 支払い案内へ（検索結果は一切返さない）
+      - URL直接アクセス → 全ルートがこの関数を通るので素通りできない
+      - API            → JSONで401。本文に中身を含めない
     """
-    return True   # TODO: 連携方式の確定後に実装する
+    row = current_member_row()
+    if row is None:
+        return False, redirect(url_for("login_page"))
+    ok, reason = mb.can_use(row)
+    if not ok:
+        return False, redirect(url_for("billing", reason=reason))
+    return True, None
+
+
+def require_member_api():
+    """API用。HTMLではなくJSONで401を返し、本文に中身を含めない。"""
+    row = current_member_row()
+    if row is None:
+        return False, (jsonify({"error": "unauthorized"}), 401)
+    ok, _ = mb.can_use(row)
+    if not ok:
+        return False, (jsonify({"error": "forbidden"}), 403)
+    return True, None
 
 
 # ---------------- 会員向け ----------------
 
 @app.route("/", methods=["GET"])
 def member_home():
-    if not require_member():
-        return redirect(url_for("admin_login"))
+    ok, resp = require_member()
+    if not ok:
+        return resp
     query = (request.args.get("q") or "").strip()
     conn = get_db()
     primary, related = None, []
@@ -195,11 +234,162 @@ def video_click():
     return redirect(row["video_url"])
 
 
+# ───────────── 申込・ログイン ─────────────
+
+# 通知の受け口のパス。推測できない長さにする。本番では環境変数で渡す。
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "demo-secret-please-change-0123456789")
+# 検証環境では自分のPCから叩けるように送信元IPの確認を切る
+ENFORCE_SOURCE_IP = os.environ.get("ENFORCE_SOURCE_IP", "0") == "1"
+
+
+@app.route("/join", methods=["GET", "POST"])
+def join():
+    """申込フォーム。
+
+    本番では famitect.com 配下に静的HTMLとして置く（決済データ送信元URLの制約）。
+    ここは、その静的HTMLに埋め込む値を作るための試作である。
+    押された時点で members に pending の行を作る。
+    ER系エラーのときキックバックが飛ばない仕様のため、これが無いと
+    「申し込んだつもりの人」を検知できない。
+    """
+    conn = get_db()
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        if "@" not in email:
+            return render_template("join.html", error="メールアドレスをご確認ください")
+        member_id = mb.create_pending(conn, email)
+        conn.commit()
+        # 本番ではここで ROBOT PAYMENT の決済フォームへPOSTする。
+        # 試作では、送信される値を確認できる画面を出す。
+        return render_template("join_confirm.html", member_id=member_id, email=email,
+                               fields=[("aid", "〈店舗ID〉"), ("cod", member_id),
+                                       ("jb", "CAPTURE"), ("am", "9800"), ("tx", "0"),
+                                       ("sf", "0"), ("actp", "4"), ("acam", "9800"),
+                                       ("actx", "0"), ("acsf", "0"), ("em", email),
+                                       ("inm", "交通事故実務デスク 月額会員")])
+    return render_template("join.html", error="")
+
+
+@app.route("/login")
+def login_page():
+    """ログイン画面。メールアドレスを入れると使い捨てリンクが届く。
+
+    トークンはURLのフラグメント（#）で渡される。フラグメントはサーバーに送られないので、
+    アクセスログにもRefererにも残らない。このページのJavaScriptが読み取って
+    POSTで送る。
+    """
+    return render_template("login_member.html", sent=False, error="")
+
+
+@app.route("/login/request", methods=["POST"])
+def login_request():
+    conn = get_db()
+    email = (request.form.get("email") or "").strip()
+    row = mb.find(conn, email=email)
+    # 会員がいてもいなくても同じ画面を出す。どのメールが登録済みかを教えないため。
+    if row is not None and row["status"] != "cancelled":
+        mb.send_login_link(conn, row, request.url_root)
+    conn.commit()
+    return render_template("login_member.html", sent=True, error="")
+
+
+@app.route("/login/consume", methods=["POST"])
+def login_consume():
+    """フラグメントから渡されたトークンを1回だけ使う。"""
+    conn = get_db()
+    token = (request.form.get("t") or "").strip()
+    member_id = mb.consume_login_token(conn, token)
+    conn.commit()
+    if not member_id:
+        return jsonify({"ok": False}), 401
+    session.clear()
+    session["member_id"] = member_id
+    session.permanent = True
+    return jsonify({"ok": True})
+
+
+@app.route("/logout")
+def member_logout():
+    session.pop("member_id", None)
+    return redirect(url_for("login_page"))
+
+
+@app.route("/billing")
+def billing():
+    """支払い・利用停止の案内。ログインはできるが検索結果は返さない画面。"""
+    row = current_member_row()
+    if row is None:
+        return redirect(url_for("login_page"))
+    # 利用できる会員がURLを直接開いた場合は、誤解を与えないよう会員トップへ戻す
+    usable, _ = mb.can_use(row)
+    if usable:
+        return redirect(url_for("member_top"))
+    return render_template("billing.html", row=row,
+                           reason=request.args.get("reason", ""))
+
+
+# ───────────── 決済通知の受け口 ─────────────
+
+@app.route("/webhook/subscpay/<secret>", methods=["GET", "POST"])
+def webhook_initial(secret):
+    return _webhook(secret, "initial")
+
+
+@app.route("/webhook/subscpay-auto/<secret>", methods=["GET", "POST"])
+def webhook_auto(secret):
+    return _webhook(secret, "auto")
+
+
+def _webhook(secret: str, kind: str):
+    """キックバックの受け口。
+
+    仕様上の制約（docs/membership-integration.md 19-4・20-4）
+      - HTML GET形式で届く（クエリ文字列）
+      - 1行目にHTMLを出力しないと「通知失敗」として記録される
+      - 「決済結果 待ち時間 30秒」があるため、ここでは保存だけして即返す
+    """
+    if not secrets.compare_digest(secret, WEBHOOK_SECRET):
+        return "<html>NG</html>", 404
+    params = dict(request.args) | dict(request.form)
+    conn = get_db()
+    mb.receive(conn, kind, params, request.remote_addr or "", ENFORCE_SOURCE_IP)
+    # 反映はここでやらない。別途 process_pending() が処理する。
+    return "<html>OK</html>", 200
+
+
+@app.route("/admin/process-events", methods=["POST"])
+def admin_process_events():
+    """未処理の通知を反映する。本番ではワーカーかcronで回す。"""
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    n = mb.process_pending(conn)
+    mb.check_stale_pending(conn)
+    mb.purge_tokens(conn)
+    conn.commit()
+    return redirect(url_for("members_admin", processed=n))
+
+
+@app.route("/admin/members")
+def members_admin():
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    return render_template(
+        "members.html",
+        members=conn.execute("SELECT * FROM members ORDER BY created_at DESC").fetchall(),
+        events=conn.execute("SELECT * FROM payment_events ORDER BY received_at DESC LIMIT 20").fetchall(),
+        alerts=conn.execute("SELECT * FROM ops_alerts ORDER BY id DESC LIMIT 20").fetchall(),
+        outbox=conn.execute("SELECT * FROM outbox ORDER BY id DESC LIMIT 20").fetchall(),
+        processed=request.args.get("processed"))
+
+
 @app.route("/home")
 def member_top():
     """会員トップ。新着件数と相談日程をデータから出す。"""
-    if not require_member():
-        return redirect(url_for("admin_login"))
+    ok, resp = require_member()
+    if not ok:
+        return resp
     conn = get_db()
     today = date.today().isoformat()
     # 会員に公開した講座のうち、直近30日のものを新着として数える
@@ -220,8 +410,9 @@ def member_top():
 @app.route("/consult")
 def consult():
     """解決しなかった場合の相談案内。AIに答えさせず、人につなぐ。"""
-    if not require_member():
-        return redirect(url_for("admin_login"))
+    ok, resp = require_member()
+    if not ok:
+        return resp
     return render_template("consult.html", query=(request.args.get("q") or ""))
 
 
