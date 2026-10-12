@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS items (
     answer_short     TEXT NOT NULL,
     body_md          TEXT,
     evidence         TEXT,
+    supplement       TEXT,
+    supplement_by    TEXT,
+    supplement_status TEXT,
+    lecture_request  INTEGER DEFAULT 0,
     key_points       TEXT,
     caveats          TEXT,
     unknown_points   TEXT,
@@ -275,6 +279,8 @@ def migrate(conn: sqlite3.Connection) -> None:
     for column, ddl in (
         ("evidence", "TEXT"), ("quality_status", "TEXT"), ("quality_notes", "TEXT"),
         ("internal_status", "TEXT"), ("internal_reviewer", "TEXT"), ("internal_reviewed_at", "TEXT"),
+        ("supplement", "TEXT"), ("supplement_by", "TEXT"), ("supplement_status", "TEXT"),
+        ("lecture_request", "INTEGER"),
     ):
         if column not in existing:
             conn.execute(f"ALTER TABLE items ADD COLUMN {column} {ddl}")
@@ -318,6 +324,21 @@ def apply_internal_review(conn: sqlite3.Connection, item_id: str, judgement: str
         """INSERT INTO review_log (item_id, reviewer, judged_at, judgement, comment, axis)
            VALUES (?, ?, ?, ?, ?, ?)""",
         (item_id, reviewer, now(), judgement, comment, "院内"),
+    )
+    conn.commit()
+
+
+def set_supplement(conn: sqlite3.Connection, item_id: str, text: str, by: str = "",
+                   lecture_request: bool = False) -> None:
+    """院長や有資格者が書いた補足を記録する。
+
+    講座で話されていない実務知識は、AIに書かせると創作になり根拠照合が成り立たない。
+    人が書いたものとして講師の説明と分けて保持し、出典も分ける。
+    """
+    conn.execute(
+        """UPDATE items SET supplement = ?, supplement_by = ?, supplement_status = ?,
+                            lecture_request = ?, updated_at = ? WHERE id = ?""",
+        (text, by, "未確認" if text else "", 1 if lecture_request else 0, now(), item_id),
     )
     conn.commit()
 

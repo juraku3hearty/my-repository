@@ -71,6 +71,9 @@ def collect_items(conn: sqlite3.Connection, statuses: tuple[str, ...],
             "body_html": _to_html(row["body_md"]),
             "body_md": row["body_md"],
             "evidence": row["evidence"] or "",
+            "supplement": row["supplement"] or "",
+            "supplement_by": row["supplement_by"] or "",
+            "lecture_request": bool(row["lecture_request"]),
             "quality_status": row["quality_status"] or "",
             "quality_notes": row["quality_notes"] or "",
             "key_points": db.loads(row["key_points"]),
@@ -204,7 +207,8 @@ def render_review_booklet(conn: sqlite3.Connection, out_dir: Path | None = None)
 CSV_HEADERS = [
     "ナレッジID", "Q番号", "カテゴリー", "質問", "回答", "関連キーワード",
     "解説PDFページ", "動画タイトル", "該当開始時刻", "該当終了時刻", "元動画URL(時刻付)",
-    "根拠テキスト", "院内確認", "専門家確認", "担当専門家", "公開可否", "品質チェック", "品質メモ",
+    "根拠テキスト", "補足（講座外）", "補足者", "院内確認", "専門家確認", "担当専門家",
+    "公開可否", "品質チェック", "品質メモ",
     "更新確認要", "要確認事項", "動画ID",
 ]
 
@@ -228,7 +232,8 @@ def export_index(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple
                 item["id"], item["q_no"], item["category"], item["question"], item["answer_short"],
                 "、".join(item["keywords"]), page_by_id.get(item["id"]) or "",
                 item["video_title"], item["start_hms"], item["end_hms"], item["timed_url"],
-                item["evidence"], item["internal_status"], item["review_status"],
+                item["evidence"], item["supplement"], item["supplement_by"],
+                item["internal_status"], item["review_status"],
                 item["expert_type"],
                 "公開可" if (item["internal_status"] == config.InternalStatus.APPROVED
                              and item["review_status"] in (config.ReviewStatus.NOT_REQUIRED,
@@ -352,8 +357,8 @@ def export_quality_list(conn: sqlite3.Connection, out_dir: Path | None = None) -
 
 
 REVIEW_SHEET_HEADERS = [
-    "ナレッジID", "判定", "コメント", "要注意", "カテゴリー", "質問", "回答",
-    "講師の発言（根拠）", "動画リンク", "動画", "時刻",
+    "ナレッジID", "判定", "コメント", "補足（講座にない内容）", "次回講座で説明希望",
+    "要注意", "カテゴリー", "質問", "回答", "講師の発言（根拠）", "動画リンク", "動画", "時刻",
 ]
 
 
@@ -390,7 +395,7 @@ def export_review_sheet_csv(conn: sqlite3.Connection, out_dir: Path | None = Non
                     "例：講師の発言がここに入ります", "", "", ""])
         for row in pending:
             w.writerow([
-                row["id"], "", "",
+                row["id"], "", "", "", "",
                 "★" if row["quality_status"] == quality.STATUS_CHECK else "",
                 row["category"], row["question"], row["answer_short"],
                 row["evidence"] or "",
@@ -398,3 +403,40 @@ def export_review_sheet_csv(conn: sqlite3.Connection, out_dir: Path | None = Non
                 row["video_title"], tr.hms(row["start_sec"] or 0),
             ])
     return path, len(pending)
+
+
+LECTURE_HEADERS = [
+    "種別", "カテゴリー", "質問", "講座で確認できない事項 / 補足内容", "補足者",
+    "元動画URL(時刻付)", "ナレッジID",
+]
+
+
+def export_lecture_requests(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple[Path, int]:
+    """次回以降の講座で扱ってほしいテーマの候補。
+
+    materials は2種類。
+      1. 院長や有資格者が「次回講座で説明希望」に印を付けたもの
+      2. AIが「講座内で確認できない」と書いた事項（講座の穴）
+    どちらも「講座で説明されていない論点」なので、次の講座テーマの材料になる。
+    """
+    out_dir = out_dir or config.OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    items = collect_items(conn, PUBLIC_STATUSES + PENDING_STATUSES)
+
+    path = out_dir / "講座テーマ候補.csv"
+    count = 0
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(LECTURE_HEADERS)
+        for item in items:
+            if item["lecture_request"]:
+                w.writerow(["説明希望（人が指定）", item["category"], item["question"],
+                            item["supplement"], item["supplement_by"],
+                            item["timed_url"], item["id"]])
+                count += 1
+        for item in items:
+            for unknown in item["unknown_points"]:
+                w.writerow(["講座内で確認できない事項", item["category"], item["question"],
+                            unknown, "", item["timed_url"], item["id"]])
+                count += 1
+    return path, count

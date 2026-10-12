@@ -248,7 +248,9 @@ def cmd_render(args: argparse.Namespace) -> int:
     qc_path, flagged = render.export_quality_list(conn)
     print(f"品質要目視: {qc_path}（{flagged}項目）")
     internal_path, unchecked = render.export_internal_review_list(conn, order=args.order)
+    lecture_path, lecture_count = render.export_lecture_requests(conn)
     print(f"院内確認リスト: {internal_path}（未確認{unchecked}項目）")
+    print(f"講座テーマ候補: {lecture_path}（{lecture_count}件）")
     if count == 0:
         print("\n公開可能な項目はまだ0件です（自動生成しただけの項目は公開しません）。")
         print("  1. out/院内確認リスト.csv を実務責任者が確認し、院内判定を記入")
@@ -298,12 +300,14 @@ def cmd_import_review(args: argparse.Namespace) -> int:
     """確認結果をCSVで戻す。
 
     院内確認リスト  : 列「院内判定」（院内確認済 / 院内要修正、済・OK・○ も可）
+                      列「補足」に講座にない内容を書けば、人が書いた補足として保存する
+                      列「次回講座で説明希望」に印を付ければ、講座テーマ候補に挙がる
     専門家の確認結果: 列「専門家判定」または「判定」（確認済 / 要修正）
     どちらの列があっても処理する。確認者・コメント列は任意。
     """
     conn = db.connect()
     path = Path(args.file)
-    internal = expert = skipped = 0
+    internal = expert = supplements = skipped = 0
     with path.open(encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             item_id = (row.get("ナレッジID") or "").strip()
@@ -322,6 +326,13 @@ def cmd_import_review(args: argparse.Namespace) -> int:
                     internal += 1
                     touched = True
 
+            supplement = (row.get("補足") or row.get("補足（講座にない内容）") or "").strip()
+            if supplement:
+                request = bool((row.get("次回講座で説明希望") or "").strip())
+                db.set_supplement(conn, item_id, supplement, reviewer, request)
+                supplements += 1
+                touched = True
+
             raw_expert = (row.get("専門家判定") or row.get("判定") or "").strip()
             if raw_expert in (config.ReviewStatus.APPROVED, config.ReviewStatus.REJECTED):
                 db.apply_review(conn, item_id, raw_expert, reviewer, comment)
@@ -330,7 +341,8 @@ def cmd_import_review(args: argparse.Namespace) -> int:
 
             if not touched:
                 skipped += 1
-    print(f"反映: 院内確認 {internal}件 / 専門家確認 {expert}件（判定の記入なし {skipped}件）")
+    print(f"反映: 院内確認 {internal}件 / 専門家確認 {expert}件 / 補足 {supplements}件"
+          f"（記入なし {skipped}件）")
     return 0
 
 
