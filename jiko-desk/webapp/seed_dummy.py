@@ -1,6 +1,7 @@
 """画面確認用のダミーデータを作る。実データ（jiko_desk.sqlite3）には触れない。"""
 from __future__ import annotations
 
+import hashlib
 import random
 import sqlite3
 from datetime import datetime, timedelta
@@ -20,9 +21,28 @@ CREATE TABLE items (
     -- 院内確認の実績。確認していないものに確認済みと表示しないため、名前と日付で持つ
     internal_reviewer TEXT, internal_reviewed_at TEXT,
     -- 元動画を会員に見せてよいか。過去動画は既定で不可（0）
-    video_visible INTEGER DEFAULT 0
+    video_visible INTEGER DEFAULT 0,
+    -- 承認は「どの版を承認したか」で持つ。本文を直したら承認が外れる
+    answer_version TEXT, approved_version TEXT, approval_state TEXT
 );
+
+DROP TABLE IF EXISTS lessons;
+CREATE TABLE lessons (
+    id TEXT PRIMARY KEY, title TEXT, published_at TEXT,
+    member_visible INTEGER DEFAULT 0      -- 過去動画は既定で会員非公開
+);
+
+DROP TABLE IF EXISTS settings;
+CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT);
 """
+
+LESSONS = [   # member_visible=1 が会員に見える。過去動画は 0 のまま
+    ("LS-041", "交通事故対応の基本（2026年10月版）", "2026-10-10", 1),
+    ("LS-040", "施術証明書の書き方", "2026-10-02", 1),
+    ("LS-039", "打ち切り打診への対応", "2026-08-18", 1),
+    ("LS-012", "2025.10.28 交通事故講座（過去回）", "2025-10-28", 0),
+    ("LS-008", "2025.8.12 交通事故講座 初級編（過去回）", "2025-08-12", 0),
+]
 
 ITEMS = [
     ("打切り・治療終了", "保険会社から治療の打ち切りを打診されたら、患者にどう案内すればよいですか？",
@@ -75,6 +95,11 @@ QUERIES = [
 ]
 
 
+def answer_hash(text: str) -> str:
+    """回答本文の版。本文が1文字でも変われば値が変わる。"""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
 def main() -> None:
     if DB.exists():
         DB.unlink()
@@ -89,13 +114,27 @@ def main() -> None:
             """INSERT INTO items (id, category, question, answer, keywords, video_title, video_id,
                video_url, start_sec, start_hms, internal_status, expert_status, publish_status,
                outdated, supplement, supplement_by, updated_at,
-               internal_reviewer, internal_reviewed_at, video_visible)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               internal_reviewer, internal_reviewed_at, video_visible,
+               answer_version, approved_version, approval_state)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (f"KB-DEMO-{i:03d}", row[0], row[1], row[2], row[3], row[4], row[5],
              f"https://vimeo.com/{row[5]}#t={row[6]}s", row[6], row[7],
              row[8], row[9], row[10], row[11], row[12], row[13],
              (now - timedelta(days=random.randint(1, 60))).strftime("%Y-%m-%d %H:%M:%S"),
-             row[14], row[15], row[16]))
+             row[14], row[15], row[16],
+             answer_hash(row[2]),
+             # 院内確認済のものだけ、その版を承認済みとして記録する
+             answer_hash(row[2]) if row[8] == "院内確認済" else "",
+             "承認済" if row[8] == "院内確認済" else "未承認"))
+    for ls in LESSONS:
+        conn.execute("INSERT INTO lessons VALUES (?,?,?,?)", ls)
+    conn.execute("INSERT INTO settings VALUES ('consult_next_date', '2026-10-24')")
+    conn.execute("INSERT INTO settings VALUES ('consult_note', '毎月1回。個別の事案を直接相談できます')")
+
+    # 本文を直したのに再承認していない状態を1件作り、画面で検証できるようにする
+    conn.execute("UPDATE items SET answer = answer || '（2026-10-12 修正）', "
+                 "answer_version = ?, approval_state = '再承認待ち' WHERE id = 'KB-DEMO-008'",
+                 (answer_hash("dummy-edited"),))
     conn.commit()
 
     published = [r["id"] for r in conn.execute("SELECT id FROM items WHERE publish_status='公開可'")]

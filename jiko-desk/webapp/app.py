@@ -17,14 +17,25 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+from datetime import date, timedelta
 from pathlib import Path
 
 from flask import (Flask, g, redirect, render_template, request, session, url_for)
 
 import applog
 
+# ── 検証環境ガード ────────────────────────────────────────────
+# require_member() が未実装（常に通す）のため、本番公開を禁止する。
+# APP_ENV=dev 以外では起動させない。外部公開も 127.0.0.1 固定で防ぐ。
+APP_ENV = os.environ.get("APP_ENV", "dev")
+if APP_ENV != "dev":
+    raise SystemExit(
+        "この雛形は検証専用です。認証（require_member）が未実装のため本番では起動できません。")
+
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("APP_DB_PATH", BASE_DIR / "demo.sqlite3"))
+if DB_PATH.name != "demo.sqlite3":
+    raise SystemExit("検証環境ではダミーデータ（demo.sqlite3）以外を開けません。")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "demo")
 
 app = Flask(__name__)
@@ -60,34 +71,49 @@ def bigrams(text: str) -> set[str]:
     return {t[i:i + 2] for i in range(len(t) - 1)} or {t}
 
 
-def similarity(query: str, target: str) -> float:
+def containment(query: str, target: str) -> float:
+    """質問のうち、どれだけが相手に含まれているかの割合。
+
+    Dice係数だと、短い質問と長い本文で値が薄まり、正解とノイズが分離しない
+    （実測で正解0.19・ノイズ0.02と差が出なかった）。被覆率にすると
+    正解0.43〜1.00／ノイズ0.00〜0.33に分かれたので、こちらを使う。
+    """
     a, b = bigrams(query), bigrams(target)
-    return 2 * len(a & b) / (len(a) + len(b)) if a and b else 0.0
+    return len(a & b) / len(a) if a else 0.0
 
 
-def search_items(conn, query: str, limit: int = 5) -> list[sqlite3.Row]:
+# 主回答として大きく出すしきい値と、関連質問として小さく出すしきい値。
+# どちらも下回る場合は回答を出さず、相談導線だけを出す。
+CONFIDENT = 0.40
+RELATED = 0.25
+
+
+def search_items(conn, query: str, limit: int = 6) -> list[dict]:
     """公開可のナレッジだけを対象に、文字の重なりで近いものを返す。
 
     LLMは使わない。返すのは人が確認した文章そのもので、要約も生成もしない。
+    スコアを添えて返し、主回答と関連質問の切り分けは呼び出し側で行う。
     """
     if not query.strip():
         return []
+    # 公開可であることに加えて、「承認済み」かつ「承認した版と今の本文が一致」を要求する。
+    # 本文を直すと answer_version が変わり、再承認するまで会員には出なくなる。
     rows = conn.execute(
-        "SELECT * FROM items WHERE publish_status = ? ", (PUBLISHED,)).fetchall()
+        "SELECT * FROM items WHERE publish_status = ? "
+        "AND approval_state = '承認済' AND approved_version = answer_version "
+        "AND approved_version <> ''", (PUBLISHED,)).fetchall()
     scored = []
     for row in rows:
-        haystack = f"{row['question']} {row['keywords']} {row['answer']} {row['category']}"
-        score = similarity(query, haystack)
-        # 検索語がそのまま含まれていれば加点（短い語でも拾えるように）
-        if normalize(query) and normalize(query) in normalize(haystack):
-            score += 0.3
-        for word in re.split(r"[\s　]+", query.strip()):
-            if len(word) >= 2 and normalize(word) in normalize(haystack):
-                score += 0.1
-        if score >= 0.12:
-            scored.append((score, row))
-    scored.sort(key=lambda x: -x[0])
-    return [r for _, r in scored[:limit]]
+        # 質問・キーワード・分類の一致を重く見る。本文だけの偶然の一致で上位に来ないように。
+        head = f"{row['question']} {row['keywords']} {row['category']}"
+        whole = f"{head} {row['answer']}"
+        score = 0.65 * containment(query, head) + 0.35 * containment(query, whole)
+        if score >= RELATED:
+            item = dict(row)
+            item["score"] = score
+            scored.append(item)
+    scored.sort(key=lambda x: -x["score"])
+    return scored[:limit]
 
 
 def current_member() -> str:
@@ -117,14 +143,19 @@ def member_home():
         return redirect(url_for("admin_login"))
     query = (request.args.get("q") or "").strip()
     conn = get_db()
-    results = []
+    primary, related = None, []
     if query:
-        results = search_items(conn, query)
-        applog.log_search(conn, current_member(), query, len(results),
-                          results[0]["id"] if results else None)
-        for row in results:
-            applog.log_view(conn, current_member(), row["id"], entry="search")
-    return render_template("member.html", query=query, results=results)
+        hits = search_items(conn, query)
+        # 十分に近いものが無ければ、無理に回答を出さない。相談導線だけを出す。
+        if hits and hits[0]["score"] >= CONFIDENT:
+            primary, related = hits[0], hits[1:4]
+        else:
+            related = hits[:3]      # 「もしかしてこの質問ですか？」として出す
+        applog.log_search(conn, current_member(), query,
+                          1 if primary else 0, primary["id"] if primary else None)
+        if primary:
+            applog.log_view(conn, current_member(), primary["id"], entry="search")
+    return render_template("member.html", query=query, primary=primary, related=related)
 
 
 @app.route("/feedback", methods=["POST"])
@@ -148,13 +179,36 @@ def video_click():
     conn = get_db()
     row = conn.execute(
         "SELECT video_id, video_url, start_sec FROM items "
-        "WHERE id = ? AND publish_status = ? AND video_visible = 1",
+        "WHERE id = ? AND publish_status = ? AND video_visible = 1 "
+        "AND approval_state = '承認済' AND approved_version = answer_version",
         (request.form.get("item_id", ""), PUBLISHED)).fetchone()
     if row is None:
         return redirect(url_for("member_home"))
     applog.log_video_click(conn, current_member(), request.form.get("item_id", ""),
                            row["video_id"], row["start_sec"])
     return redirect(row["video_url"])
+
+
+@app.route("/home")
+def member_top():
+    """会員トップ。新着件数と相談日程をデータから出す。"""
+    if not require_member():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    today = date.today().isoformat()
+    # 会員に公開した講座のうち、直近30日のものを新着として数える
+    new_count = conn.execute(
+        "SELECT COUNT(*) c FROM lessons WHERE member_visible = 1 AND published_at >= ?",
+        ((date.today() - timedelta(days=30)).isoformat(),)).fetchone()["c"]
+    def setting(key, default=""):
+        row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+        return row["value"] if row else default
+    next_date = setting("consult_next_date")
+    # 開催日を過ぎた日程は出さない
+    if next_date and next_date < today:
+        next_date = ""
+    return render_template("top.html", new_count=new_count,
+                           consult_date=next_date, consult_note=setting("consult_note"))
 
 
 @app.route("/consult")
@@ -251,6 +305,20 @@ def manage():
                            status=status, counts=counts)
 
 
+@app.route("/admin/settings", methods=["POST"])
+def admin_settings():
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    for key in ("consult_next_date", "consult_note"):
+        if key in request.form:
+            conn.execute("INSERT INTO settings(key, value) VALUES (?,?) "
+                         "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                         (key, request.form[key].strip()))
+    conn.commit()
+    return redirect(url_for("manage"))
+
+
 @app.route("/admin/knowledge/<item_id>", methods=["POST"])
 def manage_update(item_id):
     if not require_admin():
@@ -265,4 +333,5 @@ def manage_update(item_id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)), debug=True)
+    # 外部に出さない。検証は 127.0.0.1 からのみ。
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5001)), debug=True)

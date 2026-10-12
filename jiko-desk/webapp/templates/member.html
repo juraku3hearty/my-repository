@@ -17,76 +17,104 @@
 </div>
 
 {% if query %}
-  {% if results %}
-    <div class="notice">{{ results|length }}件見つかりました</div>
-    {% for r in results %}
-    <div class="card">
-      <h2>{{ r['question'] }}</h2>
 
-      {# 1. 結論を最初に見せる #}
-      <div class="answer">{{ r['answer'] }}</div>
+  {# ── 主回答：最も近い確認済みの回答を1件だけ大きく出す ── #}
+  {% if primary %}
+  <div class="card primary">
+    <h2>{{ primary['question'] }}</h2>
+    <div class="answer">{{ primary['answer'] }}</div>
 
-      {# 2. 確認状況。実際に確認を受けたものだけを表示する #}
-      <div class="verify">
-        {% if r['internal_status'] == '院内確認済' and r['internal_reviewed_at'] %}
-          <span class="badge ok">院長確認済み</span>
-          <span class="vdate">{{ r['internal_reviewer'] }}／確認日 {{ r['internal_reviewed_at'] }}</span>
-        {% else %}
-          <span class="badge warn">確認前</span>
-          <span class="vdate">院内の確認がまだ済んでいません</span>
-        {% endif %}
-        {% if r['expert_status'] == '確認済' %}<span class="badge ok">専門家確認済み</span>{% endif %}
-        {% if r['outdated'] %}<span class="badge warn">制度変更の可能性あり</span>{% endif %}
-      </div>
-
-      {# 3. 動画は、会員への公開が許可されたものだけ。URLは許可時しか出力しない #}
-      {% if r['video_visible'] and r['video_url'] %}
-      <form method="post" action="{{ url_for('video_click') }}">
-        <input type="hidden" name="item_id" value="{{ r['id'] }}">
-        <button class="video" type="submit">▶ 関連動画を見る（{{ r['start_hms'] }}〜）</button>
-      </form>
+    <div class="verify">
+      {# 承認状態と、承認した版・今の本文が一致している場合だけ「確認済み」と出す #}
+      {% if primary['approval_state'] == '承認済'
+            and primary['approved_version']
+            and primary['approved_version'] == primary['answer_version'] %}
+        <span class="badge ok">院長確認済み</span>
+        <span class="vdate">{{ primary['internal_reviewer'] }}／確認日 {{ primary['internal_reviewed_at'] }}</span>
+      {% elif primary['approval_state'] == '再承認待ち' %}
+        <span class="badge warn">再承認待ち</span>
+        <span class="vdate">回答が修正されたため、承認をやり直しています</span>
+      {% else %}
+        <span class="badge warn">確認前</span>
+        <span class="vdate">院内の確認がまだ済んでいません</span>
       {% endif %}
+      {% if primary['expert_status'] == '確認済' %}<span class="badge ok">専門家確認済み</span>{% endif %}
+      {% if primary['outdated'] %}<span class="badge warn">制度変更の可能性あり</span>{% endif %}
+    </div>
 
-      {# 4. 解決したかどうか #}
-      <div class="fb">
-        <form method="post" action="{{ url_for('feedback') }}">
-          <input type="hidden" name="item_id" value="{{ r['id'] }}">
-          <input type="hidden" name="q" value="{{ query }}">
-          <input type="hidden" name="verdict" value="helpful">
-          <button class="ghost small" type="submit">解決した</button>
-        </form>
-        <form method="post" action="{{ url_for('feedback') }}">
-          <input type="hidden" name="item_id" value="{{ r['id'] }}">
-          <input type="hidden" name="q" value="{{ query }}">
-          <input type="hidden" name="verdict" value="not_solved">
-          <button class="ghost small" type="submit">解決しなかった・相談したい</button>
-        </form>
+    {% if primary['video_visible'] %}
+    <form method="post" action="{{ url_for('video_click') }}">
+      <input type="hidden" name="item_id" value="{{ primary['id'] }}">
+      <button class="video" type="submit">▶ 関連動画を見る（{{ primary['start_hms'] }}〜）</button>
+    </form>
+    {% endif %}
+
+    <div class="fb">
+      <form method="post" action="{{ url_for('feedback') }}">
+        <input type="hidden" name="item_id" value="{{ primary['id'] }}">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="verdict" value="helpful">
+        <button class="ghost small" type="submit">解決した</button>
+      </form>
+      <form method="post" action="{{ url_for('feedback') }}">
+        <input type="hidden" name="item_id" value="{{ primary['id'] }}">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="verdict" value="not_solved">
+        <button class="ghost small" type="submit">解決しなかった・相談したい</button>
+      </form>
+    </div>
+
+    <details class="src">
+      <summary>この回答の出どころ</summary>
+      <div>
+        分類：{{ primary['category'] }}<br>
+        最終更新：{{ primary['updated_at'][:10] }}
+        {% if primary['supplement'] %}<br>補足（{{ primary['supplement_by'] }}）：{{ primary['supplement'] }}{% endif %}
       </div>
+    </details>
+  </div>
 
-      {# 5. 細かい出どころは最後にたたんでおく #}
-      <details class="src">
-        <summary>この回答の出どころ</summary>
-        <div>
-          分類：{{ r['category'] }}<br>
-          出典：{{ r['video_title'] }}　{{ r['start_hms'] }}<br>
-          最終更新：{{ r['updated_at'][:10] }}
-          {% if r['supplement'] %}<br>補足（{{ r['supplement_by'] }}）：{{ r['supplement'] }}{% endif %}
-        </div>
-      </details>
-    </div>
+  {# ── 関連質問：小さく並べるだけ。回答本文は出さない ── #}
+  {% if related %}
+  <div class="rel">
+    <h3 class="relh">関連する質問</h3>
+    {% for r in related %}
+      <a href="{{ url_for('member_home', q=r['question']) }}">{{ r['question'] }}<i>›</i></a>
     {% endfor %}
-
-    <div class="empty" style="margin-top:18px">
-      <div>探していた内容が見つかりませんか？</div>
-      <a href="{{ url_for('consult', q=query) }}"><button class="ghost" style="margin-top:10px">相談する</button></a>
-    </div>
-  {% else %}
-    <div class="empty">
-      <h2 style="margin:0 0 8px;font-size:17px">該当するナレッジが見つかりませんでした</h2>
-      <div style="font-size:13.5px;color:var(--muted)">確認済みの内容のみを検索しています。推測でお答えすることはありません。</div>
-      <a href="{{ url_for('consult', q=query) }}"><button style="margin-top:14px">相談する</button></a>
-    </div>
+  </div>
   {% endif %}
+
+  {% else %}
+  {# ── 十分に近い回答が無い：無理に答えず、相談へ案内する ── #}
+  <div class="empty">
+    <h2 style="margin:0 0 8px;font-size:17px">確認済みの回答が見つかりませんでした</h2>
+    <div style="font-size:13.5px;color:var(--muted);line-height:1.8">
+      推測でお答えすることはありません。<br>
+      個別事情で判断に迷う場合は、グループ相談をご利用ください。
+    </div>
+    <a href="{{ url_for('consult', q=query) }}"><button style="margin-top:14px">相談する</button></a>
+  </div>
+
+  {% if related %}
+  <div class="rel">
+    <h3 class="relh">もしかして、この質問ですか？</h3>
+    {% for r in related %}
+      <a href="{{ url_for('member_home', q=r['question']) }}">{{ r['question'] }}<i>›</i></a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if primary %}
+  <div class="empty" style="margin-top:18px">
+    <div style="font-size:14px">この回答で解決しませんでしたか？</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.8">
+      個別事情で判断に迷う場合は、グループ相談をご利用ください。
+    </div>
+    <a href="{{ url_for('consult', q=query) }}"><button class="ghost" style="margin-top:12px">相談する</button></a>
+  </div>
+  {% endif %}
+
 {% else %}
   <div class="empty">
     <h2 style="margin:0 0 8px;font-size:17px">実務で困ったことを入力してください</h2>

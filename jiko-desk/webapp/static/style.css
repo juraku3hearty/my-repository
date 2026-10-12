@@ -107,3 +107,19 @@ details.src[open] summary::before { content: "▾ "; }
 details.src > div { font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.9; }
 .answer { font-size: 15.5px; }
 .fb button { white-space: nowrap; }
+
+/* 主回答は1件だけ大きく。関連質問はリンクのみで小さく。 */
+.card.primary { border-color: #c9d6e1; }
+.card.primary h2 { font-size: 17.5px; }
+.card.primary .answer { font-size: 16px; padding: 14px; }
+.rel { margin-top: 18px; }
+.relh { font-size: 12px; color: var(--muted); letter-spacing: .08em; font-weight: 600;
+        margin: 0 2px 9px; padding: 0; border: 0; }
+.rel a { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+         background: #fff; border: 1px solid var(--line); border-radius: 11px;
+         padding: 13px 15px; margin-bottom: 8px; text-decoration: none;
+         color: var(--text); font-size: 14.5px; line-height: 1.6; }
+.rel a i { color: #c3ccd4; font-style: normal; font-size: 18px; }
+
+/* 紺地の中のボタンは白地にする（紺on紺で沈むため） */
+.askbox button[type=submit] { background: #fff; color: var(--navy); }
