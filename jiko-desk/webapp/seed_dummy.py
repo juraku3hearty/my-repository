@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import applog
+import membership
 
 DB = Path(__file__).resolve().parent / "demo.sqlite3"
 
@@ -107,6 +108,7 @@ def main() -> None:
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     applog.init(conn)
+    membership.init(conn)
 
     now = datetime.now()
     for i, row in enumerate(ITEMS, start=1):

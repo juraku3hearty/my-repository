@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 
 def init(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    conn.executescript(RATE_SCHEMA)
     conn.commit()
 
 
@@ -247,6 +248,39 @@ def send_login_link(conn, row, base_url: str) -> str:
     return url
 
 
+# ───────────── レート制限 ─────────────
+
+RATE_LIMITS = {
+    # 用途: (回数, 期間の分)
+    "login_request_ip": (10, 60),     # 同じIPからのログインメール要求
+    "login_request_email": (5, 60),   # 同じ宛先へのログインメール（迷惑メール化を防ぐ）
+    "login_consume_ip": (20, 10),     # トークンの総当たり
+    "join_ip": (5, 60),               # 申込の連打
+}
+
+RATE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS rate_log (
+    bucket TEXT NOT NULL, key TEXT NOT NULL, ts TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rate ON rate_log(bucket, key, ts);
+"""
+
+
+def rate_ok(conn, bucket: str, key: str) -> bool:
+    """超えていたら False を返す。記録は呼び出し時に行う。"""
+    limit, minutes = RATE_LIMITS[bucket]
+    since = (datetime.now() - timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
+    conn.execute("DELETE FROM rate_log WHERE ts < ?",
+                 ((datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),))
+    n = conn.execute("SELECT COUNT(*) n FROM rate_log WHERE bucket=? AND key=? AND ts>=?",
+                     (bucket, key, since)).fetchone()["n"]
+    conn.execute("INSERT INTO rate_log(bucket, key, ts) VALUES (?,?,?)", (bucket, key, now()))
+    if n >= limit:
+        alert(conn, "warn", "回数制限に達しました", f"{bucket} {key[:40]}")
+        return False
+    return True
+
+
 # ───────────── 決済通知の受け取り ─────────────
 
 def source_ip_ok(remote_addr: str, enforce: bool) -> bool:
@@ -392,6 +426,12 @@ def apply_rst(conn, member_id: str, kind: str, rst: str, ec: str = "") -> str:
         return "active"
 
     if rst in ("3", "5"):
+        # 通知の順序が逆転した場合の備え。すでに停止・解約した会員を、
+        # あとから届いた古い「リトライ中」通知で使える状態に戻さない。
+        # 復帰は成功通知（rst=1）が来たときだけ。
+        if row["status"] in ("suspended", "cancelled"):
+            alert(conn, "info", "停止後に届いた古い通知（無視）", f"{member_id} rst={rst}")
+            return "ignored_stale_retry"
         conn.execute("""UPDATE members SET status='grace',
                         grace_until=?, last_failure_at=?, updated_at=?
                         WHERE member_id=?""",

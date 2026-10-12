@@ -69,6 +69,12 @@ def harden(resp):
     resp.headers["Referrer-Policy"] = "no-referrer"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
+    # スクリプトとスタイルは自サイトのみ。外部への送信もしない。
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "form-action 'self' https://credit.j-payment.co.jp; "
+        "frame-ancestors 'none'; base-uri 'none'")
     return resp
 
 
@@ -255,6 +261,10 @@ def join():
     conn = get_db()
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
+        if not mb.rate_ok(conn, "join_ip", request.remote_addr or "?"):
+            conn.commit()
+            return render_template("join.html",
+                                   error="しばらく時間をおいてからお試しください")
         if "@" not in email:
             return render_template("join.html", error="メールアドレスをご確認ください")
         member_id = mb.create_pending(conn, email)
@@ -285,6 +295,12 @@ def login_page():
 def login_request():
     conn = get_db()
     email = (request.form.get("email") or "").strip()
+    ip = request.remote_addr or "?"
+    # 連打でメールを送りつけられないようにする。制限に達しても画面は同じにする。
+    if not (mb.rate_ok(conn, "login_request_ip", ip)
+            and mb.rate_ok(conn, "login_request_email", mb.norm_email(email))):
+        conn.commit()
+        return render_template("login_member.html", sent=True, error="")
     row = mb.find(conn, email=email)
     # 会員がいてもいなくても同じ画面を出す。どのメールが登録済みかを教えないため。
     if row is not None and row["status"] != "cancelled":
@@ -297,6 +313,9 @@ def login_request():
 def login_consume():
     """フラグメントから渡されたトークンを1回だけ使う。"""
     conn = get_db()
+    if not mb.rate_ok(conn, "login_consume_ip", request.remote_addr or "?"):
+        conn.commit()
+        return jsonify({"ok": False}), 429
     token = (request.form.get("t") or "").strip()
     member_id = mb.consume_login_token(conn, token)
     conn.commit()
