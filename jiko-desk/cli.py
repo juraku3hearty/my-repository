@@ -28,6 +28,7 @@ import gemini
 import knowledge
 import quality
 import render
+import search as fulltext
 import transcript as tr
 from vimeo_client import VimeoClient
 
@@ -366,6 +367,33 @@ def cmd_sync_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_search(args: argparse.Namespace) -> int:
+    """文字起こしをキーワードで横断検索する（費用ゼロ）。"""
+    conn = db.connect()
+    results = fulltext.search(conn, args.keyword, folder=args.folder, limit=args.limit)
+    if not results:
+        print(f"「{args.keyword}」は見つかりませんでした。")
+        return 0
+    print(f"「{args.keyword}」… {len(results)}本の動画で見つかりました\n")
+    for r in results:
+        mark = "済" if r["already_built"] else "未"
+        print(f"  [{mark}] {r['count']:>3}回  {r['published_at']}  {str(r['folder'])[:10]:<12} {r['title'][:34]}")
+        print(f"        {r['url']}")
+        print(f"        …{r['excerpt'][:110]}…")
+        print()
+    return 0
+
+
+def cmd_coverage(args: argparse.Namespace) -> int:
+    """テーマごとに、講座でどれだけ語られているかを数える。"""
+    conn = db.connect()
+    rows = fulltext.coverage(conn, args.keyword)
+    print(f"{'テーマ':<16} {'出現回数':>8} {'ナレッジ化済':>12} {'未ナレッジ化':>12}")
+    for r in sorted(rows, key=lambda x: -x["total"]):
+        print(f"  {r['keyword']:<16} {r['total']:>8} {r['built_videos']:>12} {r['unbuilt_videos']:>12}")
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     conn = db.connect()
     s = db.stats(conn)
@@ -453,6 +481,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--force", action="store_true", help="新着が無くても続行する")
     p.add_argument("--draft", action="store_true")
     p.set_defaults(func=cmd_sync_new)
+
+    p = sub.add_parser("search", help="文字起こしを全文検索（費用ゼロ）")
+    p.add_argument("keyword")
+    p.add_argument("--folder", help="フォルダ名で絞る")
+    p.add_argument("--limit", type=int, default=15)
+    p.set_defaults(func=cmd_search)
+
+    p = sub.add_parser("coverage", help="テーマごとの語られ方を数える")
+    p.add_argument("keyword", nargs="+")
+    p.set_defaults(func=cmd_coverage)
 
     sub.add_parser("status", help="進捗表示").set_defaults(func=cmd_status)
 
