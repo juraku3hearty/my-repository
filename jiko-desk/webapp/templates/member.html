@@ -1,9 +1,20 @@
 {% extends "base.html" %}
+{% block header_sub %} AI実務Q&A{% endblock %}
+{% block header_right %}<a class="back" href="#">‹ 会員トップ</a>{% endblock %}
 {% block content %}
-<form class="ask" method="get" action="/">
-  <textarea name="q" placeholder="例：保険会社から打ち切りを言われたらどうする？">{{ query }}</textarea>
-  <button type="submit">調べる</button>
-</form>
+<div class="askbox">
+  <h1>実務で困ったことを入力してください</h1>
+  <form class="ask" method="get" action="/">
+    <textarea name="q" placeholder="例：保険会社から打ち切りを言われたらどうする？">{{ query }}</textarea>
+    <button type="submit">調べる</button>
+  </form>
+  <div class="chips">
+    <a href="/?q=打ち切り">打ち切り</a>
+    <a href="/?q=医師の同意">医師の同意</a>
+    <a href="/?q=施術証明書">施術証明書</a>
+    <a href="/?q=健康保険の併用">健康保険の併用</a>
+  </div>
+</div>
 
 {% if query %}
   {% if results %}

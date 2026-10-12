@@ -8,14 +8,19 @@
 </head>
 <body>
 <header>
-  <div class="title">交通事故実務デスク{% block header_sub %}{% endblock %}</div>
-  <div class="sub">
-    会員専用
-    {% if session.get('is_admin') %}
-      <a href="{{ url_for('analytics') }}">分析</a>
-      <a href="{{ url_for('manage') }}">ナレッジ管理</a>
-      <a href="{{ url_for('admin_logout') }}">ログアウト</a>
-    {% endif %}
+  <div class="inner">
+    <div>
+      <div class="title">交通事故実務デスク{% block header_sub %}{% endblock %}</div>
+      <div class="sub">
+        会員専用
+        {% if session.get('is_admin') %}
+          <a href="{{ url_for('analytics') }}">分析</a>
+          <a href="{{ url_for('manage') }}">ナレッジ管理</a>
+          <a href="{{ url_for('admin_logout') }}">ログアウト</a>
+        {% endif %}
+      </div>
+    </div>
+    {% block header_right %}{% endblock %}
   </div>
 </header>
 <div class="wrap">{% block content %}{% endblock %}</div>
