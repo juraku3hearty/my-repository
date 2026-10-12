@@ -45,6 +45,12 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_SLEEP_SEC = float(os.environ.get("GEMINI_SLEEP_SEC", "4"))
 GEMINI_MAX_RETRY = int(os.environ.get("GEMINI_MAX_RETRY", "5"))
+# Gemini 2.5 系は思考トークンも maxOutputTokens に合算されるため、
+# 上限が小さいと思考だけで使い切って本文が途中で切れる。
+GEMINI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "16384"))
+# 思考の上限。0で思考オフ。実測では既定のままだと6,000近くまで膨らみ、
+# 費用も待ち時間も伸びるので既定で抑える。
+GEMINI_THINKING_BUDGET = int(os.environ.get("GEMINI_THINKING_BUDGET", "2048"))
 
 # ---- 保存先 ----
 DB_PATH = _path("DB_PATH", "data/jiko_desk.sqlite3")

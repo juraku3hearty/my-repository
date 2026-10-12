@@ -68,20 +68,23 @@ def generate_json(prompt: str,
                   schema: dict,
                   model: str | None = None,
                   temperature: float = 0.2,
-                  max_output_tokens: int = 8192) -> Any:
+                  max_output_tokens: int | None = None) -> Any:
     """プロンプトとスキーマを渡し、パース済みJSONを返す。"""
     # 環境変数にキーがあれば ?key= で送る。無ければネットワークシークレット
     # （プロキシが x-goog-api-key ヘッダーを付与する）に委ねる。
     api_key = config.GEMINI_API_KEY
     model = model or config.GEMINI_MODEL
+    generation_config = {
+        "temperature": temperature,
+        "maxOutputTokens": max_output_tokens or config.GEMINI_MAX_OUTPUT_TOKENS,
+        "responseMimeType": "application/json",
+        "responseSchema": schema,
+    }
+    if config.GEMINI_THINKING_BUDGET >= 0:
+        generation_config["thinkingConfig"] = {"thinkingBudget": config.GEMINI_THINKING_BUDGET}
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_output_tokens,
-            "responseMimeType": "application/json",
-            "responseSchema": schema,
-        },
+        "generationConfig": generation_config,
     }
 
     last_error = ""
@@ -176,7 +179,9 @@ def _parse_text(text: str, finish: str) -> Any:
     except json.JSONDecodeError as e:
         if finish == "MAX_TOKENS":
             raise GeminiError(
-                "出力がトークン上限で切れました。CHUNK_CHAR_LIMIT を小さくしてください。"
+                "出力がトークン上限で切れました。GEMINI_MAX_OUTPUT_TOKENS を上げるか、"
+                "GEMINI_THINKING_BUDGET を下げるか、CHUNK_CHAR_LIMIT を小さくしてください。"
+                "（Gemini 2.5系は思考トークンも出力上限に合算されます）"
             ) from e
         raise GeminiError(f"JSONとして解析できません: {e}\n先頭: {text[:300]}") from e
 
