@@ -54,6 +54,8 @@ header .me { font-size:11px; color:#cfe0ee; text-align:right; line-height:1.5; }
 .menu .ar { color:#c3ccd4; font-size:19px; }
 .menu .badge { font-size:11px; background:var(--warn); color:#fff; border-radius:999px;
                padding:2px 8px; margin-left:6px; vertical-align:1px; }
+.menu .badge.new { background:var(--accent); }
+.note { font-size:11.5px; color:var(--muted); margin:9px 2px 0; line-height:1.7; }
 
 /* お知らせ */
 .news { background:var(--card); border:1px solid var(--line); border-radius: var(--radius);
@@ -82,9 +84,9 @@ footer a { color:var(--muted); }
 
   <!-- 主役 -->
   <div class="hero">
-    <div class="tag">会員限定</div>
-    <h1>AI実務Q&amp;A</h1>
-    <p>講座で説明された内容から、確認済みの回答だけをお返しします。</p>
+    <div class="tag">AI実務Q&amp;A</div>
+    <h1>交通事故対応で迷ったら、<br>ここで質問</h1>
+    <p>院長の確認を終えた回答だけをお返しします。推測では答えません。</p>
     <button class="field"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><span>保険会社から打ち切りと言われたら…</span></button>
     <div class="ex">
       <b>打ち切り</b><b>医師の同意</b><b>施術証明書</b><b>健康保険の併用</b>
@@ -97,7 +99,7 @@ footer a { color:var(--muted); }
     <div class="menu">
       <a href="#">
         <div class="ic"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="2.5"/><path d="M16.5 10l5-3v10l-5-3z"/></svg></div>
-        <div class="tx"><b>実務講座</b><small>全42回。交通事故対応の基礎から実務まで</small></div>
+        <div class="tx"><b>新着講座・解説動画<span class="badge new">2件</span></b><small>公開中の講座と解説動画をご覧いただけます</small></div>
         <div class="ar">›</div>
       </a>
       <a href="#">
@@ -107,17 +109,18 @@ footer a { color:var(--muted); }
       </a>
       <a href="#">
         <div class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 16.5h4"/></svg></div>
-        <div class="tx"><b>書式ダウンロード</b><small>施術証明書・同意書のひな形</small></div>
+        <div class="tx"><b>書式ダウンロード</b><small>施術証明書・同意書のひな形（白紙の書式のみ）</small></div>
         <div class="ar">›</div>
       </a>
     </div>
+    <p class="note">書式ダウンロードは白紙のひな形のみです。Q&amp;Aの回答本文をまとめて取得する機能はありません。</p>
   </div>
 
   <!-- お知らせ -->
   <div class="sec">
     <h2>お知らせ</h2>
     <div class="news">
-      <a href="#"><time>2026.10.10</time><span>第42回 講座を公開しました<b class="new">NEW</b></span></a>
+      <a href="#"><time>2026.10.10</time><span>新しい解説動画を公開しました<b class="new">NEW</b></span></a>
       <a href="#"><time>2026.10.02</time><span>AI実務Q&amp;A を公開しました</span></a>
       <a href="#"><time>2026.09.20</time><span>10月のグループ相談の日程について</span></a>
     </div>

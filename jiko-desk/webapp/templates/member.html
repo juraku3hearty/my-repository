@@ -3,7 +3,7 @@
 {% block header_right %}<a class="back" href="#">‹ 会員トップ</a>{% endblock %}
 {% block content %}
 <div class="askbox">
-  <h1>実務で困ったことを入力してください</h1>
+  <h1>交通事故対応で迷ったら、ここで質問</h1>
   <form class="ask" method="get" action="/">
     <textarea name="q" placeholder="例：保険会社から打ち切りを言われたらどうする？">{{ query }}</textarea>
     <button type="submit">調べる</button>
@@ -22,38 +22,57 @@
     {% for r in results %}
     <div class="card">
       <h2>{{ r['question'] }}</h2>
+
+      {# 1. 結論を最初に見せる #}
       <div class="answer">{{ r['answer'] }}</div>
 
-      <div class="meta">
-        <span class="badge ok">確認済</span>
-        {% if r['expert_status'] == '確認済' %}<span class="badge ok">専門家確認済</span>{% endif %}
+      {# 2. 確認状況。実際に確認を受けたものだけを表示する #}
+      <div class="verify">
+        {% if r['internal_status'] == '院内確認済' and r['internal_reviewed_at'] %}
+          <span class="badge ok">院長確認済み</span>
+          <span class="vdate">{{ r['internal_reviewer'] }}／確認日 {{ r['internal_reviewed_at'] }}</span>
+        {% else %}
+          <span class="badge warn">確認前</span>
+          <span class="vdate">院内の確認がまだ済んでいません</span>
+        {% endif %}
+        {% if r['expert_status'] == '確認済' %}<span class="badge ok">専門家確認済み</span>{% endif %}
         {% if r['outdated'] %}<span class="badge warn">制度変更の可能性あり</span>{% endif %}
-        <span class="badge">{{ r['category'] }}</span><br>
-        最終確認日 {{ r['updated_at'][:10] }}　出典：{{ r['video_title'] }} {{ r['start_hms'] }}
       </div>
 
+      {# 3. 動画は、会員への公開が許可されたものだけ。URLは許可時しか出力しない #}
+      {% if r['video_visible'] and r['video_url'] %}
       <form method="post" action="{{ url_for('video_click') }}">
         <input type="hidden" name="item_id" value="{{ r['id'] }}">
-        <input type="hidden" name="video_id" value="{{ r['video_id'] }}">
-        <input type="hidden" name="start_sec" value="{{ r['start_sec'] }}">
-        <input type="hidden" name="url" value="{{ r['video_url'] }}">
-        <button class="video" type="submit">▶ この説明を動画で見る（{{ r['start_hms'] }}〜）</button>
+        <button class="video" type="submit">▶ 関連動画を見る（{{ r['start_hms'] }}〜）</button>
       </form>
+      {% endif %}
 
+      {# 4. 解決したかどうか #}
       <div class="fb">
         <form method="post" action="{{ url_for('feedback') }}">
           <input type="hidden" name="item_id" value="{{ r['id'] }}">
           <input type="hidden" name="q" value="{{ query }}">
           <input type="hidden" name="verdict" value="helpful">
-          <button class="ghost small" type="submit">役に立った</button>
+          <button class="ghost small" type="submit">解決した</button>
         </form>
         <form method="post" action="{{ url_for('feedback') }}">
           <input type="hidden" name="item_id" value="{{ r['id'] }}">
           <input type="hidden" name="q" value="{{ query }}">
           <input type="hidden" name="verdict" value="not_solved">
-          <button class="ghost small" type="submit">解決しなかった</button>
+          <button class="ghost small" type="submit">解決しなかった・相談したい</button>
         </form>
       </div>
+
+      {# 5. 細かい出どころは最後にたたんでおく #}
+      <details class="src">
+        <summary>この回答の出どころ</summary>
+        <div>
+          分類：{{ r['category'] }}<br>
+          出典：{{ r['video_title'] }}　{{ r['start_hms'] }}<br>
+          最終更新：{{ r['updated_at'][:10] }}
+          {% if r['supplement'] %}<br>補足（{{ r['supplement_by'] }}）：{{ r['supplement'] }}{% endif %}
+        </div>
+      </details>
     </div>
     {% endfor %}
 
@@ -63,19 +82,15 @@
     </div>
   {% else %}
     <div class="empty">
-      <strong>該当するナレッジが見つかりませんでした</strong>
-      <p style="font-size:13px;color:#6b7681">
-        確認済みの内容のみを検索しています。推測でお答えすることはありません。
-      </p>
-      <a href="{{ url_for('consult', q=query) }}"><button>相談する</button></a>
+      <h2 style="margin:0 0 8px;font-size:17px">該当するナレッジが見つかりませんでした</h2>
+      <div style="font-size:13.5px;color:var(--muted)">確認済みの内容のみを検索しています。推測でお答えすることはありません。</div>
+      <a href="{{ url_for('consult', q=query) }}"><button style="margin-top:14px">相談する</button></a>
     </div>
   {% endif %}
 {% else %}
   <div class="empty">
-    <strong>実務で困ったことを入力してください</strong>
-    <p style="font-size:13px;color:#6b7681">
-      講座で説明され、院内および専門家の確認を終えた内容だけをお返しします。
-    </p>
+    <h2 style="margin:0 0 8px;font-size:17px">実務で困ったことを入力してください</h2>
+    <div style="font-size:13.5px;color:var(--muted)">講座で説明され、院内および専門家の確認を終えた内容だけをお返しします。</div>
   </div>
 {% endif %}
 

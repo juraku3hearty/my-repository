@@ -94,10 +94,27 @@ def current_member() -> str:
     return session.get("member_id", "guest")
 
 
+def require_member():
+    """会員向け画面の関所。ここ1か所を通れば、全経路で同じ判定になる。
+
+    雛形の段階では常に通す（認証は連携方式の確定後に実装する）。
+    本実装では次を満たす：
+      - 未ログイン        → ログイン画面へ
+      - 退会・停止        → 支払い/退会の案内へ（検索結果は一切返さない）
+      - URL直接アクセス   → 同じ判定を通るので素通りできない
+      - API直接呼び出し   → /api/* も同じ関数を通し、JSONで401を返す
+    判定の根拠は members.status と members.paid_through のみで、
+    Cyfons側のログイン状態は根拠にしない（Cyfonsが止められない場合があるため）。
+    """
+    return True   # TODO: 連携方式の確定後に実装する
+
+
 # ---------------- 会員向け ----------------
 
 @app.route("/", methods=["GET"])
 def member_home():
+    if not require_member():
+        return redirect(url_for("admin_login"))
     query = (request.args.get("q") or "").strip()
     conn = get_db()
     results = []
@@ -122,15 +139,29 @@ def feedback():
 
 @app.route("/video-click", methods=["POST"])
 def video_click():
+    """動画URLはクライアントから受け取らない。
+
+    item_id だけを受け取り、サーバー側でDBを引いて
+    「公開可」かつ「動画の公開を許可済み」のときだけ飛ばす。
+    これにより、許可されていない過去動画のURLが会員の画面やHTMLソースに出ない。
+    """
     conn = get_db()
+    row = conn.execute(
+        "SELECT video_id, video_url, start_sec FROM items "
+        "WHERE id = ? AND publish_status = ? AND video_visible = 1",
+        (request.form.get("item_id", ""), PUBLISHED)).fetchone()
+    if row is None:
+        return redirect(url_for("member_home"))
     applog.log_video_click(conn, current_member(), request.form.get("item_id", ""),
-                           request.form.get("video_id", ""), request.form.get("start_sec", 0))
-    return redirect(request.form.get("url", "/"))
+                           row["video_id"], row["start_sec"])
+    return redirect(row["video_url"])
 
 
 @app.route("/consult")
 def consult():
     """解決しなかった場合の相談案内。AIに答えさせず、人につなぐ。"""
+    if not require_member():
+        return redirect(url_for("admin_login"))
     return render_template("consult.html", query=(request.args.get("q") or ""))
 
 
