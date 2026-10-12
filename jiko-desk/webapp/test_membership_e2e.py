@@ -33,7 +33,7 @@ h = q("保険会社から打ち切りと言われた")
 ok("検索結果が本文に出ない", "card primary" not in h)
 
 print("\n=== 2. 申込（pending が作られるか）===")
-sh("-c",CK,"-b",CK,"-d","email=test-member@example.com", B+"/join")
+sh("-c",CK,"-b",CK,"-d","email=test-member@example.com","-d","agree=1", B+"/join")
 c = db(); m = c.execute("SELECT * FROM members ORDER BY created_at DESC LIMIT 1").fetchone()
 MID = m["member_id"]
 ok("members に pending が1行できた", m["status"]=="pending", f"{MID} {m['email']}")

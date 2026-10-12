@@ -15,7 +15,7 @@ c.execute("DELETE FROM rate_log"); c.commit()  # rate_log_clear
 E="sec@example.com"
 c.execute("DELETE FROM members WHERE email=?",(E,)); c.execute("DELETE FROM rate_log")
 c.execute("DELETE FROM payment_events WHERE gid LIKE '94%'"); c.commit()
-sh("-d","email="+E, B+"/join")
+sh("-d","email="+E,"-d","agree=1", B+"/join")
 mid=c.execute("SELECT member_id FROM members WHERE email=?",(E,)).fetchone()["member_id"]
 sh("-c","/tmp/ak.txt","-d","password=demo", B+"/admin/login")
 
@@ -53,7 +53,7 @@ print("\n=== XSS（入力がそのまま出ないか）===")
 payload = "<script>alert(1)</script>"
 h = sh(B+"/?q="+urllib.parse.quote(payload))
 ok("検索語がエスケープされる", "<script>alert(1)</script>" not in h)
-sh("-d","email="+urllib.parse.quote(payload)+"@x.com", B+"/join")
+sh("-d","email="+urllib.parse.quote(payload)+"@x.com","-d","agree=1", B+"/join")
 h = sh("-b","/tmp/ak.txt", B+"/admin/members")
 ok("管理画面でもエスケープされる", "<script>alert(1)</script>" not in h)
 

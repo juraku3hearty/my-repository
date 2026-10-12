@@ -5,10 +5,41 @@
 <div class="empty">
   <h2 style="margin:0 0 8px;font-size:17px">メールをお送りしました</h2>
   <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
+    <b>{{ masked }}</b> 宛にお送りしました。<br>
     届いたメールのリンクを開いてください。<br>
     リンクは15分間だけ有効で、1回しか使えません。
   </div>
 </div>
+
+<div class="terms-box">
+  <h3>メールが届かないとき</h3>
+  <dl>
+    <dt>1. 迷惑メールフォルダをご確認ください</dt>
+    <dd>自動送信のため、迷惑メールに振り分けられることがあります。</dd>
+    <dt>2. 差出人を許可してください</dt>
+    <dd>{{ mail_from }} からのメールを受信できる設定にしてください。<br>
+        携帯キャリアのメールは、受信拒否設定の影響を受けやすいです。</dd>
+    <dt>3. メールアドレスをご確認ください</dt>
+    <dd>お申し込み時と違うアドレスを入力されていないかご確認ください。<br>
+        <b>登録のないアドレスでも、この画面は同じように表示されます</b>（安全のため）。</dd>
+    <dt>4. 数分お待ちください</dt>
+    <dd>送信から到着まで数分かかることがあります。</dd>
+  </dl>
+
+  {# 宛先はセッションから取る。生のメールアドレスをHTMLに出さない #}
+  <form method="post" action="{{ url_for('login_request') }}" style="margin-top:14px">
+    <button class="ghost small" type="submit">もう一度送る</button>
+  </form>
+  <div style="font-size:11.5px;color:var(--muted);margin-top:8px">
+    再送は1時間に5回までです。前に届いたリンクは無効になります。
+  </div>
+
+  <div class="links" style="margin-top:12px">
+    それでも届かない場合は <a href="{{ url_for('consult') }}">お問い合わせ</a> ください。<br>
+    <a href="{{ url_for('login_page') }}">別のメールアドレスで試す</a>
+  </div>
+</div>
+
 {% else %}
 <div class="askbox">
   <h1>ログイン</h1>
@@ -19,22 +50,23 @@
     <button type="submit">ログインリンクを送る</button>
   </form>
 </div>
+<div class="notice">
+  まだお申し込みでない方は <a href="{{ url_for('join') }}">こちら</a> からどうぞ。
+</div>
 {% endif %}
 
-<div id="working" class="empty" style="display:none">
-  <div>ログインしています…</div>
-</div>
+<div id="working" class="empty" style="display:none"><div>ログインしています…</div></div>
 <div id="failed" class="empty" style="display:none">
   <h2 style="margin:0 0 8px;font-size:17px">このリンクは使えません</h2>
   <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
-    期限が切れているか、すでに使用済みです。<br>もう一度お送りください。
+    期限が切れているか、すでに使用済みです。<br>お手数ですが、もう一度お送りください。
   </div>
+  <a href="{{ url_for('login_page') }}"><button style="margin-top:14px">ログイン画面へ</button></a>
 </div>
 
 <script>
-// ログイン用のトークンは URL のフラグメント（#）で渡される。
+// トークンは URL のフラグメント（#）で渡される。
 // フラグメントはサーバーに送られないため、アクセスログにも Referer にも残らない。
-// ここで読み取って POST で送り、すぐにURLから消す。
 (function () {
   var m = (location.hash || "").match(/[#&]t=([^&]+)/);
   if (!m) return;

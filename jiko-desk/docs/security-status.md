@@ -67,7 +67,7 @@ Referrer-Policy / X-Frame-Options / X-Content-Type-Options / CSP すべて付与
 | 経路 | 実装済み | 未対応 |
 |---|---|---|
 | `/` `/home` `/consult` 会員画面 | **既定で拒否。** `require_member()` を通り、未ログインはログイン画面、停止・解約・期限切れは支払い案内。検索結果を返さない | — |
-| `/feedback` `/video-click` | `item_id` のみ受け取り、サーバー側で公開可・承認済・版一致・`video_visible` を確認 | **`require_member()` を通していない**（ログ記録のみのため実害は小さいが、通すべき） |
+| `/feedback` `/video-click` | **`require_member()` を通す**（2026-10-12 対応）。加えて `item_id` のみ受け取り、サーバー側で公開可・承認済・版一致・`video_visible` を確認 | — |
 | `/api/*`（将来） | `require_member_api()` を用意。JSONで401/403、本文に中身を含めない | **まだAPIを作っていない** |
 | `/webhook/subscpay*` | パスの秘密を `compare_digest` で比較。違えば404。送信元IP確認 | 上記1のとおり |
 | `/admin/*` | `require_admin()`。未ログインはログイン画面へ | **CSRFトークンが無い**／**IP制限が無い**／**パスワードが環境変数の既定値「demo」** |
@@ -77,7 +77,7 @@ Referrer-Policy / X-Frame-Options / X-Content-Type-Options / CSP すべて付与
 
 ## 5. 本番公開前に必須（優先順）
 
-1. **`require_member()` を `/feedback` `/video-click` にも通す**
+1. ~~`require_member()` を `/feedback` `/video-click` にも通す~~ ✅ 対応済み
 2. **管理画面：CSRFトークン／IP制限／強いパスワード**
 3. **HTTPS必須化とセッションCookieの `Secure`**
 4. **`ENFORCE_SOURCE_IP=1` に／nginxでも送信元IPを絞る**
@@ -89,3 +89,26 @@ Referrer-Policy / X-Frame-Options / X-Content-Type-Options / CSP すべて付与
 10. 書式ダウンロードの認証付き配信
 
 **1〜6が済むまで本番公開しない。**
+
+
+---
+
+## 6. 退会者の直接アクセス検証（2026-10-12）
+
+**ログイン済みのCookieを保持したまま**、会員を `cancelled` にして各経路を直接たたいた結果。
+
+| 経路 | 結果 |
+|---|---|
+| `GET /` 会員トップ | 302 → `/billing`。本文なし |
+| `GET /?q=打ち切り` 検索 | 302 → `/billing`。**回答本文が1文字も返らない** |
+| `GET /home` | 302 → `/billing` |
+| `GET /consult` | 302 → `/billing` |
+| `POST /video-click` | 302 → `/billing`。**動画URLが本文に出ない** |
+| `POST /feedback` | 302 → `/billing` |
+| `GET /admin/*` | 302 → `/admin/login`（会員の資格では入れない） |
+| `GET /item/<id>` 回答詳細 | **404（そもそも存在しない）** |
+
+`pending`（決済未完了）でも同じ結果になることを確認済み。
+
+> **回答本文に到達できるURLは `GET /?q=` だけで、そこは `require_member()` を通る。**
+> 回答を1件ずつ開く詳細URLは作っていないため、URLを推測して直接開くこともできない。

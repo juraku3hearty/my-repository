@@ -211,6 +211,9 @@ def member_home():
 
 @app.route("/feedback", methods=["POST"])
 def feedback():
+    ok, resp = require_member()
+    if not ok:
+        return resp
     conn = get_db()
     applog.log_feedback(conn, current_member(), request.form.get("item_id", ""),
                         request.form.get("verdict", ""), request.form.get("reason", ""))
@@ -227,6 +230,9 @@ def video_click():
     「公開可」かつ「動画の公開を許可済み」のときだけ飛ばす。
     これにより、許可されていない過去動画のURLが会員の画面やHTMLソースに出ない。
     """
+    ok, resp = require_member()
+    if not ok:
+        return resp
     conn = get_db()
     row = conn.execute(
         "SELECT video_id, video_url, start_sec FROM items "
@@ -263,10 +269,14 @@ def join():
         email = (request.form.get("email") or "").strip()
         if not mb.rate_ok(conn, "join_ip", request.remote_addr or "?"):
             conn.commit()
-            return render_template("join.html",
+            return render_template("join.html", email=email,
                                    error="しばらく時間をおいてからお試しください")
         if "@" not in email:
-            return render_template("join.html", error="メールアドレスをご確認ください")
+            return render_template("join.html", email=email,
+                                   error="メールアドレスをご確認ください")
+        if request.form.get("agree") != "1":
+            return render_template("join.html", email=email,
+                                   error="利用規約などへの同意が必要です")
         member_id = mb.create_pending(conn, email)
         conn.commit()
         # 本番ではここで ROBOT PAYMENT の決済フォームへPOSTする。
@@ -276,8 +286,39 @@ def join():
                                        ("jb", "CAPTURE"), ("am", "9800"), ("tx", "0"),
                                        ("sf", "0"), ("actp", "4"), ("acam", "9800"),
                                        ("actx", "0"), ("acsf", "0"), ("em", email),
-                                       ("inm", "交通事故実務デスク 月額会員")])
-    return render_template("join.html", error="")
+                                       ("inm", "交通事故実務デスク 月額会員")],
+                               # 内部パラメータの一覧は開発環境でのみ表示する
+                               show_debug=(APP_ENV == "dev"
+                                           and request.args.get("debug") == "1"))
+    return render_template("join.html", error="", email="")
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
+@app.route("/privacy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
+
+
+@app.route("/tokusho")
+def tokusho():
+    return render_template("tokusho.html")
+
+
+MAIL_FROM = os.environ.get("MAIL_FROM", "famitect@gaea.ocn.ne.jp")
+
+
+def mask_email(email: str) -> str:
+    """ta***@example.com の形にする。入力の確認用で、全文は見せない。"""
+    email = (email or "").strip()
+    if "@" not in email:
+        return email
+    name, dom = email.split("@", 1)
+    head = name[:2] if len(name) > 2 else name[:1]
+    return f"{head}{'*' * max(1, len(name) - len(head))}@{dom}"
 
 
 @app.route("/login")
@@ -288,25 +329,31 @@ def login_page():
     アクセスログにもRefererにも残らない。このページのJavaScriptが読み取って
     POSTで送る。
     """
-    return render_template("login_member.html", sent=False, error="")
+    return render_template("login_member.html", sent=False, error="",
+                           masked="", mail_from=MAIL_FROM)
 
 
 @app.route("/login/request", methods=["POST"])
 def login_request():
     conn = get_db()
-    email = (request.form.get("email") or "").strip()
+    # 再送のときはフォームに入れず、セッションから取る。
+    # 生のメールアドレスをHTMLに出さないため。
+    email = (request.form.get("email") or session.get("login_email") or "").strip()
+    session["login_email"] = email
     ip = request.remote_addr or "?"
     # 連打でメールを送りつけられないようにする。制限に達しても画面は同じにする。
     if not (mb.rate_ok(conn, "login_request_ip", ip)
             and mb.rate_ok(conn, "login_request_email", mb.norm_email(email))):
         conn.commit()
-        return render_template("login_member.html", sent=True, error="")
+        return render_template("login_member.html", sent=True, error="",
+                               masked=mask_email(email), mail_from=MAIL_FROM)
     row = mb.find(conn, email=email)
     # 会員がいてもいなくても同じ画面を出す。どのメールが登録済みかを教えないため。
     if row is not None and row["status"] != "cancelled":
         mb.send_login_link(conn, row, request.url_root)
     conn.commit()
-    return render_template("login_member.html", sent=True, error="")
+    return render_template("login_member.html", sent=True, error="",
+                           masked=mask_email(email), mail_from=MAIL_FROM)
 
 
 @app.route("/login/consume", methods=["POST"])
