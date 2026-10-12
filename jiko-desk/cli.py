@@ -276,6 +276,7 @@ INTERNAL_ALIASES = {
     "OK": config.InternalStatus.APPROVED,
     "○": config.InternalStatus.APPROVED,
     "要修正": config.InternalStatus.REJECTED,
+    "重複": config.InternalStatus.REJECTED,
     "NG": config.InternalStatus.REJECTED,
     "×": config.InternalStatus.REJECTED,
 }

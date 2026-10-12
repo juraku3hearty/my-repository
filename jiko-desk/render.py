@@ -349,3 +349,52 @@ def export_quality_list(conn: sqlite3.Connection, out_dir: Path | None = None) -
                 item["evidence"], item["quality_notes"], item["timed_url"], item["review_status"],
             ])
     return path, len(flagged)
+
+
+REVIEW_SHEET_HEADERS = [
+    "ナレッジID", "判定", "コメント", "要注意", "カテゴリー", "質問", "回答",
+    "講師の発言（根拠）", "動画リンク", "動画", "時刻",
+]
+
+
+def export_review_sheet_csv(conn: sqlite3.Connection, out_dir: Path | None = None) -> tuple[Path, int]:
+    """院長がそのまま記入できる形のCSV（Googleスプレッドシートに変換して渡す用）。
+
+    内部用の列を落とし、判定欄を左に寄せる。先頭に凡例と記入例を置く。
+    記入例の行はナレッジIDが空なので import-review では無視される。
+    """
+    out_dir = out_dir or config.OUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    rows = db.list_items(conn)
+    pending = [r for r in rows
+               if (r["internal_status"] or config.InternalStatus.UNCHECKED) == config.InternalStatus.UNCHECKED]
+    pending.sort(key=lambda r: (r["video_id"], r["start_sec"] or 0))
+    pending = _group_by_topic(pending)
+
+    path = out_dir / "院内確認シート.csv"
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["■ 確認のしかた", "", "", "", "", "", "", "", "", "", ""])
+        w.writerow(["講師が話した内容をAIが要約しています。内容の正誤ではなく、"
+                    "「講師の発言どおりに要約できているか」「実務で使えるか」を見てください。",
+                    "", "", "", "", "", "", "", "", "", ""])
+        w.writerow(["「判定」欄に  済 / 要修正 / 重複  のどれかを入れてください。"
+                    "直したい点や、どれと重複かはコメント欄へ。",
+                    "", "", "", "", "", "", "", "", "", ""])
+        w.writerow(["「要注意」に ★ が付いた行は、AIの要約がずれている可能性があります。先に見てください。",
+                    "", "", "", "", "", "", "", "", "", ""])
+        w.writerow([""] * 11)
+        w.writerow(REVIEW_SHEET_HEADERS)
+        w.writerow(["（記入例）", "要修正", "打ち切りの説明が実際と違う", "", "打切り・治療終了",
+                    "例：保険会社から打ち切りを打診されたら？", "例：その場で同意しないよう案内します。",
+                    "例：講師の発言がここに入ります", "", "", ""])
+        for row in pending:
+            w.writerow([
+                row["id"], "", "",
+                "★" if row["quality_status"] == quality.STATUS_CHECK else "",
+                row["category"], row["question"], row["answer_short"],
+                row["evidence"] or "",
+                _timed_url(row["video_url"], row["start_sec"] or 0),
+                row["video_title"], tr.hms(row["start_sec"] or 0),
+            ])
+    return path, len(pending)
