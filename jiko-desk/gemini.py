@@ -55,7 +55,13 @@ USAGE = Usage()
 
 
 def _endpoint(model: str) -> str:
-    return f"{config.GEMINI_API_BASE}/{model}:generateContent"
+    """ストリーミング受信を使う。
+
+    一括受信（generateContent）だと、思考＋長いJSONの生成に30秒以上かかった時点で
+    経路のプロキシがタイムアウトし 502 になる。SSEなら数秒で最初のバイトが流れるため
+    タイムアウトしない。
+    """
+    return f"{config.GEMINI_API_BASE}/{model}:streamGenerateContent"
 
 
 def generate_json(prompt: str,
@@ -81,12 +87,12 @@ def generate_json(prompt: str,
     last_error = ""
     for attempt in range(config.GEMINI_MAX_RETRY):
         started = time.time()
+        params = {"alt": "sse"}
+        if api_key:
+            params["key"] = api_key
         try:
             res = requests.post(
-                _endpoint(model),
-                params={"key": api_key} if api_key else None,
-                json=payload,
-                timeout=180,
+                _endpoint(model), params=params, json=payload, stream=True, timeout=300
             )
         except requests.RequestException as e:
             last_error = f"通信エラー: {e}"
@@ -94,9 +100,14 @@ def generate_json(prompt: str,
             continue
 
         if res.status_code == 200:
-            body = res.json()
-            USAGE.add(body.get("usageMetadata") or {}, time.time() - started)
-            return _extract_json(body)
+            try:
+                text, meta, finish = _read_sse(res)
+            except requests.RequestException as e:
+                last_error = f"受信中に切断: {e}"
+                time.sleep(2 ** attempt)
+                continue
+            USAGE.add(meta, time.time() - started)
+            return _parse_text(text, finish)
 
         if res.status_code == 429:
             wait = max(config.GEMINI_SLEEP_SEC, 2 ** attempt * 5)
@@ -125,17 +136,39 @@ def generate_json(prompt: str,
     raise GeminiError(f"Gemini 呼び出しが {config.GEMINI_MAX_RETRY} 回失敗しました（{last_error}）")
 
 
-def _extract_json(body: dict) -> Any:
-    candidates = body.get("candidates") or []
-    if not candidates:
-        feedback = body.get("promptFeedback") or {}
-        raise GeminiError(f"応答が空です（promptFeedback={json.dumps(feedback, ensure_ascii=False)}）")
+def _read_sse(res) -> tuple[str, dict, str]:
+    """SSEを読み切り、本文テキスト・使用量・終了理由を返す。
 
-    candidate = candidates[0]
-    finish = candidate.get("finishReason", "")
-    parts = (candidate.get("content") or {}).get("parts") or []
-    text = "".join(p.get("text", "") for p in parts).strip()
+    requests の iter_lines は日本語がチャンク境界で壊れることがあるため、
+    バイトで受けて自前で行に分ける。
+    """
+    text_parts: list[str] = []
+    usage: dict = {}
+    finish = ""
+    buffer = b""
+    for raw in res.iter_content(chunk_size=None):
+        buffer += raw
+        while b"\n" in buffer:
+            line, buffer = buffer.split(b"\n", 1)
+            line = line.strip()
+            if not line.startswith(b"data: "):
+                continue
+            try:
+                body = json.loads(line[6:].decode("utf-8"))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                continue
+            for candidate in body.get("candidates", []):
+                finish = candidate.get("finishReason") or finish
+                for part in (candidate.get("content") or {}).get("parts", []):
+                    if part.get("text"):
+                        text_parts.append(part["text"])
+            if body.get("usageMetadata"):
+                usage = body["usageMetadata"]
+    return "".join(text_parts), usage, finish
 
+
+def _parse_text(text: str, finish: str) -> Any:
+    text = (text or "").strip()
     if not text:
         raise GeminiError(f"応答テキストが空です（finishReason={finish}）")
     try:

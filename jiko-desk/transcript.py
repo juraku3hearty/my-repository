@@ -24,6 +24,8 @@ TAG_RE = re.compile(r"</?[^>]+>")
 JP_CHAR = r"[\u3040-\u30FF\u4E00-\u9FFF々ー]"
 JP_SPACE_RE = re.compile(rf"(?<={JP_CHAR})[ \u3000]+(?={JP_CHAR})")
 DIGIT_SPACE_RE = re.compile(r"(?<=\d)[ \u3000]+(?=\d)")
+# 「2 階建て」「120 万」のように数字と日本語のあいだに入る空白
+NUM_JP_SPACE_RE = re.compile(rf"(?<=\d)[ \u3000]+(?={JP_CHAR})|(?<={JP_CHAR})[ \u3000]+(?=\d)")
 
 
 @dataclass
@@ -194,6 +196,7 @@ def normalize_caption(text: str) -> str:
         return text
     text = JP_SPACE_RE.sub("", text)
     text = DIGIT_SPACE_RE.sub("", text)
+    text = NUM_JP_SPACE_RE.sub("", text)
     for wrong, right in config.CAPTION_CORRECTIONS.items():
         text = text.replace(wrong, right)
     return re.sub(r"[ \u3000]{2,}", " ", text).strip()
