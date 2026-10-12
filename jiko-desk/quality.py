@@ -28,36 +28,58 @@ STATUS_OK = "OK"
 STATUS_CHECK = "要目視"
 
 NORMALIZE_RE = re.compile(r"[\s、。，．・「」『』（）()〈〉【】！？!?,.:：;；\-ー―‐]")
+# 保存した文字起こしの行頭に入る時刻マーカー。照合前に外さないと、
+# キューをまたぐ引用がマーカーで分断されて一致しなくなる。
+TIMESTAMP_RE = re.compile(r"\[\d{1,3}:\d{2}:\d{2}\]")
 NUMBER_RE = re.compile(r"\d+(?:[,．.]\d+)?")
-MATCH_THRESHOLD = 0.8   # 逐語引用がこの割合以上一致すれば根拠ありとみなす
+MATCH_THRESHOLD = 0.8   # 引用のこの割合以上が文字起こしに実在すれば根拠ありとみなす
+MIN_BLOCK = 10          # 偶然の一致を除くための最小区間長（文字）
 
 
 def normalize(text: str) -> str:
     """表記の揺れを落として照合しやすくする（全角数字も半角に）。"""
     if not text:
         return ""
+    text = TIMESTAMP_RE.sub("", text)
     text = text.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
     return NORMALIZE_RE.sub("", text)
 
 
 def evidence_found(evidence: str, transcript: str) -> tuple[bool, float]:
-    """逐語引用が文字起こしに含まれるか。完全一致でなくても一致率で判定する。"""
+    """逐語引用が文字起こしに含まれるか。
+
+    AIは離れた複数箇所を1つの引用としてつなげることがあるため、
+    「最長の連続一致」ではなく「一致した区間の合計が引用全体に占める割合」で見る。
+    短い偶然の一致は除くため、一定の長さ以上の区間だけを数える。
+    """
     ev, tr = normalize(evidence), normalize(transcript)
     if not ev or not tr:
         return False, 0.0
     if ev in tr:
         return True, 1.0
     matcher = SequenceMatcher(None, ev, tr, autojunk=False)
-    match = matcher.find_longest_match(0, len(ev), 0, len(tr))
-    ratio = match.size / len(ev)
+    covered = sum(b.size for b in matcher.get_matching_blocks() if b.size >= MIN_BLOCK)
+    ratio = min(1.0, covered / len(ev))
     return ratio >= MATCH_THRESHOLD, round(ratio, 2)
+
+
+def numeric_text(text: str) -> str:
+    """数値照合用の軽い正規化。
+
+    全角数字と桁区切り・空白だけを落とす。ハイフンまで消すと「年収400-500万円」が
+    「400500」という存在しない数値に化けるため、記号は残す。時刻マーカーの数字が
+    混ざらないよう先に外す。
+    """
+    text = TIMESTAMP_RE.sub("", text or "")
+    text = text.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    return re.sub(r"[,，\s\u3000]", "", text)
 
 
 def unsupported_numbers(text: str, transcript: str) -> list[str]:
     """回答・解説に出てくる数値のうち、文字起こしに無いもの。"""
-    tr = normalize(transcript)
+    tr = numeric_text(transcript)
     missing = []
-    for number in dict.fromkeys(NUMBER_RE.findall(normalize(text))):
+    for number in dict.fromkeys(NUMBER_RE.findall(numeric_text(text))):
         if len(number) < 2:      # 1桁は誤検出が多いので対象外
             continue
         if number not in tr:

@@ -47,7 +47,8 @@ class Usage:
 
     def summary(self) -> str:
         return (f"呼び出し {self.calls}回 / 入力 {self.prompt_tokens:,} / "
-                f"出力 {self.output_tokens:,}（うち思考 {self.thought_tokens:,}）/ "
+                f"出力 {self.output_tokens:,} ＋ 思考 {self.thought_tokens:,}"
+                f"（課金対象の出力 {self.billed_output:,}）/ "
                 f"合計 {self.total_tokens:,}トークン / {self.seconds:.1f}秒")
 
 
