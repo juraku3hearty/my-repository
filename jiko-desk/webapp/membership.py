@@ -80,6 +80,14 @@ CREATE TABLE IF NOT EXISTS outbox (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts TEXT NOT NULL, to_email TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL
 );
+
+-- 募集前の先行案内。受付を開く前にメールアドレスだけ預かる。
+-- 会員ではないので members には入れない。案内を送ったら用済みにする。
+CREATE TABLE IF NOT EXISTS prelaunch (
+    email      TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    notified_at TEXT NOT NULL DEFAULT ''
+);
 """
 
 
@@ -256,6 +264,7 @@ RATE_LIMITS = {
     "login_request_email": (5, 60),   # 同じ宛先へのログインメール（迷惑メール化を防ぐ）
     "login_consume_ip": (20, 10),     # トークンの総当たり
     "join_ip": (5, 60),               # 申込の連打
+    "prelaunch_ip": (5, 60),          # 先行案内の登録の連打
 }
 
 RATE_SCHEMA = """
@@ -520,3 +529,36 @@ def check_stale_pending(conn, minutes: int = 30) -> int:
                   f"{r['member_id']} {r['email']} 申込 {r['created_at']}")
     conn.commit()
     return len(rows)
+
+
+# ---- 先行案内（募集を開く前の受付） ----
+
+def prelaunch_add(conn, email: str) -> str:
+    """メールアドレスだけ預かる。すでにあれば何もしない。
+    結果に関わらず画面の文言は同じにして、登録の有無を外から分からなくする。"""
+    e = norm_email(email)
+    if "@" not in e or len(e) > 254:
+        return "invalid"
+    cur = conn.execute("SELECT email FROM prelaunch WHERE email = ?", (e,))
+    if cur.fetchone():
+        return "already"
+    conn.execute("INSERT INTO prelaunch(email, created_at) VALUES (?,?)", (e, now()))
+    return "added"
+
+
+def prelaunch_list(conn, only_unnotified: bool = False) -> list:
+    sql = "SELECT email, created_at, notified_at FROM prelaunch"
+    if only_unnotified:
+        sql += " WHERE notified_at = ''"
+    sql += " ORDER BY created_at"
+    return [dict(r) for r in conn.execute(sql).fetchall()]
+
+
+def prelaunch_mark_notified(conn, emails: list) -> int:
+    n = 0
+    for e in emails:
+        cur = conn.execute(
+            "UPDATE prelaunch SET notified_at = ? WHERE email = ? AND notified_at = ''",
+            (now(), norm_email(e)))
+        n += cur.rowcount
+    return n

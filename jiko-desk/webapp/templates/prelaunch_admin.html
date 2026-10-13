@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block header_sub %} 先行案内の登録{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>先行案内の登録 {{ rows|length }}件</h2>
+  <div class="meta">
+    受付の状態：{% if join_open %}<b>開いています</b>（JOIN_OPEN=1）。この画面は過去の記録です。
+    {% else %}<b>閉じています</b>（JOIN_OPEN=0）。募集ページは先行案内の登録を受けています。{% endif %}
+  </div>
+  <a href="{{ url_for('prelaunch_admin', format='csv') }}">
+    <button class="ghost small" style="margin-top:12px">CSVで取り出す</button></a>
+</div>
+
+<div class="scroll">
+<table>
+  <tr><th>メールアドレス</th><th>登録日時</th><th>案内済み</th></tr>
+  {% for r in rows %}
+  <tr><td>{{ r.email }}</td><td>{{ r.created_at }}</td>
+      <td>{{ r.notified_at or '—' }}</td></tr>
+  {% else %}
+  <tr><td colspan="3">まだ登録はありません</td></tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

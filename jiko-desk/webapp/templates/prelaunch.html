@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block header_sub %} 先行案内{% endblock %}
+{% block content %}
+{% if sent %}
+<div class="empty">
+  <h2 style="margin:0 0 8px;font-size:17px">お預かりしました</h2>
+  <div style="font-size:13.5px;color:var(--muted);line-height:1.9">
+    受付を開始しましたら、ご登録のアドレス宛にご案内をお送りします。<br>
+    この時点では料金は一切発生しません。
+  </div>
+  <a href="{{ url_for('lp') }}"><button class="ghost" style="margin-top:16px">サービスのご案内に戻る</button></a>
+</div>
+{% else %}
+<div class="askbox">
+  <h1>先行案内のご登録</h1>
+  <p style="color:#c3d6e4;font-size:13px;margin:0 0 4px">
+    交通事故実務デスクは現在、公開の準備中です。<br>
+    受付を開始しましたら、ご登録のアドレス宛にご案内をお送りします。</p>
+</div>
+
+<div class="terms-box">
+  <h3>ご登録にあたって</h3>
+  <dl>
+    <dt>料金</dt><dd><b>この登録では料金は発生しません。</b>お申し込みではありません</dd>
+    <dt>お預かりする情報</dt><dd>メールアドレスのみ</dd>
+    <dt>使いみち</dt><dd>受付開始のご案内を1回お送りします。それ以外には使いません</dd>
+    <dt>削除</dt><dd>いつでも削除できます。info@famitect.com までご連絡ください</dd>
+    <dt>予定している料金</dt><dd>月額9,800円（税込）</dd>
+  </dl>
+  <div class="links">
+    <a href="{{ url_for('privacy_policy') }}" target="_blank">プライバシーポリシー</a>　·　
+    <a href="{{ url_for('lp') }}">サービスのご案内</a>
+  </div>
+</div>
+
+<form method="post" style="margin-top:16px">
+  <input type="hidden" name="_csrf" value="{{ csrf() }}">
+  <input type="email" name="email" placeholder="メールアドレス" required
+         value="{{ email or '' }}">
+  <label class="agree">
+    <input type="checkbox" name="agree" value="1" required>
+    <span>プライバシーポリシーを確認し、受付開始のご案内を受け取ることに同意します</span>
+  </label>
+  <button type="submit">ご案内を受け取る</button>
+</form>
+{% if error %}<div style="color:var(--warn);font-size:13px;margin-top:10px">{{ error }}</div>{% endif %}
+{% endif %}
+{% endblock %}

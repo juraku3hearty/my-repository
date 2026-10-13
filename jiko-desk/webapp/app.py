@@ -22,7 +22,7 @@ import sqlite3
 from datetime import date, timedelta
 from pathlib import Path
 
-from flask import (Flask, g, jsonify, redirect, render_template, request,
+from flask import (Flask, Response, g, jsonify, redirect, render_template, request,
                    send_from_directory, session, url_for)
 
 import applog
@@ -35,6 +35,9 @@ import security as sec
 # APP_ENV=dev 以外では起動させない。外部公開も 127.0.0.1 固定で防ぐ。
 APP_ENV = os.environ.get("APP_ENV", "dev")
 REQUIRE_HTTPS = os.environ.get("REQUIRE_HTTPS", "0") == "1"
+# 募集の受付。0 にすると申込を閉じ、募集ページは「先行案内の登録」に切り替わる。
+# SNSで発信を始めてから決済の準備が整うまでの数日間を、これで乗り切る。
+JOIN_OPEN = os.environ.get("JOIN_OPEN", "1") == "1"
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("APP_DB_PATH", BASE_DIR / "demo.sqlite3"))
@@ -312,6 +315,9 @@ def join():
     「申し込んだつもりの人」を検知できない。
     """
     conn = get_db()
+    if not JOIN_OPEN:
+        # 受付前。決済には進ませず、先行案内の登録だけ受ける。
+        return redirect(url_for("prelaunch"))
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         if not mb.rate_ok(conn, "join_ip", sec.client_ip(request) or "?"):
@@ -344,7 +350,35 @@ def join():
 # 本番では famitect.com 側のトップに置く想定だが、文面と導線をここで確定させる。
 @app.route("/lp")
 def lp():
-    return render_template("lp.html")
+    return render_template("lp.html", join_open=JOIN_OPEN)
+
+
+@app.route("/prelaunch", methods=["GET", "POST"])
+def prelaunch():
+    """受付前の先行案内。メールアドレスだけ預かる。
+
+    登録済みかどうかで画面を変えない。アドレスの存在を外から確かめられないようにする。
+    """
+    if JOIN_OPEN:
+        return redirect(url_for("join"))
+    conn = get_db()
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip()
+        if not mb.rate_ok(conn, "prelaunch_ip", sec.client_ip(request) or "?"):
+            conn.commit()
+            return render_template("prelaunch.html", email=email,
+                                   error="しばらく時間をおいてからお試しください")
+        if request.form.get("agree") != "1":
+            return render_template("prelaunch.html", email=email,
+                                   error="プライバシーポリシーへの同意が必要です")
+        result = mb.prelaunch_add(conn, email)
+        conn.commit()
+        if result == "invalid":
+            return render_template("prelaunch.html", email=email,
+                                   error="メールアドレスをご確認ください")
+        # added でも already でも同じ画面を出す
+        return render_template("prelaunch.html", sent=True)
+    return render_template("prelaunch.html")
 
 
 @app.route("/terms")
@@ -631,6 +665,21 @@ def members_admin():
         alerts=conn.execute("SELECT * FROM ops_alerts ORDER BY id DESC LIMIT 20").fetchall(),
         outbox=conn.execute("SELECT * FROM outbox ORDER BY id DESC LIMIT 20").fetchall(),
         processed=request.args.get("processed"))
+
+
+@app.route("/admin/prelaunch")
+def prelaunch_admin():
+    """先行案内に登録した人の一覧。受付を開いたら、ここから案内を送る。"""
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    rows = mb.prelaunch_list(conn)
+    if request.args.get("format") == "csv":
+        lines = ["メールアドレス,登録日時,案内済み"]
+        lines += [f'{r["email"]},{r["created_at"]},{r["notified_at"]}' for r in rows]
+        return Response("\n".join(lines), mimetype="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": "attachment; filename=prelaunch.csv"})
+    return render_template("prelaunch_admin.html", rows=rows, join_open=JOIN_OPEN)
 
 
 @app.route("/home")

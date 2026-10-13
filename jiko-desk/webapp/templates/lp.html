@@ -24,8 +24,13 @@
       よくある質問は、24時間いつでも確認。<br>
       初めてのケースは、専門家への確認を経て回答。
     </p>
+    {% if join_open %}
     <a class="cta" href="{{ url_for('join') }}">月額9,800円（税込）で申し込む</a>
     <p class="cta-sub">クレジットカード決済・いつでも解約できます</p>
+    {% else %}
+    <a class="cta" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
+    <p class="cta-sub">現在は公開の準備中です。登録に料金はかかりません</p>
+    {% endif %}
   </div>
 </section>
 
@@ -124,7 +129,8 @@
   <section class="sec">
     <h2>料金</h2>
     <div class="price">
-      <div class="amount"><b>9,800</b><span>円／月（税込）</span></div>
+      <div class="amount"><b>9,800</b><span>円／月（税込）</span>
+        {% if not join_open %}<div class="prep">現在、受付の準備中です</div>{% endif %}</div>
       <dl>
         <dt>お支払い</dt><dd>クレジットカード。お申し込み時に初回のお支払いが発生します</dd>
         <dt>更新</dt><dd>1か月ごとに自動で更新されます</dd>
@@ -133,10 +139,17 @@
         <dt>ご利用開始</dt><dd>決済完了後、ログイン用のメールをお送りします</dd>
       </dl>
     </div>
+    {% if join_open %}
     <a class="cta dark" href="{{ url_for('join') }}">申し込みに進む</a>
     <p class="cta-sub dark">
       必要なときに調べられる。分からないときには相談できる。
     </p>
+    {% else %}
+    <a class="cta dark" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
+    <p class="cta-sub dark">
+      必要なときに調べられる。分からないときには相談できる。
+    </p>
+    {% endif %}
   </section>
 
   <!-- 注意 -->
