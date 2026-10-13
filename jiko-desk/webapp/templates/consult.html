@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block header_sub %} ご相談{% endblock %}
 {% block content %}
 <div class="card">
   <h2>解決しない場合のご相談</h2>
@@ -15,7 +16,16 @@
   </div>
   <a href="/"><button class="ghost" style="margin-top:16px">検索に戻る</button></a>
 </div>
-<div class="notice">
-  ※ この画面は雛形です。実際の連絡先・問い合わせフォームは、運用開始時に設定します。
+<div class="terms-box">
+  <h3>お問い合わせ先</h3>
+  <dl>
+    <dt>メール</dt><dd>info@famitect.com</dd>
+    <dt>電話</dt><dd>075-874-5522</dd>
+  </dl>
+  <div class="links" style="margin-top:10px">
+    <a href="{{ url_for('terms') }}">利用規約</a>　·　
+    <a href="{{ url_for('privacy_policy') }}">プライバシーポリシー</a>　·　
+    <a href="{{ url_for('tokusho') }}">特定商取引法に基づく表示</a>
+  </div>
 </div>
 {% endblock %}
