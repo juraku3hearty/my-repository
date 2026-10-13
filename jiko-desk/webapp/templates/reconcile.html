@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block header_sub %} 日次照合{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>日次照合</h2>
+  <div class="answer">
+    決済の通知は<b>自動で再送されません</b>（2026-10-13 サポート回答）。<br>
+    取りこぼしに気づく手段はこの照合だけです。毎日実行してください。
+  </div>
+  <form method="post" enctype="multipart/form-data" style="margin-top:14px">
+    <input type="hidden" name="_csrf" value="{{ csrf() }}">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">
+      管理画面から落とした決済データのCSVを選びます（省略しても通知漏れの確認はできます）。
+    </div>
+    <input type="file" name="csv" accept=".csv">
+    <button type="submit">照合する</button>
+  </form>
+</div>
+
+{% if overdue %}
+<h3>課金の通知が届いていない可能性（{{ overdue|length }}件）</h3>
+<div class="notice">
+  利用期限を{{ grace }}日以上過ぎているのに、決済の通知が届いていない会員です。<br>
+  管理画面で実際の決済を確認し、必要ならサポートに再送を依頼してください。
+</div>
+<div class="scroll"><table>
+  <tr><th>会員ID</th><th>利用期限</th><th>acid</th></tr>
+  {% for o in overdue %}
+  <tr><td>{{ o['member_id'] }}</td><td>{{ o['paid_through'] }}</td><td>{{ o['acid'] }}</td></tr>
+  {% endfor %}
+</table></div>
+{% elif result is not none %}
+<div class="notice">通知が届いていない会員はいませんでした。</div>
+{% endif %}
+
+{% if result %}
+  {% if result['errors'] %}
+  <h3>CSVを読めませんでした</h3>
+  <div class="scroll"><table>
+    {% for e in result['errors'] %}<tr><td>{{ e }}</td></tr>{% endfor %}
+  </table></div>
+  {% else %}
+  <h3>CSVとの差分（{{ result['diffs']|length }}件 / {{ result['rows'] }}行を確認）</h3>
+  {% if result['diffs'] %}
+  <div class="notice">
+    <b>自動では直しません。</b>金銭に関わるため、1件ずつ確認して判断してください。
+  </div>
+  <div class="scroll"><table>
+    <tr><th>内容</th><th>会員ID</th><th>acid</th><th>詳細</th></tr>
+    {% for d in result['diffs'] %}
+    <tr><td>{{ d['kind'] }}</td><td>{{ d.get('member_id','-') }}</td>
+        <td>{{ d['acid'] }}</td><td>{{ d.get('detail','') }}</td></tr>
+    {% endfor %}
+  </table></div>
+  {% else %}
+  <div class="notice">差分はありませんでした。</div>
+  {% endif %}
+  {% endif %}
+{% endif %}
+{% endblock %}

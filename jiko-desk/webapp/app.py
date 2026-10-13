@@ -27,6 +27,7 @@ from flask import (Flask, g, jsonify, redirect, render_template, request,
 
 import applog
 import membership as mb
+import reconcile as rec
 import security as sec
 
 # ── 検証環境ガード ────────────────────────────────────────────
@@ -547,6 +548,37 @@ def admin_process_events():
     mb.purge_tokens(conn)
     conn.commit()
     return redirect(url_for("members_admin", processed=n))
+
+
+@app.route("/admin/reconcile", methods=["GET", "POST"])
+def admin_reconcile():
+    """日次照合。CSVが無くても「通知が来ていない会員」は拾える。
+
+    キックバックの自動再送が無い（2026-10-13 サポート回答）ため、
+    取りこぼしに気づく手段はここだけになる。
+    """
+    if not require_admin():
+        return redirect(url_for("admin_login"))
+    conn = get_db()
+    result = None
+    overdue = []
+    if request.method == "POST":
+        overdue = rec.check_overdue(conn)
+        f = request.files.get("csv")
+        if f and f.filename:
+            raw = f.read()
+            # 管理画面のCSVはShift_JISのことが多い。UTF-8も試す。
+            for enc in ("cp932", "utf-8-sig", "utf-8"):
+                try:
+                    text = raw.decode(enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            else:
+                text = raw.decode("utf-8", errors="replace")
+            result = rec.reconcile_csv(conn, text)
+    return render_template("reconcile.html", result=result, overdue=overdue,
+                           grace=rec.OVERDUE_GRACE_DAYS)
 
 
 @app.route("/admin/members")
