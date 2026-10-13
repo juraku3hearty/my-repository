@@ -104,7 +104,10 @@ def headers(resp, https: bool):
     resp.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     # インラインのスクリプト・スタイルを許可しない。外部への送信も禁止する。
     resp.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'self'; style-src 'self'; "
+        "default-src 'self'; script-src 'self'; "
+        # 募集ページの見出しに明朝を使う。Google Fonts だけを許す。
+        "style-src 'self' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data:; connect-src 'self'; "
         "form-action 'self' https://credit.j-payment.co.jp; "
         "frame-ancestors 'none'; base-uri 'none'; object-src 'none'")

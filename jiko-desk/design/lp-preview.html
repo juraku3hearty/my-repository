@@ -1,0 +1,537 @@
+<title>交通事故実務デスク</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600;700&display=swap">
+<style>
+/* 索引カードの棚。見出しは明朝、本文はゴシック。
+   色は会員サイトの design/tokens.css と同じ藍を軸に、紙の地色を敷く。 */
+:root {
+  --ink:      #16202a;   /* 本文 */
+  --ink-soft: #5d6b78;   /* 補助 */
+  --navy:     #14304a;   /* 主色。会員サイトと共通 */
+  --teal:     #1f7a8c;   /* 補助色。会員サイトと共通 */
+  --paper:    #f4f2ed;   /* 地。わずかに温かい紙色 */
+  --card:     #ffffff;
+  --rule:     #ddd8cf;   /* 罫 */
+  --tab:      #e9e4da;   /* 索引カードのつまみ */
+  --ok:       #2c6b2f;
+  --warn:     #9b3a24;
+  --shadow:   0 1px 2px rgba(22,32,42,.06), 0 10px 26px rgba(22,32,42,.07);
+  --mincho: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --gothic: "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink:      #e8e6e1;
+    --ink-soft: #9aa6b1;
+    --navy:     #8fb6d4;
+    --teal:     #5fb3c4;
+    --paper:    #15191d;
+    --card:     #1d2328;
+    --rule:     #343b42;
+    --tab:      #272e34;
+    --ok:       #7fc083;
+    --warn:     #e09277;
+    --shadow:   0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink:      #e8e6e1;
+  --ink-soft: #9aa6b1;
+  --navy:     #8fb6d4;
+  --teal:     #5fb3c4;
+  --paper:    #15191d;
+  --card:     #1d2328;
+  --rule:     #343b42;
+  --tab:      #272e34;
+  --ok:       #7fc083;
+  --warn:     #e09277;
+  --shadow:   0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--gothic); font-size: 16px; line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+}
+.page { max-width: 760px; margin: 0 auto; padding-block: 0 72px; padding-left: 20px; padding-right: 20px; }
+h1, h2, h3 { font-family: var(--mincho); font-weight: 600; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: inherit; }
+
+/* 確認用の帯 */
+.preview-bar {
+  background: var(--navy); color: var(--paper); font-size: 12.5px; line-height: 1.6;
+  padding: 9px 20px; text-align: center; letter-spacing: .02em;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .preview-bar { background: #0f1317; color: var(--ink-soft); }
+}
+:root[data-theme="dark"] .preview-bar { background: #0f1317; color: var(--ink-soft); }
+
+/* ── 見出し部 ── */
+.masthead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding-block: 26px 0;
+}
+.wordmark { font-family: var(--mincho); font-size: 17px; font-weight: 700; letter-spacing: .06em; }
+.wordmark small { display: block; font-family: var(--gothic); font-weight: 400;
+  font-size: 11px; letter-spacing: .14em; color: var(--ink-soft); margin-top: 2px; }
+.masthead .enter { font-size: 12.5px; color: var(--ink-soft); text-decoration: none;
+  border: 1px solid var(--rule); border-radius: 999px; padding: 6px 15px; white-space: nowrap; }
+
+/* ── 柱 ── */
+.hero { padding-block: 34px 8px; }
+.hero h1 {
+  font-size: clamp(27px, 7.4vw, 44px); line-height: 1.42;
+  letter-spacing: .005em; margin-bottom: 22px;
+}
+.hero h1 em { font-style: normal; display: block; }
+.hero h1 .thin { color: var(--ink-soft); font-size: .62em; font-family: var(--gothic);
+  font-weight: 500; letter-spacing: .04em; display: block; margin-bottom: 14px; line-height: 1.7; }
+.two-lines { display: grid; gap: 7px; margin-bottom: 26px; }
+.two-lines div {
+  font-family: var(--mincho); font-size: clamp(15px, 4.1vw, 18.5px); font-weight: 600;
+  padding-left: 17px; border-left: 3px solid var(--teal); line-height: 1.75;
+}
+.two-lines div:last-child { border-left-color: var(--navy); }
+
+/* 申込ボタン */
+.cta-row { display: flex; flex-wrap: wrap; gap: 11px; align-items: center; }
+.cta {
+  flex: 1 1 260px; min-width: 0; display: block; text-align: center; text-decoration: none;
+  background: var(--navy); color: var(--paper); font-weight: 700; font-size: 16.5px;
+  padding: 17px 20px; border-radius: 4px; letter-spacing: .02em;
+  box-shadow: var(--shadow);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cta { color: #10161c; }
+}
+:root[data-theme="dark"] .cta { color: #10161c; }
+.cta-note { font-size: 12.5px; color: var(--ink-soft); flex: 1 1 200px; line-height: 1.7; }
+
+/* ── 画面の写し ── */
+.screens { margin-top: 38px; display: grid; grid-template-columns: 1fr; gap: 18px; }
+@media (min-width: 640px) { .screens { grid-template-columns: 1fr 1fr; } }
+.phone {
+  background: var(--card); border: 1px solid var(--rule); border-radius: 18px;
+  box-shadow: var(--shadow); overflow: hidden; min-width: 0;
+}
+.phone .bar {
+  background: var(--navy); color: #fff; padding: 11px 14px; font-size: 11.5px;
+  letter-spacing: .04em; display: flex; justify-content: space-between; align-items: center;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .phone .bar { background: #223947; color: #d6e6f1; }
+}
+:root[data-theme="dark"] .phone .bar { background: #223947; color: #d6e6f1; }
+.phone .body { padding: 14px; display: grid; gap: 11px; }
+.q-field {
+  border: 1px solid var(--rule); border-radius: 9px; padding: 11px 12px;
+  font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: center;
+}
+.q-field svg { width: 15px; height: 15px; flex: 0 0 15px; stroke: var(--ink-soft);
+  fill: none; stroke-width: 2.1; stroke-linecap: round; }
+.a-card { border: 1px solid var(--rule); border-radius: 9px; padding: 12px 13px; }
+.a-card .qt { font-family: var(--mincho); font-size: 14px; font-weight: 600; line-height: 1.6; }
+.a-card .at {
+  margin-top: 9px; font-size: 13px; line-height: 1.85; background: var(--paper);
+  border-left: 3px solid var(--navy); padding: 10px 11px; border-radius: 0 6px 6px 0;
+}
+.stamp {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+  font-size: 11px; font-weight: 700; color: var(--ok);
+  border: 1px solid var(--ok); border-radius: 3px; padding: 2px 8px; letter-spacing: .04em;
+}
+.stamp.pend { color: var(--warn); border-color: var(--warn); }
+.a-card .when { font-size: 10.5px; color: var(--ink-soft); margin-top: 7px; letter-spacing: .02em; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-row b { font-weight: 400; font-size: 11.5px; color: var(--ink-soft);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; }
+.shot-cap { font-size: 11.5px; color: var(--ink-soft); text-align: center;
+  padding: 0 14px 13px; line-height: 1.65; }
+
+/* ── 節 ── */
+.sec { margin-top: 62px; }
+.sec > h2 {
+  font-size: clamp(19px, 5.2vw, 24px); line-height: 1.55; margin-bottom: 7px;
+}
+.sec > .kicker {
+  font-family: var(--gothic); font-size: 11px; font-weight: 700; letter-spacing: .18em;
+  color: var(--teal); margin-bottom: 11px;
+}
+.sec > .intro { font-size: 15px; color: var(--ink-soft); margin-top: 10px; line-height: 1.9; }
+.rule { height: 1px; background: var(--rule); margin-top: 18px; }
+
+/* 索引カード */
+.cards { margin-top: 24px; display: grid; gap: 13px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .cards { grid-template-columns: 1fr 1fr; } }
+.icard {
+  position: relative; background: var(--card); border: 1px solid var(--rule);
+  border-radius: 3px; padding: 19px 17px 16px; box-shadow: var(--shadow); min-width: 0;
+}
+.icard::before {
+  content: ""; position: absolute; top: -9px; left: 17px; width: 62px; height: 10px;
+  background: var(--tab); border: 1px solid var(--rule); border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+.icard b { display: block; font-family: var(--mincho); font-size: 16px; font-weight: 600; }
+.icard p { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.8; }
+
+/* 手順 */
+.steps { margin-top: 26px; display: grid; gap: 0; }
+.step { display: grid; grid-template-columns: 56px 1fr; gap: 16px;
+  padding: 22px 0; border-top: 1px solid var(--rule); min-width: 0; }
+.step:last-child { border-bottom: 1px solid var(--rule); }
+.step .n { font-family: var(--mincho); font-size: 30px; font-weight: 700;
+  color: var(--teal); line-height: 1; letter-spacing: -.02em; }
+.step h3 { font-size: 18px; margin-bottom: 6px; }
+.step p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.85; }
+
+/* 言い切り */
+.pledge {
+  margin-top: 26px; background: var(--card); border: 1px solid var(--rule);
+  border-left: 5px solid var(--navy); border-radius: 0 6px 6px 0;
+  padding: 24px 22px; box-shadow: var(--shadow);
+}
+.pledge .big { font-family: var(--mincho); font-size: clamp(17px, 4.6vw, 21px);
+  font-weight: 600; line-height: 1.7; }
+.pledge .sub { font-size: 14px; color: var(--ink-soft); margin-top: 12px; line-height: 1.9; }
+
+/* できること・できないこと */
+.scope { margin-top: 24px; display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .scope { grid-template-columns: 1fr 1fr; } }
+.scope > div { background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 18px 18px 16px; box-shadow: var(--shadow); min-width: 0; }
+.scope h3 { font-family: var(--gothic); font-size: 12px; font-weight: 700; letter-spacing: .12em;
+  padding-bottom: 9px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
+.scope .can h3  { color: var(--ok); }
+.scope .cant h3 { color: var(--warn); }
+.scope ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.scope li { font-size: 14px; line-height: 1.75; padding-left: 20px; position: relative; }
+.scope .can li::before  { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+.scope .cant li::before { content: "—"; position: absolute; left: 0; color: var(--warn); }
+.scope .cant li { color: var(--ink-soft); }
+
+/* 料金 */
+.fee { margin-top: 24px; background: var(--card); border: 1px solid var(--rule);
+  border-radius: 4px; box-shadow: var(--shadow); overflow: hidden; }
+.fee .amount { text-align: center; padding: 30px 20px 26px; border-bottom: 1px solid var(--rule); }
+.fee .amount .n { font-family: var(--mincho); font-size: clamp(46px, 13vw, 62px); font-weight: 700;
+  line-height: 1; letter-spacing: -.02em; color: var(--navy); font-variant-numeric: tabular-nums; }
+.fee .amount .u { font-size: 14px; color: var(--ink-soft); margin-left: 7px; }
+.fee .amount .per { font-size: 12.5px; color: var(--ink-soft); margin-top: 9px; letter-spacing: .06em; }
+.fee dl { margin: 0; padding: 20px 20px 18px; display: grid; gap: 14px; }
+.fee dt { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ink-soft); }
+.fee dd { margin: 3px 0 0; font-size: 14px; line-height: 1.8; }
+
+/* よくある質問 */
+.faq { margin-top: 24px; border-top: 1px solid var(--rule); }
+.faq details { border-bottom: 1px solid var(--rule); }
+.faq summary {
+  cursor: pointer; list-style: none; padding: 17px 34px 17px 0; position: relative;
+  font-family: var(--mincho); font-size: 15.5px; font-weight: 600; line-height: 1.65;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "＋"; position: absolute; right: 4px; top: 16px;
+  color: var(--teal); font-family: var(--gothic); font-size: 16px; font-weight: 400;
+}
+.faq details[open] summary::after { content: "−"; }
+.faq summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+.faq .ans { font-size: 14px; color: var(--ink-soft); line-height: 1.9; padding: 0 4px 19px 0; }
+
+/* 末尾 */
+.closer { margin-top: 56px; background: var(--navy); border-radius: 6px;
+  padding: 34px 24px 30px; text-align: center; }
+.closer h2 { color: var(--paper); font-size: clamp(19px, 5vw, 24px); line-height: 1.6; }
+.closer p { color: #b8cbdb; font-size: 14px; margin-top: 11px; line-height: 1.85; }
+.closer .cta { background: var(--paper); color: var(--navy); margin-top: 22px;
+  display: inline-block; flex: none; min-width: 240px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .closer { background: #223947; }
+  :root:not([data-theme="light"]) .closer h2 { color: #eef4f8; }
+  :root:not([data-theme="light"]) .closer .cta { background: #eef4f8; color: #16222c; }
+}
+:root[data-theme="dark"] .closer { background: #223947; }
+:root[data-theme="dark"] .closer h2 { color: #eef4f8; }
+:root[data-theme="dark"] .closer .cta { background: #eef4f8; color: #16222c; }
+
+.caution { margin-top: 34px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.95;
+  border: 1px dashed var(--rule); border-radius: 4px; padding: 16px 17px; }
+.caution p + p { margin-top: 9px; }
+
+footer { margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--rule);
+  font-size: 12.5px; color: var(--ink-soft); line-height: 2; }
+footer .links { margin-bottom: 9px; }
+footer .links a { color: var(--navy); text-decoration: none; border-bottom: 1px solid var(--rule); }
+footer .co { font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="preview-bar">確認用のプレビューです。公開版ではボタンから決済とログインに進みます。</div>
+
+<div class="page">
+
+  <div class="masthead">
+    <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の実務の確認先</small></div>
+    <a class="enter" href="#料金">会員ログイン</a>
+  </div>
+
+  <!-- 柱 -->
+  <section class="hero">
+    <h1>
+      <span class="thin">整骨院・接骨院の先生へ</span>
+      <em>交通事故実務の疑問を、</em>
+      <em>ひとりで抱え込まない。</em>
+    </h1>
+    <div class="two-lines">
+      <div>よくある質問は、24時間いつでも確認。</div>
+      <div>初めてのケースは、専門家への確認を経て回答。</div>
+    </div>
+    <div class="cta-row">
+      <a class="cta" href="#料金">月額9,800円（税込）で申し込む</a>
+      <p class="cta-note">クレジットカード決済。<br>いつでも解約できます。</p>
+    </div>
+
+    <!-- 実際の画面 -->
+    <div class="screens">
+      <div class="phone">
+        <div class="bar"><span>交通事故実務デスク</span><span>Q&amp;A</span></div>
+        <div class="body">
+          <div class="q-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+            <span>打ち切りと言われた</span>
+          </div>
+          <div class="a-card">
+            <div class="qt">保険会社から「そろそろ打ち切り」と言われました。すぐに施術をやめるべきですか。</div>
+            <div class="at">保険会社の打ち切りの連絡は、施術の必要性の判断ではありません。まず主治医の見解を確認し、必要であれば施術継続の医学的理由を書面で…</div>
+            <span class="stamp">院長確認済み</span>
+            <div class="when">確認日 2026-10-02</div>
+          </div>
+          <div class="chip-row"><b>打ち切り</b><b>医師の同意</b><b>施術証明書</b></div>
+        </div>
+        <p class="shot-cap">検索すると、確認を終えた回答が結論から出ます。</p>
+      </div>
+
+      <div class="phone">
+        <div class="bar"><span>交通事故実務デスク</span><span>ご相談</span></div>
+        <div class="body">
+          <div class="a-card">
+            <div class="qt">該当するQ&amp;Aが見つかりませんでした</div>
+            <div class="at">お探しの内容は、まだQ&amp;Aになっていないか、個別の判断が必要な可能性があります。いただいた質問は記録され、確認のうえ回答します。</div>
+            <span class="stamp pend">確認中</span>
+            <div class="when">ご相談として受付</div>
+          </div>
+          <div class="q-field">
+            <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+            <span>この内容で相談する</span>
+          </div>
+        </div>
+        <p class="shot-cap">無いときは、無いと出ます。推測の答えは返しません。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 場面 -->
+  <section class="sec">
+    <p class="kicker">こんな場面で</p>
+    <h2>判断に迷う場面は、<br>突然やってきます。</h2>
+    <p class="intro">
+      保険会社への対応、施術証明書、健康保険の取り扱い、施術の打ち切り。
+      整骨院・接骨院の現場では、調べる時間のないときに限って判断を求められます。
+    </p>
+    <div class="cards">
+      <div class="icard">
+        <b>保険会社への対応</b>
+        <p>担当者から連絡が来たが、どこまで答えてよいのか分からない。</p>
+      </div>
+      <div class="icard">
+        <b>施術証明書</b>
+        <p>書き方や記載の範囲に自信がない。前回と違う様式が届いた。</p>
+      </div>
+      <div class="icard">
+        <b>健康保険の取り扱い</b>
+        <p>第三者行為の届出、自賠責との関係をどう整理するか。</p>
+      </div>
+      <div class="icard">
+        <b>施術の打ち切り</b>
+        <p>打ち切りを告げられたとき、患者さんにどう説明するか。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section class="sec">
+    <p class="kicker">使い方</p>
+    <h2>普段は検索。迷ったら相談。<br>難しい案件は専門家確認。</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="n">一</div>
+        <div>
+          <h3>普段は検索</h3>
+          <p>蓄積された確認済みのQ&amp;Aは、24時間いつでも検索・閲覧できます。
+             スマホで質問を入れるだけ。結論から表示します。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">二</div>
+        <div>
+          <h3>迷ったら相談</h3>
+          <p>過去のQ&amp;Aにない新しいケースや、個別事情によって判断が必要な場合は、
+             ご相談ください。そのまま相談として受け付けます。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">三</div>
+        <div>
+          <h3>難しい案件は専門家確認</h3>
+          <p>内容に応じて専門家への確認を行ったうえで回答します。
+             回答はQ&amp;Aに蓄積され、次に同じ場面で迷う先生の役に立ちます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 方針 -->
+  <section class="sec">
+    <p class="kicker">考え方</p>
+    <h2>確認を大切にする。</h2>
+    <div class="pledge">
+      <p class="big">その場しのぎの推測ではなく、確認を大切にする。</p>
+      <p class="sub">
+        Q&amp;Aに表示されるのは、確認を終えた回答だけです。
+        未確認の内容をAIが推測で補うことはありません。回答を書き直したときは、
+        もう一度確認を通すまで「院長確認済み」の表示は出ません。
+      </p>
+    </div>
+    <p class="intro">
+      交通事故実務デスクは、先生が日々の交通事故対応を進めるための、実務の確認先です。
+    </p>
+  </section>
+
+  <!-- 範囲 -->
+  <section class="sec">
+    <p class="kicker">ご利用の範囲</p>
+    <h2>できること、できないこと。</h2>
+    <div class="scope">
+      <div class="can">
+        <h3>できること</h3>
+        <ul>
+          <li>公開済みQ&amp;Aの検索・閲覧（24時間）</li>
+          <li>Q&amp;Aに紐づく解説動画の視聴</li>
+          <li>新しいケースのご相談</li>
+          <li>施術証明書・同意書のひな形（白紙）のダウンロード</li>
+        </ul>
+      </div>
+      <div class="cant">
+        <h3>できないこと</h3>
+        <ul>
+          <li>個別の事案についての法律判断・保険金請求の可否の保証</li>
+          <li>医学的な診断・施術の適否の判断</li>
+          <li>Q&amp;A全件の一覧表示・一括ダウンロード</li>
+          <li>ご相談への即時回答</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 料金 -->
+  <section class="sec" id="料金">
+    <p class="kicker">料金</p>
+    <h2>月額9,800円（税込）。</h2>
+    <div class="fee">
+      <div class="amount">
+        <span class="n">9,800</span><span class="u">円</span>
+        <div class="per">１か月あたり（税込）</div>
+      </div>
+      <dl>
+        <dt>お支払い</dt>
+        <dd>クレジットカード。お申し込み時に初回のお支払いが発生します。
+            カード情報は決済代行会社の画面で入力され、当社では受け取りません。</dd>
+        <dt>更新</dt>
+        <dd>1か月ごとに自動で更新されます。</dd>
+        <dt>解約</dt>
+        <dd>いつでも解約できます。解約後、次回の課金は行われません。
+            お支払い済みの期間が終了するまでご利用いただけます（返金はありません）。</dd>
+        <dt>ご利用開始</dt>
+        <dd>決済完了後、ログイン用のメールをお送りします。パスワードは不要です。</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- よくある質問 -->
+  <section class="sec">
+    <p class="kicker">よくある質問</p>
+    <h2>お申し込みの前に。</h2>
+    <div class="faq">
+      <details open>
+        <summary>パソコンが苦手でも使えますか。</summary>
+        <div class="ans">スマホだけで使えます。質問を入力して検索するだけで、結論から表示されます。
+          ログインもパスワード不要で、届いたメールのリンクを開くだけです。</div>
+      </details>
+      <details>
+        <summary>相談の回答はどのくらいで届きますか。</summary>
+        <div class="ans">即時ではありません。内容によって確認に時間をいただきます。
+          確認が済み次第、回答をお送りし、Q&amp;Aにも追加します。</div>
+      </details>
+      <details>
+        <summary>AIが勝手に答えを作ることはありませんか。</summary>
+        <div class="ans">ありません。検索の結果として出るのは、確認を終えた回答の本文そのものです。
+          回答文をあとから書き直した場合は、もう一度確認を通すまで表示されません。</div>
+      </details>
+      <details>
+        <summary>解約はどうすればよいですか。</summary>
+        <div class="ans">いつでも解約できます。解約後は次回の課金が行われず、
+          お支払い済みの期間が終わるまではそのままご利用いただけます。</div>
+      </details>
+      <details>
+        <summary>複数のスタッフで使えますか。</summary>
+        <div class="ans">1件のお申し込みにつき1つのメールアドレスでご利用いただきます。
+          院内で共有される場合は、お問い合わせください。</div>
+      </details>
+      <details>
+        <summary>弁護士・行政書士ですが、協力することはできますか。</summary>
+        <div class="ans">現場で実際に生まれた疑問をテーマに、学び合える場をつくりたいと考えています。
+          関心のある先生は info@famitect.com までご連絡ください。
+          具体的な内容や条件は、ご相談しながら決めていきます。</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 末尾 -->
+  <div class="closer">
+    <h2>必要なときに調べられる。<br>分からないときには相談できる。</h2>
+    <p>交通事故対応で迷ったとき、確認先があるという状態をつくります。</p>
+    <a class="cta" href="#料金">月額9,800円（税込）で申し込む</a>
+  </div>
+
+  <div class="caution">
+    <p>※24時間利用できるのは公開済みQ&amp;Aの閲覧機能です。個別相談への回答は即時対応ではなく、
+       確認内容に応じて時間をいただきます。</p>
+    <p>※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
+       保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
+       弁護士・行政書士・医師等の有資格者にご相談ください。</p>
+    <p>※画面はすべて開発中のもので、表示内容は実際のQ&amp;Aではありません。</p>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="#料金">利用規約</a>　·
+      <a href="#料金">プライバシーポリシー</a>　·
+      <a href="#料金">特定商取引法に基づく表示</a>
+    </div>
+    <div class="co">
+      株式会社famitect　交通事故実務デスク<br>
+      京都府京都市伏見区久我石原町1-7<br>
+      075-874-5522　info@famitect.com
+    </div>
+  </footer>
+
+</div>

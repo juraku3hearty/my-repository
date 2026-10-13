@@ -5,82 +5,134 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>交通事故実務デスク｜整骨院・接骨院の交通事故対応の確認先</title>
 <meta name="description" content="保険会社対応・施術証明書・健康保険の取り扱い・施術の打ち切り。整骨院・接骨院の交通事故実務で迷ったときの確認先。公開済みQ&amp;Aは24時間検索できます。月額9,800円（税込）。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="{{ url_for('static', filename='lp.css') }}">
 </head>
 <body>
+<div class="page">
 
-<header>
-  <div class="inner">
-    <div class="brand">交通事故実務デスク<span>整骨院・接骨院の実務の確認先</span></div>
-    <a class="hlogin" href="{{ url_for('login_page') }}">会員ログイン</a>
+  <div class="masthead">
+    <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の実務の確認先</small></div>
+    <a class="enter" href="{{ url_for('login_page') }}">会員ログイン</a>
   </div>
-</header>
 
-<!-- 主役 -->
-<section class="hero">
-  <div class="inner">
-    <h1>交通事故実務の疑問を、<br>ひとりで抱え込まない。</h1>
-    <p class="lead">
-      よくある質問は、24時間いつでも確認。<br>
-      初めてのケースは、専門家への確認を経て回答。
-    </p>
-    {% if join_open %}
-    <a class="cta" href="{{ url_for('join') }}">月額9,800円（税込）で申し込む</a>
-    <p class="cta-sub">クレジットカード決済・いつでも解約できます</p>
-    {% else %}
-    <a class="cta" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
-    <p class="cta-sub">現在は公開の準備中です。登録に料金はかかりません</p>
-    {% endif %}
-  </div>
-</section>
-
-<div class="wrap">
-
-  <!-- 課題 -->
-  <section class="sec">
-    <p class="body">
-      保険会社への対応、施術証明書、健康保険の取り扱い、施術の打ち切り。
-    </p>
-    <div class="scenes">
-      <b>保険会社への対応</b>
-      <b>施術証明書</b>
-      <b>健康保険の取り扱い</b>
-      <b>施術の打ち切り</b>
+  <!-- 柱 -->
+  <section class="hero">
+    <h1>
+      <span class="thin">整骨院・接骨院の先生へ</span>
+      <em>交通事故実務の疑問を、</em>
+      <em>ひとりで抱え込まない。</em>
+    </h1>
+    <div class="two-lines">
+      <div>よくある質問は、24時間いつでも確認。</div>
+      <div>初めてのケースは、専門家への確認を経て回答。</div>
     </div>
-    <p class="body">
-      整骨院・接骨院の現場では、判断に迷う場面が突然やってきます。
+    <div class="cta-row">
+      {% if join_open %}
+      <a class="cta" href="{{ url_for('join') }}">月額9,800円（税込）で申し込む</a>
+      <p class="cta-note">クレジットカード決済。<br>いつでも解約できます。</p>
+      {% else %}
+      <a class="cta" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
+      <p class="cta-note">現在は公開の準備中です。<br>登録に料金はかかりません。</p>
+      {% endif %}
+    </div>
+
+    <!-- 実際の画面 -->
+    <div class="screens">
+      <div class="phone">
+        <div class="bar"><span>交通事故実務デスク</span><span>Q&amp;A</span></div>
+        <div class="body">
+          <div class="q-field">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+            <span>打ち切りと言われた</span>
+          </div>
+          <div class="a-card">
+            <div class="qt">保険会社から「そろそろ打ち切り」と言われました。すぐに施術をやめるべきですか。</div>
+            <div class="at">保険会社の打ち切りの連絡は、施術の必要性の判断ではありません。まず主治医の見解を確認し、必要であれば施術継続の医学的理由を書面で…</div>
+            <span class="stamp">院長確認済み</span>
+            <div class="when">確認日 2026-10-02</div>
+          </div>
+          <div class="chip-row"><b>打ち切り</b><b>医師の同意</b><b>施術証明書</b></div>
+        </div>
+        <p class="shot-cap">検索すると、確認を終えた回答が結論から出ます。</p>
+      </div>
+
+      <div class="phone">
+        <div class="bar"><span>交通事故実務デスク</span><span>ご相談</span></div>
+        <div class="body">
+          <div class="a-card">
+            <div class="qt">該当するQ&amp;Aが見つかりませんでした</div>
+            <div class="at">お探しの内容は、まだQ&amp;Aになっていないか、個別の判断が必要な可能性があります。いただいた質問は記録され、確認のうえ回答します。</div>
+            <span class="stamp pend">確認中</span>
+            <div class="when">ご相談として受付</div>
+          </div>
+          <div class="q-field">
+            <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+            <span>この内容で相談する</span>
+          </div>
+        </div>
+        <p class="shot-cap">無いときは、無いと出ます。推測の答えは返しません。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 場面 -->
+  <section class="sec">
+    <p class="kicker">こんな場面で</p>
+    <h2>判断に迷う場面は、<br>突然やってきます。</h2>
+    <p class="intro">
+      保険会社への対応、施術証明書、健康保険の取り扱い、施術の打ち切り。
+      整骨院・接骨院の現場では、調べる時間のないときに限って判断を求められます。
     </p>
-    <p class="body">
-      そんなときのために、<strong>交通事故実務デスク</strong>があります。
-    </p>
+    <div class="cards">
+      <div class="icard">
+        <b>保険会社への対応</b>
+        <p>担当者から連絡が来たが、どこまで答えてよいのか分からない。</p>
+      </div>
+      <div class="icard">
+        <b>施術証明書</b>
+        <p>書き方や記載の範囲に自信がない。前回と違う様式が届いた。</p>
+      </div>
+      <div class="icard">
+        <b>健康保険の取り扱い</b>
+        <p>第三者行為の届出、自賠責との関係をどう整理するか。</p>
+      </div>
+      <div class="icard">
+        <b>施術の打ち切り</b>
+        <p>打ち切りを告げられたとき、患者さんにどう説明するか。</p>
+      </div>
+    </div>
   </section>
 
   <!-- 使い方 -->
   <section class="sec">
-    <h2>普段は検索。迷ったら相談。難しい案件は専門家確認。</h2>
+    <p class="kicker">使い方</p>
+    <h2>普段は検索。迷ったら相談。<br>難しい案件は専門家確認。</h2>
     <div class="steps">
       <div class="step">
-        <div class="no">1</div>
-        <div class="tx">
-          <b>普段は検索</b>
+        <div class="n">一</div>
+        <div>
+          <h3>普段は検索</h3>
           <p>蓄積された確認済みのQ&amp;Aは、24時間いつでも検索・閲覧できます。
              スマホで質問を入れるだけ。結論から表示します。</p>
         </div>
       </div>
       <div class="step">
-        <div class="no">2</div>
-        <div class="tx">
-          <b>迷ったら相談</b>
+        <div class="n">二</div>
+        <div>
+          <h3>迷ったら相談</h3>
           <p>過去のQ&amp;Aにない新しいケースや、個別事情によって判断が必要な場合は、
-             ご相談ください。</p>
+             ご相談ください。そのまま相談として受け付けます。</p>
         </div>
       </div>
       <div class="step">
-        <div class="no">3</div>
-        <div class="tx">
-          <b>難しい案件は専門家確認</b>
+        <div class="n">三</div>
+        <div>
+          <h3>難しい案件は専門家確認</h3>
           <p>内容に応じて専門家への確認を行ったうえで回答します。
-             回答はそのままQ&amp;Aに蓄積され、次に同じ場面で迷う先生の役に立ちます。</p>
+             回答はQ&amp;Aに蓄積され、次に同じ場面で迷う先生の役に立ちます。</p>
         </div>
       </div>
     </div>
@@ -88,22 +140,26 @@
 
   <!-- 方針 -->
   <section class="sec">
+    <p class="kicker">考え方</p>
+    <h2>確認を大切にする。</h2>
     <div class="pledge">
-      <p>その場しのぎの推測ではなく、確認を大切にする。</p>
-      <p class="small">
-        Q&amp;Aに表示されるのは、<b>確認を終えた回答だけ</b>です。
-        未確認の内容をAIが推測で補うことはありません。
+      <p class="big">その場しのぎの推測ではなく、確認を大切にする。</p>
+      <p class="sub">
+        Q&amp;Aに表示されるのは、確認を終えた回答だけです。
+        未確認の内容をAIが推測で補うことはありません。回答を書き直したときは、
+        もう一度確認を通すまで「院長確認済み」の表示は出ません。
       </p>
     </div>
-    <p class="body">
+    <p class="intro">
       交通事故実務デスクは、先生が日々の交通事故対応を進めるための、実務の確認先です。
     </p>
   </section>
 
   <!-- 範囲 -->
   <section class="sec">
-    <h2>ご利用の範囲</h2>
-    <div class="two">
+    <p class="kicker">ご利用の範囲</p>
+    <h2>できること、できないこと。</h2>
+    <div class="scope">
       <div class="can">
         <h3>できること</h3>
         <ul>
@@ -126,52 +182,98 @@
   </section>
 
   <!-- 料金 -->
-  <section class="sec">
-    <h2>料金</h2>
-    <div class="price">
-      <div class="amount"><b>9,800</b><span>円／月（税込）</span>
-        {% if not join_open %}<div class="prep">現在、受付の準備中です</div>{% endif %}</div>
+  <section class="sec" id="料金">
+    <p class="kicker">料金</p>
+    <h2>月額9,800円（税込）。</h2>
+    <div class="fee">
+      <div class="amount">
+        <span class="n">9,800</span><span class="u">円</span>
+        <div class="per">１か月あたり（税込）</div>
+        {% if not join_open %}<div class="per prep">現在、受付の準備中です</div>{% endif %}
+      </div>
       <dl>
-        <dt>お支払い</dt><dd>クレジットカード。お申し込み時に初回のお支払いが発生します</dd>
-        <dt>更新</dt><dd>1か月ごとに自動で更新されます</dd>
-        <dt>解約</dt><dd>いつでも解約できます。解約後、次回の課金は行われません。
-            お支払い済みの期間が終了するまでご利用いただけます（返金はありません）</dd>
-        <dt>ご利用開始</dt><dd>決済完了後、ログイン用のメールをお送りします</dd>
+        <dt>お支払い</dt>
+        <dd>クレジットカード。お申し込み時に初回のお支払いが発生します。
+            カード情報は決済代行会社の画面で入力され、当社では受け取りません。</dd>
+        <dt>更新</dt>
+        <dd>1か月ごとに自動で更新されます。</dd>
+        <dt>解約</dt>
+        <dd>いつでも解約できます。解約後、次回の課金は行われません。
+            お支払い済みの期間が終了するまでご利用いただけます（返金はありません）。</dd>
+        <dt>ご利用開始</dt>
+        <dd>決済完了後、ログイン用のメールをお送りします。パスワードは不要です。</dd>
       </dl>
     </div>
-    {% if join_open %}
-    <a class="cta dark" href="{{ url_for('join') }}">申し込みに進む</a>
-    <p class="cta-sub dark">
-      必要なときに調べられる。分からないときには相談できる。
-    </p>
-    {% else %}
-    <a class="cta dark" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
-    <p class="cta-sub dark">
-      必要なときに調べられる。分からないときには相談できる。
-    </p>
-    {% endif %}
   </section>
 
-  <!-- 注意 -->
+  <!-- よくある質問 -->
   <section class="sec">
-    <div class="caution">
-      ※24時間利用できるのは公開済みQ&amp;Aの閲覧機能です。個別相談への回答は即時対応ではなく、
-      確認内容に応じて時間をいただきます。<br>
-      ※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
-      保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
-      弁護士・行政書士・医師等の有資格者にご相談ください。
+    <p class="kicker">よくある質問</p>
+    <h2>お申し込みの前に。</h2>
+    <div class="faq">
+      <details open>
+        <summary>パソコンが苦手でも使えますか。</summary>
+        <div class="ans">スマホだけで使えます。質問を入力して検索するだけで、結論から表示されます。
+          ログインもパスワード不要で、届いたメールのリンクを開くだけです。</div>
+      </details>
+      <details>
+        <summary>相談の回答はどのくらいで届きますか。</summary>
+        <div class="ans">即時ではありません。内容によって確認に時間をいただきます。
+          確認が済み次第、回答をお送りし、Q&amp;Aにも追加します。</div>
+      </details>
+      <details>
+        <summary>AIが勝手に答えを作ることはありませんか。</summary>
+        <div class="ans">ありません。検索の結果として出るのは、確認を終えた回答の本文そのものです。
+          回答文をあとから書き直した場合は、もう一度確認を通すまで表示されません。</div>
+      </details>
+      <details>
+        <summary>解約はどうすればよいですか。</summary>
+        <div class="ans">いつでも解約できます。解約後は次回の課金が行われず、
+          お支払い済みの期間が終わるまではそのままご利用いただけます。</div>
+      </details>
+      <details>
+        <summary>複数のスタッフで使えますか。</summary>
+        <div class="ans">1件のお申し込みにつき1つのメールアドレスでご利用いただきます。
+          院内で共有される場合は、お問い合わせください。</div>
+      </details>
+      <details>
+        <summary>弁護士・行政書士ですが、協力することはできますか。</summary>
+        <div class="ans">現場で実際に生まれた疑問をテーマに、学び合える場をつくりたいと考えています。
+          関心のある先生は info@famitect.com までご連絡ください。
+          具体的な内容や条件は、ご相談しながら決めていきます。</div>
+      </details>
     </div>
   </section>
+
+  <!-- 末尾 -->
+  <div class="closer">
+    <h2>必要なときに調べられる。<br>分からないときには相談できる。</h2>
+    <p>交通事故対応で迷ったとき、確認先があるという状態をつくります。</p>
+    {% if join_open %}
+    <a class="cta" href="{{ url_for('join') }}">月額9,800円（税込）で申し込む</a>
+    {% else %}
+    <a class="cta" href="{{ url_for('prelaunch') }}">受付開始のご案内を受け取る</a>
+    {% endif %}
+  </div>
+
+  <div class="caution">
+    <p>※24時間利用できるのは公開済みQ&amp;Aの閲覧機能です。個別相談への回答は即時対応ではなく、
+       確認内容に応じて時間をいただきます。</p>
+    <p>※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
+       保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
+       弁護士・行政書士・医師等の有資格者にご相談ください。</p>
+  </div>
 
   <footer>
     <div class="links">
-      <a href="{{ url_for('terms') }}">利用規約</a>　·　
-      <a href="{{ url_for('privacy_policy') }}">プライバシーポリシー</a>　·　
+      <a href="{{ url_for('terms') }}">利用規約</a>　·
+      <a href="{{ url_for('privacy_policy') }}">プライバシーポリシー</a>　·
       <a href="{{ url_for('tokusho') }}">特定商取引法に基づく表示</a>
     </div>
-    <div class="company">
+    <div class="co">
       株式会社famitect　交通事故実務デスク<br>
-      京都府京都市伏見区久我石原町1-7　075-874-5522　info@famitect.com
+      京都府京都市伏見区久我石原町1-7<br>
+      075-874-5522　info@famitect.com
     </div>
   </footer>
 
