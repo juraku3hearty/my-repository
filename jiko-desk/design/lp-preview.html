@@ -173,6 +173,23 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
 .screen-cap { font-size: 12px; color: var(--on-navy-s); text-align: center;
   margin-top: 13px; line-height: 1.7; }
 
+/* 回答の下に出す監修者。ネット記事の著者プロフィールと同じ役割 */
+.byline { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--rule);
+  display: flex; gap: 12px; align-items: flex-start; }
+.byline .av { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--tab); border: 1px solid var(--rule); display: grid; place-items: center; }
+.byline .av svg { width: 22px; height: 22px; stroke: var(--ink-soft); fill: none; stroke-width: 1.5; }
+.byline .who { flex: 1; min-width: 0; }
+.byline .nm { font-family: var(--mincho); font-size: 15px; font-weight: 700; line-height: 1.4; }
+.vchk { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--ok);
+  border: 1.5px solid var(--ok); border-radius: 3px; padding: 2px 8px; margin-top: 7px;
+  letter-spacing: .03em; white-space: nowrap; }
+.byline .of { font-size: 11.5px; color: var(--ink-soft); margin-top: 3px; }
+.byline .pr { font-size: 12.5px; color: var(--ink-soft); line-height: 1.75; margin-top: 7px; }
+.srcline { margin-top: 11px; font-size: 11.5px; color: var(--ink-soft); line-height: 1.75;
+  background: var(--paper); border-radius: 6px; padding: 9px 11px; }
+.srcline b { color: var(--ink); font-weight: 700; }
+
 /* 近いQ&Aの一覧。回答本文は出さず、質問だけをリンクで見せる */
 .rel { display: grid; gap: 8px; }
 .rel-h { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--ink-soft);
@@ -228,7 +245,12 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
 
 .plan-item + .plan-item { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--rule); }
 .plan-item .pnum { display: inline-block; font-size: 11.5px; font-weight: 700;
-  letter-spacing: .14em; color: var(--teal); margin-bottom: 7px; }
+  letter-spacing: .1em; color: var(--todo); border: 1px solid var(--todo);
+  border-radius: 3px; padding: 2px 9px; margin-bottom: 9px; }
+.plan-item .pnum.now { color: var(--ok); border-color: var(--ok); }
+.plan-item .nofee { background: rgba(44,107,47,.07); border-left: 3px solid var(--ok);
+  border-radius: 0 6px 6px 0; padding: 12px 13px; margin-top: 12px; }
+.plan-item p b { color: var(--ink); }
 .plan-item h3 { font-size: 18px; line-height: 1.55; margin-bottom: 10px; }
 .plan-item p { font-size: 14.5px; line-height: 1.9; }
 .plan-item p + p { margin-top: 11px; }
@@ -388,7 +410,8 @@ footer .co { font-size: 12px; }
           <div>
             <h3><u>確認を終えた回答が、</u><u>結論から出る</u></h3>
             <p>長い解説を読み進める必要はありません。結論が先に来ます。
-               確認を終えたものだけが出ます。誰が確認したかも表示されます。</p>
+               確認を終えたものだけが出ます。回答の下には、確認した先生のお名前と
+               ご紹介、そして元になった講座の回が出ます。</p>
           </div>
         </div>
         <div class="screen">
@@ -398,8 +421,19 @@ footer .co { font-size: 12px; }
               <div class="qt">保険会社から「そろそろ打ち切り」と言われました。すぐに施術をやめるべきですか。</div>
               <div class="at">保険会社の打ち切りの連絡は、施術の必要性の医学的な判断ではありません。
                 まず主治医の見解を確認し、必要であれば施術継続の理由を書面で…</div>
-              <span class="stamp"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>行政書士 確認済み</span>
-              <div class="when">〈確認者名〉／確認日 2026-10-02</div>
+              <div class="byline">
+                <div class="av"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div>
+                <div class="who">
+                  <div class="nm">〈確認した先生のお名前〉</div>
+                  <div class="of">行政書士／〈事務所名〉</div>
+                  <div><span class="vchk">✓ この回答を確認済み</span></div>
+                  <div class="pr">〈この先生の紹介文。交通事故分野の経歴を2行程度〉</div>
+                </div>
+              </div>
+              <div class="srcline">
+                <b>出典</b> 交通事故実務講座 第12回（〈話した先生のお名前〉）<br>
+                <b>確認日</b> 2026-10-02
+              </div>
             </div>
             <div class="q-field ghost">
               <svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="2.5"/><path d="M16.5 10l5-3v10l-5-3z"/></svg>
@@ -407,7 +441,7 @@ footer .co { font-size: 12px; }
             </div>
           </div>
         </div>
-        <p class="screen-cap">回答文を書き直したときは、もう一度確認を通すまでこの表示は出ません。</p>
+        <p class="screen-cap">回答文を書き直したときは、確認した先生にもう一度通すまで、この表示は出ません。</p>
       </div>
 
       <div class="flow-step">
@@ -468,9 +502,9 @@ footer .co { font-size: 12px; }
       </div>
       <div class="value">
         <svg class="vi" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
-        <h3>誰が確認したかが分かる</h3>
-        <p>回答には確認した人の肩書と確認日が付きます。書き直したときは、
-           もう一度確認を通すまで表示されません。</p>
+        <h3>誰の見解かが、分かる</h3>
+        <p>回答の下に、確認した先生のお名前・ご紹介・確認日と、元になった
+           講座の回が出ます。書き直したら、もう一度確認を通すまで表示されません。</p>
       </div>
     </div>
   </div>
@@ -517,47 +551,51 @@ footer .co { font-size: 12px; }
   </div>
 </section>
 
-<!-- ───── 構想 ───── -->
+<!-- ───── 専門家とのつながり ───── -->
 <section class="band">
   <div class="inner">
     <div class="sec-head">
-      <span class="plan-note">構想中・未確定</span>
-      <h2><u>専門家の先生と、</u><u>つながれる場をつくりたい。</u></h2>
-      <p class="sub">これから進めたいと考えていることです。
-        いずれも決まっていないため、現時点の会員特典ではありません。</p>
+      <p class="eyebrow">専門家の先生とのつながり</p>
+      <h2><u>調べて終わりでは、</u><u>ないようにしたい。</u></h2>
+      <p class="sub">Q&amp;Aや相談では収まらず、実際に手続きや交渉を任せたい場面があります。
+        いま行っていることと、これから進めたいことを分けて書きます。</p>
     </div>
 
     <div class="plan-box">
       <div class="plan-item">
-        <span class="pnum">構想 1</span>
-        <h3>実務解説と、学び合いの場</h3>
+        <span class="pnum now">いま行っていること</span>
+        <h3>行政書士・弁護士の先生のご紹介</h3>
         <p>
-          交通事故の実務には、整骨院の側からは見えにくい部分があります。
-          弁護士・行政書士の先生に現場で実際に生まれた疑問を知っていただき、
-          実務解説にご協力いただける関係をつくれないかと考えています。
+          ご希望があれば、交通事故に詳しい行政書士・弁護士の先生をご紹介しています。
+          これは交通事故実務デスクの開始前から行っていることです。
         </p>
-        <p>
-          整骨院の先生にとっては、知識だけでなく、考え方や人柄を知るきっかけに。
-          専門家の先生にとっては、普段なかなか聞けない現場の声に触れる機会に。
+        <p class="nofee">
+          <b>ご紹介にあたって、当社が手数料や紹介料を受け取ることはありません。</b>
+          ご依頼の契約は、先生と直接お結びいただきます。当社は間に入りません。
         </p>
       </div>
 
       <div class="plan-item">
-        <span class="pnum">構想 2</span>
-        <h3>依頼したいときの、つなぎ先</h3>
+        <span class="pnum">これから（未確定）</span>
+        <h3>会員の先生向けの料金</h3>
         <p>
-          Q&amp;Aや相談では収まらず、実際に手続きや交渉を任せたい場面があります。
-          そのときに、交通事故に詳しい行政書士・弁護士の先生をご紹介できる形を
-          つくれないかと考えています。会員の先生向けの料金を設けられるかどうかも、
-          あわせて相談していきます。
+          会員の先生がご依頼される場合の料金について、先生方と相談しているところです。
+          <b>まだ決まっておらず、月額料金には含まれていません。</b>決まり次第ご案内します。
         </p>
       </div>
 
-      <div class="undecided">
-        <b>どちらも構想であり、会員特典ではありません。</b><br>
-        ご協力いただく先生、開催の頻度、参加の条件、ご紹介の方法、料金は、
-        いずれもまだ決まっていません。月額料金に、これらは含まれていません。
-        内容が決まりましたら、あらためてご案内します。
+      <div class="plan-item">
+        <span class="pnum">これから（未確定）</span>
+        <h3>実務解説と、学び合いの場</h3>
+        <p>
+          現場で実際に生まれた疑問をテーマに、専門家の先生と学び合える場をつくれないかと
+          考えています。整骨院の先生にとっては考え方や人柄を知るきっかけに、
+          専門家の先生にとっては普段聞けない現場の声に触れる機会に。
+        </p>
+        <p>
+          <b>ご協力いただく先生、開催の頻度、参加の条件は、いずれも未定です。</b>
+          月額料金に、この場への参加は含まれていません。
+        </p>
       </div>
     </div>
   </div>
@@ -641,9 +679,16 @@ footer .co { font-size: 12px; }
           確認が済み次第、回答をお送りし、Q&amp;Aにも追加します。</div>
       </details>
       <details>
+        <summary>回答は誰が書いているのですか。</summary>
+        <div class="ans">もとになっているのは、交通事故実務講座で先生方にお話しいただいた内容です。
+          それを実務で使える形に整理し、お話しいただいた先生ご本人に確認を通したうえで公開しています。
+          回答の下に、確認した先生のお名前とご紹介、元になった講座の回を表示しています。</div>
+      </details>
+      <details>
         <summary>AIが勝手に答えを作ることはありませんか。</summary>
         <div class="ans">ありません。検索の結果として出るのは、確認を終えた回答の本文そのものです。
-          回答文をあとから書き直した場合は、もう一度確認を通すまで表示されません。</div>
+          AIは回答を書く作業の下ごしらえに使いますが、公開されるのは先生の確認を通った文章だけです。
+          本文をあとから書き直した場合は、もう一度確認を通すまで表示されません。</div>
       </details>
       <details>
         <summary>解約はどうすればよいですか。</summary>
@@ -658,7 +703,8 @@ footer .co { font-size: 12px; }
       <details>
         <summary>弁護士・行政書士ですが、協力することはできますか。</summary>
         <div class="ans">現場で実際に生まれた疑問をテーマに、学び合える場をつくりたいと考えています。
-          あわせて、会員の先生からご依頼が出た際のつなぎ先についてもご相談したいと考えています。
+          あわせて、ご依頼が出た際のご紹介先についてもご相談したいと考えています。
+          ご紹介にあたって当社が手数料をいただくことはありません。
           関心のある先生は info@famitect.com までご連絡ください。
           具体的な内容や条件は、ご相談しながら決めていきます。</div>
       </details>
@@ -682,9 +728,10 @@ footer .co { font-size: 12px; }
     <p>※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
        保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
        弁護士・行政書士・医師等の有資格者にご相談ください。</p>
-    <p>※専門家との実務解説・交流、および専門家のご紹介は、いずれも構想段階です。
-       会員特典として確定したものではなく、月額料金には含まれていません。
-       ご紹介の方法や料金が決まり次第、あらためてご案内します。</p>
+    <p>※行政書士・弁護士の先生のご紹介は、交通事故実務デスクの会員でなくても承っています。
+       当社が手数料・紹介料を受け取ることはありません。ご依頼の契約は先生と直接お結びいただきます。</p>
+    <p>※会員向けの料金、および実務解説・交流の場は、いずれも未確定です。
+       会員特典として確定したものではなく、月額料金には含まれていません。</p>
     <p>※画面はすべて開発中のもので、表示内容は実際のQ&amp;Aではありません。</p>
   </div>
 </div>
