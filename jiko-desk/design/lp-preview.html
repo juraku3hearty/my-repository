@@ -226,6 +226,13 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
   background: rgba(180,83,47,.07); border: 1px dashed var(--todo);
   border-radius: 4px; padding: 13px 14px; line-height: 1.85; }
 
+.plan-item + .plan-item { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.plan-item .pnum { display: inline-block; font-size: 11.5px; font-weight: 700;
+  letter-spacing: .14em; color: var(--teal); margin-bottom: 7px; }
+.plan-item h3 { font-size: 18px; line-height: 1.55; margin-bottom: 10px; }
+.plan-item p { font-size: 14.5px; line-height: 1.9; }
+.plan-item p + p { margin-top: 11px; }
+
 /* ── 範囲 ── */
 .scope { display: grid; gap: 15px; grid-template-columns: 1fr; }
 @media (min-width: 620px) { .scope { grid-template-columns: 1fr 1fr; } }
@@ -515,23 +522,41 @@ footer .co { font-size: 12px; }
   <div class="inner">
     <div class="sec-head">
       <span class="plan-note">構想中・未確定</span>
-      <h2>専門家の先生と、<br>学び合える場をつくりたい。</h2>
+      <h2><u>専門家の先生と、</u><u>つながれる場をつくりたい。</u></h2>
+      <p class="sub">これから進めたいと考えていることです。
+        いずれも決まっていないため、現時点の会員特典ではありません。</p>
     </div>
+
     <div class="plan-box">
-      <p>
-        交通事故の実務には、整骨院の側からは見えにくい部分があります。
-        弁護士・行政書士の先生に現場で実際に生まれた疑問を知っていただき、
-        実務解説にご協力いただける関係をつくれないかと考えています。
-      </p>
-      <p>
-        整骨院の先生にとっては、知識だけでなく、考え方や人柄を知るきっかけに。
-        専門家の先生にとっては、普段なかなか聞けない現場の声に触れる機会に。
-        そういう場にできればと思っています。
-      </p>
+      <div class="plan-item">
+        <span class="pnum">構想 1</span>
+        <h3>実務解説と、学び合いの場</h3>
+        <p>
+          交通事故の実務には、整骨院の側からは見えにくい部分があります。
+          弁護士・行政書士の先生に現場で実際に生まれた疑問を知っていただき、
+          実務解説にご協力いただける関係をつくれないかと考えています。
+        </p>
+        <p>
+          整骨院の先生にとっては、知識だけでなく、考え方や人柄を知るきっかけに。
+          専門家の先生にとっては、普段なかなか聞けない現場の声に触れる機会に。
+        </p>
+      </div>
+
+      <div class="plan-item">
+        <span class="pnum">構想 2</span>
+        <h3>依頼したいときの、つなぎ先</h3>
+        <p>
+          Q&amp;Aや相談では収まらず、実際に手続きや交渉を任せたい場面があります。
+          そのときに、交通事故に詳しい行政書士・弁護士の先生をご紹介できる形を
+          つくれないかと考えています。会員の先生向けの料金を設けられるかどうかも、
+          あわせて相談していきます。
+        </p>
+      </div>
+
       <div class="undecided">
-        <b>これは構想であり、会員特典ではありません。</b><br>
-        ご協力いただく専門家、開催の頻度、参加の条件は、いずれもまだ決まっていません。
-        月額料金に、この場への参加は含まれていません。
+        <b>どちらも構想であり、会員特典ではありません。</b><br>
+        ご協力いただく先生、開催の頻度、参加の条件、ご紹介の方法、料金は、
+        いずれもまだ決まっていません。月額料金に、これらは含まれていません。
         内容が決まりましたら、あらためてご案内します。
       </div>
     </div>
@@ -633,6 +658,7 @@ footer .co { font-size: 12px; }
       <details>
         <summary>弁護士・行政書士ですが、協力することはできますか。</summary>
         <div class="ans">現場で実際に生まれた疑問をテーマに、学び合える場をつくりたいと考えています。
+          あわせて、会員の先生からご依頼が出た際のつなぎ先についてもご相談したいと考えています。
           関心のある先生は info@famitect.com までご連絡ください。
           具体的な内容や条件は、ご相談しながら決めていきます。</div>
       </details>
@@ -656,7 +682,9 @@ footer .co { font-size: 12px; }
     <p>※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
        保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
        弁護士・行政書士・医師等の有資格者にご相談ください。</p>
-    <p>※専門家との実務解説・交流は構想段階です。会員特典として確定したものではありません。</p>
+    <p>※専門家との実務解説・交流、および専門家のご紹介は、いずれも構想段階です。
+       会員特典として確定したものではなく、月額料金には含まれていません。
+       ご紹介の方法や料金が決まり次第、あらためてご案内します。</p>
     <p>※画面はすべて開発中のもので、表示内容は実際のQ&amp;Aではありません。</p>
   </div>
 </div>
