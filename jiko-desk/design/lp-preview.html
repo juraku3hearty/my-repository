@@ -1,352 +1,328 @@
 <title>交通事故実務デスク</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@500;600;700&display=swap">
 <style>
-/* 索引カードの棚。見出しは明朝、本文はゴシック。
-   色は会員サイトの design/tokens.css と同じ藍を軸に、紙の地色を敷く。 */
+/* 紺の帯と紙の面を交互に積む。見出しは明朝、本文はゴシック。
+   色は会員サイトの design/tokens.css と同じ藍・青磁を軸にする。 */
 :root {
-  --ink:      #16202a;   /* 本文 */
-  --ink-soft: #5d6b78;   /* 補助 */
-  --navy:     #14304a;   /* 主色。会員サイトと共通 */
-  --teal:     #1f7a8c;   /* 補助色。会員サイトと共通 */
-  --paper:    #f4f2ed;   /* 地。わずかに温かい紙色 */
+  --ink:      #16202a;
+  --ink-soft: #5d6b78;
+  --navy:     #14304a;
+  --navy-dp:  #0d2236;
+  --teal:     #1f7a8c;
+  --paper:    #f4f2ed;
   --card:     #ffffff;
-  --rule:     #ddd8cf;   /* 罫 */
-  --tab:      #e9e4da;   /* 索引カードのつまみ */
+  --rule:     #ddd8cf;
+  --tab:      #e9e4da;
+  --on-navy:  #eef3f7;
+  --on-navy-s:#a9c4d8;
   --ok:       #2c6b2f;
   --warn:     #9b3a24;
-  --shadow:   0 1px 2px rgba(22,32,42,.06), 0 10px 26px rgba(22,32,42,.07);
+  --todo:     #b4532f;
+  --shadow:   0 1px 2px rgba(22,32,42,.06), 0 12px 30px rgba(22,32,42,.09);
+  --shadow-l: 0 2px 4px rgba(22,32,42,.08), 0 26px 50px rgba(22,32,42,.14);
   --mincho: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   --gothic: "Noto Sans JP", -apple-system, "Hiragino Sans", sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ink:      #e8e6e1;
-    --ink-soft: #9aa6b1;
-    --navy:     #8fb6d4;
-    --teal:     #5fb3c4;
-    --paper:    #15191d;
-    --card:     #1d2328;
-    --rule:     #343b42;
-    --tab:      #272e34;
-    --ok:       #7fc083;
-    --warn:     #e09277;
-    --shadow:   0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.3);
+    --ink: #e8e6e1; --ink-soft: #99a5b0; --navy: #8fb6d4; --navy-dp: #0b1116;
+    --teal: #5fb3c4; --paper: #14181c; --card: #1c2227; --rule: #333a41;
+    --tab: #262d33; --on-navy: #eef3f7; --on-navy-s: #9fb6c7;
+    --ok: #7fc083; --warn: #e09277; --todo: #e0a085;
+    --shadow: 0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.35);
+    --shadow-l: 0 2px 4px rgba(0,0,0,.5), 0 26px 50px rgba(0,0,0,.45);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --ink:      #e8e6e1;
-  --ink-soft: #9aa6b1;
-  --navy:     #8fb6d4;
-  --teal:     #5fb3c4;
-  --paper:    #15191d;
-  --card:     #1d2328;
-  --rule:     #343b42;
-  --tab:      #272e34;
-  --ok:       #7fc083;
-  --warn:     #e09277;
-  --shadow:   0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.3);
+  --ink: #e8e6e1; --ink-soft: #99a5b0; --navy: #8fb6d4; --navy-dp: #0b1116;
+  --teal: #5fb3c4; --paper: #14181c; --card: #1c2227; --rule: #333a41;
+  --tab: #262d33; --on-navy: #eef3f7; --on-navy-s: #9fb6c7;
+  --ok: #7fc083; --warn: #e09277; --todo: #e0a085;
+  --shadow: 0 1px 2px rgba(0,0,0,.45), 0 12px 30px rgba(0,0,0,.35);
+  --shadow-l: 0 2px 4px rgba(0,0,0,.5), 0 26px 50px rgba(0,0,0,.45);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--paper); color: var(--ink);
+body { margin: 0; background: var(--paper); color: var(--ink);
   font-family: var(--gothic); font-size: 16px; line-height: 1.9;
-  -webkit-font-smoothing: antialiased;
-}
-.page { max-width: 760px; margin: 0 auto; padding-block: 0 72px; padding-left: 20px; padding-right: 20px; }
+  -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 h1, h2, h3 { font-family: var(--mincho); font-weight: 600; text-wrap: balance; margin: 0; }
-p { margin: 0; }
+p, ul, dl { margin: 0; }
 a { color: inherit; }
+img { max-width: 100%; }
 
-/* 確認用の帯 */
-.preview-bar {
-  background: var(--navy); color: var(--paper); font-size: 12.5px; line-height: 1.6;
-  padding: 9px 20px; text-align: center; letter-spacing: .02em;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .preview-bar { background: #0f1317; color: var(--ink-soft); }
-}
-:root[data-theme="dark"] .preview-bar { background: #0f1317; color: var(--ink-soft); }
+/* 帯 */
+.band { padding-block: 64px; }
+.band.dark { background: var(--navy); color: var(--on-navy); }
+.band.deep { background: var(--navy-dp); color: var(--on-navy); }
+.band.card-bg { background: var(--card); }
+.inner { max-width: 760px; margin: 0 auto; padding-inline: 20px; }
+.band.dark h1, .band.dark h2, .band.dark h3,
+.band.deep h1, .band.deep h2, .band.deep h3 { color: var(--on-navy); }
 
-/* ── 見出し部 ── */
-.masthead {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 16px; flex-wrap: wrap;
-  padding-block: 26px 0;
-}
-.wordmark { font-family: var(--mincho); font-size: 17px; font-weight: 700; letter-spacing: .06em; }
+.preview-bar { background: var(--todo); color: #fff; font-size: 12.5px; line-height: 1.6;
+  padding: 10px 20px; text-align: center; letter-spacing: .01em; font-weight: 500; }
+
+/* 見出し部 */
+.masthead { padding-block: 22px; border-bottom: 1px solid rgba(255,255,255,.14); }
+.masthead .inner { display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; }
+.wordmark { font-family: var(--mincho); font-size: 17px; font-weight: 700; letter-spacing: .07em; }
 .wordmark small { display: block; font-family: var(--gothic); font-weight: 400;
-  font-size: 11px; letter-spacing: .14em; color: var(--ink-soft); margin-top: 2px; }
-.masthead .enter { font-size: 12.5px; color: var(--ink-soft); text-decoration: none;
-  border: 1px solid var(--rule); border-radius: 999px; padding: 6px 15px; white-space: nowrap; }
+  font-size: 11.5px; letter-spacing: .13em; color: var(--on-navy-s); margin-top: 3px; }
+.enter { font-size: 12.5px; color: var(--on-navy-s); text-decoration: none;
+  border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 7px 16px; white-space: nowrap; }
 
 /* ── 柱 ── */
-.hero { padding-block: 34px 8px; }
-.hero h1 {
-  font-size: clamp(27px, 7.4vw, 44px); line-height: 1.42;
-  letter-spacing: .005em; margin-bottom: 22px;
+.hero { padding-block: 46px 56px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .2em;
+  color: var(--teal); margin-bottom: 20px; }
+.band.dark .eyebrow, .band.deep .eyebrow { color: #76c3d4; }
+.scene { display: grid; gap: 13px; margin-bottom: 26px; }
+.scene .line {
+  font-family: var(--mincho); font-weight: 700; line-height: 1.45;
+  font-size: clamp(26px, 7.4vw, 46px); letter-spacing: .005em;
 }
-.hero h1 em { font-style: normal; display: block; }
-.hero h1 .thin { color: var(--ink-soft); font-size: .62em; font-family: var(--gothic);
-  font-weight: 500; letter-spacing: .04em; display: block; margin-bottom: 14px; line-height: 1.7; }
-.two-lines { display: grid; gap: 7px; margin-bottom: 26px; }
-.two-lines div {
-  font-family: var(--mincho); font-size: clamp(15px, 4.1vw, 18.5px); font-weight: 600;
-  padding-left: 17px; border-left: 3px solid var(--teal); line-height: 1.75;
+/* 語のまとまりで折り返す。「連/絡。」のような割れ方を防ぐ */
+/* 見出しは語のまとまりで折り返す */
+h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: none; }
+.scene .line.q { color: #8fd0de; font-size: clamp(21px, 5.9vw, 37px); }
+.scene .line.q .br { opacity: .55; }
+.hero .turn {
+  font-family: var(--mincho); font-size: clamp(19px, 5.2vw, 27px); font-weight: 600;
+  line-height: 1.6; padding-top: 24px; margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,.2);
 }
-.two-lines div:last-child { border-left-color: var(--navy); }
+.hero .turn b { color: #8fd0de; font-weight: 700; }
+.hero .lead { color: var(--on-navy-s); font-size: 15px; }
+.hero .lead u { display: inline-block; text-decoration: none; }
+.hero .lead { font-size: 15px; line-height: 1.95; margin-top: 16px; }
 
-/* 申込ボタン */
-.cta-row { display: flex; flex-wrap: wrap; gap: 11px; align-items: center; }
-.cta {
-  flex: 1 1 260px; min-width: 0; display: block; text-align: center; text-decoration: none;
-  background: var(--navy); color: var(--paper); font-weight: 700; font-size: 16.5px;
-  padding: 17px 20px; border-radius: 4px; letter-spacing: .02em;
-  box-shadow: var(--shadow);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .cta { color: #10161c; }
-}
-:root[data-theme="dark"] .cta { color: #10161c; }
-.cta-note { font-size: 12.5px; color: var(--ink-soft); flex: 1 1 200px; line-height: 1.7; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 13px; align-items: center; margin-top: 30px; }
+.cta { flex: 1 1 280px; min-width: 0; display: block; text-align: center; text-decoration: none;
+  background: var(--paper); color: var(--navy-dp); font-weight: 700; font-size: 17px;
+  padding: 19px 20px; border-radius: 5px; letter-spacing: .02em; box-shadow: var(--shadow-l); }
+.cta .sm { display: block; font-size: 12px; font-weight: 500; opacity: .72; margin-top: 3px;
+  letter-spacing: 0; }
+.cta-note { font-size: 12.5px; color: var(--on-navy-s); flex: 1 1 190px; line-height: 1.75; }
 
-/* ── 画面の写し ── */
-.screens { margin-top: 38px; display: grid; grid-template-columns: 1fr; gap: 18px; }
-@media (min-width: 640px) { .screens { grid-template-columns: 1fr 1fr; } }
-.phone {
-  background: var(--card); border: 1px solid var(--rule); border-radius: 18px;
-  box-shadow: var(--shadow); overflow: hidden; min-width: 0;
-}
-.phone .bar {
-  background: var(--navy); color: #fff; padding: 11px 14px; font-size: 11.5px;
-  letter-spacing: .04em; display: flex; justify-content: space-between; align-items: center;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .phone .bar { background: #223947; color: #d6e6f1; }
-}
-:root[data-theme="dark"] .phone .bar { background: #223947; color: #d6e6f1; }
-.phone .body { padding: 14px; display: grid; gap: 11px; }
-.q-field {
-  border: 1px solid var(--rule); border-radius: 9px; padding: 11px 12px;
-  font-size: 13.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: center;
-}
-.q-field svg { width: 15px; height: 15px; flex: 0 0 15px; stroke: var(--ink-soft);
-  fill: none; stroke-width: 2.1; stroke-linecap: round; }
-.a-card { border: 1px solid var(--rule); border-radius: 9px; padding: 12px 13px; }
-.a-card .qt { font-family: var(--mincho); font-size: 14px; font-weight: 600; line-height: 1.6; }
-.a-card .at {
-  margin-top: 9px; font-size: 13px; line-height: 1.85; background: var(--paper);
-  border-left: 3px solid var(--navy); padding: 10px 11px; border-radius: 0 6px 6px 0;
-}
-.stamp {
-  display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
-  font-size: 11px; font-weight: 700; color: var(--ok);
-  border: 1px solid var(--ok); border-radius: 3px; padding: 2px 8px; letter-spacing: .04em;
-}
-.stamp.pend { color: var(--warn); border-color: var(--warn); }
-.a-card .when { font-size: 10.5px; color: var(--ink-soft); margin-top: 7px; letter-spacing: .02em; }
-.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip-row b { font-weight: 400; font-size: 11.5px; color: var(--ink-soft);
-  border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; }
-.shot-cap { font-size: 11.5px; color: var(--ink-soft); text-align: center;
-  padding: 0 14px 13px; line-height: 1.65; }
+/* ── 場面 ── */
+.sec-head { margin-bottom: 26px; }
+.sec-head h2 { font-size: clamp(22px, 5.8vw, 30px); line-height: 1.5; }
+.sec-head .sub { font-size: 15px; color: var(--ink-soft); margin-top: 12px; line-height: 1.95; }
+.band.dark .sec-head .sub, .band.deep .sec-head .sub { color: var(--on-navy-s); }
 
-/* ── 節 ── */
-.sec { margin-top: 62px; }
-.sec > h2 {
-  font-size: clamp(19px, 5.2vw, 24px); line-height: 1.55; margin-bottom: 7px;
-}
-.sec > .kicker {
-  font-family: var(--gothic); font-size: 11px; font-weight: 700; letter-spacing: .18em;
-  color: var(--teal); margin-bottom: 11px;
-}
-.sec > .intro { font-size: 15px; color: var(--ink-soft); margin-top: 10px; line-height: 1.9; }
-.rule { height: 1px; background: var(--rule); margin-top: 18px; }
-
-/* 索引カード */
-.cards { margin-top: 24px; display: grid; gap: 13px; grid-template-columns: 1fr; }
+.cards { display: grid; gap: 13px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .cards { grid-template-columns: 1fr 1fr; } }
-.icard {
-  position: relative; background: var(--card); border: 1px solid var(--rule);
-  border-radius: 3px; padding: 19px 17px 16px; box-shadow: var(--shadow); min-width: 0;
-}
-.icard::before {
-  content: ""; position: absolute; top: -9px; left: 17px; width: 62px; height: 10px;
-  background: var(--tab); border: 1px solid var(--rule); border-bottom: 0;
-  border-radius: 3px 3px 0 0;
-}
-.icard b { display: block; font-family: var(--mincho); font-size: 16px; font-weight: 600; }
-.icard p { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.8; }
+.icard { position: relative; background: var(--card); border: 1px solid var(--rule);
+  border-radius: 3px; padding: 21px 18px 17px; box-shadow: var(--shadow); min-width: 0; }
+.icard::before { content: ""; position: absolute; top: -9px; left: 18px; width: 66px; height: 10px;
+  background: var(--tab); border: 1px solid var(--rule); border-bottom: 0; border-radius: 3px 3px 0 0; }
+.icard b { display: block; font-family: var(--mincho); font-size: 16.5px; font-weight: 600; }
+.icard p { font-size: 14px; color: var(--ink-soft); margin-top: 7px; line-height: 1.8; }
 
-/* 手順 */
-.steps { margin-top: 26px; display: grid; gap: 0; }
-.step { display: grid; grid-template-columns: 56px 1fr; gap: 16px;
-  padding: 22px 0; border-top: 1px solid var(--rule); min-width: 0; }
-.step:last-child { border-bottom: 1px solid var(--rule); }
-.step .n { font-family: var(--mincho); font-size: 30px; font-weight: 700;
-  color: var(--teal); line-height: 1; letter-spacing: -.02em; }
-.step h3 { font-size: 18px; margin-bottom: 6px; }
-.step p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.85; }
-
-/* 言い切り */
-.pledge {
-  margin-top: 26px; background: var(--card); border: 1px solid var(--rule);
-  border-left: 5px solid var(--navy); border-radius: 0 6px 6px 0;
-  padding: 24px 22px; box-shadow: var(--shadow);
+/* ── Q&A体験 ── */
+.flow { display: grid; gap: 0; }
+.flow-step { padding-block: 30px; border-top: 1px solid rgba(255,255,255,.16); }
+.flow-step:first-child { border-top: 0; padding-top: 6px; }
+.flow-head { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 18px; }
+.flow-head .n {
+  flex: 0 0 42px; width: 42px; height: 42px; border-radius: 50%;
+  border: 1.5px solid #76c3d4; color: #76c3d4;
+  display: grid; place-items: center; font-family: var(--mincho); font-size: 19px;
+  font-weight: 700; line-height: 1;
 }
-.pledge .big { font-family: var(--mincho); font-size: clamp(17px, 4.6vw, 21px);
-  font-weight: 600; line-height: 1.7; }
-.pledge .sub { font-size: 14px; color: var(--ink-soft); margin-top: 12px; line-height: 1.9; }
+.flow-head h3 { font-size: clamp(18px, 4.8vw, 22px); line-height: 1.5; }
+.flow-head p { font-size: 14px; color: var(--on-navy-s); margin-top: 6px; line-height: 1.85; }
 
-/* できること・できないこと */
-.scope { margin-top: 24px; display: grid; gap: 14px; grid-template-columns: 1fr; }
+.screen {
+  background: var(--card); border-radius: 16px; box-shadow: var(--shadow-l);
+  overflow: hidden; color: var(--ink); max-width: 420px; margin: 0 auto;
+}
+.screen .bar { background: var(--navy); color: #fff; padding: 13px 16px; font-size: 12px;
+  letter-spacing: .05em; display: flex; justify-content: space-between; align-items: center; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .screen .bar { background: #253d4c; color: #d6e6f1; }
+}
+:root[data-theme="dark"] .screen .bar { background: #253d4c; color: #d6e6f1; }
+.screen .body { padding: 17px; display: grid; gap: 13px; }
+.q-field { border: 1.5px solid var(--navy); border-radius: 10px; padding: 14px 14px;
+  font-size: 15px; display: flex; gap: 10px; align-items: center; }
+.q-field.ghost { border: 1px solid var(--rule); color: var(--ink-soft); font-size: 14px; }
+.q-field svg { width: 17px; height: 17px; flex: 0 0 17px; stroke: currentColor;
+  fill: none; stroke-width: 2.1; stroke-linecap: round; opacity: .65; }
+.a-card { border: 1px solid var(--rule); border-radius: 10px; padding: 15px 15px 14px; }
+.a-card .qt { font-family: var(--mincho); font-size: 15.5px; font-weight: 600; line-height: 1.65; }
+.a-card .at { margin-top: 11px; font-size: 14px; line-height: 1.9; background: var(--paper);
+  border-left: 4px solid var(--navy); padding: 12px 13px; border-radius: 0 7px 7px 0; }
+.stamp { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px;
+  font-size: 12px; font-weight: 700; color: var(--ok); border: 1.5px solid var(--ok);
+  border-radius: 3px; padding: 3px 9px; letter-spacing: .04em; }
+.stamp svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round; }
+.stamp.pend { color: var(--warn); border-color: var(--warn); }
+.a-card .when { font-size: 12px; color: var(--ink-soft); margin-top: 8px; letter-spacing: .02em; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip-row b { font-weight: 400; font-size: 12px; color: var(--ink-soft);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 5px 11px; }
+.screen-cap { font-size: 12px; color: var(--on-navy-s); text-align: center;
+  margin-top: 13px; line-height: 1.7; }
+
+/* 近いQ&Aの一覧。回答本文は出さず、質問だけをリンクで見せる */
+.rel { display: grid; gap: 8px; }
+.rel-h { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--ink-soft);
+  margin: 2px 0 1px; }
+.rel a { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--rule); border-radius: 9px; padding: 12px 13px;
+  text-decoration: none; color: var(--ink); font-size: 13.5px; line-height: 1.65; }
+.rel a i { color: var(--ink-soft); font-style: normal; font-size: 17px; }
+
+/* ── 価値 ── */
+.values { display: grid; gap: 15px; grid-template-columns: 1fr; }
+@media (min-width: 680px) { .values { grid-template-columns: repeat(3, 1fr); } }
+.value { background: var(--card); border: 1px solid var(--rule); border-top: 4px solid var(--teal);
+  border-radius: 3px; padding: 22px 19px 19px; box-shadow: var(--shadow); min-width: 0; }
+.value .vi { width: 34px; height: 34px; stroke: var(--teal); fill: none;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 13px; }
+.value h3 { font-size: 17px; line-height: 1.55; }
+.value p { font-size: 14px; color: var(--ink-soft); margin-top: 9px; line-height: 1.85; }
+
+/* ── 院長 ── */
+.chief { display: grid; gap: 24px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 640px) { .chief { grid-template-columns: 220px 1fr; gap: 30px; }
+  .portrait { max-width: 100%; } }
+.portrait { aspect-ratio: 3 / 4; width: 100%; max-width: 210px; border-radius: 4px;
+  background: var(--tab); border: 1px solid var(--rule);
+  display: grid; place-items: center; text-align: center; padding: 18px; }
+.portrait .ph { font-size: 12px; color: var(--todo); line-height: 1.8; font-weight: 700; }
+.portrait .ph svg { width: 40px; height: 40px; stroke: var(--todo); fill: none;
+  stroke-width: 1.4; margin-bottom: 9px; }
+.chief .name { font-family: var(--mincho); font-size: 24px; font-weight: 700; line-height: 1.4; }
+.chief .role { font-size: 12.5px; color: var(--ink-soft); letter-spacing: .08em; margin-top: 6px; }
+.chief .say { font-family: var(--mincho); font-size: clamp(16px, 4.4vw, 19px); font-weight: 600;
+  line-height: 1.8; margin-top: 18px; padding-left: 16px; border-left: 3px solid var(--teal); }
+.chief .bio { font-size: 14px; color: var(--ink-soft); line-height: 1.95; margin-top: 18px; }
+.facts { margin-top: 20px; display: grid; gap: 0; border-top: 1px solid var(--rule); }
+.facts > div { display: grid; grid-template-columns: 106px 1fr; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 13.5px; align-items: baseline; }
+.facts dt { font-size: 12px; font-weight: 700; letter-spacing: .09em; color: var(--ink-soft); }
+.facts dd { margin: 0; line-height: 1.8; }
+.todo { color: var(--todo); font-weight: 700; background: rgba(180,83,47,.09);
+  border: 1px dashed var(--todo); border-radius: 3px; padding: 1px 7px; font-size: 12.5px; }
+
+/* ── 構想 ── */
+.plan-note { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em;
+  color: var(--todo); border: 1.5px solid var(--todo); border-radius: 3px;
+  padding: 3px 11px; margin-bottom: 14px; }
+.plan-box { background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 22px 20px; box-shadow: var(--shadow); }
+.plan-box p + p { margin-top: 13px; }
+.plan-box .undecided { margin-top: 18px; font-size: 13px; color: var(--todo);
+  background: rgba(180,83,47,.07); border: 1px dashed var(--todo);
+  border-radius: 4px; padding: 13px 14px; line-height: 1.85; }
+
+/* ── 範囲 ── */
+.scope { display: grid; gap: 15px; grid-template-columns: 1fr; }
 @media (min-width: 620px) { .scope { grid-template-columns: 1fr 1fr; } }
 .scope > div { background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
-  padding: 18px 18px 16px; box-shadow: var(--shadow); min-width: 0; }
-.scope h3 { font-family: var(--gothic); font-size: 12px; font-weight: 700; letter-spacing: .12em;
-  padding-bottom: 9px; border-bottom: 1px solid var(--rule); margin-bottom: 12px; }
-.scope .can h3  { color: var(--ok); }
-.scope .cant h3 { color: var(--warn); }
-.scope ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
-.scope li { font-size: 14px; line-height: 1.75; padding-left: 20px; position: relative; }
-.scope .can li::before  { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+  padding: 20px 19px 17px; box-shadow: var(--shadow); min-width: 0; }
+.scope h3 { font-family: var(--gothic); font-size: 12.5px; font-weight: 700; letter-spacing: .13em;
+  padding-bottom: 10px; border-bottom: 1px solid var(--rule); margin-bottom: 14px; }
+.scope .can h3 { color: var(--ok); } .scope .cant h3 { color: var(--warn); }
+.scope ul { padding: 0; list-style: none; display: grid; gap: 10px; }
+.scope li { font-size: 14px; line-height: 1.75; padding-left: 22px; position: relative; }
+.scope .can li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
 .scope .cant li::before { content: "—"; position: absolute; left: 0; color: var(--warn); }
 .scope .cant li { color: var(--ink-soft); }
 
-/* 料金 */
-.fee { margin-top: 24px; background: var(--card); border: 1px solid var(--rule);
-  border-radius: 4px; box-shadow: var(--shadow); overflow: hidden; }
-.fee .amount { text-align: center; padding: 30px 20px 26px; border-bottom: 1px solid var(--rule); }
-.fee .amount .n { font-family: var(--mincho); font-size: clamp(46px, 13vw, 62px); font-weight: 700;
+/* ── 料金 ── */
+.fee { background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+  box-shadow: var(--shadow-l); overflow: hidden; color: var(--ink); }
+.fee .amount { text-align: center; padding: 34px 20px 28px; border-bottom: 1px solid var(--rule); }
+.fee .amount .n { font-family: var(--mincho); font-size: clamp(50px, 14vw, 70px); font-weight: 700;
   line-height: 1; letter-spacing: -.02em; color: var(--navy); font-variant-numeric: tabular-nums; }
-.fee .amount .u { font-size: 14px; color: var(--ink-soft); margin-left: 7px; }
-.fee .amount .per { font-size: 12.5px; color: var(--ink-soft); margin-top: 9px; letter-spacing: .06em; }
-.fee dl { margin: 0; padding: 20px 20px 18px; display: grid; gap: 14px; }
-.fee dt { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ink-soft); }
-.fee dd { margin: 3px 0 0; font-size: 14px; line-height: 1.8; }
+.fee .amount .u { font-size: 15px; color: var(--ink-soft); margin-left: 8px; }
+.fee .amount .per { font-size: 12.5px; color: var(--ink-soft); margin-top: 11px; letter-spacing: .07em; }
+.fee .amount .day { font-size: 13px; color: var(--teal); margin-top: 9px; font-weight: 700; }
+.fee dl { padding: 22px 21px 20px; display: grid; gap: 15px; }
+.fee dt { font-size: 12px; font-weight: 700; letter-spacing: .11em; color: var(--ink-soft); }
+.fee dd { margin: 4px 0 0; font-size: 14px; line-height: 1.8; }
 
-/* よくある質問 */
-.faq { margin-top: 24px; border-top: 1px solid var(--rule); }
+/* ── よくある質問 ── */
+.faq { border-top: 1px solid var(--rule); }
 .faq details { border-bottom: 1px solid var(--rule); }
-.faq summary {
-  cursor: pointer; list-style: none; padding: 17px 34px 17px 0; position: relative;
-  font-family: var(--mincho); font-size: 15.5px; font-weight: 600; line-height: 1.65;
-}
+.faq summary { cursor: pointer; list-style: none; padding: 18px 36px 18px 0; position: relative;
+  font-family: var(--mincho); font-size: 16px; font-weight: 600; line-height: 1.65; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after {
-  content: "＋"; position: absolute; right: 4px; top: 16px;
-  color: var(--teal); font-family: var(--gothic); font-size: 16px; font-weight: 400;
-}
+.faq summary::after { content: "＋"; position: absolute; right: 4px; top: 17px;
+  color: var(--teal); font-family: var(--gothic); font-size: 17px; font-weight: 400; }
 .faq details[open] summary::after { content: "−"; }
 .faq summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
-.faq .ans { font-size: 14px; color: var(--ink-soft); line-height: 1.9; padding: 0 4px 19px 0; }
+.faq .ans { font-size: 14px; color: var(--ink-soft); line-height: 1.95; padding: 0 4px 20px 0; }
 
-/* 末尾 */
-.closer { margin-top: 56px; background: var(--navy); border-radius: 6px;
-  padding: 34px 24px 30px; text-align: center; }
-.closer h2 { color: var(--paper); font-size: clamp(19px, 5vw, 24px); line-height: 1.6; }
-.closer p { color: #b8cbdb; font-size: 14px; margin-top: 11px; line-height: 1.85; }
-.closer .cta { background: var(--paper); color: var(--navy); margin-top: 22px;
-  display: inline-block; flex: none; min-width: 240px; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .closer { background: #223947; }
-  :root:not([data-theme="light"]) .closer h2 { color: #eef4f8; }
-  :root:not([data-theme="light"]) .closer .cta { background: #eef4f8; color: #16222c; }
-}
-:root[data-theme="dark"] .closer { background: #223947; }
-:root[data-theme="dark"] .closer h2 { color: #eef4f8; }
-:root[data-theme="dark"] .closer .cta { background: #eef4f8; color: #16222c; }
+/* ── 末尾 ── */
+.closer { text-align: center; }
+.closer h2 { font-size: clamp(21px, 5.6vw, 28px); line-height: 1.6; }
+.closer .sub { color: var(--on-navy-s); font-size: 14.5px; margin-top: 14px; line-height: 1.9; }
+.closer .cta { display: inline-block; flex: none; min-width: 270px; margin-top: 26px; }
 
-.caution { margin-top: 34px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.95;
-  border: 1px dashed var(--rule); border-radius: 4px; padding: 16px 17px; }
-.caution p + p { margin-top: 9px; }
+.caution { font-size: 12.5px; color: var(--ink-soft); line-height: 1.95;
+  border: 1px dashed var(--rule); border-radius: 4px; padding: 17px 18px; }
+.caution p + p { margin-top: 10px; }
 
-footer { margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--rule);
-  font-size: 12.5px; color: var(--ink-soft); line-height: 2; }
-footer .links { margin-bottom: 9px; }
+footer { padding-block: 30px 58px; font-size: 12.5px; color: var(--ink-soft); line-height: 2; }
+footer .links { margin-bottom: 10px; }
 footer .links a { color: var(--navy); text-decoration: none; border-bottom: 1px solid var(--rule); }
 footer .co { font-size: 12px; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
-<div class="preview-bar">確認用のプレビューです。公開版ではボタンから決済とログインに進みます。</div>
+<div class="preview-bar">確認用のプレビューです。〈 〉と枠の部分は未記入で、院長の写真・経歴が決まり次第そのまま差し替えます。</div>
 
-<div class="page">
-
+<!-- ───── 柱 ───── -->
+<div class="band deep" style="padding-block:0">
   <div class="masthead">
-    <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の実務の確認先</small></div>
-    <a class="enter" href="#料金">会員ログイン</a>
+    <div class="inner">
+      <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の実務の確認先</small></div>
+      <a class="enter" href="#料金">会員ログイン</a>
+    </div>
   </div>
 
-  <!-- 柱 -->
-  <section class="hero">
-    <h1>
-      <span class="thin">整骨院・接骨院の先生へ</span>
-      <em>交通事故実務の疑問を、</em>
-      <em>ひとりで抱え込まない。</em>
-    </h1>
-    <div class="two-lines">
-      <div>よくある質問は、24時間いつでも確認。</div>
-      <div>初めてのケースは、専門家への確認を経て回答。</div>
+  <div class="inner hero">
+    <p class="eyebrow">整骨院・接骨院の先生へ</p>
+    <div class="scene">
+      <div class="line"><u>保険会社から、</u><u>突然の連絡。</u></div>
+      <div class="line q"><u><span class="br">「</span>これ、</u><u>どう対応すればいい？<span class="br">」</span></u></div>
     </div>
-    <div class="cta-row">
-      <a class="cta" href="#料金">月額9,800円（税込）で申し込む</a>
-      <p class="cta-note">クレジットカード決済。<br>いつでも解約できます。</p>
-    </div>
-
-    <!-- 実際の画面 -->
-    <div class="screens">
-      <div class="phone">
-        <div class="bar"><span>交通事故実務デスク</span><span>Q&amp;A</span></div>
-        <div class="body">
-          <div class="q-field">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
-            <span>打ち切りと言われた</span>
-          </div>
-          <div class="a-card">
-            <div class="qt">保険会社から「そろそろ打ち切り」と言われました。すぐに施術をやめるべきですか。</div>
-            <div class="at">保険会社の打ち切りの連絡は、施術の必要性の判断ではありません。まず主治医の見解を確認し、必要であれば施術継続の医学的理由を書面で…</div>
-            <span class="stamp">院長確認済み</span>
-            <div class="when">確認日 2026-10-02</div>
-          </div>
-          <div class="chip-row"><b>打ち切り</b><b>医師の同意</b><b>施術証明書</b></div>
-        </div>
-        <p class="shot-cap">検索すると、確認を終えた回答が結論から出ます。</p>
-      </div>
-
-      <div class="phone">
-        <div class="bar"><span>交通事故実務デスク</span><span>ご相談</span></div>
-        <div class="body">
-          <div class="a-card">
-            <div class="qt">該当するQ&amp;Aが見つかりませんでした</div>
-            <div class="at">お探しの内容は、まだQ&amp;Aになっていないか、個別の判断が必要な可能性があります。いただいた質問は記録され、確認のうえ回答します。</div>
-            <span class="stamp pend">確認中</span>
-            <div class="when">ご相談として受付</div>
-          </div>
-          <div class="q-field">
-            <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
-            <span>この内容で相談する</span>
-          </div>
-        </div>
-        <p class="shot-cap">無いときは、無いと出ます。推測の答えは返しません。</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 場面 -->
-  <section class="sec">
-    <p class="kicker">こんな場面で</p>
-    <h2>判断に迷う場面は、<br>突然やってきます。</h2>
-    <p class="intro">
-      保険会社への対応、施術証明書、健康保険の取り扱い、施術の打ち切り。
-      整骨院・接骨院の現場では、調べる時間のないときに限って判断を求められます。
+    <p class="turn"><u>その迷いを、</u><b><u>ひとりで</u><u>抱え込まない。</u></b></p>
+    <p class="lead">
+      <u>よくある質問は、</u><u>確認済みのQ&amp;Aから</u><u>24時間いつでも検索。</u><br>
+      <u>初めてのケースは、</u><u>専門家への確認を経て</u><u>回答します。</u>
     </p>
+    <div class="cta-row">
+      <a class="cta" href="#料金">月額9,800円（税込）で申し込む<span class="sm">クレジットカード決済・いつでも解約できます</span></a>
+      <p class="cta-note">1日あたり<br>約320円です。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ───── 場面 ───── -->
+<section class="band">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">こんな場面で</p>
+      <h2>調べる時間のないときに限って、<br>判断を求められる。</h2>
+      <p class="sub">
+        交通事故の患者さんへの対応は、件数が多くないぶん、毎回が初めてのようなものです。
+        手元に答えがないまま、その場で返事をしなければならない場面があります。
+      </p>
+    </div>
     <div class="cards">
       <div class="icard">
         <b>保険会社への対応</b>
@@ -365,61 +341,210 @@ footer .co { font-size: 12px; }
         <p>打ち切りを告げられたとき、患者さんにどう説明するか。</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 使い方 -->
-  <section class="sec">
-    <p class="kicker">使い方</p>
-    <h2>普段は検索。迷ったら相談。<br>難しい案件は専門家確認。</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="n">一</div>
-        <div>
-          <h3>普段は検索</h3>
-          <p>蓄積された確認済みのQ&amp;Aは、24時間いつでも検索・閲覧できます。
-             スマホで質問を入れるだけ。結論から表示します。</p>
+<!-- ───── Q&A体験 ───── -->
+<section class="band dark">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">使ってみると</p>
+      <h2><u>調べる、</u><u>出てくる、</u><u>無ければ相談。</u></h2>
+      <p class="sub">スマホで質問を入れるところから、相談に進むまでの3つの画面です。</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-head">
+          <div class="n">一</div>
+          <div>
+            <h3><u>迷っている言葉のまま、</u><u>入れる</u></h3>
+            <p>専門用語に言い換える必要はありません。現場で出てきた言葉のままで構いません。</p>
+          </div>
         </div>
+        <div class="screen">
+          <div class="bar"><span>交通事故実務デスク</span><span>Q&amp;A</span></div>
+          <div class="body">
+            <div class="q-field">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+              <span>保険会社から打ち切りと言われた</span>
+            </div>
+            <div class="chip-row"><b>打ち切り</b><b>医師の同意</b><b>施術証明書</b><b>健康保険の併用</b></div>
+          </div>
+        </div>
+        <p class="screen-cap">よく調べられている言葉は、押すだけで検索できます。</p>
       </div>
-      <div class="step">
-        <div class="n">二</div>
-        <div>
-          <h3>迷ったら相談</h3>
-          <p>過去のQ&amp;Aにない新しいケースや、個別事情によって判断が必要な場合は、
-             ご相談ください。そのまま相談として受け付けます。</p>
+
+      <div class="flow-step">
+        <div class="flow-head">
+          <div class="n">二</div>
+          <div>
+            <h3><u>確認を終えた回答が、</u><u>結論から出る</u></h3>
+            <p>長い解説を読み進める必要はありません。結論が先に来ます。
+               確認を終えたものだけが出ます。誰が確認したかも表示されます。</p>
+          </div>
         </div>
+        <div class="screen">
+          <div class="bar"><span>交通事故実務デスク</span><span>回答</span></div>
+          <div class="body">
+            <div class="a-card">
+              <div class="qt">保険会社から「そろそろ打ち切り」と言われました。すぐに施術をやめるべきですか。</div>
+              <div class="at">保険会社の打ち切りの連絡は、施術の必要性の医学的な判断ではありません。
+                まず主治医の見解を確認し、必要であれば施術継続の理由を書面で…</div>
+              <span class="stamp"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>行政書士 確認済み</span>
+              <div class="when">〈確認者名〉／確認日 2026-10-02</div>
+            </div>
+            <div class="q-field ghost">
+              <svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="2.5"/><path d="M16.5 10l5-3v10l-5-3z"/></svg>
+              <span>この内容の解説動画を見る</span>
+            </div>
+          </div>
+        </div>
+        <p class="screen-cap">回答文を書き直したときは、もう一度確認を通すまでこの表示は出ません。</p>
       </div>
-      <div class="step">
-        <div class="n">三</div>
-        <div>
-          <h3>難しい案件は専門家確認</h3>
-          <p>内容に応じて専門家への確認を行ったうえで回答します。
-             回答はQ&amp;Aに蓄積され、次に同じ場面で迷う先生の役に立ちます。</p>
+
+      <div class="flow-step">
+        <div class="flow-head">
+          <div class="n">三</div>
+          <div>
+            <h3><u>近いものは出す。</u><u>無ければ無いと出す。</u></h3>
+            <p>近いQ&amp;Aがあれば一緒に出します。ただし、それらしい答えを
+               AIがつくって埋めることはしません。該当が無ければ、そのまま相談になります。</p>
+          </div>
         </div>
+        <div class="screen">
+          <div class="bar"><span>交通事故実務デスク</span><span>ご相談</span></div>
+          <div class="body">
+            <div class="a-card">
+              <div class="qt">ぴたりと一致するQ&amp;Aはありませんでした</div>
+              <div class="at">お探しの内容は、まだQ&amp;Aになっていないか、個別の判断が必要な可能性があります。
+                いただいた質問は記録され、確認のうえ回答します。</div>
+              <span class="stamp pend">確認中</span>
+              <div class="when">ご相談として受付</div>
+            </div>
+            <div class="rel">
+              <p class="rel-h">近いかもしれないQ&amp;A</p>
+              <a><span>施術の打ち切りを告げられたあと、健康保険に切り替えられますか。</span><i>›</i></a>
+              <a><span>保険会社から施術頻度を減らすよう言われました。</span><i>›</i></a>
+            </div>
+            <div class="q-field ghost">
+              <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+              <span>この内容で相談する</span>
+            </div>
+          </div>
+        </div>
+        <p class="screen-cap">近いQ&amp;Aは質問だけを並べます。回答本文は開いてから読む形です。<br>相談への回答は即時ではありません。確認が済み次第お送りします。</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 方針 -->
-  <section class="sec">
-    <p class="kicker">考え方</p>
-    <h2>確認を大切にする。</h2>
-    <div class="pledge">
-      <p class="big">その場しのぎの推測ではなく、確認を大切にする。</p>
-      <p class="sub">
-        Q&amp;Aに表示されるのは、確認を終えた回答だけです。
-        未確認の内容をAIが推測で補うことはありません。回答を書き直したときは、
-        もう一度確認を通すまで「院長確認済み」の表示は出ません。
+<!-- ───── 価値 ───── -->
+<section class="band">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">月額9,800円で手に入るもの</p>
+      <h2>検索機能ではなく、<br>確認先そのものです。</h2>
+    </div>
+    <div class="values">
+      <div class="value">
+        <svg class="vi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <h3>24時間、確認できる実務知識</h3>
+        <p>夜間でも休診日でも、確認を終えたQ&amp;Aを検索できます。
+           誰かの返事を待つ必要がありません。</p>
+      </div>
+      <div class="value">
+        <svg class="vi" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/><path d="M9 11h6M9 14h4"/></svg>
+        <h3>新しいケースを相談できる環境</h3>
+        <p>調べて出てこないときに、聞ける先があります。
+           確認のうえ回答し、その内容はQ&amp;Aとして残ります。</p>
+      </div>
+      <div class="value">
+        <svg class="vi" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <h3>誰が確認したかが分かる</h3>
+        <p>回答には確認した人の肩書と確認日が付きます。書き直したときは、
+           もう一度確認を通すまで表示されません。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── 院長 ───── -->
+<section class="band card-bg">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">運営する人</p>
+      <h2><u>確認するのは、</u><u>現場を知っている人です。</u></h2>
+    </div>
+    <div class="chief">
+      <div class="portrait">
+        <div class="ph">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          写真を差し替え<br>（縦3：横4）
+        </div>
+      </div>
+      <div>
+        <div class="name">〈院長氏名〉</div>
+        <div class="role">交通事故実務デスク 監修</div>
+        <p class="say">現場で困るのは、セミナーで学んだあと、<br>院に戻ってからなんですよね。</p>
+        <p class="bio">
+          〈ここに院長のご経歴を入れます。資格、開業年、交通事故対応に取り組むようになった
+          きっかけ、現在の院での関わり方など、3〜5行程度〉
+        </p>
+        <dl class="facts">
+          <div><dt>資格</dt><dd><span class="todo">〈要記入〉</span></dd></div>
+          <div><dt>開業</dt><dd><span class="todo">〈要記入〉</span></dd></div>
+          <div><dt>動画教材</dt>
+               <dd>交通事故実務講座として公開（<span class="todo">〈本数・開始年を要記入〉</span>）</dd></div>
+          <div><dt>無料セミナー</dt>
+               <dd>整骨院・接骨院の先生向けに開催
+                   （<span class="todo">〈回数・期間を要記入〉</span>）</dd></div>
+        </dl>
+        <p class="bio" style="margin-top:16px">
+          これまで無料セミナーなどを通じて、多くの先生と交通事故実務について学ぶ機会をいただきました。
+          そこで繰り返し聞いたのが、学んだはずのことを現場で思い出せない、という声です。
+          必要なときに確認できる場所をつくりたい。それが、このサービスをはじめた理由です。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───── 構想 ───── -->
+<section class="band">
+  <div class="inner">
+    <div class="sec-head">
+      <span class="plan-note">構想中・未確定</span>
+      <h2>専門家の先生と、<br>学び合える場をつくりたい。</h2>
+    </div>
+    <div class="plan-box">
+      <p>
+        交通事故の実務には、整骨院の側からは見えにくい部分があります。
+        弁護士・行政書士の先生に現場で実際に生まれた疑問を知っていただき、
+        実務解説にご協力いただける関係をつくれないかと考えています。
       </p>
+      <p>
+        整骨院の先生にとっては、知識だけでなく、考え方や人柄を知るきっかけに。
+        専門家の先生にとっては、普段なかなか聞けない現場の声に触れる機会に。
+        そういう場にできればと思っています。
+      </p>
+      <div class="undecided">
+        <b>これは構想であり、会員特典ではありません。</b><br>
+        ご協力いただく専門家、開催の頻度、参加の条件は、いずれもまだ決まっていません。
+        月額料金に、この場への参加は含まれていません。
+        内容が決まりましたら、あらためてご案内します。
+      </div>
     </div>
-    <p class="intro">
-      交通事故実務デスクは、先生が日々の交通事故対応を進めるための、実務の確認先です。
-    </p>
-  </section>
+  </div>
+</section>
 
-  <!-- 範囲 -->
-  <section class="sec">
-    <p class="kicker">ご利用の範囲</p>
-    <h2>できること、できないこと。</h2>
+<!-- ───── 範囲 ───── -->
+<section class="band card-bg">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">ご利用の範囲</p>
+      <h2>できること、できないこと。</h2>
+    </div>
     <div class="scope">
       <div class="can">
         <h3>できること</h3>
@@ -440,16 +565,21 @@ footer .co { font-size: 12px; }
         </ul>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 料金 -->
-  <section class="sec" id="料金">
-    <p class="kicker">料金</p>
-    <h2>月額9,800円（税込）。</h2>
+<!-- ───── 料金 ───── -->
+<section class="band" id="料金">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">料金</p>
+      <h2>月額9,800円（税込）。</h2>
+    </div>
     <div class="fee">
       <div class="amount">
         <span class="n">9,800</span><span class="u">円</span>
         <div class="per">１か月あたり（税込）</div>
+        <div class="day">1日あたり約320円</div>
       </div>
       <dl>
         <dt>お支払い</dt>
@@ -464,12 +594,16 @@ footer .co { font-size: 12px; }
         <dd>決済完了後、ログイン用のメールをお送りします。パスワードは不要です。</dd>
       </dl>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- よくある質問 -->
-  <section class="sec">
-    <p class="kicker">よくある質問</p>
-    <h2>お申し込みの前に。</h2>
+<!-- ───── よくある質問 ───── -->
+<section class="band card-bg">
+  <div class="inner">
+    <div class="sec-head">
+      <p class="eyebrow">よくある質問</p>
+      <h2>お申し込みの前に。</h2>
+    </div>
     <div class="faq">
       <details open>
         <summary>パソコンが苦手でも使えますか。</summary>
@@ -503,25 +637,32 @@ footer .co { font-size: 12px; }
           具体的な内容や条件は、ご相談しながら決めていきます。</div>
       </details>
     </div>
-  </section>
-
-  <!-- 末尾 -->
-  <div class="closer">
-    <h2>必要なときに調べられる。<br>分からないときには相談できる。</h2>
-    <p>交通事故対応で迷ったとき、確認先があるという状態をつくります。</p>
-    <a class="cta" href="#料金">月額9,800円（税込）で申し込む</a>
   </div>
+</section>
 
+<!-- ───── 末尾 ───── -->
+<section class="band deep">
+  <div class="inner closer">
+    <h2><u>必要なときに調べられる。</u><br><u>分からないときには</u><u>相談できる。</u></h2>
+    <p class="sub">交通事故対応で迷ったとき、確認先があるという状態をつくります。</p>
+    <a class="cta" href="#料金">月額9,800円（税込）で申し込む<span class="sm">クレジットカード決済・いつでも解約できます</span></a>
+  </div>
+</section>
+
+<div class="inner" style="padding-block:40px 0">
   <div class="caution">
     <p>※24時間利用できるのは公開済みQ&amp;Aの閲覧機能です。個別相談への回答は即時対応ではなく、
        確認内容に応じて時間をいただきます。</p>
     <p>※本サービスで提供する情報は一般的な実務の参考情報です。個別の事案に対する法律判断・
        保険金請求の可否・医学的判断を保証するものではありません。個別の判断が必要な場合は、
        弁護士・行政書士・医師等の有資格者にご相談ください。</p>
+    <p>※専門家との実務解説・交流は構想段階です。会員特典として確定したものではありません。</p>
     <p>※画面はすべて開発中のもので、表示内容は実際のQ&amp;Aではありません。</p>
   </div>
+</div>
 
-  <footer>
+<footer>
+  <div class="inner">
     <div class="links">
       <a href="#料金">利用規約</a>　·
       <a href="#料金">プライバシーポリシー</a>　·
@@ -532,6 +673,5 @@ footer .co { font-size: 12px; }
       京都府京都市伏見区久我石原町1-7<br>
       075-874-5522　info@famitect.com
     </div>
-  </footer>
-
-</div>
+  </div>
+</footer>
