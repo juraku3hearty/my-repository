@@ -340,6 +340,13 @@ def join():
     return render_template("join.html", error="", email="")
 
 
+# 募集ページ。会員でなくても見られる唯一の入り口。
+# 本番では famitect.com 側のトップに置く想定だが、文面と導線をここで確定させる。
+@app.route("/lp")
+def lp():
+    return render_template("lp.html")
+
+
 @app.route("/terms")
 def terms():
     return render_template("terms.html")

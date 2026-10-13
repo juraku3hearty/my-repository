@@ -1,0 +1,108 @@
+/* 募集ページ。スマホを基準に組む。
+   色・角丸・影は会員画面（style.css / design/tokens.css）と同じ値を使う。 */
+:root {
+  --navy:   #14304a;
+  --navy-d: #0d2236;
+  --accent: #1f7a8c;
+  --bg:     #f6f7f9;
+  --card:   #ffffff;
+  --line:   #e2e6ea;
+  --text:   #1c1c1c;
+  --muted:  #6b7681;
+  --ok:     #2c6b2f;
+  --warn:   #9b3a24;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(20,48,74,.07), 0 6px 18px rgba(20,48,74,.05);
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family: var(--font); background: var(--bg); color: var(--text);
+       line-height:1.85; font-size:16px; -webkit-text-size-adjust:100%; }
+.inner { max-width: 640px; margin: 0 auto; }
+.wrap  { max-width: 640px; margin: 0 auto; padding: 0 18px 56px; }
+
+/* ヘッダー */
+header { background: var(--navy); color:#fff; padding: 13px 18px; }
+header .inner { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+header .brand { font-weight:700; font-size:15px; letter-spacing:.02em; }
+header .brand span { display:block; font-weight:400; font-size:11px; color:#a9c6dd; letter-spacing:.04em; }
+header .hlogin { color:#cfe0ee; font-size:12px; text-decoration:none; white-space:nowrap;
+                 border:1px solid rgba(255,255,255,.3); border-radius:999px; padding:5px 12px; }
+
+/* 主役 */
+.hero { background: linear-gradient(165deg, var(--navy) 0%, var(--navy-d) 100%);
+        color:#fff; padding: 34px 18px 30px; }
+.hero h1 { font-size: 25px; line-height:1.5; margin:0 0 16px; letter-spacing:.01em; }
+.hero .lead { font-size: 16px; color:#cfe0ee; margin:0 0 24px; line-height:1.9; font-weight:600; }
+.cta { display:block; background:#fff; color: var(--navy); text-decoration:none;
+       text-align:center; font-weight:700; font-size:16.5px; padding:17px 14px;
+       border-radius:12px; box-shadow:0 3px 10px rgba(0,0,0,.18); }
+.cta.dark { background: var(--navy); color:#fff; box-shadow: var(--shadow); }
+.cta-sub { text-align:center; font-size:12px; color:#a9c6dd; margin:10px 0 0; }
+.cta-sub.dark { color: var(--muted); }
+
+/* 本文 */
+.sec { margin-top: 34px; }
+.sec h2 { font-size: 17px; line-height:1.65; margin:0 0 16px; color: var(--navy);
+          border-left: 4px solid var(--navy); padding-left: 11px; }
+.sec h3 { font-size: 13px; margin:0 0 8px; }
+.body { font-size: 15.5px; margin: 0 0 14px; }
+.body strong { color: var(--navy); }
+
+/* 迷う場面 */
+.scenes { display:flex; flex-wrap:wrap; gap:8px; margin: 0 0 16px; }
+.scenes b { font-weight:600; font-size:13px; background:#fff; border:1px solid var(--line);
+            border-radius:999px; padding:7px 13px; color: var(--navy); box-shadow: var(--shadow); }
+
+/* 3ステップ */
+.steps { display:grid; gap:12px; }
+.step { display:flex; gap:14px; background: var(--card); border:1px solid var(--line);
+        border-radius: var(--radius); padding:16px 17px; box-shadow: var(--shadow); }
+.step .no { width:30px; height:30px; flex:0 0 30px; border-radius:50%;
+            background: var(--navy); color:#fff; display:grid; place-items:center;
+            font-weight:700; font-size:15px; margin-top:3px; }
+.step .tx { flex:1; min-width:0; }
+.step .tx b { display:block; font-size:16px; color: var(--navy); }
+.step .tx p { font-size:14px; margin:5px 0 0; line-height:1.8; }
+
+/* 方針 */
+.pledge { background: var(--card); border:1px solid #c9d6e1; border-radius: var(--radius);
+          padding:18px 18px 15px; box-shadow: var(--shadow); margin-bottom:16px; }
+.pledge p { margin:0; font-size:17px; font-weight:700; color: var(--navy); line-height:1.7; }
+.pledge .small { margin-top:9px; font-size:13.5px; font-weight:400; color: var(--text); }
+
+/* できること・できないこと */
+.two { display:grid; gap:12px; }
+.two > div { background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+             padding:15px 16px; box-shadow: var(--shadow); }
+.two ul { margin:0; padding-left:1.15em; font-size:14px; line-height:1.85; }
+.two li { margin-bottom:5px; }
+.can h3  { color: var(--ok); }
+.cant h3 { color: var(--warn); }
+.cant ul { color: var(--muted); }
+
+/* 料金 */
+.price { background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+         padding:18px 17px 16px; box-shadow: var(--shadow); margin-bottom:16px; }
+.price .amount { text-align:center; padding-bottom:14px; border-bottom:1px solid var(--line);
+                 margin-bottom:12px; }
+.price .amount b { font-size:40px; font-weight:700; color: var(--navy); letter-spacing:-.01em; }
+.price .amount span { font-size:14px; color: var(--muted); margin-left:4px; }
+.price dl { margin:0; font-size:13.5px; }
+.price dt { color: var(--muted); font-size:11.5px; margin-top:10px; letter-spacing:.02em; }
+.price dd { margin:0; line-height:1.75; }
+
+/* 注意書き */
+.caution { font-size:12.5px; color: var(--muted); line-height:1.95;
+           background:#fff; border:1px dashed var(--line); border-radius:10px; padding:13px 14px; }
+
+footer { text-align:center; margin-top:34px; padding-top:22px; border-top:1px solid var(--line);
+         font-size:12px; color: var(--muted); line-height:2; }
+footer .links a { color: var(--navy); }
+footer .company { margin-top:10px; font-size:11.5px; }
+
+/* PCでは2列にするだけ。構造は変えない */
+@media (min-width: 620px) {
+  .hero h1 { font-size: 29px; }
+  .two { grid-template-columns: 1fr 1fr; }
+}
