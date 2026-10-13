@@ -65,8 +65,9 @@ img { max-width: 100%; }
 .band.dark h1, .band.dark h2, .band.dark h3,
 .band.deep h1, .band.deep h2, .band.deep h3 { color: var(--on-navy); }
 
-.preview-bar { background: var(--todo); color: #fff; font-size: 12.5px; line-height: 1.6;
-  padding: 10px 20px; text-align: center; letter-spacing: .01em; font-weight: 500; }
+.preview-bar { background: var(--todo); color: #fff; font-size: 12.5px; line-height: 1.7;
+  padding: 11px 20px; text-align: center; letter-spacing: .01em; font-weight: 500; }
+.preview-bar b { color: #fff; }
 
 /* 見出し部 */
 .masthead { padding-block: 22px; border-bottom: 1px solid rgba(255,255,255,.14); }
@@ -90,7 +91,7 @@ img { max-width: 100%; }
 }
 /* 語のまとまりで折り返す。「連/絡。」のような割れ方を防ぐ */
 /* 見出しは語のまとまりで折り返す */
-h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: none; }
+u { display: inline-block; text-decoration: none; }   /* 語のまとまりで折り返すための印 */
 .scene .line.q { color: #8fd0de; font-size: clamp(21px, 5.9vw, 37px); }
 .scene .line.q .br { opacity: .55; }
 .hero .turn {
@@ -99,6 +100,9 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
   border-top: 1px solid rgba(255,255,255,.2);
 }
 .hero .turn b { color: #8fd0de; font-weight: 700; }
+.hero .thesis { font-family: var(--mincho); font-size: clamp(16px, 4.3vw, 20px);
+  font-weight: 600; line-height: 1.75; margin-top: 15px; color: var(--on-navy); }
+.hero .thesis b { color: #8fd0de; }
 .hero .lead { color: var(--on-navy-s); font-size: 15px; }
 .hero .lead u { display: inline-block; text-decoration: none; }
 .hero .lead { font-size: 15px; line-height: 1.95; margin-top: 16px; }
@@ -229,6 +233,12 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
   padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 13.5px; align-items: baseline; }
 .facts dt { font-size: 12px; font-weight: 700; letter-spacing: .09em; color: var(--ink-soft); }
 .facts dd { margin: 0; line-height: 1.8; }
+.need { margin-top: 18px; font-size: 12.5px; line-height: 1.9; color: var(--todo);
+  background: rgba(180,83,47,.07); border: 1px dashed var(--todo); border-radius: 4px;
+  padding: 13px 14px; }
+.need b { display: block; color: var(--todo); font-size: 12.5px; letter-spacing: .04em;
+  margin-bottom: 4px; }
+.need span { display: block; margin-top: 6px; opacity: .85; }
 .todo { color: var(--todo); font-weight: 700; background: rgba(180,83,47,.09);
   border: 1px dashed var(--todo); border-radius: 3px; padding: 1px 7px; font-size: 12.5px; }
 
@@ -251,6 +261,8 @@ h1 u, h2 u, h3 u, .turn u, .lead u { display: inline-block; text-decoration: non
 .plan-item .nofee { background: rgba(44,107,47,.07); border-left: 3px solid var(--ok);
   border-radius: 0 6px 6px 0; padding: 12px 13px; margin-top: 12px; }
 .plan-item p b { color: var(--ink); }
+.plan-item .nopromise { background: rgba(180,83,47,.07); border-left: 3px solid var(--todo);
+  border-radius: 0 6px 6px 0; padding: 12px 13px; margin-top: 12px; }
 .plan-item h3 { font-size: 18px; line-height: 1.55; margin-bottom: 10px; }
 .plan-item p { font-size: 14.5px; line-height: 1.9; }
 .plan-item p + p { margin-top: 11px; }
@@ -312,13 +324,13 @@ footer .co { font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
-<div class="preview-bar">確認用のプレビューです。〈 〉と枠の部分は未記入で、院長の写真・経歴が決まり次第そのまま差し替えます。</div>
+<div class="preview-bar">確認用のプレビューです。<b>〈 〉の箇所は素材をいただいてから記入します。</b>推測では書きません。</div>
 
 <!-- ───── 柱 ───── -->
 <div class="band deep" style="padding-block:0">
   <div class="masthead">
     <div class="inner">
-      <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の実務の確認先</small></div>
+      <div class="wordmark">交通事故実務デスク<small>整骨院・接骨院の、実務の確認先</small></div>
       <a class="enter" href="#料金">会員ログイン</a>
     </div>
   </div>
@@ -330,9 +342,10 @@ footer .co { font-size: 12px; }
       <div class="line q"><u><span class="br">「</span>これ、</u><u>どう対応すればいい？<span class="br">」</span></u></div>
     </div>
     <p class="turn"><u>その迷いを、</u><b><u>ひとりで</u><u>抱え込まない。</u></b></p>
+    <p class="thesis"><u>検索できる道具ではなく、</u><u>実務の</u><b><u>確認先</u></b><u>です。</u></p>
     <p class="lead">
       <u>よくある質問は、</u><u>確認済みのQ&amp;Aから</u><u>24時間いつでも検索。</u><br>
-      <u>初めてのケースは、</u><u>専門家への確認を経て</u><u>回答します。</u>
+      <u>はじめてのケースは、</u><u>確認をとってから</u><u>回答します。</u>
     </p>
     <div class="cta-row">
       <a class="cta" href="#料金">月額9,800円（税込）で申し込む<span class="sm">クレジットカード決済・いつでも解約できます</span></a>
@@ -410,8 +423,8 @@ footer .co { font-size: 12px; }
           <div>
             <h3><u>確認を終えた回答が、</u><u>結論から出る</u></h3>
             <p>長い解説を読み進める必要はありません。結論が先に来ます。
-               確認を終えたものだけが出ます。回答の下には、確認した先生のお名前と
-               ご紹介、そして元になった講座の回が出ます。</p>
+               確認を終えたものだけが出ます。回答の下には、確認した先生のお名前・
+               ご紹介・確認日が出ます。</p>
           </div>
         </div>
         <div class="screen">
@@ -430,27 +443,26 @@ footer .co { font-size: 12px; }
                   <div class="pr">〈この先生の紹介文。交通事故分野の経歴を2行程度〉</div>
                 </div>
               </div>
-              <div class="srcline">
-                <b>出典</b> 交通事故実務講座 第12回（〈話した先生のお名前〉）<br>
-                <b>確認日</b> 2026-10-02
-              </div>
+              <div class="srcline"><b>確認日</b> 2026-10-02</div>
             </div>
             <div class="q-field ghost">
               <svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="14" height="14" rx="2.5"/><path d="M16.5 10l5-3v10l-5-3z"/></svg>
-              <span>この内容の解説動画を見る</span>
+              <span>この内容の解説動画を見る（公開中）</span>
             </div>
           </div>
         </div>
-        <p class="screen-cap">回答文を書き直したときは、確認した先生にもう一度通すまで、この表示は出ません。</p>
+        <p class="screen-cap">回答文を書き直したときは、確認した先生にもう一度通すまで、この表示は出ません。<br>解説動画のボタンは、<b>会員に公開している動画があるときだけ</b>出ます。</p>
       </div>
 
       <div class="flow-step">
         <div class="flow-head">
           <div class="n">三</div>
           <div>
-            <h3><u>近いものは出す。</u><u>無ければ無いと出す。</u></h3>
+            <h3><u>近いものは出す。</u><u>無ければ、相談になる。</u></h3>
             <p>近いQ&amp;Aがあれば一緒に出します。ただし、それらしい答えを
-               AIがつくって埋めることはしません。該当が無ければ、そのまま相談になります。</p>
+               AIがつくって埋めることはしません。該当が無ければ、そのまま相談として受け付け、
+               <b>確認をとってから回答します。</b>内容に応じて、講座でお話しいただいた
+               行政書士の先生に確認することもあります。</p>
           </div>
         </div>
         <div class="screen">
@@ -485,7 +497,9 @@ footer .co { font-size: 12px; }
   <div class="inner">
     <div class="sec-head">
       <p class="eyebrow">月額9,800円で手に入るもの</p>
-      <h2>検索機能ではなく、<br>確認先そのものです。</h2>
+      <h2><u>検索機能ではなく、</u><br><u>確認先そのものです。</u></h2>
+      <p class="sub">月額9,800円でお渡ししているのは、検索できる画面ではありません。
+        迷ったときに確認できる先がある、という状態です。</p>
     </div>
     <div class="values">
       <div class="value">
@@ -503,8 +517,8 @@ footer .co { font-size: 12px; }
       <div class="value">
         <svg class="vi" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
         <h3>誰の見解かが、分かる</h3>
-        <p>回答の下に、確認した先生のお名前・ご紹介・確認日と、元になった
-           講座の回が出ます。書き直したら、もう一度確認を通すまで表示されません。</p>
+        <p>回答の下に、確認した先生のお名前・ご紹介・確認日が出ます。
+           書き直したら、もう一度確認を通すまで表示されません。</p>
       </div>
     </div>
   </div>
@@ -541,6 +555,12 @@ footer .co { font-size: 12px; }
                <dd>整骨院・接骨院の先生向けに開催
                    （<span class="todo">〈回数・期間を要記入〉</span>）</dd></div>
         </dl>
+        <div class="need">
+          <b>この欄を仕上げるのに必要な素材</b>
+          ① 顔写真（縦長・1枚）　② お名前と肩書　③ 資格と取得年　④ 開業年
+          ⑤ 交通事故実務講座の本数と公開開始年　⑥ 無料セミナーの開催回数と期間　⑦ ご経歴3〜5行<br>
+          <span>いただいた分だけ記入します。分からない項目は、その行ごと消します。</span>
+        </div>
         <p class="bio" style="margin-top:16px">
           これまで無料セミナーなどを通じて、多くの先生と交通事故実務について学ぶ機会をいただきました。
           そこで繰り返し聞いたのが、学んだはずのことを現場で思い出せない、という声です。
@@ -583,9 +603,10 @@ footer .co { font-size: 12px; }
           考えています。整骨院の先生にとっては考え方や人柄を知るきっかけに、
           専門家の先生にとっては普段聞けない現場の声に触れる機会に。
         </p>
-        <p>
-          <b>ご協力いただく先生、開催の頻度、参加の条件は、いずれも未定です。</b>
-          月額料金に、この場への参加は含まれていません。
+        <p class="nopromise">
+          <b>これは構想であり、お約束ではありません。</b>
+          ご協力いただく先生、開催の頻度、参加の条件は、いずれも決まっていません。
+          開催できない場合もあります。月額料金に、この場への参加は含まれていません。
         </p>
       </div>
     </div>
@@ -604,7 +625,7 @@ footer .co { font-size: 12px; }
         <h3>できること</h3>
         <ul>
           <li>公開済みQ&amp;Aの検索・閲覧（24時間）</li>
-          <li>Q&amp;Aに紐づく解説動画の視聴</li>
+          <li>Q&amp;Aに紐づく解説動画の視聴（公開しているものに限ります）</li>
           <li>新しいケースのご相談</li>
           <li>施術証明書・同意書のひな形（白紙）のダウンロード</li>
         </ul>
@@ -673,7 +694,9 @@ footer .co { font-size: 12px; }
         <summary>回答は誰が書いているのですか。</summary>
         <div class="ans">もとになっているのは、交通事故実務講座で先生方にお話しいただいた内容です。
           それを実務で使える形に整理し、お話しいただいた先生ご本人に確認を通したうえで公開しています。
-          回答の下に、確認した先生のお名前とご紹介、元になった講座の回を表示しています。</div>
+          回答の下には、確認した先生のお名前・ご紹介・確認日を表示しています。<br>
+          解説動画のボタンは、会員に公開している動画があるときだけ出ます。
+          講座の未公開分は、会員画面には表示されません。</div>
       </details>
       <details>
         <summary>AIが勝手に答えを作ることはありませんか。</summary>
@@ -730,9 +753,9 @@ footer .co { font-size: 12px; }
 <footer>
   <div class="inner">
     <div class="links">
-      <a href="#料金">利用規約</a>　·
-      <a href="#料金">プライバシーポリシー</a>　·
-      <a href="#料金">特定商取引法に基づく表示</a>
+      <a href="terms.html">利用規約</a>　·
+      <a href="privacy.html">プライバシーポリシー</a>　·
+      <a href="tokusho.html">特定商取引法に基づく表示</a>
     </div>
     <div class="co">
       株式会社famitect　交通事故実務デスク<br>
