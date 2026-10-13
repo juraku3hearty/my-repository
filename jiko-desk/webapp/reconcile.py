@@ -77,6 +77,55 @@ def parse_csv(text: str) -> tuple[list[dict], list[str]]:
     return rows, []
 
 
+# 照合を何日やらなければ警告するか。CSVは手で落とす運用なので、忘れを拾う。
+RECONCILE_INTERVAL_DAYS = 2
+
+
+def last_reconciled_at(conn) -> str:
+    row = conn.execute(
+        "SELECT ts FROM ops_alerts WHERE topic = '日次照合を実行しました' "
+        "ORDER BY id DESC LIMIT 1").fetchone()
+    return row["ts"] if row else ""
+
+
+def check_reconcile_overdue(conn) -> bool:
+    """CSVとの照合を一定期間やっていなければ警告する。
+
+    CSVの自動取得ができるとは**仮定していない**。管理画面から人が落とす前提なので、
+    やり忘れが起きる。通知の自動再送が無い以上、照合をやめると取りこぼしに
+    気づけなくなるため、忘れ自体を検知する。
+
+    **CSVを上げたときだけ「実行した」とみなす。** CSV無しの確認では、
+    決済側との食い違いを見つけられないため。
+    """
+    last = last_reconciled_at(conn)
+    if not last:
+        mb.alert(conn, "warn", "日次照合をまだ一度も実行していません",
+                 "通知の自動再送が無いため、照合しないと取りこぼしに気づけません")
+        conn.commit()
+        return True
+    limit = (datetime.now() - timedelta(days=RECONCILE_INTERVAL_DAYS)).strftime("%Y-%m-%d %H:%M:%S")
+    if last < limit:
+        mb.alert(conn, "warn", "日次照合が止まっています",
+                 f"最後の実行 {last} / {RECONCILE_INTERVAL_DAYS}日以上あいています")
+        conn.commit()
+        return True
+    return False
+
+
+def record_quick_check(conn) -> None:
+    """CSV無しの確認を記録する。これは「照合」には数えない。"""
+    mb.alert(conn, "info", "通知漏れの確認を実行しました", "CSVなし（決済側との突き合わせは未実施）")
+    conn.commit()
+
+
+def last_quick_check_at(conn) -> str:
+    row = conn.execute(
+        "SELECT ts FROM ops_alerts WHERE topic = '通知漏れの確認を実行しました' "
+        "ORDER BY id DESC LIMIT 1").fetchone()
+    return row["ts"] if row else ""
+
+
 def check_overdue(conn) -> list[dict]:
     """課金されたはずなのに通知が来ていない会員を拾う。CSVが無くても動く。
 

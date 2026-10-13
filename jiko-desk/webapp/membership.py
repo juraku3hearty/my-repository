@@ -359,10 +359,27 @@ def process_pending(conn) -> int:
         "SELECT * FROM payment_events WHERE processed_at IS NULL ORDER BY received_at"
     ).fetchall()
     for ev in rows:
-        result = _apply(conn, ev["kind"], _decode(ev["raw"]))
+        try:
+            result = _apply(conn, ev["kind"], _decode(ev["raw"]))
+        except Exception as e:                  # noqa: BLE001
+            # 1件の失敗で残りが止まらないようにする。
+            # processed_at は入れない（次回また処理を試みる）。
+            result = f"error: {str(e)[:120]}"
+            alert(conn, "error", "通知の反映に失敗しました",
+                  f"gid={ev['gid']} kind={ev['kind']} {result}")
+            conn.execute("UPDATE payment_events SET result = ? WHERE gid = ? AND kind = ?",
+                         (result, ev["gid"], ev["kind"]))
+            continue
         conn.execute("UPDATE payment_events SET processed_at = ?, result = ? "
                      "WHERE gid = ? AND kind = ?", (now(), result, ev["gid"], ev["kind"]))
     conn.commit()
+    # 何度も失敗し続けているものは、別途目立たせる
+    stuck = conn.execute(
+        "SELECT COUNT(*) n FROM payment_events "
+        "WHERE processed_at IS NULL AND result LIKE 'error:%'").fetchone()["n"]
+    if stuck:
+        alert(conn, "error", "反映できない通知が残っています", f"{stuck}件")
+        conn.commit()
     return len(rows)
 
 
@@ -374,6 +391,14 @@ def _apply(conn, kind: str, p: dict) -> str:
 
     # 自分の会員サイト由来かを cod の形で判定する。
     # 同じ店舗IDで店舗売上やサプリの決済も通るため、形の違うものは処理しない。
+    #
+    # 【2026-10-13 時点の注意】acid・em・nm のキックバックへの追加は未設定。
+    # したがって当面 acid が届かない可能性があり、**cod だけが頼りになる**。
+    # cod が空の通知は、自社の決済かどうかも判断できないので必ず記録する。
+    if not cod:
+        alert(conn, "warn", "codの無い通知（判別できません）",
+              f"acid={acid} rst={rst} ec={ec}")
+        return "ignored_no_cod"
     if not cod.startswith("JK-"):
         return "ignored_other_product"
 
@@ -382,7 +407,12 @@ def _apply(conn, kind: str, p: dict) -> str:
         alert(conn, "warn", "会員が見つからない通知", f"cod={cod} acid={acid}")
         return "member_not_found"
 
-    # 初回通知で acid を結びつける
+    # 初回通知で acid を結びつける。
+    # acid の返却はまだ設定されていないため、届かないことがある。
+    # その場合は cod（会員ID）だけで運用し、acid が届いた時点で結びつける。
+    if not acid and not row["robotpay_acid"]:
+        alert(conn, "info", "acidがまだ届いていません",
+              f"{row['member_id']} / 自動課金停止APIはacidが無いと実行できません")
     if acid and not row["robotpay_acid"]:
         conn.execute("UPDATE members SET robotpay_acid = ?, updated_at = ? WHERE member_id = ?",
                      (acid, now(), row["member_id"]))

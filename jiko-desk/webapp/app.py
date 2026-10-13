@@ -269,6 +269,32 @@ def video_click():
 
 # ───────────── 申込・ログイン ─────────────
 
+# ── 本番の決済に触る操作の安全装置 ─────────────────────────
+# 自動課金停止API（acsgate.aspx）を呼ぶ機能は、MAYUさんの承認があるまで
+# 実行できないようにしておく。既定は無効。
+# 有効にするには ALLOW_STOP_API=1 と STOP_API_AID（店舗ID）の両方が要る。
+ALLOW_STOP_API = os.environ.get("ALLOW_STOP_API", "0") == "1"
+STOP_API_AID = os.environ.get("STOP_API_AID", "")
+
+
+def stop_auto_charge(acid: str) -> tuple[bool, str]:
+    """自動課金を停止する。**承認があるまで実行されない。**
+
+    注意（2026-10-13 サポート回答）
+      - このAPIで停止すると、会員に自動で通知メールが送信される
+      - 文面は管理画面「設定 ＞ ユーザ向けメール ＞ 自動課金 ＞ 停止」で確認できる
+      - 文面を確認するまで使わない
+      - 実行には、決済データ送信元IPに当方のサーバーを登録しておく必要がある
+    """
+    if not ALLOW_STOP_API or not STOP_API_AID:
+        return False, "停止APIは無効です（ALLOW_STOP_API と STOP_API_AID が必要）"
+    if not acid:
+        return False, "自動課金番号が分かりません（acidのキックバック追加が未設定）"
+    raise NotImplementedError(
+        "実装前に、会員へ届く停止メールの文面を確認してください。"
+        "docs/subscpay-facts.md の D2 を参照。")
+
+
 # 通知の受け口のパス。推測できない長さにする。本番では環境変数で渡す。
 WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "demo-secret-please-change-0123456789")
 # 検証環境では自分のPCから叩けるように送信元IPの確認を切る
@@ -288,7 +314,7 @@ def join():
     conn = get_db()
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
-        if not mb.rate_ok(conn, "join_ip", request.remote_addr or "?"):
+        if not mb.rate_ok(conn, "join_ip", sec.client_ip(request) or "?"):
             conn.commit()
             return render_template("join.html", email=email,
                                    error="しばらく時間をおいてからお試しください")
@@ -361,7 +387,7 @@ def login_request():
     # 生のメールアドレスをHTMLに出さないため。
     email = (request.form.get("email") or session.get("login_email") or "").strip()
     session["login_email"] = email
-    ip = request.remote_addr or "?"
+    ip = sec.client_ip(request) or "?"
     # 連打でメールを送りつけられないようにする。制限に達しても画面は同じにする。
     if not (mb.rate_ok(conn, "login_request_ip", ip)
             and mb.rate_ok(conn, "login_request_email", mb.norm_email(email))):
@@ -381,7 +407,7 @@ def login_request():
 def login_consume():
     """フラグメントから渡されたトークンを1回だけ使う。"""
     conn = get_db()
-    ip = request.remote_addr or "?"
+    ip = sec.client_ip(request) or "?"
     # 総当たり対策。失敗した試行だけを数えるので、正規の利用者が共有IPから
     # 何度ログインしても打ち止めにならない。
     if not mb.rate_ok(conn, "login_consume_ip", ip, record=False):
@@ -532,7 +558,7 @@ def _webhook(secret: str, kind: str):
         return "<html>NG</html>", 404
     params = dict(request.args) | dict(request.form)
     conn = get_db()
-    mb.receive(conn, kind, params, request.remote_addr or "", ENFORCE_SOURCE_IP)
+    mb.receive(conn, kind, params, sec.client_ip(request) or "", ENFORCE_SOURCE_IP)
     # 反映はここでやらない。別途 process_pending() が処理する。
     return "<html>OK</html>", 200
 
@@ -562,8 +588,11 @@ def admin_reconcile():
     conn = get_db()
     result = None
     overdue = []
+    stale = rec.check_reconcile_overdue(conn)
+    last = rec.last_reconciled_at(conn)
     if request.method == "POST":
         overdue = rec.check_overdue(conn)
+        rec.record_quick_check(conn)
         f = request.files.get("csv")
         if f and f.filename:
             raw = f.read()
@@ -578,7 +607,9 @@ def admin_reconcile():
                 text = raw.decode("utf-8", errors="replace")
             result = rec.reconcile_csv(conn, text)
     return render_template("reconcile.html", result=result, overdue=overdue,
-                           grace=rec.OVERDUE_GRACE_DAYS)
+                           grace=rec.OVERDUE_GRACE_DAYS, stale=stale, last=last,
+                           last_quick=rec.last_quick_check_at(conn),
+                           interval=rec.RECONCILE_INTERVAL_DAYS)
 
 
 @app.route("/admin/members")
@@ -631,7 +662,7 @@ def consult():
 
 def require_admin():
     """管理者の関所。IP制限とセッションの両方を見る。"""
-    if not sec.admin_ip_allowed(request.remote_addr or "?"):
+    if not sec.admin_ip_allowed(sec.client_ip(request) or "?"):
         return False
     return session.get("is_admin") is True
 
@@ -639,7 +670,7 @@ def require_admin():
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     conn = get_db()
-    ip = request.remote_addr or "?"
+    ip = sec.client_ip(request) or "?"
     if not sec.admin_ip_allowed(ip):
         return "<html>この場所からは利用できません。</html>", 403
     error = ""

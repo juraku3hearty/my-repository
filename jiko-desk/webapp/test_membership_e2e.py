@@ -79,7 +79,7 @@ ok("検索結果が本文に出ない", "card primary" not in h)
 
 print("\n=== 2. 申込（pending が作られるか）===")
 sh("-c",CK,"-b",CK,"-d","email=test-member@example.com","-d","agree=1", B+"/join")
-c = db(); m = c.execute("SELECT * FROM members ORDER BY created_at DESC LIMIT 1").fetchone()
+c = db(); m = c.execute("SELECT * FROM members WHERE email='test-member@example.com'").fetchone()
 MID = m["member_id"]
 ok("members に pending が1行できた", m["status"]=="pending", f"{MID} {m['email']}")
 ok("カード情報・氏名・住所・電話を持っていない",

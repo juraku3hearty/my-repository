@@ -7,10 +7,24 @@
     決済の通知は<b>自動で再送されません</b>（2026-10-13 サポート回答）。<br>
     取りこぼしに気づく手段はこの照合だけです。毎日実行してください。
   </div>
+  <div class="approval {{ 'ng' if stale else 'ok' }}" style="margin-top:12px">
+    <b>CSVとの照合：{% if last %}{{ last[:16] }}{% else %}未実施{% endif %}</b>
+    <span class="tiny">
+      {% if stale %}{{ interval }}日以上あいています。CSVを上げて照合してください
+      {% else %}{{ interval }}日以内に実行されています{% endif %}
+    </span>
+  </div>
+  {% if last_quick %}
+  <div class="notice" style="margin-top:6px">
+    通知漏れの確認（CSVなし）の最終実行：{{ last_quick[:16] }}<br>
+    <b>CSVを上げないと、決済側との食い違いは見つけられません。</b>
+  </div>
+  {% endif %}
   <form method="post" enctype="multipart/form-data" style="margin-top:14px">
     <input type="hidden" name="_csrf" value="{{ csrf() }}">
     <div style="font-size:13px;color:var(--muted);margin-bottom:8px">
-      管理画面から落とした決済データのCSVを選びます（省略しても通知漏れの確認はできます）。
+      管理画面から落とした決済データのCSVを選びます（省略しても通知漏れの確認はできます）。<br>
+      CSVは手で落とす前提です。自動取得できるとは想定していません。
     </div>
     <input type="file" name="csv" accept=".csv">
     <button type="submit">照合する</button>

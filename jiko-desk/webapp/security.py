@@ -27,6 +27,35 @@ def init(conn):
     conn.executescript(SCHEMA)
 
 
+# ───────────── 送信元IPの判定（プロキシ経由の扱い）─────────────
+#
+# nginx などを前に置くと remote_addr は 127.0.0.1 になり、本当の送信元が分からなくなる。
+# X-Forwarded-For をそのまま信じるのは危険で、誰でも偽装できてしまう。
+#
+# 正しい扱いは「自分が置いたプロキシの段数を知っていること」。
+# TRUSTED_PROXY_COUNT に段数を入れると、X-Forwarded-For の右からその数だけ
+# さかのぼった値を送信元とみなす。右端は直前のプロキシが付けた値なので信用できる。
+#
+#   直接公開（プロキシなし）          TRUSTED_PROXY_COUNT=0  → remote_addr を使う
+#   nginx を1段だけ前に置く            TRUSTED_PROXY_COUNT=1  → XFF の右から1番目
+#   CDN + nginx の2段                  TRUSTED_PROXY_COUNT=2  → XFF の右から2番目
+#
+# 【重要】nginx 側にも設定が要る。
+#   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#   proxy_set_header X-Real-IP $remote_addr;
+# さらに nginx 自身でIPを絞っておけば二重に守れる（docs/operations.md）。
+
+def client_ip(request) -> str:
+    n = int(os.environ.get("TRUSTED_PROXY_COUNT", "0") or 0)
+    if n <= 0:
+        return request.remote_addr or ""
+    xff = [x.strip() for x in (request.headers.get("X-Forwarded-For") or "").split(",") if x.strip()]
+    if len(xff) < n:
+        # 段数が合わない＝設定ミスか偽装。判定できないので空にして拒否させる。
+        return ""
+    return xff[-n]
+
+
 # ───────────── 起動時の自己点検 ─────────────
 
 def preflight(app_env: str) -> list[str]:
@@ -46,6 +75,9 @@ def preflight(app_env: str) -> list[str]:
         problems.append("MEMBER_HASH_SALT が既定値のままです")
     if not os.environ.get("ADMIN_ALLOW_IPS", ""):
         problems.append("ADMIN_ALLOW_IPS が未設定です（管理画面にIP制限がかかりません）")
+    if "TRUSTED_PROXY_COUNT" not in os.environ:
+        problems.append("TRUSTED_PROXY_COUNT が未設定です"
+                        "（プロキシ経由だと送信元IPを正しく判定できません）")
     return problems
 
 
