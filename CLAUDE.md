@@ -124,13 +124,44 @@ MAYUが主催する取り組み。一人ひとりの業務課題をAIで自動�
     `Scheduled` が1件も無い場合は、まずトグルを疑う
   - 動作確認は History に `Scheduled` 表記の実行が出るかで判断する。
     該当行が無い日は `1 operation` で空振りするが、それは正常
+- **Threads実装（2026-10-14 構築完了・初回自動実行は10/15 11:30で検証予定）:**
+  - Metaアプリ名 `樹整骨院 SNS投稿` / ビジネス `樹鍼灸整骨院` / **開発モードのまま**（公開・審査不要）
+  - Threads User ID: `29583181311273824` / Threadsユーザー名 `itukisinkyu_staff`
+  - Makeのモジュール構成（Instagramの後ろに3つ追加）:
+    | # | 種別 | 設定 |
+    |---|---|---|
+    | 11 | HTTP Make a request | `POST https://graph.threads.net/v1.0/29583181311273824/threads`<br>Body: form-urlencoded / `media_type=IMAGE`, `image_url`=C列, `text`=B列, `access_token`<br>Parse response: **Yes**（これをYesにしないと13で戻り値が使えない） |
+    | 12 | Tools Sleep | 30秒。Metaが画像を取りに行く待ち時間。無いと「準備できていない」で失敗する |
+    | 13 | HTTP Make a request | `POST .../29583181311273824/threads_publish`<br>Body: `creation_id={{11.data.id}}`, `access_token` |
+  - Threads APIは「①下書きコンテナ作成 → ②公開」の2段階。Instagramと同じ構造
+  - **セットアップで詰まった点（次回必ず再発する）:**
+    1. **Messaging APIと同じくアプリ作成ウィザードは「Threads APIにアクセス」ユースケースを選ぶ**
+    2. トークンは**グラフAPIエクスプローラ**（developers.facebook.com/tools/explorer）で取る。
+       アプリ管理画面側に「ユーザートークンジェネレーター」は見当たらなかった
+    3. ★**エクスプローラでドメインを `graph.facebook.com` → `graph.threads.net` に切り替える。**
+       切り替えるとボタンが「Generate Threads Access Token」に変わる。
+       切り替え忘れるとFacebookのトークンが出て使えない
+    4. ★**Threadsアカウントをテスターに招待し、Threads側で承認が要る。**
+       未承認だと `error_code: 1349245 "The user has not accepted the invite to test the app"`。
+       パスワードや認証情報の問題ではない
+       - 招待: アプリの役割 →「メンバーを追加」→ **役割の種類で「Threadsテスター」を選ぶ**。
+         Facebookの「テスター」欄にThreadsユーザー名を入れると `Invalid id` になる
+       - 承認: **Threadsアプリ → 設定 → 「その他の設定」→ ウェブサイトのアクセス許可 → 招待**。
+         「アカウント」という項目は存在しない。**通知バッジが一切出ないので気づけない**
+    5. 認可ダイアログは「続行／キャンセル」のみで、Optional権限も含めて一括許可される。
+       個別選択は不要
+  - **⚠️ 未対応の重大な運用課題: アクセストークンは60日で失効する。**
+    `th_refresh_token` で更新できるが未実装。放置するとThreads投稿だけ静かに止まる。
+    ディオーネのtoken.pickleと同じ問題。更新の仕組みを別途用意すること
 - **残課題:**
   1. GASコードから `setupProperties()` 内の平文トークンを削除（note記事掲載時の漏洩防止）← **未了**
   2. フッター変更が実際の投稿に正しく反映されているかの確認
-  3. Threads追加（上記のHTTP実装。別日にまとめて）
-  4. 過去行（5/23〜8/12）のアーカイブシートへの退避。季節ネタは毎年使い回せるので消さない
-  5. B列にハッシュタグが含まれるためGoogle側にも出る。実害は小さいので当面放置
-  6. Googleモジュールの Title欄に本文が丸ごと入っている（Make側の必須項目を埋めるため
+  3. Threadsの初回自動実行の結果確認（10/15 11:30）
+  4. **Threadsトークンの60日更新の仕組み**（未着手・放置すると止まる）
+  5. Threadsモジュールの手前に `length(B列) <= 500` のフィルターを追加（長文回のスキップ）
+  6. 過去行（5/23〜8/12）のアーカイブシートへの退避。季節ネタは毎年使い回せるので消さない
+  7. B列にハッシュタグが含まれるためGoogle側にも出る。実害は小さいので当面放置
+  8. Googleモジュールの Title欄に本文が丸ごと入っている（Make側の必須項目を埋めるため
      同じ変数を流用したと思われる）。CTA投稿ではタイトルが表示されない可能性が高く、
      実害は確認できていないため保留
 - **注意点:**
