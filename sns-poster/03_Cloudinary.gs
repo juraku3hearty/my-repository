@@ -12,7 +12,7 @@ var CLOUDINARY_FOLDER = 'sns-poster';
 
 /**
  * 画像を Cloudinary にアップロードし、Instagram 投稿に使える配信URLを返す。
- * @return {{url:string, width:number, height:number, warning:string}}
+ * @return {{url:string, googleUrl:string, width:number, height:number, warning:string}}
  */
 function uploadToCloudinary_(blob) {
   var cloud = cloudinaryCloud_();
@@ -50,6 +50,9 @@ function uploadToCloudinary_(blob) {
 
   return {
     url: buildCloudinaryUrl_(cloud, tx, json.version, json.public_id),
+    // Google用は常に正方形パディング版。Instagram用とは別URLになる
+    googleUrl: buildCloudinaryUrl_(
+      cloud, CONFIG.CLOUDINARY_GOOGLE_TX, json.version, json.public_id),
     width: json.width,
     height: json.height,
     warning: warning

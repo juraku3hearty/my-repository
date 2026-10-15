@@ -25,8 +25,9 @@ var HELP_TEXT = [
   '「シート最終日 + ' + CONFIG.DEFAULT_INTERVAL_DAYS + '日」に自動割り当てされます。',
   '',
   '【コマンド】',
+  'やり直し … 直前に登録した投稿を取り消す',
   '確認 … 今の下書きを表示',
-  '取消 … 下書きを破棄',
+  '取消 … 下書きを破棄（まだ登録前のもの）',
   '一覧 … 今日以降の予約投稿を表示',
   'ID　 … 自分のLINE IDを表示',
   'ヘルプ … この説明'
@@ -46,6 +47,12 @@ function handleCommand_(event, userId, text) {
 
   if (t === '確認' || t === '下書き') {
     replyText_(event.replyToken, describeDraft_(getDraft_(userId)));
+    return true;
+  }
+
+  // 直前に登録した投稿を取り消す。登録済みの行をシートから削除する
+  if (t === 'やり直し' || t === 'やりなおし' || t === '取り消し') {
+    replyText_(event.replyToken, undoLastCommit_(userId));
     return true;
   }
 
@@ -93,4 +100,41 @@ function handleCommand_(event, userId, text) {
   }
 
   return false;
+}
+
+
+/**
+ * 直前に登録した投稿をシートから削除し、文章を下書きに戻す。
+ * 画像だけ送り直せば再登録できる状態にする。
+ */
+function undoLastCommit_(userId) {
+  var last = getLastCommit_(userId);
+  if (!last || !last.imageUrl) {
+    return 'やり直せる登録がありません。\n\n' +
+           '（やり直せるのは、最後に登録した1件だけです。' +
+           'それより前のものはスプレッドシートで直接編集してください）';
+  }
+
+  var res = deletePostByImageUrl_(last.imageUrl);
+  clearLastCommit_(userId);
+
+  if (!res.found) {
+    return 'シートに該当の行が見つかりませんでした。\n' +
+           'すでに削除されたか、画像URLが書き換えられた可能性があります。\n\n' +
+           '対象: ' + last.dateStr;
+  }
+
+  // 文章と日付は下書きに戻す。画像を送り直すだけで再登録できる
+  saveDraft_(userId, { text: last.text, dateStr: last.dateStr });
+
+  var msg = '🗑 ' + res.dateStr + ' の登録を取り消しました。\n\n' +
+            '投稿文は保持しています（' + (last.text || '').length + '文字）。\n' +
+            '画像を送り直してください。';
+
+  if (res.maybePosted) {
+    msg += '\n\n⚠️ この投稿はすでにSNSへ公開された可能性があります。\n' +
+           'シートの行は消しましたが、Instagram・Google・Threadsに出ているものは' +
+           '各アプリから手動で削除してください。';
+  }
+  return msg;
 }

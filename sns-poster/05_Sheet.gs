@@ -49,7 +49,7 @@ function readSchedule_(sh) {
  * @param {string} dateStr 'yyyy/MM/dd' もしくは空文字（空なら自動割り当て）
  * @return {{row:number, dateStr:string, weekday:string}}
  */
-function appendPost_(dateStr, text, imageUrl) {
+function appendPost_(dateStr, text, imageUrl, googleImageUrl) {
   var sh = getSheet_();
   var schedule = readSchedule_(sh);
 
@@ -77,6 +77,8 @@ function appendPost_(dateStr, text, imageUrl) {
   sh.getRange(row, CONFIG.COL_TEXT).setValue(text);
   sh.getRange(row, CONFIG.COL_IMAGE).setValue(imageUrl);
   sh.getRange(row, CONFIG.COL_DONE).setValue(''); // Make が投稿後に埋める
+  sh.getRange(row, CONFIG.COL_GOOGLE_IMAGE).setValue(googleImageUrl || imageUrl);
+  ensureGoogleImageHeader_(sh);
   SpreadsheetApp.flush();
 
   return {
@@ -84,6 +86,12 @@ function appendPost_(dateStr, text, imageUrl) {
     dateStr: fmtDate_(target),
     weekday: WEEKDAYS[target.getDay()]
   };
+}
+
+/** E列のヘッダーが空なら入れておく（列を後から足したため） */
+function ensureGoogleImageHeader_(sh) {
+  var cell = sh.getRange(1, CONFIG.COL_GOOGLE_IMAGE);
+  if (!cell.getValue()) cell.setValue('Google用画像URL');
 }
 
 /** 日付未指定時の投稿日: 既存の最終日 + N日。ただし必ず明日以降にする */
@@ -200,4 +208,63 @@ function extractLeadingDate_(text) {
     return { dateStr: fmtDate_(d), rest: lines.slice(1).join('\n').replace(/^\n+/, '') };
   }
   return { dateStr: '', rest: text };
+}
+
+/* ---------- 「やり直し」用：登録済み行の削除 ---------- */
+
+/**
+ * 画像URLで行を探して削除する。
+ * 行番号ではなく画像URLで探すのは、他の登録で行が挿入されると
+ * 行番号がずれてしまい、別の投稿を消す事故が起きるため。
+ * CloudinaryのURLはアップロードごとにユニークなので照合キーに使える。
+ *
+ * @return {{found:boolean, row:number, dateStr:string, maybePosted:boolean, text:string}}
+ */
+function deletePostByImageUrl_(imageUrl) {
+  if (!imageUrl) return { found: false };
+
+  var sh = getSheet_();
+  var last = lastDataRow_(sh);
+  if (last <= CONFIG.HEADER_ROWS) return { found: false };
+
+  var values = sh.getRange(CONFIG.HEADER_ROWS + 1, 1,
+                           last - CONFIG.HEADER_ROWS, CONFIG.COL_GOOGLE_IMAGE).getValues();
+
+  for (var i = 0; i < values.length; i++) {
+    if (String(values[i][CONFIG.COL_IMAGE - 1]) !== String(imageUrl)) continue;
+
+    var row = CONFIG.HEADER_ROWS + i + 1;
+    var d = toDate_(values[i][CONFIG.COL_DATE - 1]);
+    var info = {
+      found: true,
+      row: row,
+      dateStr: d ? fmtDate_(d) : '',
+      text: String(values[i][CONFIG.COL_TEXT - 1] || ''),
+      maybePosted: isLikelyPosted_(d, values[i][CONFIG.COL_DONE - 1])
+    };
+    sh.deleteRow(row);
+    SpreadsheetApp.flush();
+    return info;
+  }
+  return { found: false };
+}
+
+/**
+ * すでに投稿された可能性が高いかを判定する。
+ * Makeは「投稿済み」列を書かない運用なので、投稿日と現在時刻から推測する。
+ *  - 投稿日が過去            → 投稿済み
+ *  - 投稿日が今日で投稿時刻を過ぎている → 投稿済み
+ *  - それ以外                → まだ
+ */
+function isLikelyPosted_(postDate, doneCell) {
+  if (doneCell !== '' && doneCell !== null && doneCell !== undefined) return true;
+  if (!postDate) return false;
+
+  var today = todayJst_();
+  if (postDate.getTime() < today.getTime()) return true;
+  if (postDate.getTime() > today.getTime()) return false;
+
+  // 投稿日が今日。設定した投稿時刻を過ぎていれば投稿済みとみなす
+  var now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'HH:mm');
+  return now >= CONFIG.POST_TIME_HHMM;
 }

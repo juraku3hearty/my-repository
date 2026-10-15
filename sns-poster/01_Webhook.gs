@@ -67,6 +67,7 @@ function handleImageMessage_(event, userId) {
   var draft = getDraft_(userId);
   var replaced = !!draft.imageUrl;
   draft.imageUrl = uploaded.url;
+  draft.googleImageUrl = uploaded.googleUrl;
   draft.imageInfo = uploaded.width + '×' + uploaded.height;
   draft.imageWarning = uploaded.warning || '';
   saveDraft_(userId, draft);
@@ -115,8 +116,15 @@ function handleTextMessage_(event, userId, text) {
 
 /** 画像とテキストが揃ったのでシートへ書き込む */
 function commitDraft_(userId, draft) {
-  var result = appendPost_(draft.dateStr, draft.text, draft.imageUrl);
+  var result = appendPost_(draft.dateStr, draft.text, draft.imageUrl, draft.googleImageUrl);
   clearDraft_(userId);
+
+  // 「やり直し」で取り消せるように控えておく
+  saveLastCommit_(userId, {
+    dateStr: result.dateStr,
+    imageUrl: draft.imageUrl,
+    text: draft.text
+  });
 
   var msg = '✅ 登録しました\n' +
             '投稿日: ' + result.dateStr + '（' + result.weekday + '）\n' +
@@ -129,5 +137,7 @@ function commitDraft_(userId, draft) {
   if (draft.imageWarning) {
     msg += '\n\n' + draft.imageWarning;
   }
+
+  msg += '\n\n間違えていたら「やり直し」と送ってください。';
   return msg;
 }

@@ -16,6 +16,7 @@ var CONFIG = {
   COL_TEXT: 2,   // B: テキスト
   COL_IMAGE: 3,  // C: 画像URL
   COL_DONE: 4,   // D: 投稿済み
+  COL_GOOGLE_IMAGE: 5, // E: Google用画像URL（正方形パディング版）
 
   // ヘッダー行数
   HEADER_ROWS: 1,
@@ -26,12 +27,22 @@ var CONFIG = {
   // 下書きの保持時間（時間）。これを超えた下書きは破棄する
   DRAFT_TTL_HOURS: 24,
 
+  // Makeが投稿を実行する時刻（HH:mm）。「やり直し」で投稿済みの可能性を判定するのに使う。
+  // Make側のスケジュールを変えたらここも合わせること
+  POST_TIME_HHMM: '11:30',
+
   // Instagram が受け付けるアスペクト比（幅 / 高さ）の範囲
   IG_MIN_RATIO: 0.8,   // 4:5
   IG_MAX_RATIO: 1.91,  // 1.91:1
 
   // Cloudinary 配信時の基本変換（Instagram は JPEG のみ対応）
   CLOUDINARY_BASE_TX: 'f_jpg,q_auto:good,w_1080,c_limit',
+
+  // Google用の変換。Googleビジネスプロフィールは横長寄りに表示するため、
+  // 縦長画像をそのまま渡すと上下が切り取られる（2026-10実測）。
+  // 横長の画像は切れずに表示されたため、切り取らずに白余白を足して4:3に収める。
+  // 元から横長・正方形の画像なら余白はほとんど出ない
+  CLOUDINARY_GOOGLE_TX: 'ar_4:3,c_pad,b_white,f_jpg,q_auto:good,w_1200',
 
   TIMEZONE: 'Asia/Tokyo'
 };

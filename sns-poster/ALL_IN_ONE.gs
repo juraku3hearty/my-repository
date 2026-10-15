@@ -30,6 +30,7 @@ var CONFIG = {
   COL_TEXT: 2,   // B: テキスト
   COL_IMAGE: 3,  // C: 画像URL
   COL_DONE: 4,   // D: 投稿済み
+  COL_GOOGLE_IMAGE: 5, // E: Google用画像URL（正方形パディング版）
 
   // ヘッダー行数
   HEADER_ROWS: 1,
@@ -40,12 +41,22 @@ var CONFIG = {
   // 下書きの保持時間（時間）。これを超えた下書きは破棄する
   DRAFT_TTL_HOURS: 24,
 
+  // Makeが投稿を実行する時刻（HH:mm）。「やり直し」で投稿済みの可能性を判定するのに使う。
+  // Make側のスケジュールを変えたらここも合わせること
+  POST_TIME_HHMM: '11:30',
+
   // Instagram が受け付けるアスペクト比（幅 / 高さ）の範囲
   IG_MIN_RATIO: 0.8,   // 4:5
   IG_MAX_RATIO: 1.91,  // 1.91:1
 
   // Cloudinary 配信時の基本変換（Instagram は JPEG のみ対応）
   CLOUDINARY_BASE_TX: 'f_jpg,q_auto:good,w_1080,c_limit',
+
+  // Google用の変換。Googleビジネスプロフィールは横長寄りに表示するため、
+  // 縦長画像をそのまま渡すと上下が切り取られる（2026-10実測）。
+  // 横長の画像は切れずに表示されたため、切り取らずに白余白を足して4:3に収める。
+  // 元から横長・正方形の画像なら余白はほとんど出ない
+  CLOUDINARY_GOOGLE_TX: 'ar_4:3,c_pad,b_white,f_jpg,q_auto:good,w_1200',
 
   TIMEZONE: 'Asia/Tokyo'
 };
@@ -159,6 +170,7 @@ function handleImageMessage_(event, userId) {
   var draft = getDraft_(userId);
   var replaced = !!draft.imageUrl;
   draft.imageUrl = uploaded.url;
+  draft.googleImageUrl = uploaded.googleUrl;
   draft.imageInfo = uploaded.width + '×' + uploaded.height;
   draft.imageWarning = uploaded.warning || '';
   saveDraft_(userId, draft);
@@ -207,8 +219,15 @@ function handleTextMessage_(event, userId, text) {
 
 /** 画像とテキストが揃ったのでシートへ書き込む */
 function commitDraft_(userId, draft) {
-  var result = appendPost_(draft.dateStr, draft.text, draft.imageUrl);
+  var result = appendPost_(draft.dateStr, draft.text, draft.imageUrl, draft.googleImageUrl);
   clearDraft_(userId);
+
+  // 「やり直し」で取り消せるように控えておく
+  saveLastCommit_(userId, {
+    dateStr: result.dateStr,
+    imageUrl: draft.imageUrl,
+    text: draft.text
+  });
 
   var msg = '✅ 登録しました\n' +
             '投稿日: ' + result.dateStr + '（' + result.weekday + '）\n' +
@@ -221,6 +240,8 @@ function commitDraft_(userId, draft) {
   if (draft.imageWarning) {
     msg += '\n\n' + draft.imageWarning;
   }
+
+  msg += '\n\n間違えていたら「やり直し」と送ってください。';
   return msg;
 }
 
@@ -293,7 +314,7 @@ var CLOUDINARY_FOLDER = 'sns-poster';
 
 /**
  * 画像を Cloudinary にアップロードし、Instagram 投稿に使える配信URLを返す。
- * @return {{url:string, width:number, height:number, warning:string}}
+ * @return {{url:string, googleUrl:string, width:number, height:number, warning:string}}
  */
 function uploadToCloudinary_(blob) {
   var cloud = cloudinaryCloud_();
@@ -331,6 +352,9 @@ function uploadToCloudinary_(blob) {
 
   return {
     url: buildCloudinaryUrl_(cloud, tx, json.version, json.public_id),
+    // Google用は常に正方形パディング版。Instagram用とは別URLになる
+    googleUrl: buildCloudinaryUrl_(
+      cloud, CONFIG.CLOUDINARY_GOOGLE_TX, json.version, json.public_id),
     width: json.width,
     height: json.height,
     warning: warning
@@ -460,6 +484,37 @@ function describeDraft_(draft) {
   return lines.join('\n');
 }
 
+/* ---------- 直近に登録した投稿の記録 ---------- */
+/*
+ * 「やり直し」で取り消せるようにするため、登録のたびに内容を控えておく。
+ * 行番号は他の登録で行が挿入されるとずれるので、
+ * 取り消し時の行の特定には画像URL（Cloudinaryの発行分でユニーク）を使う。
+ */
+
+function lastCommitKey_(userId) {
+  return 'last_' + userId;
+}
+
+function saveLastCommit_(userId, info) {
+  info.committedAt = Date.now();
+  PropertiesService.getScriptProperties()
+    .setProperty(lastCommitKey_(userId), JSON.stringify(info));
+}
+
+function getLastCommit_(userId) {
+  var raw = PropertiesService.getScriptProperties().getProperty(lastCommitKey_(userId));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearLastCommit_(userId) {
+  PropertiesService.getScriptProperties().deleteProperty(lastCommitKey_(userId));
+}
+
 // ═══════════════════════════════════════════════════════════
 // 05_Sheet.gs
 // ═══════════════════════════════════════════════════════════
@@ -515,7 +570,7 @@ function readSchedule_(sh) {
  * @param {string} dateStr 'yyyy/MM/dd' もしくは空文字（空なら自動割り当て）
  * @return {{row:number, dateStr:string, weekday:string}}
  */
-function appendPost_(dateStr, text, imageUrl) {
+function appendPost_(dateStr, text, imageUrl, googleImageUrl) {
   var sh = getSheet_();
   var schedule = readSchedule_(sh);
 
@@ -543,6 +598,8 @@ function appendPost_(dateStr, text, imageUrl) {
   sh.getRange(row, CONFIG.COL_TEXT).setValue(text);
   sh.getRange(row, CONFIG.COL_IMAGE).setValue(imageUrl);
   sh.getRange(row, CONFIG.COL_DONE).setValue(''); // Make が投稿後に埋める
+  sh.getRange(row, CONFIG.COL_GOOGLE_IMAGE).setValue(googleImageUrl || imageUrl);
+  ensureGoogleImageHeader_(sh);
   SpreadsheetApp.flush();
 
   return {
@@ -550,6 +607,12 @@ function appendPost_(dateStr, text, imageUrl) {
     dateStr: fmtDate_(target),
     weekday: WEEKDAYS[target.getDay()]
   };
+}
+
+/** E列のヘッダーが空なら入れておく（列を後から足したため） */
+function ensureGoogleImageHeader_(sh) {
+  var cell = sh.getRange(1, CONFIG.COL_GOOGLE_IMAGE);
+  if (!cell.getValue()) cell.setValue('Google用画像URL');
 }
 
 /** 日付未指定時の投稿日: 既存の最終日 + N日。ただし必ず明日以降にする */
@@ -668,6 +731,65 @@ function extractLeadingDate_(text) {
   return { dateStr: '', rest: text };
 }
 
+/* ---------- 「やり直し」用：登録済み行の削除 ---------- */
+
+/**
+ * 画像URLで行を探して削除する。
+ * 行番号ではなく画像URLで探すのは、他の登録で行が挿入されると
+ * 行番号がずれてしまい、別の投稿を消す事故が起きるため。
+ * CloudinaryのURLはアップロードごとにユニークなので照合キーに使える。
+ *
+ * @return {{found:boolean, row:number, dateStr:string, maybePosted:boolean, text:string}}
+ */
+function deletePostByImageUrl_(imageUrl) {
+  if (!imageUrl) return { found: false };
+
+  var sh = getSheet_();
+  var last = lastDataRow_(sh);
+  if (last <= CONFIG.HEADER_ROWS) return { found: false };
+
+  var values = sh.getRange(CONFIG.HEADER_ROWS + 1, 1,
+                           last - CONFIG.HEADER_ROWS, CONFIG.COL_GOOGLE_IMAGE).getValues();
+
+  for (var i = 0; i < values.length; i++) {
+    if (String(values[i][CONFIG.COL_IMAGE - 1]) !== String(imageUrl)) continue;
+
+    var row = CONFIG.HEADER_ROWS + i + 1;
+    var d = toDate_(values[i][CONFIG.COL_DATE - 1]);
+    var info = {
+      found: true,
+      row: row,
+      dateStr: d ? fmtDate_(d) : '',
+      text: String(values[i][CONFIG.COL_TEXT - 1] || ''),
+      maybePosted: isLikelyPosted_(d, values[i][CONFIG.COL_DONE - 1])
+    };
+    sh.deleteRow(row);
+    SpreadsheetApp.flush();
+    return info;
+  }
+  return { found: false };
+}
+
+/**
+ * すでに投稿された可能性が高いかを判定する。
+ * Makeは「投稿済み」列を書かない運用なので、投稿日と現在時刻から推測する。
+ *  - 投稿日が過去            → 投稿済み
+ *  - 投稿日が今日で投稿時刻を過ぎている → 投稿済み
+ *  - それ以外                → まだ
+ */
+function isLikelyPosted_(postDate, doneCell) {
+  if (doneCell !== '' && doneCell !== null && doneCell !== undefined) return true;
+  if (!postDate) return false;
+
+  var today = todayJst_();
+  if (postDate.getTime() < today.getTime()) return true;
+  if (postDate.getTime() > today.getTime()) return false;
+
+  // 投稿日が今日。設定した投稿時刻を過ぎていれば投稿済みとみなす
+  var now = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'HH:mm');
+  return now >= CONFIG.POST_TIME_HHMM;
+}
+
 // ═══════════════════════════════════════════════════════════
 // 06_Commands.gs
 // ═══════════════════════════════════════════════════════════
@@ -699,8 +821,9 @@ var HELP_TEXT = [
   '「シート最終日 + ' + CONFIG.DEFAULT_INTERVAL_DAYS + '日」に自動割り当てされます。',
   '',
   '【コマンド】',
+  'やり直し … 直前に登録した投稿を取り消す',
   '確認 … 今の下書きを表示',
-  '取消 … 下書きを破棄',
+  '取消 … 下書きを破棄（まだ登録前のもの）',
   '一覧 … 今日以降の予約投稿を表示',
   'ID　 … 自分のLINE IDを表示',
   'ヘルプ … この説明'
@@ -720,6 +843,12 @@ function handleCommand_(event, userId, text) {
 
   if (t === '確認' || t === '下書き') {
     replyText_(event.replyToken, describeDraft_(getDraft_(userId)));
+    return true;
+  }
+
+  // 直前に登録した投稿を取り消す。登録済みの行をシートから削除する
+  if (t === 'やり直し' || t === 'やりなおし' || t === '取り消し') {
+    replyText_(event.replyToken, undoLastCommit_(userId));
     return true;
   }
 
@@ -767,6 +896,43 @@ function handleCommand_(event, userId, text) {
   }
 
   return false;
+}
+
+
+/**
+ * 直前に登録した投稿をシートから削除し、文章を下書きに戻す。
+ * 画像だけ送り直せば再登録できる状態にする。
+ */
+function undoLastCommit_(userId) {
+  var last = getLastCommit_(userId);
+  if (!last || !last.imageUrl) {
+    return 'やり直せる登録がありません。\n\n' +
+           '（やり直せるのは、最後に登録した1件だけです。' +
+           'それより前のものはスプレッドシートで直接編集してください）';
+  }
+
+  var res = deletePostByImageUrl_(last.imageUrl);
+  clearLastCommit_(userId);
+
+  if (!res.found) {
+    return 'シートに該当の行が見つかりませんでした。\n' +
+           'すでに削除されたか、画像URLが書き換えられた可能性があります。\n\n' +
+           '対象: ' + last.dateStr;
+  }
+
+  // 文章と日付は下書きに戻す。画像を送り直すだけで再登録できる
+  saveDraft_(userId, { text: last.text, dateStr: last.dateStr });
+
+  var msg = '🗑 ' + res.dateStr + ' の登録を取り消しました。\n\n' +
+            '投稿文は保持しています（' + (last.text || '').length + '文字）。\n' +
+            '画像を送り直してください。';
+
+  if (res.maybePosted) {
+    msg += '\n\n⚠️ この投稿はすでにSNSへ公開された可能性があります。\n' +
+           'シートの行は消しましたが、Instagram・Google・Threadsに出ているものは' +
+           '各アプリから手動で削除してください。';
+  }
+  return msg;
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -59,3 +59,34 @@ function describeDraft_(draft) {
   }
   return lines.join('\n');
 }
+
+/* ---------- 直近に登録した投稿の記録 ---------- */
+/*
+ * 「やり直し」で取り消せるようにするため、登録のたびに内容を控えておく。
+ * 行番号は他の登録で行が挿入されるとずれるので、
+ * 取り消し時の行の特定には画像URL（Cloudinaryの発行分でユニーク）を使う。
+ */
+
+function lastCommitKey_(userId) {
+  return 'last_' + userId;
+}
+
+function saveLastCommit_(userId, info) {
+  info.committedAt = Date.now();
+  PropertiesService.getScriptProperties()
+    .setProperty(lastCommitKey_(userId), JSON.stringify(info));
+}
+
+function getLastCommit_(userId) {
+  var raw = PropertiesService.getScriptProperties().getProperty(lastCommitKey_(userId));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearLastCommit_(userId) {
+  PropertiesService.getScriptProperties().deleteProperty(lastCommitKey_(userId));
+}

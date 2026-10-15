@@ -9,6 +9,7 @@ const Utilities = {
   formatDate(d, tz, fmt) {
     // テストは TZ=Asia/Tokyo で実行する前提
     if (fmt === 'yyyy/MM/dd') return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+    if (fmt === 'HH:mm') return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     throw new Error('unsupported fmt ' + fmt);
   }
 };
@@ -51,6 +52,10 @@ function makeSheet(rows) {
           }
           return out;
         },
+        getValue() {
+          const r = data[row - 1] || [];
+          return r[col - 1] === undefined ? '' : r[col - 1];
+        },
         setValue(v) {
           while (data.length < row) data.push(['','','','']);
           const r = data[row-1];
@@ -72,7 +77,7 @@ const ctx = vm.createContext({
   Date: MockDate, console, JSON, String, Number, Object, Math, Array, Error, RegExp
 });
 
-['00_Config.gs','04_Draft.gs','05_Sheet.gs'].forEach(f =>
+['00_Config.gs','04_Draft.gs','05_Sheet.gs','06_Commands.gs'].forEach(f =>
   vm.runInContext(fs.readFileSync(DIR+f,'utf8'), ctx, { filename: f })
 );
 // 02_LineApi の truncate_ だけ必要
@@ -153,8 +158,9 @@ eq('日付未指定 → 11/25+3日 = 11/28', JSON.parse(r).dateStr, '2026/11/28'
 eq('  行は末尾', JSON.parse(r).row, 5);
 
 setup();
-run("appendPost_('11/20','本文テキスト','img.jpg')");
-eq('挿入行の内容', run("_sheet._data[3].slice(1)"), ['本文テキスト','img.jpg','']);
+run("appendPost_('11/20','本文テキスト','img.jpg','img_google.jpg')");
+eq('挿入行の内容', run("_sheet._data[3].slice(1)"),
+   ['本文テキスト','img.jpg','','img_google.jpg']);
 
 console.log('\n== 過去日を指定したときの繰り上げ（仕様） ==');
 eq("今日10/11に'10/01'は翌年扱い", run("fmtDate_(parseDateStr_('10/01'))"), '2027/10/01');
@@ -182,6 +188,69 @@ eq('未設定なら全員許可', run("isAllowedUser_('Uxxx')"), true);
 run("PropertiesService.getScriptProperties().setProperty('ALLOWED_USER_IDS','Uaaa, Ubbb');");
 eq('許可リスト内', run("isAllowedUser_('Ubbb')"), true);
 eq('許可リスト外', run("isAllowedUser_('Uccc')"), false);
+
+console.log('\n== E列（Google用画像URL）==');
+run(`
+  _sheet = makeSheet([
+    ['投稿日','テキスト','画像URL','投稿済み',''],
+  ]);
+`);
+run("appendPost_('11/20','本文','https://x/ig.jpg','https://x/google.jpg')");
+eq('C列=Instagram用', run("_sheet._data[1][2]"), 'https://x/ig.jpg');
+eq('E列=Google用',    run("_sheet._data[1][4]"), 'https://x/google.jpg');
+eq('E1にヘッダーが入る', run("_sheet._data[0][4]"), 'Google用画像URL');
+run("appendPost_('11/21','本文2','https://x/only.jpg')");
+eq('Google用未指定ならC列と同じ', run("_sheet._data[2][4]"), 'https://x/only.jpg');
+
+console.log('\n== deletePostByImageUrl_ ==');
+function setup3() {
+  return run(`
+    _sheet = makeSheet([
+      ['投稿日','テキスト','画像URL','投稿済み','Google用画像URL'],
+      [new Date(2026,10,5),  'A', 'https://x/a.jpg', '', 'https://x/ag.jpg'],
+      [new Date(2026,10,15), 'B', 'https://x/b.jpg', '', 'https://x/bg.jpg'],
+      [new Date(2026,10,25), 'C', 'https://x/c.jpg', '', 'https://x/cg.jpg']
+    ]);
+    'ok';
+  `);
+}
+setup3();
+const del = JSON.parse(run("JSON.stringify(deletePostByImageUrl_('https://x/b.jpg'))"));
+eq('見つかる', del.found, true);
+eq('正しい日付を返す', del.dateStr, '2026/11/15');
+eq('本文も返す', del.text, 'B');
+eq('その行だけ消える',
+   run("_sheet._data.slice(1).map(function(r){return r[1];})"), ['A','C']);
+
+setup3();
+eq('存在しないURLはfound:false',
+   JSON.parse(run("JSON.stringify(deletePostByImageUrl_('https://x/zzz.jpg'))")).found, false);
+eq('  行は減らない', run("_sheet._data.length"), 4);
+
+console.log('\n== isLikelyPosted_ ==（今日 = 2026/10/11 12:00）');
+eq('未来の日付 → まだ',   run("isLikelyPosted_(new Date(2026,10,1), '')"), false);
+eq('過去の日付 → 投稿済み', run("isLikelyPosted_(new Date(2026,8,1), '')"), true);
+eq('今日・11:30以降 → 投稿済み', run("isLikelyPosted_(new Date(2026,9,11), '')"), true);
+eq('投稿済み列が埋まっている → 投稿済み',
+   run("isLikelyPosted_(new Date(2026,10,1), '11/1')"), true);
+
+console.log('\n== やり直し（undoLastCommit_）==');
+run("PropertiesService.getScriptProperties().setProperty('ALLOWED_USER_IDS','');");
+setup3();
+run("saveLastCommit_('U9', {dateStr:'2026/11/15', imageUrl:'https://x/b.jpg', text:'B'});");
+const undo = run("undoLastCommit_('U9')");
+eq('取り消しメッセージが出る', /取り消しました/.test(undo), true);
+eq('行が消える', run("_sheet._data.slice(1).map(function(r){return r[1];})"), ['A','C']);
+eq('文章が下書きに戻る', run("getDraft_('U9').text"), 'B');
+eq('日付も下書きに戻る', run("getDraft_('U9').dateStr"), '2026/11/15');
+eq('記録はクリアされる', run("getLastCommit_('U9')"), null);
+eq('2回目はやり直せない', /やり直せる登録がありません/.test(run("undoLastCommit_('U9')")), true);
+
+setup3();
+run("saveLastCommit_('U8', {dateStr:'2026/09/01', imageUrl:'https://x/a.jpg', text:'A'});");
+run("_sheet._data[1][0] = new Date(2026,8,1);");
+const undoOld = run("undoLastCommit_('U8')");
+eq('投稿済みの可能性を警告する', /すでにSNSへ公開された可能性/.test(undoOld), true);
 
 console.log('\n---------------------------');
 console.log(`pass: ${pass}  fail: ${fail}`);
