@@ -58,6 +58,31 @@ def bare(q: str) -> str:
     return BOILER.sub("", q or "")
 
 
+def overlap_scorer(questions: list[str]):
+    """この束の中で「ありふれた言葉」を外してから重なりを測る関数を返す。
+
+    束がテーマ別（自賠責保険Aなど）だと、全部の質問に「自賠責」が入る。
+    固定の除外語リストではテーマ語を外せないので、
+    束の中で4分の1以上の質問に出てくる文字のつながりは数えない。
+    """
+    from app import bigrams
+    n = len(questions) or 1
+    df: dict[str, int] = {}
+    for q in questions:
+        for g in bigrams(bare(q)):
+            df[g] = df.get(g, 0) + 1
+    common = {g for g, c in df.items() if c / n > 0.25}
+
+    def score(a: str, b: str) -> float:
+        ga = bigrams(bare(a)) - common
+        gb = bigrams(bare(b)) - common
+        if not ga or not gb:
+            return 0.0
+        hit = len(ga & gb)
+        return max(hit / len(ga), hit / len(gb))
+    return score
+
+
 # 文字起こしで繰り返し出る聞き取り違い。回答に混ざっていないか見る。
 TYPO = {
     "行動": "公道", "正骨院": "整骨院", "精骨院": "整骨院", "性骨院": "整骨院",
@@ -181,8 +206,110 @@ def build(video_ids: list[str], out_path: Path, compare_to: Path | None = None) 
     return recs
 
 
+def build_from_csv(src: Path, out_path: Path, compare_to: Path | None = None) -> None:
+    """すでに作ってある束（out/①〜⑥）に、あとから検査と並べ替えをかける。
+
+    DBは見ない。束を作った時点とDBの中身がずれている場合があるため、
+    束に書かれている質問・回答・根拠だけを使う。
+    """
+    rows = list(csv.DictReader(src.open(encoding="utf-8-sig")))
+
+    done, approved = set(), []
+    if compare_to and compare_to.exists():
+        for r in csv.DictReader(compare_to.open(encoding="utf-8")):
+            done.add(r["ナレッジID"])
+            if r.get("判定") == "済":
+                approved.append(r)
+
+    kept, already, dropped = [], [], []
+    for r in rows:
+        if r["ナレッジID"] in done:
+            already.append(r)
+        elif EMPTY.search(r.get("回答", "")):
+            dropped.append(r)
+        else:
+            kept.append(r)
+
+    sim = overlap_scorer([r["質問"] for r in kept] + [r["質問"] for r in approved])
+    pairs: dict[str, list[tuple[str, float, str]]] = {}
+    for i, a in enumerate(kept):
+        for b in kept[i + 1:]:
+            c = sim(a["質問"], b["質問"])
+            if c >= 0.55:
+                pairs.setdefault(a["ナレッジID"], []).append((b["ナレッジID"], c, b["質問"]))
+                pairs.setdefault(b["ナレッジID"], []).append((a["ナレッジID"], c, a["質問"]))
+    for a in kept:
+        for b in approved:
+            c = sim(a["質問"], b["質問"])
+            if c >= 0.55:
+                pairs.setdefault(a["ナレッジID"], []).append(
+                    (b["ナレッジID"] + "（済）", c, b["質問"]))
+
+    recs = []
+    for r in kept:
+        text = r.get("回答", "")
+        star, kind = [], []
+        if GUESS.search(text):
+            star.append("推測表現")
+        if PUSH.search(text):
+            star.append("勧誘に見える")
+        typo = [f"{a}→{b}" for a, b in TYPO.items() if a in text]
+        if typo:
+            star.append("誤字候補:" + " ".join(typo[:3]))
+        if MONEY.search(text):
+            kind.append("数字")
+        if sum(w in text for w in PAIR) >= 2:
+            kind.append("条件が対")
+        top = sorted(pairs.get(r["ナレッジID"], []), key=lambda t: -t[1])[:2]
+        same = ""
+        if top:
+            star.append("重なり")
+            same = "／".join(f"{i}（{c:.2f}）{q}" for i, c, q in top)
+        recs.append({
+            "ナレッジID": r["ナレッジID"], "判定": "", "コメント": "",
+            "注意": "★ " + " / ".join(star) if star else "",
+            "種類": " ".join(kind), "重なり相手": same,
+            "カテゴリー": r.get("カテゴリー", ""),
+            "質問": r["質問"], "回答": r.get("回答", ""),
+            "講師の発言（根拠）": r.get("講師の発言（根拠）", ""),
+            "動画リンク": r.get("動画リンク", ""),
+        })
+
+    def order(d):
+        if d["注意"] and "重なり" not in d["注意"]:
+            return (0, d["カテゴリー"], d["ナレッジID"])
+        if d["注意"]:
+            return (1, d["カテゴリー"], d["ナレッジID"])
+        if d["種類"]:
+            return (2, d["カテゴリー"], d["ナレッジID"])
+        return (3, d["カテゴリー"], d["ナレッジID"])
+    recs.sort(key=order)
+
+    with out_path.open("w", encoding="utf-8", newline="") as fp:
+        w = csv.DictWriter(fp, fieldnames=list(recs[0].keys()))
+        w.writeheader(); w.writerows(recs)
+
+    alone = sum(1 for d in recs if d["注意"] and "重なり" not in d["注意"])
+    pair  = sum(1 for d in recs if d["注意"] and "重なり" in d["注意"])
+    kindn = sum(1 for d in recs if not d["注意"] and d["種類"])
+    print(f"  元 {len(rows)}件")
+    print(f"    初回で確認済み {len(already)}件 を除外")
+    print(f"    回答になっていない {len(dropped)}件 を除外")
+    print(f"  → 出力 {len(recs)}件")
+    print(f"     ① ★ 単独で判断できる  {alone:3}件 ← ここから")
+    print(f"     ② ★ 重なり           {pair:3}件")
+    print(f"     ③ 印 数字・条件が対    {kindn:3}件")
+    print(f"     ④ 印なし             {len(recs)-alone-pair-kindn:3}件")
+    for r in dropped:
+        print(f"       除外(回答になっていない): {r['ナレッジID']} {r['質問'][:40]}")
+
+
 if __name__ == "__main__":
-    ids = sys.argv[1:-1] or []
-    out = Path(sys.argv[-1])
-    build(ids, out, compare_to=ROOT / "data" / "review-round1.csv")
-    print(f"  → {out}")
+    args = sys.argv[1:]
+    r1 = ROOT / "data" / "review-round1.csv"
+    if args and args[0] == "--from-csv":
+        build_from_csv(Path(args[1]), Path(args[2]), compare_to=r1)
+        print(f"  → {args[2]}")
+    else:
+        build(args[:-1], Path(args[-1]), compare_to=r1)
+        print(f"  → {args[-1]}")
