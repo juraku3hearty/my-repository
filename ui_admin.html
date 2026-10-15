@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<?!= include('ui_style') ?>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="card">
+    <h1>届いた問診</h1>
+    <p class="sub"><?= clinic['院名'] ?></p>
+    <a class="btn ghost" href="<?= urls.print ?>" target="_blank" rel="noopener">印刷用シートを開く</a>
+  </div>
+
+  <div id="list"><p class="sub" style="text-align:center">読み込んでいます…</p></div>
+
+  <p class="foot">※表示される確認項目は、判断ではありません。<br>個別の事案については専門家にご確認ください。</p>
+</main>
+
+<script>
+  var TOKEN = '<?= token ?>';
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function alertHtml(raw){
+    if (!raw) return '';
+    return String(raw).split('\n').filter(String).map(function(line){
+      var level = 'info';
+      if (line.indexOf('[high]') === 0) level = 'high';
+      else if (line.indexOf('[warn]') === 0) level = 'warn';
+      return '<div class="alert ' + level + '">' + esc(line.replace(/^\[\w+\]\s*/, '')) + '</div>';
+    }).join('');
+  }
+
+  function row(r){
+    var parts = [];
+    parts.push('<div class="rec">');
+    parts.push('<div class="meta">' + esc(r['受付日時']) + '</div>');
+    parts.push('<div class="name">' + esc(r['患者名'] || '(お名前未記入)') + '</div>');
+
+    var sub = [];
+    if (r['事故日時']) sub.push('事故 ' + esc(r['事故日時']));
+    if (r['経過日数'] !== '' && r['経過日数'] != null) sub.push('経過 ' + esc(r['経過日数']) + '日');
+    if (r['電話']) sub.push(esc(r['電話']));
+    if (sub.length) parts.push('<div class="meta">' + sub.join('　/　') + '</div>');
+
+    parts.push(alertHtml(r['アラート']));
+
+    if (r['痛み部位']) parts.push('<p style="font-size:14px;margin:10px 0 0"><strong>痛み:</strong> ' + esc(r['痛み部位']) + '</p>');
+    if (r['病院での案内']) parts.push('<p style="font-size:14px;margin:6px 0 0"><strong>病院での案内:</strong> ' + esc(r['病院での案内']) + '</p>');
+    if (r['遅延理由']) {
+      parts.push('<p style="font-size:14px;margin:6px 0 0"><strong>遅れた理由:</strong> ' + esc(r['遅延理由']) + '</p>');
+      if (r['遅延理由詳細']) parts.push('<p style="font-size:14px;margin:4px 0 0;color:#4a5a72">「' + esc(r['遅延理由詳細']) + '」</p>');
+    }
+
+    parts.push('<details style="margin-top:12px"><summary style="cursor:pointer;font-size:14px;color:#4a5a72">すべての回答を見る</summary>');
+    parts.push('<div style="font-size:13px;margin-top:8px">');
+    ['住所','発生場所','発生場所その他','自分の種別','走行状態','乗車区分','相手の種別',
+     '車両キズ箇所','修理費用','過失_自分','過失_相手','病院受診','最終受診日',
+     '病院併用意向','自賠責認知','任意保険'].forEach(function(k){
+      if (r[k] !== '' && r[k] != null) {
+        parts.push('<div><span style="color:#4a5a72">' + esc(k) + '：</span>' + esc(r[k]) + '</div>');
+      }
+    });
+    parts.push('</div></details>');
+
+    parts.push('<label style="margin-top:14px">院内メモ</label>');
+    parts.push('<textarea data-id="' + esc(r.recordId) + '" class="memo">' + esc(r['院内メモ']) + '</textarea>');
+    parts.push('<button class="btn ghost save" data-id="' + esc(r.recordId) + '" style="margin-top:8px">メモを保存</button>');
+    parts.push('<span class="saved sub" data-id="' + esc(r.recordId) + '" style="margin-left:8px"></span>');
+    parts.push('</div>');
+    return parts.join('');
+  }
+
+  function bindSave(){
+    Array.prototype.forEach.call(document.querySelectorAll('.save'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        var ta = document.querySelector('textarea.memo[data-id="' + id + '"]');
+        var sp = document.querySelector('.saved[data-id="' + id + '"]');
+        btn.disabled = true; sp.textContent = '保存中…';
+        google.script.run
+          .withSuccessHandler(function(res){
+            sp.textContent = (res && res.ok) ? '保存しました' : '保存できませんでした';
+            btn.disabled = false;
+          })
+          .withFailureHandler(function(){ sp.textContent = '保存できませんでした'; btn.disabled = false; })
+          .saveIntakeMemo(TOKEN, id, ta.value);
+      });
+    });
+  }
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      var box = document.getElementById('list');
+      if (!res || !res.ok) { box.innerHTML = '<div class="card">読み込めませんでした。</div>'; return; }
+      if (!res.rows.length) {
+        box.innerHTML = '<div class="card"><p class="sub" style="margin:0">まだ届いていません。<br>患者さんにQRを見せて記入してもらうと、ここに入ります。</p></div>';
+        return;
+      }
+      box.innerHTML = res.rows.map(row).join('');
+      bindSave();
+    })
+    .withFailureHandler(function(){
+      document.getElementById('list').innerHTML = '<div class="card">読み込めませんでした。</div>';
+    })
+    .listIntakes(TOKEN, 100);
+</script>
+</body>
+</html>

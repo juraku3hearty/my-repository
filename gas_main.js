@@ -34,10 +34,18 @@ function doPost(e) {
 }
 
 function handleLineWebhook(body) {
-  // 必要な処理はここに実装。現状は受信確認のみ。
   (body.events || []).forEach(function(event) {
-    if (event && event.type === 'message' && event.message && event.message.text) {
-      Logger.log('LINE message: ' + event.message.text);
+    try {
+      // 問診票ジェネレーター側の処理（06_LineFollow.js）
+      if (typeof routeLineEvent_ === 'function') {
+        routeLineEvent_(event);
+        return;
+      }
+      if (event && event.type === 'message' && event.message && event.message.text) {
+        Logger.log('LINE message: ' + event.message.text);
+      }
+    } catch (err) {
+      Logger.log('handleLineWebhook event error: ' + err.message);
     }
   });
   return ContentService.createTextOutput('OK');

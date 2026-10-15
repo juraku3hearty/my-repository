@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<?!= include('ui_style') ?>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="card">
+    <h1>交通事故 カウンセリングシート</h1>
+    <p class="sub"><?= clinic['院名'] ?></p>
+    <p style="font-size:14px;margin:0">
+      分かる範囲でご記入ください。分からない項目は空欄のままで構いません。
+    </p>
+  </div>
+
+  <form id="f" class="card" autocomplete="off">
+
+    <h2>ご連絡先</h2>
+    <label>お名前</label>
+    <input type="text" name="患者名" required>
+
+    <label>電話番号（連絡のつきやすいもの）</label>
+    <input type="tel" name="電話" inputmode="tel">
+
+    <label>ご住所</label>
+    <input type="text" name="住所">
+
+    <h2>交通事故の内容</h2>
+    <label>事故の日時</label>
+    <input type="datetime-local" name="事故日時" id="accidentAt">
+    <p id="daysNote" class="sub hidden" style="margin-top:6px"></p>
+
+    <label>事故の発生場所</label>
+    <div class="choices">
+      <label><input type="radio" name="発生場所" value="交差点">交差点</label>
+      <label><input type="radio" name="発生場所" value="交差点以外の道路">交差点以外の道路</label>
+      <label><input type="radio" name="発生場所" value="その他">その他</label>
+    </div>
+    <input type="text" name="発生場所その他" placeholder="「その他」の場合、差し支えなければご記入ください" style="margin-top:8px">
+
+    <label>あなたは何に乗っていましたか</label>
+    <div class="choices">
+      <label><input type="radio" name="自分の種別" value="自動車">自動車</label>
+      <label><input type="radio" name="自分の種別" value="バイク">バイク</label>
+      <label><input type="radio" name="自分の種別" value="自転車">自転車</label>
+      <label><input type="radio" name="自分の種別" value="歩行者">歩行者</label>
+    </div>
+
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label style="margin-top:0">事故のとき</label>
+        <div class="choices">
+          <label><input type="radio" name="走行状態" value="走行中">走行中</label>
+          <label><input type="radio" name="走行状態" value="停車中">停車中</label>
+        </div>
+      </div>
+      <div>
+        <label style="margin-top:0">お立場</label>
+        <div class="choices">
+          <label><input type="radio" name="乗車区分" value="運転手">運転手</label>
+          <label><input type="radio" name="乗車区分" value="同乗者">同乗者</label>
+        </div>
+      </div>
+    </div>
+
+    <label>相手は何に乗っていましたか</label>
+    <div class="choices">
+      <label><input type="radio" name="相手の種別" value="自動車">自動車</label>
+      <label><input type="radio" name="相手の種別" value="バイク">バイク</label>
+      <label><input type="radio" name="相手の種別" value="自転車">自転車</label>
+      <label><input type="radio" name="相手の種別" value="歩行者">歩行者</label>
+    </div>
+
+    <label>お車などのキズがついた場所（分かる範囲で）</label>
+    <input type="text" name="車両キズ箇所" placeholder="例：後方バンパー">
+
+    <h3>分かる範囲でお聞かせください</h3>
+    <div class="grid2">
+      <div>
+        <label style="margin-top:0">修理費用</label>
+        <input type="text" name="修理費用" inputmode="numeric" placeholder="円">
+      </div>
+      <div>
+        <label style="margin-top:0">過失割合</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="text" name="過失_自分" inputmode="numeric" placeholder="自分">
+          <span>：</span>
+          <input type="text" name="過失_相手" inputmode="numeric" placeholder="相手">
+        </div>
+      </div>
+    </div>
+
+    <h2>痛みのある場所</h2>
+    <p class="sub">当てはまるものすべてを選んでください。</p>
+    <div class="choices" id="painArea"></div>
+
+    <h2>病院の受診について</h2>
+    <label>事故のあと、病院へ行きましたか</label>
+    <div class="choices">
+      <label><input type="radio" name="病院受診" value="はい" class="hosp">はい</label>
+      <label><input type="radio" name="病院受診" value="いいえ" class="hosp">いいえ</label>
+    </div>
+
+    <div id="hospDetail" class="hidden">
+      <label>最後に病院に行ったのはいつですか</label>
+      <input type="date" name="最終受診日">
+
+      <label>病院で、整骨院への通院について何か言われましたか</label>
+      <div class="choices">
+        <label><input type="radio" name="病院での案内" value="特に言われていない">特に言われていない</label>
+        <label><input type="radio" name="病院での案内" value="整骨院には行かないように言われた">整骨院には行かないように言われた</label>
+        <label><input type="radio" name="病院での案内" value="併用してよいと言われた">併用してよいと言われた</label>
+        <label><input type="radio" name="病院での案内" value="覚えていない">覚えていない</label>
+      </div>
+    </div>
+
+    <div id="delayBox" class="hidden">
+      <h2>通院開始までの経過について</h2>
+      <div class="notice">
+        <strong>事故から日数が経っています</strong>
+        お答えいただけると、このあとのご説明がスムーズになります。分からなければ空欄で構いません。
+      </div>
+      <label>事故のあと、すぐに受診されなかった理由に近いものはありますか</label>
+      <div class="choices">
+        <label><input type="radio" name="遅延理由" value="医療機関が開いていなかった">医療機関が開いていなかった</label>
+        <label><input type="radio" name="遅延理由" value="入院・他の治療中だった">入院・他の治療中だった</label>
+        <label><input type="radio" name="遅延理由" value="事故直後は症状がなかった">事故直後は症状がなかった</label>
+        <label><input type="radio" name="遅延理由" value="行こうとしたが行けなかった">行こうとしたが行けなかった</label>
+        <label><input type="radio" name="遅延理由" value="その他">その他</label>
+      </div>
+      <label>そのときの状況を、覚えている範囲でお聞かせください</label>
+      <textarea name="遅延理由詳細" placeholder="例：年末で病院が開いていなかった"></textarea>
+    </div>
+
+    <h2>確認させてください</h2>
+    <p class="sub">通院の進め方について、先生から詳しくご説明いたします。</p>
+
+    <label>病院にも合わせて通院されるご予定ですか</label>
+    <div class="choices">
+      <label><input type="radio" name="病院併用意向" value="はい">はい</label>
+      <label><input type="radio" name="病院併用意向" value="いいえ">いいえ</label>
+      <label><input type="radio" name="病院併用意向" value="わからない">わからない</label>
+    </div>
+
+    <label>自賠責保険が定める慰謝料の算定について、ご存じですか</label>
+    <div class="choices">
+      <label><input type="radio" name="自賠責認知" value="はい">はい</label>
+      <label><input type="radio" name="自賠責認知" value="いいえ">いいえ</label>
+    </div>
+
+    <label>ご自身で加入されている交通事故の保険はありますか</label>
+    <div class="choices">
+      <label><input type="radio" name="任意保険" value="はい">はい</label>
+      <label><input type="radio" name="任意保険" value="いいえ">いいえ</label>
+      <label><input type="radio" name="任意保険" value="わからない">わからない</label>
+    </div>
+
+    <div style="margin-top:28px">
+      <button type="submit" class="btn" id="submitBtn">送信する</button>
+      <p id="msg" class="sub" style="text-align:center;margin-top:10px"></p>
+    </div>
+  </form>
+
+  <div id="done" class="card hidden">
+    <div class="ok">
+      <strong>ありがとうございました。</strong>
+      <p style="margin:8px 0 0">受付にお声がけください。このあと先生からご説明いたします。</p>
+    </div>
+  </div>
+
+  <p class="foot"><?= clinic['院名'] ?></p>
+</main>
+
+<script>
+  var PUBLIC_ID = '<?= publicId ?>';
+  var THRESHOLD = <?= threshold ?>;
+
+  var PAIN_PARTS = ['頭部','首（頚部）','肩（右）','肩（左）','背中','腰',
+    '胸部','腹部','腕（右）','腕（左）','手・手首','臀部',
+    '太もも','膝（右）','膝（左）','足首・足','その他'];
+
+  (function renderPain(){
+    var box = document.getElementById('painArea');
+    PAIN_PARTS.forEach(function(p){
+      var l = document.createElement('label');
+      l.innerHTML = '<input type="checkbox" name="痛み部位" value="' + p + '">' + p;
+      box.appendChild(l);
+    });
+  })();
+
+  // 事故日からの経過日数を計算して、必要なら「遅れた理由」を表示する
+  document.getElementById('accidentAt').addEventListener('change', function(){
+    var note = document.getElementById('daysNote');
+    var box  = document.getElementById('delayBox');
+    if (!this.value) { note.classList.add('hidden'); box.classList.add('hidden'); return; }
+
+    var d = new Date(this.value);
+    if (isNaN(d.getTime())) return;
+    var a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var n = new Date();
+    var b = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    var days = Math.floor((b - a) / 86400000);
+
+    note.textContent = '事故から ' + days + ' 日が経過しています。';
+    note.classList.remove('hidden');
+    box.classList.toggle('hidden', days <= THRESHOLD);
+  });
+
+  // 病院を受診している場合だけ、詳細を聞く
+  Array.prototype.forEach.call(document.querySelectorAll('.hosp'), function(el){
+    el.addEventListener('change', function(){
+      document.getElementById('hospDetail').classList.toggle('hidden', this.value !== 'はい');
+    });
+  });
+
+  document.getElementById('f').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var msg = document.getElementById('msg');
+    btn.disabled = true;
+    msg.textContent = '送信しています…';
+
+    var fd = new FormData(this);
+    var payload = { publicId: PUBLIC_ID };
+    fd.forEach(function(v, k){
+      if (k === '痛み部位') {
+        payload[k] = payload[k] || [];
+        payload[k].push(v);
+      } else {
+        payload[k] = v;
+      }
+    });
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        if (res && res.ok) {
+          document.getElementById('f').classList.add('hidden');
+          document.getElementById('done').classList.remove('hidden');
+          window.scrollTo(0, 0);
+        } else {
+          msg.textContent = (res && res.message) || '送信できませんでした。';
+          btn.disabled = false;
+        }
+      })
+      .withFailureHandler(function(err){
+        msg.textContent = '送信できませんでした。受付にお声がけください。';
+        btn.disabled = false;
+      })
+      .saveIntake(payload);
+  });
+</script>
+</body>
+</html>

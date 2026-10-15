@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<?!= include('ui_style') ?>
+</head>
+<body>
+<main class="wrap">
+
+  <div class="card">
+    <h1>あなたの院の問診票を作ります</h1>
+    <p class="sub">院名を入れるだけです。30秒で終わります。</p>
+  </div>
+
+  <form id="f" class="card">
+    <label>院名 <span style="color:#9b2226">*</span></label>
+    <input type="text" name="院名" value="<?= clinic['院名'] ?>" required placeholder="例：〇〇整骨院">
+
+    <label>院長名</label>
+    <input type="text" name="院長名" value="<?= clinic['院長名'] ?>">
+
+    <label>電話番号</label>
+    <input type="tel" name="電話" value="<?= clinic['電話'] ?>">
+
+    <label>住所</label>
+    <input type="text" name="住所" value="<?= clinic['住所'] ?>">
+
+    <div style="margin-top:24px">
+      <button type="submit" class="btn" id="btn">この内容で作成する</button>
+      <p id="msg" class="sub" style="text-align:center;margin-top:10px"></p>
+    </div>
+  </form>
+
+  <div id="done" class="card hidden">
+    <div class="ok" style="margin-bottom:20px">
+      <strong>できました。</strong>
+      <p style="margin:8px 0 0">このページをブックマークしておいてください。</p>
+    </div>
+
+    <h2>① 患者さんに見せるURL</h2>
+    <p class="sub">受付でこのQRを見せて、スマホで記入してもらいます。</p>
+    <div class="urlbox" id="uIntake"></div>
+    <div id="qr" style="text-align:center;padding:16px 0"></div>
+
+    <h2>② 印刷用（院名入り）</h2>
+    <p class="sub">紙で使う場合はこちら。開いて印刷すればPDFとしても保存できます。</p>
+    <div class="urlbox" id="uPrint"></div>
+    <a id="aPrint" class="btn ghost" target="_blank" rel="noopener">印刷用を開く</a>
+
+    <h2>③ 届いた問診を見る</h2>
+    <p class="sub">患者さんが記入すると、ここに入ります。LINEにも通知が届きます。</p>
+    <div class="urlbox" id="uAdmin"></div>
+    <a id="aAdmin" class="btn ghost" target="_blank" rel="noopener">管理画面を開く</a>
+
+    <div class="notice" style="margin-top:24px">
+      <strong>このURLは、あなたの院専用です</strong>
+      院名が入った状態で発行されています。他院の方には共有しないでください。
+    </div>
+  </div>
+
+  <p class="foot">交通事故実務デスク</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  var TOKEN = '<?= clinic.adminToken ?>';
+
+  function showUrls(urls){
+    document.getElementById('uIntake').textContent = urls.intake;
+    document.getElementById('uPrint').textContent  = urls.print;
+    document.getElementById('uAdmin').textContent  = urls.admin;
+    document.getElementById('aPrint').href = urls.print;
+    document.getElementById('aAdmin').href = urls.admin;
+
+    var box = document.getElementById('qr');
+    box.innerHTML = '';
+    if (window.QRCode) {
+      new QRCode(box, { text: urls.intake, width: 180, height: 180,
+                        colorDark: '#16243a', colorLight: '#ffffff' });
+    }
+    document.getElementById('f').classList.add('hidden');
+    document.getElementById('done').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+
+  document.getElementById('f').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var btn = document.getElementById('btn');
+    var msg = document.getElementById('msg');
+    btn.disabled = true;
+    msg.textContent = '作成しています…';
+
+    var payload = { token: TOKEN };
+    new FormData(this).forEach(function(v, k){ payload[k] = v; });
+
+    google.script.run
+      .withSuccessHandler(function(res){
+        if (res && res.ok) { showUrls(res.urls); }
+        else { msg.textContent = (res && res.message) || '保存できませんでした。'; btn.disabled = false; }
+      })
+      .withFailureHandler(function(){
+        msg.textContent = '保存できませんでした。もう一度お試しください。';
+        btn.disabled = false;
+      })
+      .saveClinic(payload);
+  });
+</script>
+</body>
+</html>
