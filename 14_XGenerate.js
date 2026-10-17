@@ -37,13 +37,25 @@ function xGeneratePosts() {
   xToast_(posts.length + '本できました。X_投稿案_週形式 からそのままコピーできます。');
 }
 
+/** 1回のAPI呼び出しで作る本数。多いと出力が上限に達して切れる。 */
+var X_GEN_CHUNK = 3;
+
+/** 生成全体の時間の上限（GASの6分制限に対する安全マージン） */
+var X_GEN_TIME_LIMIT_MS = 4.8 * 60 * 1000;
+
 /**
  * 生成の本体。
+ *
+ * 7本を1回で出すと出力が上限に達して切れるので、3本ずつに分けて呼ぶ。
+ * 分けると冒頭が被りやすくなるため、前の回で使った1行目を次の回に渡す。
+ *
  * @param {string} themesText テーマ（空なら提案させる）
  * @param {number} count 本数
  * @return {Array<Object>}
  */
 function xGenerate_(themesText, count) {
+  var started = Date.now();
+
   var setting = xReadSetting_();
   var strategy = xReadStrategy_();
   var concept = setting['これからのコンセプト'] || '';
@@ -53,15 +65,75 @@ function xGenerate_(themesText, count) {
   }
 
   var rules = xReadRules_();
-  var samples = xReadSamples_(3);
-  if (!samples.length) samples = xPickSamples_(3);
+  var samples = xReadSamples_(2);
+  if (!samples.length) samples = xPickSamples_(2);
   var facts = xReadFacts_(40);
   var factSheets = xReadFactSheets_();
   var sampleSheets = xReadSampleSheets_();
   var patterns = xPatternsText_();
-  var weekPlan = xWeekPlanText_();
+  var plan = xReadWeekPlan_();
 
-  var system = [
+  var system = xGenSystem_();
+  var context = xGenContext_(setting, strategy, concept, rules,
+                             samples, facts, factSheets, sampleSheets, patterns);
+
+  var themes = String(themesText || '').trim();
+  var all = [];
+  var usedOpenings = [];
+  var usedPatterns = [];
+
+  for (var from = 0; from < count; from += X_GEN_CHUNK) {
+    if (Date.now() - started > X_GEN_TIME_LIMIT_MS) {
+      Logger.log('時間切れのため ' + all.length + ' 本で打ち切りました。');
+      break;
+    }
+
+    var n = Math.min(X_GEN_CHUNK, count - from);
+    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns);
+
+    var posts;
+    try {
+      posts = xParseJson_(xClaude_({
+        system: system,
+        userText: context + '\n' + req,
+        maxTokens: 16000,
+        effort: 'high'
+      })).posts || [];
+    } catch (err) {
+      Logger.log((from + 1) + '本目からの生成に失敗しました: ' + err.message);
+      // 1本ずつに落として作り直す
+      posts = [];
+      for (var k = 0; k < n; k++) {
+        if (Date.now() - started > X_GEN_TIME_LIMIT_MS) break;
+        try {
+          var one = xParseJson_(xClaude_({
+            system: system,
+            userText: context + '\n' +
+              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns),
+            maxTokens: 12000,
+            effort: 'high'
+          })).posts || [];
+          posts = posts.concat(one);
+        } catch (err2) {
+          Logger.log((from + k + 1) + '本目を飛ばしました: ' + err2.message);
+        }
+      }
+    }
+
+    posts.forEach(function (p) {
+      all.push(p);
+      var head = String(p['冒頭3行'] || p['本文'] || '').split('\n')[0].trim();
+      if (head) usedOpenings.push(head);
+      if (p['使った型']) usedPatterns.push(String(p['使った型']));
+    });
+  }
+
+  return all;
+}
+
+/** 生成のシステムプロンプト */
+function xGenSystem_() {
+  return [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
     '',
     '■ 言い切りの使い分け（この書き手の核になる規則）',
@@ -73,38 +145,34 @@ function xGenerate_(themesText, count) {
     '他人の傾向・統計・一般論は、言い切らないでください。',
     '  「9割が」「ほぼ全員」「絶対に」「本質は」「決め手はこれだけ」は使いません。',
     '  必ず留保をつけてください。「〜な気がします」「たぶん」「〜かもしれません」',
-    '  「〜という人が多い気がします」のように、確かめていないことは確かめていない形で書く。',
     '',
     '確かめていないことを本当のように書くのが、この書き手が一番嫌うことです。',
     '',
-    '最重要のルール:',
+    '■ 最重要のルール',
+    '',
     '- 「文体ルール」の禁止語は、絶対に使わないでください。',
-    '  これは過去にこの書き手が自分で消した語です。1つでも混ざると、本人の文ではなくなります。',
-    '- 一般的によくあるSNS文章術の型に寄せないでください。この書き手の型に寄せてください。',
+    '  これは過去にこの書き手が自分で消した語です。1つでも混ざると本人の文ではなくなります。',
     '- 一次情報が与えられている場合、それを必ず使ってください。',
     '  数字・固有名詞・実際にあった出来事は、一次情報にあるものだけを書いてください。',
     '  それらしい具体例を作らないでください。',
     '- 年齢・時期・頻度・回数は、一次情報に書かれている表現をそのまま使ってください。',
-    '  言い換えたり、辻褄が合うように調整したりしないでください。',
     '  例：「14歳で」とあれば「14歳で」。「30代の頃」などに変えない。',
     '  元の表現が不自然に見えても、直さずにそのまま使ってください。',
     '  書かれていない頻度（「年に1回」など）を足さないでください。',
-    '- 新しいほうの投稿例を手本にしてください。',
-    '  古い投稿は外部ライターの原稿がもとになっており、いまの軸とは違います。',
     '- 投稿例（文体の手本）に書かれている出来事や数字は、事実とは限りません。',
     '  外部ライターが作った話が混ざっています。文体だけを見て、事実は拾わないでください。',
-    '- 内容は「これからのコンセプト」を軸に作ってください。',
-    '  文体ルールの「よく書くテーマ」「繰り返している主張」は、この書き手が',
-    '  これまで積み上げてきたものです。コンセプトと矛盾しない限り、活かしてください。',
-    '  矛盾する場合だけ、コンセプトを優先してください。',
-    '- 文体ルールの「雛形にあったテーマ」「構成の型」は、プロのライターが作った企画案です。',
-    '  テーマの引き出しと、組み立ての型として活かしてください。',
-    '  ただし文章そのものは、必ずこの書き手の文体に置き換えてください。',
+    '- 新しいほうの投稿例を手本にしてください。古い投稿はいまの軸とは違います。',
+    '- 一般的によくあるSNS文章術の型に寄せないでください。この書き手の型に寄せてください。',
     '',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
+}
 
+/** 毎回共通で渡す材料 */
+function xGenContext_(setting, strategy, concept, rules, samples, facts,
+                      factSheets, sampleSheets, patterns) {
   var parts = [];
+
   if (strategy) {
     parts.push('# 発信設計書（この書き手の戦略。ここが土台）');
     parts.push(strategy);
@@ -113,17 +181,6 @@ function xGenerate_(themesText, count) {
   if (concept) {
     parts.push('# これからのコンセプト（補足）');
     parts.push(concept);
-    parts.push('');
-  }
-
-  if (setting['アカウント紹介']) {
-    parts.push('# アカウント紹介');
-    parts.push(setting['アカウント紹介']);
-    parts.push('');
-  }
-  if (setting['投稿の方向性']) {
-    parts.push('# 投稿の方向性');
-    parts.push(setting['投稿の方向性']);
     parts.push('');
   }
   if (setting['扱わないこと']) {
@@ -136,21 +193,17 @@ function xGenerate_(themesText, count) {
   parts.push(rules);
   parts.push('');
 
-  if (samples.length) {
-    parts.push('# 実際の投稿の例（文体と、これまでの積み上げの参考）');
-    samples.forEach(function (s, i) {
-      parts.push('--- 例' + (i + 1) + ' ---');
-      parts.push(s);
-    });
+  if (patterns) {
+    parts.push('# 構成の型（この書き手が実際に使っている骨組み）');
+    parts.push(patterns);
     parts.push('');
   }
 
   if (sampleSheets) {
     parts.push('# 完成した投稿（文体の手本）');
     parts.push('⚠️ ここは「書き方」だけを見てください。');
-    parts.push('この中には、外部ライターが作った事実でない話が混ざっています。');
-    parts.push('ここに書かれている出来事・数字・エピソードは、一切使わないでください。');
-    parts.push('事実は、下の「経歴・インタビュー」と「一次情報」からだけ取ってください。');
+    parts.push('外部ライターが作った事実でない話が混ざっています。');
+    parts.push('ここに書かれている出来事・数字は一切使わないでください。');
     parts.push(sampleSheets);
     parts.push('');
   }
@@ -163,76 +216,79 @@ function xGenerate_(themesText, count) {
   }
 
   if (facts) {
-    parts.push('# あなたの一次情報（実際にあったこと・数字・言われた言葉）');
-    parts.push('ここに無いことを、推測で書かないでください。');
-    parts.push('具体を書くときは、必ずこの中から取ってください。');
+    parts.push('# 追加の一次情報');
     parts.push(facts);
     parts.push('');
   }
 
+  return parts.join('\n');
+}
+
+/** その回ぶんの依頼 */
+function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns) {
+  var parts = [];
   parts.push('# 依頼');
-  if (String(themesText || '').trim()) {
-    parts.push('次のテーマで、' + count + '本の投稿を書いてください。');
-    parts.push(String(themesText).trim());
+  parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
+             n + '本を書いてください。');
+
+  if (themes) {
+    parts.push('テーマ（全体ぶん。この中から、今回の' + n + '本に合うものを使ってください）:');
+    parts.push(themes);
   } else {
-    parts.push('コンセプトに沿って、' + count + '本の投稿を書いてください。');
     parts.push('テーマはあなたが決めてください。似たテーマを並べず、角度を変えてください。');
     parts.push('これまで繰り返し書いてきたテーマを、新しい角度で書き直すのも有効です。');
-    parts.push('「雛形にあったテーマ」で、まだ十分に書けていないものがあれば、それも候補にしてください。');
   }
-  if (patterns) {
-    parts.push('# 構成の型（この書き手が実際に使っている骨組み）');
-    parts.push('1本ごとに違う型を使い、使った型名を出力に書いてください。');
-    parts.push('');
-    parts.push('【冒頭の重複を避ける】ここが一番大事です。');
-    parts.push('内容を変えても、1行目の入り方が同じだと、読む側には前と同じものに見えます。');
-    parts.push('・「冒頭の作り方」が似ている型を、同じ週に2本以上使わないでください。');
-    parts.push('・とくに、カギカッコで誰かの台詞や心の声を置いて始める形は、');
-    parts.push('  この週のうち最大2本までにしてください。');
-    parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
-    parts.push('・7本の1行目を並べたとき、形が揃っていないか必ず確かめてください。');
-    parts.push(patterns);
-    parts.push('');
-  }
+  parts.push('');
 
-  parts.push('');
-  parts.push('# ターゲット層の配分');
-  parts.push('発信設計書にターゲットが層（潜在層／準顕在層／顕在層／明確層）で分かれている場合、');
-  parts.push('次の順で1本ずつ割り当ててください。');
-  if (weekPlan) {
-    parts.push('※この週は、本人が各日の分類を決めています。こちらに従ってください。');
-    parts.push(weekPlan);
-    parts.push('「締め」の分類が本文と違う日は、最後の一文だけをその分類に寄せてください。');
-  } else {
-    xLayerPlan_(count).forEach(function (layer, i) {
-      parts.push('  ' + (i + 1) + '本目: ' + layer);
-    });
+  // 各本の分類
+  parts.push('## この回で書く分（1本ずつ）');
+  for (var i = 0; i < n; i++) {
+    var idx = from + i;
+    var slot = plan[idx];
+    if (slot) {
+      var line = '・' + (idx + 1) + '本目（' + slot.date + '）: 本文=' + slot.cat;
+      if (slot.closeCat !== slot.cat) line += ' / 締め=' + slot.closeCat;
+      var layer = xLayerOf_(slot.cat);
+      if (layer) line += ' / 読者の温度=' + layer;
+      if (slot.memo) line += ' / メモ=' + slot.memo;
+      parts.push(line);
+    } else {
+      parts.push('・' + (idx + 1) + '本目: ' + xLayerPlan_(total)[idx]);
+    }
   }
-  parts.push('各層の「ペイン」「反応するキーワード」「抱かせる感情」が設計書にあれば、');
-  parts.push('その層の投稿に必ず反映してください。層の指定が設計書に無ければ、この配分は無視して構いません。');
+  if (plan.length) {
+    parts.push('「締め」が本文と違う分は、最後の一文だけをその分類に寄せてください。');
+  }
   parts.push('');
+
+  // 冒頭と型の重複を避ける
+  parts.push('## 重複を避ける');
+  if (usedOpenings.length) {
+    parts.push('すでに書いた投稿の1行目です。**これと同じ形で始めないでください。**');
+    usedOpenings.forEach(function (h) { parts.push('  × ' + h); });
+  }
+  if (usedPatterns.length) {
+    parts.push('すでに使った型です。別の型を使ってください: ' + usedPatterns.join('、'));
+  }
+  parts.push('・カギカッコで誰かの台詞や心の声を置いて始める形は、全' + total + '本のうち最大2本までです。');
+  parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
+  parts.push('');
+
   parts.push('--- 出力形式 ---');
   parts.push('{"posts":[{');
-  parts.push('  "テーマ": "この投稿のテーマ",');
+  parts.push('  "テーマ": "この投稿のテーマ（30字以内）",');
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
-  parts.push('  "使った型": "構成の型の型名。型カタログが無ければ空",');
+  parts.push('  "使った型": "構成の型の型名",');
   parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
-  parts.push('  "使った事実": "本文で触れた事実と、その出どころ（インタビュー・年表・一次情報のどれか）",');
   parts.push('  "本文": "そのまま投稿できる完成文。改行もそのまま",');
-  parts.push('  "冒頭3行": "プレビューに出る最初の3行だけを抜き出したもの",');
-  parts.push('  "狙い": "この投稿で何を伝えるか（1行）",');
-  parts.push('  "使った禁止語チェック": "禁止語を使っていないか自己確認した結果"');
+  parts.push('  "冒頭3行": "最初の3行だけを抜き出したもの",');
+  parts.push('  "狙い": "30字以内",');
+  parts.push('  "使った事実": "本文で触れた事実の出どころ。60字以内",');
+  parts.push('  "使った禁止語チェック": "20字以内"');
   parts.push('}]}');
+  parts.push('※ posts には必ず ' + n + ' 本だけ入れてください。');
 
-  var text = xClaude_({
-    system: system,
-    userText: parts.join('\n'),
-    maxTokens: 16000,
-    effort: 'high'
-  });
-
-  var json = xParseJson_(text);
-  return json.posts || [];
+  return parts.join('\n');
 }
 
 /** 文体の参考として、実投稿をいくつか拾う（反応が良い順があればそれを優先） */
