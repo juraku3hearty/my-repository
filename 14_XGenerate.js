@@ -72,10 +72,12 @@ function xGenerate_(themesText, count) {
   var sampleSheets = xReadSampleSheets_();
   var patterns = xPatternsText_();
   var plan = xReadWeekPlan_();
+  var pastThemes = xPastThemes_(40);
+  var reactions = xReadReactions_(30);
 
   var system = xGenSystem_();
   var context = xGenContext_(setting, strategy, concept, rules,
-                             samples, facts, factSheets, sampleSheets, patterns);
+                             samples, facts, factSheets, sampleSheets, patterns, reactions);
 
   var themes = String(themesText || '').trim();
   var all = [];
@@ -89,7 +91,7 @@ function xGenerate_(themesText, count) {
     }
 
     var n = Math.min(X_GEN_CHUNK, count - from);
-    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns);
+    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns, pastThemes);
 
     var posts;
     try {
@@ -109,7 +111,7 @@ function xGenerate_(themesText, count) {
           var one = xParseJson_(xClaude_({
             system: system,
             userText: context + '\n' +
-              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns),
+              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns, pastThemes),
             maxTokens: 12000,
             effort: 'high'
           })).posts || [];
@@ -170,7 +172,7 @@ function xGenSystem_() {
 
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, samples, facts,
-                      factSheets, sampleSheets, patterns) {
+                      factSheets, sampleSheets, patterns, reactions) {
   var parts = [];
 
   if (strategy) {
@@ -221,11 +223,24 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
     parts.push('');
   }
 
+  if (reactions) {
+    parts.push('# 読者からの反応・引用した相手の投稿（外からの入力）');
+    parts.push('ここは他人の言葉です。扱い方に注意してください。');
+    parts.push('・実際に言われた言葉として、そのまま引用してよいです。');
+    parts.push('  「こう言われたことがあります」の形で使ってください。');
+    parts.push('・「みんながそう思っている」「よくある悩みです」と一般化しないでください。');
+    parts.push('  1人が言ったことは、1人が言ったこととして書いてください。');
+    parts.push('・ここにある他人の視点は、本人が自分では思いつかない角度です。');
+    parts.push('  内側の棚卸しだけで書くと既出の繰り返しになるので、積極的に使ってください。');
+    parts.push(reactions);
+    parts.push('');
+  }
+
   return parts.join('\n');
 }
 
 /** その回ぶんの依頼 */
-function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns) {
+function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, pastThemes) {
   var parts = [];
   parts.push('# 依頼');
   parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
@@ -260,6 +275,32 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns) 
     parts.push('「締め」が本文と違う分は、最後の一文だけをその分類に寄せてください。');
   }
   parts.push('');
+
+  // 視点の角度
+  parts.push('## 視点の角度（1本ずつ違う角度から書く）');
+  parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
+  parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
+  for (var a = 0; a < n; a++) {
+    var ai = (from + a) % X_ANGLES.length;
+    parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+  }
+  parts.push('');
+
+  parts.push('## まだ結びついていない2つを結ぶ');
+  parts.push('一次情報の中から、これまで同じ投稿で語られていない2つの出来事を選び、');
+  parts.push('その2つを結びつけて1つの話にしてください。');
+  parts.push('（例：別々の現場で起きたことを並べて、共通する構造を見せる）');
+  parts.push('すでに何度も一緒に語られている組み合わせは避けてください。');
+  parts.push('');
+
+  if (pastThemes && pastThemes.length) {
+    parts.push('## すでに書いたテーマ（同じ結論に着地しない）');
+    parts.push('同じテーマを扱っても構いませんが、下と同じ着地にはしないでください。');
+    parts.push('「結局いちばん大事なのは◯◯でした」で終わる形が繰り返されています。');
+    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    pastThemes.slice(0, 30).forEach(function (t) { parts.push('  ・' + t); });
+    parts.push('');
+  }
 
   // 冒頭と型の重複を避ける
   parts.push('## 重複を避ける');
@@ -409,4 +450,22 @@ function xWriteWeekBlock_(posts) {
   sh.setColumnWidth(1, 90);
   for (var c = 2; c <= cols; c++) sh.setColumnWidth(c, 300);
   sh.getRange(startRow, 1, block.length, 1).setFontWeight('bold').setBackground('#eef3f9');
+}
+
+
+/**
+ * すでに生成した投稿のテーマを集める（新規性の判定に使う）。
+ */
+function xPastThemes_(limit) {
+  var out = [];
+  var sh = xBook_().getSheetByName(X_SHEETS.DRAFT);
+  if (sh && sh.getLastRow() > 1) {
+    // 列順: 作成日時, 分類, 使った型, ターゲット層, テーマ, ...
+    var values = sh.getRange(2, 5, sh.getLastRow() - 1, 1).getValues();
+    for (var i = values.length - 1; i >= 0 && out.length < limit; i--) {
+      var t = String(values[i][0]).trim();
+      if (t && out.indexOf(t) < 0) out.push(t);
+    }
+  }
+  return out;
 }

@@ -21,6 +21,7 @@ function onOpen() {
       .addItem('③ 構成の型を取り出す', 'xExtractPatterns')
       .addSeparator()
       .addItem('今週の傾向シートを作る（紫微斗数）', 'xSetupWeekPlan')
+      .addItem('反応ログのシートを作る', 'xSetupReactionLog')
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')

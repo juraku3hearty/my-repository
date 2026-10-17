@@ -37,7 +37,8 @@ var X_SHEETS = {
   QSTOCK: 'X_未回答の質問',
   STRATEGY: 'X_戦略',
   PATTERN: 'X_型カタログ',
-  WEEKPLAN: 'X_週の傾向'
+  WEEKPLAN: 'X_週の傾向',
+  REACTION: 'X_反応ログ'
 };
 
 /**
@@ -53,6 +54,23 @@ var X_CATEGORIES = [
   { name: '専門',       desc: '仕事の知識・ノウハウ',            palace: '官禄宮', layer: '準顕在層' },
   { name: '自分の言葉', desc: '自分語り・実感・経歴',            palace: '命宮',   layer: '準顕在層' },
   { name: '仕組み化',   desc: '「仕組みになる」「長く効く」',    palace: '田宅宮', layer: '顕在層' }
+];
+
+/**
+ * 視点の角度。
+ *
+ * 素材が同じでも、どの向きから見るかで結論が変わる。
+ * 文体の再現だけだと既出の焼き直しになるので、週の中で角度を散らす。
+ */
+var X_ANGLES = [
+  '自分が過去にしていた判断を否定する。「前はこう思っていたが、違った」から入る',
+  'よく言われていることの逆を、自分の経験から言う。「〜と言われるけれど、現場では逆だった」',
+  'うまくいかなかった話から入る。失敗の中身を具体的に書き、そこから何を変えたかで締める',
+  '数字の裏側を書く。表に出ている数字ではなく、そこに含まれない部分の話をする',
+  '読者の予想を外す。「〜の話だと思われるかもしれませんが、違います」から入る',
+  '別の分野の出来事を、この仕事に重ねて見せる',
+  '結論を先に言い切り、そこに至るまでに捨てた選択肢を並べる',
+  '相手の立場に寄り切って書く。社長ではなく、聞かれる側（スタッフ）から見た景色を書く'
 ];
 
 /** 使うモデル。文体の再現が目的なので安いモデルに落とさない。 */
@@ -1012,10 +1030,12 @@ function xGenerate_(themesText, count) {
   var sampleSheets = xReadSampleSheets_();
   var patterns = xPatternsText_();
   var plan = xReadWeekPlan_();
+  var pastThemes = xPastThemes_(40);
+  var reactions = xReadReactions_(30);
 
   var system = xGenSystem_();
   var context = xGenContext_(setting, strategy, concept, rules,
-                             samples, facts, factSheets, sampleSheets, patterns);
+                             samples, facts, factSheets, sampleSheets, patterns, reactions);
 
   var themes = String(themesText || '').trim();
   var all = [];
@@ -1029,7 +1049,7 @@ function xGenerate_(themesText, count) {
     }
 
     var n = Math.min(X_GEN_CHUNK, count - from);
-    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns);
+    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns, pastThemes);
 
     var posts;
     try {
@@ -1049,7 +1069,7 @@ function xGenerate_(themesText, count) {
           var one = xParseJson_(xClaude_({
             system: system,
             userText: context + '\n' +
-              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns),
+              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns, pastThemes),
             maxTokens: 12000,
             effort: 'high'
           })).posts || [];
@@ -1110,7 +1130,7 @@ function xGenSystem_() {
 
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, samples, facts,
-                      factSheets, sampleSheets, patterns) {
+                      factSheets, sampleSheets, patterns, reactions) {
   var parts = [];
 
   if (strategy) {
@@ -1161,11 +1181,24 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
     parts.push('');
   }
 
+  if (reactions) {
+    parts.push('# 読者からの反応・引用した相手の投稿（外からの入力）');
+    parts.push('ここは他人の言葉です。扱い方に注意してください。');
+    parts.push('・実際に言われた言葉として、そのまま引用してよいです。');
+    parts.push('  「こう言われたことがあります」の形で使ってください。');
+    parts.push('・「みんながそう思っている」「よくある悩みです」と一般化しないでください。');
+    parts.push('  1人が言ったことは、1人が言ったこととして書いてください。');
+    parts.push('・ここにある他人の視点は、本人が自分では思いつかない角度です。');
+    parts.push('  内側の棚卸しだけで書くと既出の繰り返しになるので、積極的に使ってください。');
+    parts.push(reactions);
+    parts.push('');
+  }
+
   return parts.join('\n');
 }
 
 /** その回ぶんの依頼 */
-function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns) {
+function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, pastThemes) {
   var parts = [];
   parts.push('# 依頼');
   parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
@@ -1200,6 +1233,32 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns) 
     parts.push('「締め」が本文と違う分は、最後の一文だけをその分類に寄せてください。');
   }
   parts.push('');
+
+  // 視点の角度
+  parts.push('## 視点の角度（1本ずつ違う角度から書く）');
+  parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
+  parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
+  for (var a = 0; a < n; a++) {
+    var ai = (from + a) % X_ANGLES.length;
+    parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+  }
+  parts.push('');
+
+  parts.push('## まだ結びついていない2つを結ぶ');
+  parts.push('一次情報の中から、これまで同じ投稿で語られていない2つの出来事を選び、');
+  parts.push('その2つを結びつけて1つの話にしてください。');
+  parts.push('（例：別々の現場で起きたことを並べて、共通する構造を見せる）');
+  parts.push('すでに何度も一緒に語られている組み合わせは避けてください。');
+  parts.push('');
+
+  if (pastThemes && pastThemes.length) {
+    parts.push('## すでに書いたテーマ（同じ結論に着地しない）');
+    parts.push('同じテーマを扱っても構いませんが、下と同じ着地にはしないでください。');
+    parts.push('「結局いちばん大事なのは◯◯でした」で終わる形が繰り返されています。');
+    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    pastThemes.slice(0, 30).forEach(function (t) { parts.push('  ・' + t); });
+    parts.push('');
+  }
 
   // 冒頭と型の重複を避ける
   parts.push('## 重複を避ける');
@@ -1351,6 +1410,24 @@ function xWriteWeekBlock_(posts) {
   sh.getRange(startRow, 1, block.length, 1).setFontWeight('bold').setBackground('#eef3f9');
 }
 
+
+/**
+ * すでに生成した投稿のテーマを集める（新規性の判定に使う）。
+ */
+function xPastThemes_(limit) {
+  var out = [];
+  var sh = xBook_().getSheetByName(X_SHEETS.DRAFT);
+  if (sh && sh.getLastRow() > 1) {
+    // 列順: 作成日時, 分類, 使った型, ターゲット層, テーマ, ...
+    var values = sh.getRange(2, 5, sh.getLastRow() - 1, 1).getValues();
+    for (var i = values.length - 1; i >= 0 && out.length < limit; i--) {
+      var t = String(values[i][0]).trim();
+      if (t && out.indexOf(t) < 0) out.push(t);
+    }
+  }
+  return out;
+}
+
 // ============================================================
 // 15_XMenu.js
 // ============================================================
@@ -1378,6 +1455,7 @@ function onOpen() {
       .addItem('③ 構成の型を取り出す', 'xExtractPatterns')
       .addSeparator()
       .addItem('今週の傾向シートを作る（紫微斗数）', 'xSetupWeekPlan')
+      .addItem('反応ログのシートを作る', 'xSetupReactionLog')
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')
@@ -2188,4 +2266,71 @@ function xWeekPlanText_() {
     return '  ' + parts.join(' / ');
   });
   return lines.join('\n');
+}
+
+/* ============================================================
+ * 反応ログ
+ *
+ * 引用ポスト、もらったコメント、自分の返信を溜める。
+ *
+ * インタビューや年表は「自分の内側」の棚卸しなので、
+ * そこからだけ書くと内側で完結した話しか出ない。
+ * 他人の言葉は、自分では思いつかない角度をそのまま持ち込む。
+ * ============================================================ */
+
+/** 反応ログの種類 */
+var X_REACTION_KINDS = [
+  '自分の投稿',
+  '引用した相手の投稿',
+  'もらったコメント',
+  '自分の返信',
+  'DMでのやりとり',
+  '対面で言われたこと'
+];
+
+/**
+ * X_反応ログ シートを作る。
+ */
+function xSetupReactionLog() {
+  var sh = xSheet_(X_SHEETS.REACTION, ['日付', '種類', '内容', '誰の言葉か', '気づいたこと']);
+
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(X_REACTION_KINDS, true).setAllowInvalid(true).build();
+  sh.getRange(2, 2, 200, 1).setDataValidation(rule);
+
+  sh.setColumnWidth(1, 100);
+  sh.setColumnWidth(2, 150);
+  sh.setColumnWidth(3, 520);
+  sh.setColumnWidth(5, 280);
+  sh.getRange(2, 3, sh.getMaxRows() - 1, 1).setWrap(true);
+  sh.getRange(2, 5, sh.getMaxRows() - 1, 1).setWrap(true);
+
+  xToast_('X_反応ログ を作りました。引用ポストやコメントを貼ってください。');
+}
+
+/**
+ * 反応ログを、生成プロンプト用のテキストにする。
+ * @param {number} limit 新しいほうから何件か
+ */
+function xReadReactions_(limit) {
+  var sh = xBook_().getSheetByName(X_SHEETS.REACTION);
+  if (!sh || sh.getLastRow() < 2) return '';
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();
+  var rows = values.filter(function (r) { return String(r[2]).trim(); });
+  if (!rows.length) return '';
+
+  rows.reverse();
+  if (limit) rows = rows.slice(0, limit);
+
+  return rows.map(function (r) {
+    var parts = [];
+    var head = '- 【' + (String(r[1]).trim() || '記録') + '】';
+    if (r[0]) head += ' ' + fmtDate_(r[0]);
+    if (r[3]) head += '（' + String(r[3]).trim() + '）';
+    parts.push(head);
+    parts.push('  ' + String(r[2]).trim().replace(/\n/g, '\n  '));
+    if (r[4]) parts.push('  → 気づいたこと: ' + String(r[4]).trim());
+    return parts.join('\n');
+  }).join('\n');
 }

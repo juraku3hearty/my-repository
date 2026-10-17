@@ -103,3 +103,70 @@ function xWeekPlanText_() {
   });
   return lines.join('\n');
 }
+
+/* ============================================================
+ * 反応ログ
+ *
+ * 引用ポスト、もらったコメント、自分の返信を溜める。
+ *
+ * インタビューや年表は「自分の内側」の棚卸しなので、
+ * そこからだけ書くと内側で完結した話しか出ない。
+ * 他人の言葉は、自分では思いつかない角度をそのまま持ち込む。
+ * ============================================================ */
+
+/** 反応ログの種類 */
+var X_REACTION_KINDS = [
+  '自分の投稿',
+  '引用した相手の投稿',
+  'もらったコメント',
+  '自分の返信',
+  'DMでのやりとり',
+  '対面で言われたこと'
+];
+
+/**
+ * X_反応ログ シートを作る。
+ */
+function xSetupReactionLog() {
+  var sh = xSheet_(X_SHEETS.REACTION, ['日付', '種類', '内容', '誰の言葉か', '気づいたこと']);
+
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(X_REACTION_KINDS, true).setAllowInvalid(true).build();
+  sh.getRange(2, 2, 200, 1).setDataValidation(rule);
+
+  sh.setColumnWidth(1, 100);
+  sh.setColumnWidth(2, 150);
+  sh.setColumnWidth(3, 520);
+  sh.setColumnWidth(5, 280);
+  sh.getRange(2, 3, sh.getMaxRows() - 1, 1).setWrap(true);
+  sh.getRange(2, 5, sh.getMaxRows() - 1, 1).setWrap(true);
+
+  xToast_('X_反応ログ を作りました。引用ポストやコメントを貼ってください。');
+}
+
+/**
+ * 反応ログを、生成プロンプト用のテキストにする。
+ * @param {number} limit 新しいほうから何件か
+ */
+function xReadReactions_(limit) {
+  var sh = xBook_().getSheetByName(X_SHEETS.REACTION);
+  if (!sh || sh.getLastRow() < 2) return '';
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();
+  var rows = values.filter(function (r) { return String(r[2]).trim(); });
+  if (!rows.length) return '';
+
+  rows.reverse();
+  if (limit) rows = rows.slice(0, limit);
+
+  return rows.map(function (r) {
+    var parts = [];
+    var head = '- 【' + (String(r[1]).trim() || '記録') + '】';
+    if (r[0]) head += ' ' + fmtDate_(r[0]);
+    if (r[3]) head += '（' + String(r[3]).trim() + '）';
+    parts.push(head);
+    parts.push('  ' + String(r[2]).trim().replace(/\n/g, '\n  '));
+    if (r[4]) parts.push('  → 気づいたこと: ' + String(r[4]).trim());
+    return parts.join('\n');
+  }).join('\n');
+}
