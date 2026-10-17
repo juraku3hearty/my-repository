@@ -38,11 +38,17 @@ var RECHECK = { '外す': [5], '理由': '4本目と同じ採用の話' };
 var mode = 'auto';
 var ON_EDITOR = null;
 var refillReqs = [];
+var dirReqs = [];
 global.UrlFetchApp = { fetchAll: function (reqs) { return reqs.map(function (q) {
   var body = JSON.parse(q.payload); var u = body.messages[0].content; __payloads.push(body.system + '\n=====\n' + u);
   var out;
   if (/編集者です/.test(body.system) && /作り直した本:/.test(u)) out = RECHECK;
   else if (/編集者です/.test(body.system)) { if (ON_EDITOR) ON_EDITOR(); out = mode === 'auto' ? EDITOR_AUTO : EDITOR_FIXED; }
+  else if (/材料が無かった枠です/.test(u)) {
+    dirReqs.push(u);
+    var md = u.match(/全\d+本のうち、(\d+)本目から/);
+    out = { posts: [{ 'テーマ': 'DIR' + md[1], '本文': 'DIRBODY' + md[1] + ' 考えと問い\n【要確認：実例があれば】', '冒頭3行': 'D', '投稿の狙い': 'x', '事実確認が必要な箇所': '実例' }] };
+  }
   else if (/この枠は作り直しです/.test(u)) {
     refillReqs.push(u);
     var m = u.match(/全\d+本のうち、(\d+)本目から/); var k = +m[1];
@@ -76,16 +82,24 @@ ok(rows.length === 7 && rows.map(function (r) { return r[col('枠')]; }).join(',
 ok(body(1).indexOf('BODY1') === 0 && body(2).indexOf('BODY2') === 0 && body(4).indexOf('BODY4') === 0, '残した1・2・4本目はそのまま');
 ok(body(3).indexOf('NEWBODY3 from R1') === 0, '3本目はR1から作り直し: ' + body(3));
 ok(body(6).indexOf('NEWBODY6 from R2') === 0, '6本目はR2から作り直し: ' + body(6));
-ok(body(7) === '' && cell(7, '状態') === '空き', '7本目は材料なし → 無理に埋めず空き');
-ok(body(5) === '' && cell(5, '状態') === '空き', '5本目は作り直したがまだ重なっていた → 空き');
+ok(body(7).indexOf('DIRBODY7') === 0, '7本目は材料なし → 事業の方向性から叩き台: ' + body(7).split('\n')[0]);
+ok(body(5).indexOf('DIRBODY5') === 0, '5本目は作り直してもまだ重なっていた → 方向性からもう一度: ' + body(5).split('\n')[0]);
+ok(/実体験は入れていません/.test(cell(7, '編集メモ')), '7本目の編集メモ: ' + cell(7, '編集メモ'));
+ok(/2回目/.test(cell(5, '編集メモ')), '5本目の編集メモ: ' + cell(5, '編集メモ'));
+ok(cell(7, '状態') === '要確認', '方向性の叩き台に【要確認】があれば状態「要確認」');
+var d7 = dirReqs.filter(function (u) { return /全7本のうち、7本目から/.test(u); })[0] || '';
+ok(/実体験・出来事・人物・セリフ・数字は作らない/.test(d7) && /考え・見方・問いかけの形/.test(d7), '方向性の依頼：実体験を作らず、考え・問いの形で');
+ok(/1本目: 判断基準と任せる範囲/.test(d7) && /× 任せる範囲の線引き/.test(d7), '方向性の依頼にも「残す本」「外した案」が入っている');
+var d5 = dirReqs.filter(function (u) { return /全7本のうち、5本目から/.test(u); })[0] || '';
+ok(/× NEW5/.test(d5), '5本目の2回目では、重なった作り直し案も「外した案」に入っている');
 ok(/重なり（1・6・7本目／テーマ・主張）の中から残した1本/.test(cell(1, '編集メモ')), '1本目の編集メモ: ' + cell(1, '編集メモ'));
 ok(/重なりのため作り直し（材料: R2）/.test(cell(6, '編集メモ')), '6本目の編集メモ: ' + cell(6, '編集メモ'));
 ok(cell(2, '状態') === '要確認', '【要確認】が残る2本目は状態「要確認」（完成稿扱いしない）');
 ok(/誘導が週2本/.test(cell(1, '自己チェック')) && /誘導が週2本/.test(cell(4, '自己チェック')), '誘導が週2本 → 両方に印');
 var t = __toasts[__toasts.length - 1];
-ok(/【不足】5本目・7本目/.test(t), '不足を報告: ' + t);
+ok(/5本目・7本目は今週の材料が無かったので、事業の方向性から叩き台を作りました/.test(t) && !/【不足】/.test(t), '報告: ' + t);
 var wk = S['X_投稿案_週形式']._d; var hd = wk.filter(function (r) { return r && r[0] === '日付'; }).pop();
-ok(/（要確認・未完成）/.test(hd[2]) && /（空き）/.test(hd[5]) && /（空き）/.test(hd[7]), '週形式の見出しに（要確認・未完成）（空き）');
+ok(/（要確認・未完成）/.test(hd[2]) && /（要確認・未完成）/.test(hd[7]) && !hd.some(function (x) { return /（空き）/.test(String(x)); }), '週形式：空きは無く、要確認の本に（要確認・未完成）');
 var r6 = refillReqs.filter(function (u) { return /\[R2\]/.test(u); })[0] || '';
 ok(/1本目: 判断基準と任せる範囲/.test(r6) && /4本目: 採用の質問/.test(r6), '作り直しの依頼に「残す本」の一覧が入っている');
 ok(/× 任せる範囲の線引き/.test(r6) && /× 判断基準の共有/.test(r6), '作り直しの依頼に「外した案」が入っている');
@@ -161,3 +175,36 @@ var ngE = xCheckDrafts();
 var tE = __toasts[__toasts.length - 1];
 ok(ngE === 1, '今回の分の要確認は1本 → ' + ngE);
 ok(/今回の分のうち1本に要確認/.test(tE) && !/カギカッコ始まりが/.test(tE), '報告に過去の8本が混ざっていない: ' + tE);
+
+console.log('===== F: X_設定「材料が無い枠」=「空ける」なら、従来どおり空けて不足を報告 =====');
+S['X_設定'].appendRow(['材料が無い枠', '空ける', '']);
+S['X_投稿案'] = M.makeSheet('X_投稿案', []); book._s = S;
+var w4 = Date.now(); while (Date.now() - w4 < 1100) {}
+mode = 'auto'; UI_ANSWER = null; ON_EDITOR = null; RECHECK = { '外す': [5] }; dirReqs = [];
+__G();
+var bF = batchRows(); col = bF.col; rows = bF.rows;
+ok(body(7) === '' && cell(7, '状態') === '空き', '7本目は空き');
+ok(body(5) === '' && cell(5, '状態') === '空き', '5本目は空き');
+ok(dirReqs.length === 0, '方向性からの作成はしていない');
+ok(/【不足】5本目・7本目/.test(__toasts[__toasts.length - 1]), '不足を報告: ' + __toasts[__toasts.length - 1]);
+
+console.log('===== G: 今夜のログと同じ状況（1・2・4を残す → 材料はR6だけ → 5本目も重なる） =====');
+S['X_設定']._d = S['X_設定']._d.filter(function (r) { return !(r && r[0] === '材料が無い枠'); });
+S['X_投稿案'] = M.makeSheet('X_投稿案', []); book._s = S;
+var w5 = Date.now(); while (Date.now() - w5 < 1100) {}
+mode = 'auto'; RECHECK = { '外す': [] }; UI_ANSWER = null;
+EDITOR_AUTO = { '重複': [], '作り直す': [] };
+__G();                                      // まず7本（重なりなし）
+var w6 = Date.now(); while (Date.now() - w6 < 1100) {}
+mode = 'fixed'; dirReqs = []; refillReqs = [];
+EDITOR_FIXED = { '重複': [], '作り直す': [{ '本': 3, '材料': null }, { '本': 5, '材料': 'R6' }, { '本': 6, '材料': null }, { '本': 7, '材料': null }] };
+// R6 は存在しない番号（今週は5件）なので材料なし扱いになることも確かめる
+RECHECK = { '外す': [] };
+UI_ANSWER = '1,2,4'; MEMO_ANSWER = '';
+__R();
+var bG = batchRows(); col = bG.col; rows = bG.rows;
+ok([3,5,6,7].every(function (k) { return body(k).indexOf('DIRBODY' + k) === 0; }), '3・5・6・7本目がすべて方向性から埋まった（空きなし）');
+ok([1,2,4].every(function (k) { return cell(k, '状態') === '残す'; }), '1・2・4本目は「残す」');
+ok(dirReqs.length === 4, '方向性の依頼は4枠ぶん（並列） → ' + dirReqs.length);
+var tG = __toasts[__toasts.length - 1];
+ok(/3本目・5本目・6本目・7本目は今週の材料が無かったので、事業の方向性から叩き台を作りました/.test(tG), '報告: ' + tG);

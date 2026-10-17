@@ -539,6 +539,7 @@ var X_TEXT_ITEMS = [
   ['過去の投稿・経歴を材料にする', '「はい」で過去の投稿本文と経歴・年表を渡す。それ以外は渡さない（今週の返信を優先）', false, 'いいえ'],
   ['返信を読む日数', '直近何日ぶんの返信・引用を材料にするか', false, '7'],
   ['週の役割配分', '「役割:本数」を改行区切りで。目安なので、材料が無い役割は飛ばす', false, X_DEFAULT_ROLES],
+  ['材料が無い枠', '「方向性から作る」…事業の方向性と系統の傾向から考え・問いの叩き台を作る（実体験は入れない）／「空ける」…空けて不足を報告する', false, '方向性から作る'],
   ['禁止する着地', 'この結論で締めない（改行区切り）。自己チェックでも検出する', false, X_DEFAULT_BANNED_LANDINGS],
   ['使用禁止のエピソード', '今は使わない話（改行区切り）。また使いたくなったら消してください', false, X_DEFAULT_BANNED_EPISODES]
 ];
@@ -1327,7 +1328,11 @@ function xFinishWeek_(ctx, edit, t0) {
   var made = posts.filter(function (p) { return String(p['本文'] || '').trim(); });
   var secs = Math.round((Date.now() - t0) / 1000);
   var msg = made.length + '本できました（' + secs + '秒）。';
-  if (edit.replaced) msg += '重なっていた' + edit.replaced + '本を別の返信から作り直しました。';
+  if (edit.replaced) msg += edit.replaced + '本を作り直しました。';
+  if (edit.noMaterial && edit.noMaterial.length) {
+    msg += edit.noMaterial.map(function (i) { return (i + 1) + '本目'; }).join('・') +
+      'は今週の材料が無かったので、事業の方向性から叩き台を作りました（実体験は入れていません。「編集メモ」参照）。';
+  }
   if (edit.shortage.length) {
     msg += '【不足】' + edit.shortage.map(function (i) { return (i + 1) + '本目'; }).join('・') +
       'は、残した本と重ならない材料が今週の返信に無かったため空けています。';
@@ -4159,7 +4164,10 @@ function xTrendText_() {
  *   1. 7本を書き終えたら、テーマ・主張・エピソード・読後感の重なりを確認する
  *   2. 重なったものは、最も良い1本だけを残す
  *   3. 外した枠は、今週の別の返信・引用から企画を選び直す
- *   4. 新しい材料がなければ、無理に7本埋めず不足を報告する
+ *   4. 新しい材料がなければ不足を報告する。
+ *      空けたままだと週の予約ができないので、既定では事業の方向性と系統の傾向から
+ *      「考え・問い」の叩き台を作って埋める（実体験・セリフ・数字は作らない）。
+ *      X_設定「材料が無い枠」を「空ける」にすると、従来どおり空ける。
  *   6. 【要確認】が残った原稿は完成稿として扱わない
  *
  * 流れ
@@ -4186,7 +4194,7 @@ var X_EDIT_CHECK_LIMIT_MS = 4.2 * 60 * 1000;
  * @return {Object} { posts, replaced, shortage:[idx], skipped }
  */
 function xEditWeek_(ctx, posts, keepIdx) {
-  var result = { posts: posts.slice(), replaced: 0, shortage: [], skipped: '' };
+  var result = { posts: posts.slice(), replaced: 0, shortage: [], noMaterial: [], skipped: '' };
   var elapsed = function () { return Date.now() - ctx.started; };
 
   if (!keepIdx && elapsed() > X_EDIT_START_LIMIT_MS) {
@@ -4231,9 +4239,15 @@ function xEditWeek_(ctx, posts, keepIdx) {
   }
 
   var rejected = plan.replace.map(function (r) { return byIdx[r.idx]; }).filter(Boolean);
+  var fillByDirection = String((ctx.setting || {})['材料が無い枠'] || '方向性から作る').trim() !== '空ける';
+
+  // 材料が無い枠：既定では方向性から作る。「空ける」設定なら空ける。
+  plan.replace.filter(function (r) { return !r.material; }).forEach(function (r) {
+    result.noMaterial.push(r.idx);
+    if (fillByDirection) r.material = X_DIRECTION_MATERIAL;
+    else result.shortage.push(r.idx);
+  });
   var withMaterial = plan.replace.filter(function (r) { return r.material; });
-  plan.replace.filter(function (r) { return !r.material; })
-    .forEach(function (r) { result.shortage.push(r.idx); });
 
   // 2) 外した枠を作り直す（材料がある枠だけ）
   var keepPosts = posts.filter(function (p) {
@@ -4249,11 +4263,26 @@ function xEditWeek_(ctx, posts, keepIdx) {
   // 3) 作り直した分が、まだ重なっていないかを確認する
   if (fresh.length && elapsed() < X_EDIT_CHECK_LIMIT_MS) {
     var dup = xEditRecheck_(ctx, keepPosts.concat(fresh), fresh.map(function (p) { return p._idx; }));
-    fresh = fresh.filter(function (p) {
-      if (dup.indexOf(p._idx) < 0) return true;
-      result.shortage.push(p._idx);
-      return false;
-    });
+    var dropped = fresh.filter(function (p) { return dup.indexOf(p._idx) >= 0; });
+    fresh = fresh.filter(function (p) { return dup.indexOf(p._idx) < 0; });
+
+    // まだ重なっていた枠は、方向性からもう一度だけ作る（重なった案も「外した案」に足す）
+    if (dropped.length && fillByDirection && elapsed() < X_EDIT_REFILL_LIMIT_MS) {
+      var again = dropped.map(function (p) {
+        return { idx: p._idx, material: X_DIRECTION_MATERIAL, plan: '', claim: '', reason: '' };
+      });
+      var second = xRefill_(ctx, again, keepPosts.concat(fresh), rejected.concat(dropped));
+      second.forEach(function (p) {
+        p._note += '（2回目。重なりの最終確認はしていません）';
+        if (result.noMaterial.indexOf(p._idx) < 0) result.noMaterial.push(p._idx);
+      });
+      fresh = fresh.concat(second);
+      dropped.forEach(function (p) {
+        if (!second.some(function (q) { return q._idx === p._idx; })) result.shortage.push(p._idx);
+      });
+    } else {
+      dropped.forEach(function (p) { result.shortage.push(p._idx); });
+    }
   } else if (fresh.length) {
     result.skipped = '時間の都合で、作り直した分の重なり確認は省きました';
   }
@@ -4261,8 +4290,15 @@ function xEditWeek_(ctx, posts, keepIdx) {
   result.posts = keepPosts.concat(fresh).sort(function (a, b) { return a._idx - b._idx; });
   result.replaced = fresh.length;
   result.shortage.sort(function (a, b) { return a - b; });
+  // 報告には「最終的に方向性から作った枠」だけを出す
+  result.noMaterial = result.noMaterial.filter(function (i) {
+    return fresh.some(function (p) { return p._idx === i && p._fromDirection; });
+  }).sort(function (a, b) { return a - b; });
   return result;
 }
+
+/** 材料が無い枠に使う、目印の材料 */
+var X_DIRECTION_MATERIAL = { no: '方向性', text: '', direction: true };
 
 /**
  * 編集者に、重なりと作り直す枠を決めてもらう。
@@ -4454,6 +4490,16 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
   }).join('\n');
 
   var reqs = slots.map(function (s) {
+    if (s.material && s.material.direction) {
+      return {
+        system: ctx.system,
+        userText: ctx.context + '\n' +
+          xGenRequest_(s.idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) + '\n' +
+          xDirectionRequest_(keepText, rejectedText),
+        maxTokens: X_GEN_MAX_TOKENS,
+        effort: 'high'
+      };
+    }
     var extra = [
       '',
       '## この枠は作り直しです',
@@ -4497,6 +4543,13 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
       continue;
     }
     one[0]._idx = slots[i].idx;
+    if (slots[i].material.direction) {
+      one[0]._fromDirection = true;
+      one[0]._note = '今週の材料なし：事業の方向性と系統の傾向から作った叩き台（実体験は入れていません）';
+      if (!one[0]['元になった返信・切り口']) one[0]['元になった返信・切り口'] = '事業の方向性・系統の傾向';
+      out.push(one[0]);
+      continue;
+    }
     one[0]._note = '重なりのため作り直し（材料: ' + slots[i].material.no + '）' +
       (slots[i].reason ? ' ' + slots[i].reason : '');
     if (!one[0]['元になった返信・切り口']) {
@@ -4505,6 +4558,34 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
     out.push(one[0]);
   }
   return out;
+}
+
+/**
+ * 今週の材料が無い枠の依頼文。
+ * 本人の「やりたいこと」（事業の方向性）と、読まれやすい・つながりやすい系統から、
+ * 出来事ではなく「考え・問い」の形で書かせる。
+ */
+function xDirectionRequest_(keepText, rejectedText) {
+  return [
+    '',
+    '## この枠は、今週の返信に使える材料が無かった枠です',
+    '「③ 事業の方向性とターゲット」と「読まれやすい系統・つながりやすい系統」をもとに、',
+    'この書き手が今、読者に伝えたいこと・問いかけたいことを1本書いてください。',
+    '',
+    '### 書き方',
+    '・出来事の報告ではなく、考え・見方・問いかけの形にしてください。',
+    '・実体験・出来事・人物・セリフ・数字は作らないでください。',
+    '  経験で裏づけたい箇所は、作らずに【要確認：〜の実例があれば】と残してください。',
+    '・自分の考えとしては言い切って構いません。他人の傾向・一般論は言い切らないでください。',
+    '・つながりやすい系統を優先してください。読者が「自分のことだ」と返信したくなる問いで締めるのも有効です。',
+    '・材料が少ないので、短文の長さで構いません。',
+    '',
+    '### 次の本とテーマ・主張・読後感を重ねない（同じ週に出す本）',
+    keepText || '  （なし）',
+    '',
+    '### 重なりとして外した案（この方向に戻らない）',
+    rejectedText || '  （なし）'
+  ].join('\n');
 }
 
 /**

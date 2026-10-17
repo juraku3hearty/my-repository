@@ -82,7 +82,11 @@ function xFinishWeek_(ctx, edit, t0) {
   var made = posts.filter(function (p) { return String(p['本文'] || '').trim(); });
   var secs = Math.round((Date.now() - t0) / 1000);
   var msg = made.length + '本できました（' + secs + '秒）。';
-  if (edit.replaced) msg += '重なっていた' + edit.replaced + '本を別の返信から作り直しました。';
+  if (edit.replaced) msg += edit.replaced + '本を作り直しました。';
+  if (edit.noMaterial && edit.noMaterial.length) {
+    msg += edit.noMaterial.map(function (i) { return (i + 1) + '本目'; }).join('・') +
+      'は今週の材料が無かったので、事業の方向性から叩き台を作りました（実体験は入れていません。「編集メモ」参照）。';
+  }
   if (edit.shortage.length) {
     msg += '【不足】' + edit.shortage.map(function (i) { return (i + 1) + '本目'; }).join('・') +
       'は、残した本と重ならない材料が今週の返信に無かったため空けています。';
