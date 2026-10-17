@@ -1,0 +1,370 @@
+<title>自賠責 慰謝料の計算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap">
+<style>
+/* 対象日数は「治療期間」と「実通院日数×2」の少ない方。講座で講師が
+   そう話している（1060102035 t=2481）。月ごとの入力は実通院日数を
+   数えるためのもので、月ごとに区切る計算は参考として並べるだけ。
+   色は会員サイトと同じ藍。 */
+:root {
+  --ink:#16202a; --soft:#5d6b78; --navy:#14304a; --teal:#1f7a8c;
+  --paper:#f4f2ed; --card:#fff; --rule:#ddd8cf; --tab:#e9e4da;
+  --win:#1f7a8c; --lose:#a8a29a; --warn:#b4532f; --ok:#2c6b2f; --todo:#b4532f;
+  --shadow:0 1px 2px rgba(22,32,42,.06),0 10px 26px rgba(22,32,42,.08);
+  --mincho:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif;
+  --gothic:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ink:#e8e6e1; --soft:#99a5b0; --navy:#8fb6d4; --teal:#5fb3c4;
+  --paper:#14181c; --card:#1c2227; --rule:#333a41; --tab:#262d33;
+  --win:#5fb3c4; --lose:#6b7278; --warn:#e0a085; --ok:#7fc083; --todo:#e0a085;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 10px 26px rgba(0,0,0,.35);
+  color-scheme: dark; } }
+:root[data-theme="dark"]{
+  --ink:#e8e6e1; --soft:#99a5b0; --navy:#8fb6d4; --teal:#5fb3c4;
+  --paper:#14181c; --card:#1c2227; --rule:#333a41; --tab:#262d33;
+  --win:#5fb3c4; --lose:#6b7278; --warn:#e0a085; --ok:#7fc083; --todo:#e0a085;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 10px 26px rgba(0,0,0,.35);
+  color-scheme: dark; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--gothic);
+  font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+.wrap{max-width:680px;margin:0 auto;padding-inline:18px;padding-block:0 60px}
+h1,h2,h3{font-family:var(--mincho);margin:0;text-wrap:balance}
+p{margin:0}
+
+header{background:var(--navy);color:#eef3f7;padding:16px 18px}
+header .in{max-width:680px;margin:0 auto}
+header h1{font-size:17px;font-weight:700;letter-spacing:.04em}
+header p{font-size:12px;color:#a9c4d8;margin-top:3px;line-height:1.7}
+
+.bar{background:rgba(180,83,47,.1);border-bottom:1px solid var(--todo);
+  padding:11px 18px;font-size:12.5px;color:var(--todo);line-height:1.75}
+.bar .in{max-width:680px;margin:0 auto}
+.bar b{font-weight:700}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;
+  padding:19px 18px;box-shadow:var(--shadow);margin-top:18px}
+.card>h2{font-size:14px;letter-spacing:.05em;color:var(--navy);
+  padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:15px}
+
+label{display:block;margin-bottom:14px}
+label .t{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+label .h{display:block;font-size:11.5px;color:var(--soft);font-weight:400;
+  margin-top:2px;line-height:1.7}
+input[type=date],input[type=number]{width:100%;padding:12px;border:1px solid var(--rule);
+  border-radius:9px;font-family:inherit;font-size:16px;background:var(--paper);
+  color:var(--ink);font-variant-numeric:tabular-nums}
+input:focus{outline:2px solid var(--teal);outline-offset:1px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media (max-width:430px){.pair{grid-template-columns:1fr}}
+
+/* 月ごとの入力 */
+.months{display:grid;gap:8px}
+.mrow{display:grid;grid-template-columns:1fr 92px;gap:9px;align-items:center}
+.mrow .ml{font-size:13.5px;font-variant-numeric:tabular-nums}
+.mrow .ml small{display:block;font-size:11px;color:var(--soft)}
+.mrow input{padding:10px 11px;font-size:15px;text-align:right}
+.msum{display:flex;justify-content:space-between;margin-top:11px;padding-top:11px;
+  border-top:1px solid var(--rule);font-size:13.5px;font-variant-numeric:tabular-nums}
+.msum b{font-weight:700}
+
+.err{background:rgba(180,83,47,.08);border:1px solid var(--warn);color:var(--warn);
+  border-radius:8px;padding:11px 12px;font-size:13px;line-height:1.8;margin-top:14px}
+
+/* 2つの数え方 */
+.ways{display:grid;gap:12px}
+@media (min-width:560px){.ways{grid-template-columns:1fr 1fr}}
+.way{border:2px solid var(--rule);border-radius:11px;padding:16px 15px;background:var(--paper)}
+.way .wt{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--soft)}
+.way .wd{font-size:11.5px;color:var(--soft);line-height:1.7;margin-top:3px;min-height:3.4em}
+.way .wn{font-family:var(--mincho);font-size:30px;font-weight:700;line-height:1.15;
+  margin-top:10px;font-variant-numeric:tabular-nums;color:var(--navy)}
+.way .wn small{font-size:.42em;color:var(--soft);margin-left:3px}
+.way .wf{font-size:11.5px;color:var(--soft);margin-top:6px;font-variant-numeric:tabular-nums;
+  line-height:1.7;word-break:break-all}
+.way.hi{border-color:var(--teal);background:rgba(31,122,140,.06)}
+.way.ref{opacity:.72}
+.way.ref .wn{font-size:23px;color:var(--soft)}
+
+.gap{margin-top:14px;border-radius:9px;padding:13px 14px;font-size:13px;line-height:1.85}
+.gap.same{background:rgba(44,107,47,.08);border:1px solid var(--ok);color:var(--ok)}
+.gap.diff{background:rgba(180,83,47,.08);border:1px solid var(--todo);color:var(--todo)}
+.gap b{font-weight:700}
+
+.note{margin-top:14px;font-size:12.5px;line-height:1.9;color:var(--soft);
+  border-left:3px solid var(--teal);padding-left:12px}
+.note.warn{border-left-color:var(--warn);color:var(--warn)}
+.note b{color:var(--ink)}
+.note.warn b{color:var(--warn)}
+
+details.more{margin-top:16px;border-top:1px solid var(--rule);padding-top:13px}
+details.more summary{cursor:pointer;list-style:none;font-size:13px;color:var(--soft);font-weight:700}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::before{content:"▸ ";color:var(--teal)}
+details.more[open] summary::before{content:"▾ "}
+details.more .body{font-size:13px;color:var(--soft);line-height:1.95;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:9px}
+th,td{border:1px solid var(--rule);padding:8px 9px;text-align:left;
+  font-variant-numeric:tabular-nums}
+th{background:var(--paper);color:var(--soft);font-weight:700;white-space:nowrap}
+
+footer{margin-top:26px;font-size:11.5px;color:var(--soft);line-height:1.95;
+  border-top:1px solid var(--rule);padding-top:15px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header><div class="in">
+  <h1>自賠責保険　慰謝料の計算</h1>
+  <p>月ごとの通院日数を入れると、対象になる日数と金額が出ます。</p>
+</div></header>
+
+<div class="bar"><div class="in">
+  <b>「治療期間」と「実通院日数×2」をくらべ、少ない方の日数に4,300円をかけます。</b>
+  月ごとの入力は、実通院日数を数えやすくするためのものです。
+</div></div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>日付</h2>
+    <label>
+      <span class="t">事故日<span class="h">分かれば。計算には使いませんが、治療開始までの間隔を見ます。</span></span>
+      <input type="date" id="acc">
+    </label>
+    <div class="pair">
+      <label>
+        <span class="t">治療開始日<span class="h">初診の日</span></span>
+        <input type="date" id="start">
+      </label>
+      <label style="margin-bottom:0">
+        <span class="t">治療終了日<span class="h">予定でも可</span></span>
+        <input type="date" id="end">
+      </label>
+    </div>
+  </div>
+
+  <div class="card" id="mcard" hidden>
+    <h2>月ごとの通院日数</h2>
+    <p style="font-size:12.5px;color:var(--soft);line-height:1.8;margin-bottom:14px">
+      病院と整骨院の合計。同じ日に両方行っても1日です。ここで入れた数の合計が
+      「実通院日数」になります。
+    </p>
+    <div class="months" id="months"></div>
+    <div class="msum"><span>実通院日数の合計</span><b id="sumDays">–</b></div>
+    <div id="err"></div>
+  </div>
+
+  <div class="card" id="out" hidden>
+    <h2>慰謝料</h2>
+    <div class="ways">
+      <div class="way hi" id="wayA">
+        <div class="wt">自賠責の計算</div>
+        <div class="wd">「治療期間」と「実通院日数×2」をくらべて、少ない方の日数に4,300円</div>
+        <div class="wn" id="aYen">–</div>
+        <div class="wf" id="aF"></div>
+      </div>
+      <div class="way ref" id="wayB">
+        <div class="wt">参考　月ごとに区切った場合</div>
+        <div class="wd">各月で「その月の日数」と「その月の通院×2」をくらべて足す。この数え方の根拠は確認できていません</div>
+        <div class="wn" id="bYen">–</div>
+        <div class="wf" id="bF"></div>
+      </div>
+    </div>
+
+    <div class="gap" id="gap"></div>
+    <div id="advice"></div>
+
+    <details class="more">
+      <summary>月ごとの通院日数の内訳</summary>
+      <div class="body"><table id="brk"></table></div>
+    </details>
+
+    <details class="more">
+      <summary>あと何日通うと、いくら増えるか</summary>
+      <div class="body">
+        <p id="moreLead"></p>
+        <table id="tbl"></table>
+      </div>
+    </details>
+  </div>
+
+  <footer>
+    対象日数は「治療期間」と「実通院日数×2」のうち少ない方で、1日あたり4,300円です
+    （2020年4月1日以降に発生した事故。それより前は1日4,200円）。<br>
+    傷害分の慰謝料だけの計算です。治療費・休業損害・通院交通費は含みません。
+    自賠責の傷害分には、これらを合わせて120万円の上限があります。<br>
+    実際の支払額は保険会社の審査によって変わります。目安としてお使いください。
+  </footer>
+</div>
+
+<script>
+var YEN = 4300;
+var $ = function (id) { return document.getElementById(id); };
+var fmt = function (n) { return n.toLocaleString("ja-JP"); };
+var vals = {};   // "2026-02" -> 通院日数
+
+function parseDate(v) {
+  if (!v) return null;
+  var p = v.split("-");
+  if (p.length !== 3) return null;
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return isNaN(d.getTime()) ? null : d;
+}
+function diffDays(a, b) { return Math.round((b - a) / 86400000); }
+function key(y, m) { return y + "-" + String(m + 1).padStart(2, "0"); }
+
+/* 治療期間を暦月で切る。最初と最後の月は、期間に入っている日数だけ数える。 */
+function slice(start, end) {
+  var out = [], y = start.getFullYear(), m = start.getMonth();
+  while (y < end.getFullYear() || (y === end.getFullYear() && m <= end.getMonth())) {
+    var first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+    var from = first < start ? start : first;
+    var to = last > end ? end : last;
+    out.push({ key: key(y, m), y: y, m: m + 1, days: diffDays(from, to) + 1 });
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  return out;
+}
+
+function draw() {
+  var start = parseDate($("start").value), end = parseDate($("end").value);
+  if (!start || !end || end < start) { $("mcard").hidden = true; $("out").hidden = true; return; }
+  var ms = slice(start, end);
+  if (ms.length > 36) { $("mcard").hidden = true; $("out").hidden = true; return; }
+  $("mcard").hidden = false;
+
+  var h = "";
+  ms.forEach(function (x) {
+    var v = vals[x.key] === undefined ? "" : vals[x.key];
+    h += '<div class="mrow"><div class="ml">' + x.y + "年" + x.m + "月" +
+         "<small>期間内 " + x.days + "日</small></div>" +
+         '<input type="number" min="0" max="' + x.days + '" step="1" inputmode="numeric" ' +
+         'data-k="' + x.key + '" data-d="' + x.days + '" value="' + v + '" placeholder="0">' +
+         "</div>";
+  });
+  $("months").innerHTML = h;
+  $("months").querySelectorAll("input").forEach(function (el) {
+    el.addEventListener("input", function () {
+      vals[el.dataset.k] = el.value === "" ? "" : Math.max(0, Math.floor(Number(el.value)));
+      run(ms);
+    });
+  });
+  run(ms);
+}
+
+function run(ms) {
+  var start = parseDate($("start").value), end = parseDate($("end").value),
+      acc = parseDate($("acc").value), errs = [];
+  if (acc && start && start < acc) errs.push("治療開始日が事故日より前になっています。");
+
+  var total = 0, anyInput = false, detail = [];
+  ms.forEach(function (x) {
+    var v = vals[x.key];
+    if (v === "" || v === undefined) v = 0; else anyInput = true;
+    if (v > x.days) errs.push(x.y + "年" + x.m + "月：通院 " + v +
+        "日が、その月の期間内日数 " + x.days + "日を超えています。");
+    total += v;
+    detail.push({ k: x.key, y: x.y, m: x.m, days: x.days, v: v,
+                  used: Math.min(x.days, v * 2) });
+  });
+  $("sumDays").textContent = fmt(total) + "日";
+  $("err").innerHTML = errs.length ? '<div class="err">' + errs.join("<br>") + "</div>" : "";
+  if (errs.length || !anyInput) { $("out").hidden = true; return; }
+  $("out").hidden = false;
+
+  var period = diffDays(start, end) + 1;
+  var aDays = Math.min(period, total * 2), aYen = aDays * YEN;
+  var bDays = detail.reduce(function (s, x) { return s + x.used; }, 0), bYen = bDays * YEN;
+
+  // 実通院日数×2 が治療期間に届く通院日数。ここを超えると慰謝料は増えない
+  var capDays = Math.ceil(period / 2);
+
+  $("aYen").innerHTML = fmt(aYen) + "<small>円</small>";
+  $("aF").innerHTML = "治療期間 " + fmt(period) + "日 ／ 実通院 " + fmt(total) +
+    "日×2 = " + fmt(total * 2) + "日<br>少ない方の <b>" + fmt(aDays) + "日</b> × " +
+    fmt(YEN) + "円" + (aDays === period && total * 2 !== period
+      ? "（治療期間を採用）" : aDays === total * 2 ? "（実通院×2を採用）" : "");
+  $("bYen").innerHTML = fmt(bYen) + "<small>円</small>";
+  $("bF").textContent = detail.map(function (x) { return x.used; }).join(" + ") +
+                        " = " + fmt(bDays) + "日 × " + fmt(YEN) + "円";
+
+
+  var g = $("gap");
+  if (total >= capDays) {
+    g.className = "gap diff";
+    g.innerHTML = "<b>頭打ちに達しています。</b>この治療期間（" + fmt(period) +
+      "日）では、実通院 " + fmt(capDays) + "日 で慰謝料は上限になります。いまは " +
+      fmt(total) + "日。<b>これ以上通っても慰謝料は増えません。</b>";
+  } else {
+    g.className = "gap same";
+    g.innerHTML = "<b>まだ頭打ちではありません。</b>この治療期間（" + fmt(period) +
+      "日）では実通院 " + fmt(capDays) + "日 まで反映されます。あと " +
+      fmt(capDays - total) + "日分（1日につき " + fmt(YEN * 2) + "円）増える計算です。";
+  }
+
+  var adv = "";
+  if (acc && start) {
+    var gapd = diffDays(acc, start);
+    adv += '<div class="note' + (gapd > 13 ? " warn" : "") + '"><b>事故日から治療開始まで ' +
+      gapd + "日。</b>" + (gapd > 13
+        ? "被害者請求で整骨院のみの通院が認められる目安は13日以内とされています。整形外科にも通われているか確認してください。"
+        : "被害者請求で整骨院のみの通院が認められる目安（13日以内）に入っています。") + "</div>";
+  }
+  adv += '<div class="note"><b>通院を増やしても、1日あたり4,300円の2倍（8,600円）は超えません。</b>' +
+    "実通院日数×2 が治療期間を超えると、そこから先は治療期間の方が採用されるためです。" +
+    "通院の回数は症状に応じて判断するものです。</div>";
+  adv += '<div class="note">この金額は<b>患者さんが受け取る慰謝料</b>です。' +
+    "施術費・通院交通費・休業損害とあわせて、自賠責の傷害分は120万円が上限です。</div>";
+  $("advice").innerHTML = adv;
+
+  var rows = "<tr><th>月</th><th>期間内の日数</th><th>通院した日数</th></tr>";
+  detail.forEach(function (x) {
+    rows += "<tr><td>" + x.y + "/" + x.m + "</td><td>" + x.days + "日</td><td>" +
+      x.v + "日</td></tr>";
+  });
+  rows += "<tr><th>合計</th><th>治療期間 " + fmt(period) + "日</th><th>実通院 " +
+          fmt(total) + "日</th></tr>";
+  $("brk").innerHTML = rows;
+
+  var room = capDays - total;
+  if (room > 0) {
+    var t2 = "<tr><th>実通院日数</th><th>対象日数</th><th>慰謝料</th><th>いまとの差</th></tr>";
+    for (var i = 1; i <= Math.min(room, 8); i++) {
+      var d2 = Math.min(period, (total + i) * 2), y2 = d2 * YEN;
+      t2 += "<tr><td>" + fmt(total + i) + "日（+" + i + "）</td><td>" + fmt(d2) +
+        "日</td><td>" + fmt(y2) + "円</td><td>+" + fmt(y2 - aYen) + "円</td></tr>";
+    }
+    $("moreLead").textContent = "1日通うごとに " + fmt(YEN * 2) + "円 増えます。" +
+      "実通院 " + fmt(capDays) + "日 で頭打ちになり、それ以降は増えません。";
+    $("tbl").innerHTML = t2;
+  } else {
+    $("moreLead").textContent = "すでに頭打ちです。この治療期間では、これ以上通っても慰謝料は増えません。" +
+      "治療期間そのものが延びれば、上限も上がります。";
+    $("tbl").innerHTML = "";
+  }
+}
+
+["acc", "start", "end"].forEach(function (id) {
+  $(id).addEventListener("input", draw);
+  $(id).addEventListener("change", draw);
+});
+
+/* 開いた時点で動く形にしておく。数字は例で、入れ替えれば消える。 */
+(function seed() {
+  var p = function (d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
+           "-" + String(d.getDate()).padStart(2, "0");
+  };
+  var end = new Date(), start = new Date(end.getTime() - 89 * 86400000);
+  $("acc").value = p(new Date(start.getTime() - 3 * 86400000));
+  $("start").value = p(start);
+  $("end").value = p(end);
+  var ms = slice(start, end);
+  var ex = [25, 3, 10];
+  ms.forEach(function (x, i) { vals[x.key] = ex[i] === undefined ? 5 : ex[i]; });
+  draw();
+})();
+</script>
