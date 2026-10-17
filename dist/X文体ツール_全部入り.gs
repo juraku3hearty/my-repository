@@ -1437,12 +1437,13 @@ function xWriteWeekBlock_(posts) {
 
   var width = posts.length;
   var wdays = ['日', '月', '火', '水', '木', '金', '土'];
-
-  // 実行日の翌日から順に割り当てる（日曜に回すと月曜始まりになる）
-  var base = new Date();
-  base.setDate(base.getDate() + 1);
-
   var plan = xReadWeekPlan_();
+
+  // 日付は X_週の傾向 に合わせる。無ければ次の月曜から。
+  var base = new Date();
+  var add = (8 - base.getDay()) % 7;
+  if (add === 0) add = 7;
+  base.setDate(base.getDate() + add);
 
   var headRow = [startLabel];
   var dateRow = [dateLabel];
@@ -1450,12 +1451,19 @@ function xWriteWeekBlock_(posts) {
   var fixRow  = [postLabel];
 
   for (var i = 0; i < width; i++) {
-    var d = new Date(base.getTime());
-    d.setDate(base.getDate() + i);
-    var ymd = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
     var slot = plan[i];
-    headRow.push(wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）' +
-                 (slot && slot.cat ? ' ' + slot.cat : ''));
+    var label, ymd;
+    if (slot && slot.date) {
+      // 週の傾向シートの日付をそのまま使う（手で直した分を尊重する）
+      label = slot.date;
+      ymd = slot.date.replace(/（.+?）/, '');
+    } else {
+      var d = new Date(base.getTime());
+      d.setDate(base.getDate() + i);
+      ymd = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
+      label = wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）';
+    }
+    headRow.push(label + (slot && slot.cat ? ' ' + slot.cat : ''));
     dateRow.push(ymd + (slot && slot.time ? ' ' + slot.time : ''));
     textRow.push(posts[i]['本文'] || '');
     fixRow.push('');
@@ -2286,8 +2294,11 @@ function xSetupWeekPlan() {
   }
 
   var wdays = ['日', '月', '火', '水', '木', '金', '土'];
+  // 週は月曜始まり。次の月曜からの7日分を用意する。
   var base = new Date();
-  base.setDate(base.getDate() + 1);
+  var add = (8 - base.getDay()) % 7;
+  if (add === 0) add = 7;
+  base.setDate(base.getDate() + add);
 
   var rows = [];
   for (var i = 0; i < 7; i++) {
