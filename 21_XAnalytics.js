@@ -158,9 +158,7 @@ function xAnalyticsSummary() {
       ' フォロー' + n(x, ci.follow) + ' | ' + String(x[ci.body]).slice(0, 44));
   });
 
-  if (rows.length < 30) {
-    Logger.log('\n※まだ ' + rows.length + '件です。型ごとの比較は、30件を超えてからにしてください。');
-  }
+  Logger.log('\n系統ごとの比較は、メニュー「アナリティクス: 伸びる系統を調べる」で出せます。');
   xToast_(rows.length + '件を集計しました。ログを見てください。');
 }
 

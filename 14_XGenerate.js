@@ -139,6 +139,8 @@ function xGenerate_(themesText, count) {
   var facts = usePast ? xReadFacts_(40) : '';
 
   var patterns = xPatternsText_();
+  var trend = '';
+  try { trend = xTrendText_(); } catch (e) { Logger.log('系統の傾向を読めませんでした: ' + e.message); }
   var plan = xReadWeekPlan_();
   var pastThemes = xPastThemes_(40);
   var reactions = xReadReactions_(30);
@@ -147,7 +149,7 @@ function xGenerate_(themesText, count) {
   var system = xGenSystem_();
   var context = xGenContext_(setting, strategy, concept, rules,
                              facts, factSheets, sampleSheets, patterns, reactions, adopted,
-                             replies, notes, planSheets);
+                             replies, notes, planSheets, trend);
 
   var themes = String(themesText || '').trim();
   var spec = xGenSpec_(count, setting);
@@ -349,7 +351,7 @@ function xGenSystem_() {
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, facts,
                       factSheets, sampleSheets, patterns, reactions, adopted,
-                      replies, notes, planSheets) {
+                      replies, notes, planSheets, trend) {
   var parts = [];
 
   if (strategy) {
@@ -373,6 +375,17 @@ function xGenContext_(setting, strategy, concept, rules, facts,
   parts.push('# 文体ルール（過去の書き換え履歴から抽出）');
   parts.push(rules);
   parts.push('');
+
+  if (trend) {
+    parts.push('# 読まれやすい系統・つながりやすい系統（過去半年の数字）');
+    parts.push('過去の投稿を、役割と分類に振り分けて数字を比べた結果です。');
+    parts.push('使うのは「どの系統が読まれ、どの系統がフォローや会話につながったか」だけです。');
+    parts.push('過去の投稿の中身（出来事・結論・言い回し）は使わないでください。');
+    parts.push('割り当てた役割と分類は変えずに、その中でテーマや切り口を選ぶときの参考にしてください。');
+    parts.push('表示回数よりも、つながりやすい系統を重く見てください。');
+    parts.push(trend);
+    parts.push('');
+  }
 
   if (replies || notes) {
     parts.push('# ② 直近の返信・引用（いちばんの材料）');
