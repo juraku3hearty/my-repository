@@ -169,18 +169,21 @@ function xAnalyticsSummary() {
  * 「直近」は今日からではなく、取り込んだデータのいちばん新しい日から数える。
  * CSVを書き出した日と生成する日がずれても、最新の1週間を拾えるようにするため。
  *
+ * 1件ずつ R1, R2 … の番号を振る。週全体の編集で「どの返信がまだ使われていないか」を
+ * 番号で指せるようにするため。
+ *
  * @param {number} days 何日ぶん
- * @return {string}
+ * @return {Array<Object>} [{ no:'R1', d:Date|null, kind:'返信'|'引用（推定）', text }]
  */
-function xReadRecentReplies_(days) {
+function xRecentReplyList_(days) {
   var sh = xBook_().getSheetByName(X_SHEETS.FACT);
-  if (!sh || sh.getLastRow() < 2) return '';
+  if (!sh || sh.getLastRow() < 2) return [];
 
   var values = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
   var rows = values.filter(function (r) {
     return /^Xでの(返信|引用)/.test(String(r[1])) && String(r[3]).trim();
   });
-  if (!rows.length) return '';
+  if (!rows.length) return [];
 
   var dated = rows.map(function (r) { return { d: xParseDate_(r[0]), r: r }; });
   var latest = null;
@@ -197,10 +200,27 @@ function xReadRecentReplies_(days) {
   }
 
   picked.sort(function (a, b) { return (b.d || 0) - (a.d || 0); });
-  return picked.map(function (x) {
+  return picked.map(function (x, i) {
+    return {
+      no: 'R' + (i + 1),
+      d: x.d,
+      kind: String(x.r[1]).replace(/^Xでの/, ''),
+      text: String(x.r[3]).trim()
+    };
+  });
+}
+
+/** 返信の一覧を、プロンプトに入れる文にする */
+function xFormatReplies_(list) {
+  return (list || []).map(function (x) {
     var d = x.d ? Utilities.formatDate(x.d, 'Asia/Tokyo', 'M/d') : '';
-    return '- [' + d + '・' + String(x.r[1]).replace(/^Xでの/, '') + '] ' + String(x.r[3]).trim();
+    return '- [' + x.no + '・' + d + '・' + x.kind + '] ' + x.text;
   }).join('\n');
+}
+
+/** 互換用：番号つきの文で返す */
+function xReadRecentReplies_(days) {
+  return xFormatReplies_(xRecentReplyList_(days));
 }
 
 /** 「2026-10-17」「2026/10/17 9:00」「2026年10月17日」などを Date にする。読めなければ null */

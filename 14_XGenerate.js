@@ -55,19 +55,41 @@ function xGeneratePosts() {
   }
 
   var t0 = Date.now();
-  var posts = xGenerate_(themes, count);
-  xWriteDrafts_(posts);
-  xWriteWeekBlock_(posts);
+  var ctx = xGenCtx_(themes, count);
+  var posts = xGenInitial_(ctx);
+
+  // 7本を並べて重なりを見て、重なった枠を別の返信から作り直す
+  var edit = xEditWeek_(ctx, posts, null);
+
+  xFinishWeek_(ctx, edit, t0);
+}
+
+/**
+ * 書き出し・自己チェック・報告。最初の生成と「残して作り直す」で共通。
+ * @param {Object} ctx
+ * @param {Object} edit xEditWeek_ の戻り値 { posts, notes, shortage, skipped }
+ * @param {number} t0 開始時刻
+ */
+function xFinishWeek_(ctx, edit, t0) {
+  var posts = edit.posts;
+  xWriteDrafts_(posts, ctx.count);
+  xWriteWeekBlock_(posts, ctx.count);
 
   // 全文を読まずに済むよう、機械で照合できる分はここで検査する
   var ng = 0;
   try { ng = xCheckDrafts() || 0; } catch (e) { Logger.log('チェック失敗: ' + e.message); }
 
+  var made = posts.filter(function (p) { return String(p['本文'] || '').trim(); });
   var secs = Math.round((Date.now() - t0) / 1000);
-  var msg = posts.length + '本できました（' + secs + '秒）。' +
-    (posts.length < count ? '（' + count + '本のうち' + (count - posts.length) + '本は作れませんでした）' : '') +
-    (ng ? ('要確認が' + ng + '本あります（「自己チェック」列の赤い行）。') : '自動チェックは全部OKでした。') +
-    ' X_投稿案_週形式 からコピーできます。';
+  var msg = made.length + '本できました（' + secs + '秒）。';
+  if (edit.replaced) msg += '重なっていた' + edit.replaced + '本を別の返信から作り直しました。';
+  if (edit.shortage.length) {
+    msg += '【不足】' + edit.shortage.map(function (i) { return (i + 1) + '本目'; }).join('・') +
+      'は、残した本と重ならない材料が今週の返信に無かったため空けています。';
+  }
+  if (edit.skipped) msg += '（' + edit.skipped + '）';
+  msg += ng ? ('要確認が' + ng + '本あります（「自己チェック」列の赤い行）。') : '自動チェックは全部OKでした。';
+  msg += ' X_投稿案_週形式 からコピーできます。';
   Logger.log(msg);
   xToast_(msg);
 }
@@ -108,6 +130,18 @@ var X_GEN_TIME_LIMIT_MS = 4.8 * 60 * 1000;
  * @return {Array<Object>}
  */
 function xGenerate_(themesText, count) {
+  var ctx = xGenCtx_(themesText, count);
+  return xGenInitial_(ctx);
+}
+
+/**
+ * 生成に使う材料をそろえる。最初の生成と、作り直し（週の編集）で共通。
+ *
+ * @param {string} themesText テーマ（空なら提案させる）
+ * @param {number} count 本数
+ * @return {Object} ctx
+ */
+function xGenCtx_(themesText, count) {
   var started = Date.now();
 
   var setting = xReadSetting_();
@@ -122,7 +156,8 @@ function xGenerate_(themesText, count) {
 
   // ② 直近の返信・引用。これが主材料。
   var days = parseInt(setting['返信を読む日数'], 10);
-  var replies = xReadRecentReplies_(isNaN(days) || days <= 0 ? 7 : days);
+  var replyList = xRecentReplyList_(isNaN(days) || days <= 0 ? 7 : days);
+  var replies = xFormatReplies_(replyList);
   var notes = xReadThisWeekNotes_();
 
   // ① 外部ライターの企画シート（テーマ選び・切り口の参考）
@@ -151,10 +186,31 @@ function xGenerate_(themesText, count) {
                              facts, factSheets, sampleSheets, patterns, reactions, adopted,
                              replies, notes, planSheets, trend);
 
-  var themes = String(themesText || '').trim();
-  var spec = xGenSpec_(count, setting);
+  return {
+    started: started,
+    setting: setting,
+    system: system,
+    context: context,
+    themes: String(themesText || '').trim(),
+    count: count,
+    spec: xGenSpec_(count, setting),
+    plan: plan,
+    pastThemes: pastThemes,
+    replyList: replyList,
+    notes: notes
+  };
+}
 
-  // 3本ずつの束に分けて、全部まとめて並列で投げる
+/**
+ * 最初の生成。2本ずつの束に分けて、全部まとめて並列で投げる。
+ * @param {Object} ctx xGenCtx_ の戻り値
+ * @return {Array<Object>} _idx（0始まりの枠番号）つきの投稿
+ */
+function xGenInitial_(ctx) {
+  var started = ctx.started;
+  var system = ctx.system, context = ctx.context, themes = ctx.themes, count = ctx.count;
+  var spec = ctx.spec, plan = ctx.plan, pastThemes = ctx.pastThemes;
+
   var jobs = [];
   for (var from = 0; from < count; from += X_GEN_CHUNK) {
     jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, count - from) });
@@ -327,6 +383,9 @@ function xGenSystem_() {
     '- 過去に使った話を無理に引っ張り出さず、今週の返信から考えられることを優先してください。',
     '- 情報が足りない場合、長くするために別の体験談を足さず、短く仕上げてください。',
     '  長文の枠でも、材料が足りなければ短文の長さで構いません。',
+    '- 毎回サービス紹介や固定ポストへの誘導を入れないでください。',
+    '  「固定ポストを見てください」「DMください」「ご相談はこちら」などは基本入れません。',
+    '  週の傾向で「人脈」の日だけ、最後の1文で軽く触れる程度なら構いません。',
     '',
     '■ 最重要のルール',
     '',
@@ -652,16 +711,43 @@ function xPickSamples_(n) {
     .filter(function (s) { return s.trim(); });
 }
 
-/** 投稿案をシートに書き出す */
-function xWriteDrafts_(posts) {
-  var sh = xSheet_(X_SHEETS.DRAFT, X_DRAFT_HEADERS);
-  if (!posts.length) return;
+/**
+ * 枠番号（_idx）の順に並べ、空いた枠には空の投稿を入れる。
+ * @param {Array<Object>} posts
+ * @param {number} count 本数（省略時は posts の最大枠番号まで）
+ * @return {Array<Object>}
+ */
+function xBySlot_(posts, count) {
+  var max = count || 0;
+  posts.forEach(function (p, i) {
+    if (p._idx === undefined || p._idx === null) p._idx = i;
+    max = Math.max(max, p._idx + 1);
+  });
+  var out = [];
+  for (var i = 0; i < max; i++) out.push(null);
+  posts.forEach(function (p) { if (!out[p._idx]) out[p._idx] = p; });
+  for (var j = 0; j < max; j++) {
+    if (!out[j]) out[j] = { _idx: j, '本文': '', _note: '材料不足のため空き', _state: '空き' };
+  }
+  return out;
+}
 
-  var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
+/** 投稿案をシートに書き出す */
+function xWriteDrafts_(posts, count) {
+  var sh = xSheet_(X_SHEETS.DRAFT, X_DRAFT_HEADERS);
+  if (!posts.length && !count) return;
+
+  // 空いた枠も1行として残す。「残して作り直す」が枠番号で読めるようにするため。
+  posts = xBySlot_(posts, count);
+
+  var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
   var width = Math.max(sh.getLastColumn(), X_DRAFT_HEADERS.length);
   var rows = posts.map(function (p) {
+    var body = String(p['本文'] || '');
+    var state = p._state || (!body.trim() ? '空き' : (/【要確認/.test(body) ? '要確認' : '未'));
     var v = {
       '作成日時': now,
+      '枠': p._idx + 1,
       '分類': p['分類'] || '',
       '役割': p['役割'] || '',
       '使った型': p['使った型'] || '',
@@ -672,9 +758,10 @@ function xWriteDrafts_(posts) {
       '本文': p['本文'] || '',
       '冒頭3行': p['冒頭3行'] || '',
       '事実確認が必要な箇所': p['事実確認が必要な箇所'] || '',
+      '編集メモ': p._note || '',
       '自己チェック': '',
       '投稿予定日': '',
-      '状態': '未'
+      '状態': state
     };
     var row = X_DRAFT_HEADERS.map(function (h) { return v[h]; });
     while (row.length < width) row.push('');   // 手で足した列のぶん
@@ -684,7 +771,7 @@ function xWriteDrafts_(posts) {
   var start = sh.getLastRow() + 1;
   sh.getRange(start, 1, rows.length, width).setValues(rows);
 
-  ['本文', '元になった返信・切り口', '事実確認が必要な箇所'].forEach(function (h) {
+  ['本文', '元になった返信・切り口', '事実確認が必要な箇所', '編集メモ'].forEach(function (h) {
     var c = xDraftCol_(h);
     sh.setColumnWidth(c, h === '本文' ? 520 : 300);
     sh.getRange(2, c, sh.getLastRow() - 1, 1).setWrap(true);
@@ -704,8 +791,9 @@ function xWriteDrafts_(posts) {
  *
  * そのまま選択してコピーすれば、既存のシートに貼れる。
  */
-function xWriteWeekBlock_(posts) {
-  if (!posts || !posts.length) return;
+function xWriteWeekBlock_(posts, count) {
+  if (!posts || (!posts.length && !count)) return;
+  posts = xBySlot_(posts, count);
 
   var map = xReadSetting_();
   var startLabel = (map['▼ブロックの先頭ラベル'] || '日付').trim();
@@ -742,9 +830,12 @@ function xWriteWeekBlock_(posts) {
       ymd = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
       label = wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）';
     }
-    headRow.push(label + (slot && slot.cat ? ' ' + slot.cat : ''));
+    var body = String(posts[i]['本文'] || '');
+    // 【要確認】が残っている原稿は完成稿として扱わない。見出しで分かるようにする。
+    var mark = !body.trim() ? '（空き）' : (/【要確認/.test(body) ? '（要確認・未完成）' : '');
+    headRow.push(label + (slot && slot.cat ? ' ' + slot.cat : '') + mark);
     dateRow.push(ymd + (slot && slot.time ? ' ' + slot.time : ''));
-    textRow.push(posts[i]['本文'] || '');
+    textRow.push(body);
     fixRow.push('');
   }
 

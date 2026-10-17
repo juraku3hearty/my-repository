@@ -35,6 +35,14 @@ function xCheckDrafts() {
   var latestStamp = String(stamps[stamps.length - 1][0]);
   var systemCount = 0;
 
+  // 誘導（サービス紹介・固定ポストなど）は週に1本まで。今回の生成分で数える。
+  var promoRows = [];
+  for (var pi = 0; pi < bodies.length; pi++) {
+    if (String(stamps[pi][0]) !== latestStamp) continue;
+    var pb = String(bodies[pi][0] || '');
+    if (X_PROMO_WORDS.some(function (w) { return pb.indexOf(w) >= 0; })) promoRows.push(pi);
+  }
+
   var results = [];
   var ngRows = [];
 
@@ -64,6 +72,11 @@ function xCheckDrafts() {
       if (tail.indexOf('仕組み') >= 0) systemCount++;
     }
 
+    // 誘導が週2本以上なら、その本すべてに印を付ける
+    if (promoRows.length > 1 && promoRows.indexOf(i) >= 0) {
+      problems.push('誘導が週' + promoRows.length + '本（1本まで）');
+    }
+
     // 4) 【要確認：…】が残っていないか
     //    元の投稿が分からないときにAIが入れる印。そのまま投稿できない。
     var asks = body.match(/【要確認[^】]*】/g);
@@ -81,6 +94,19 @@ function xCheckDrafts() {
   }
 
   sh.getRange(2, checkCol, results.length, 1).setValues(results);
+
+  // 【要確認】が残っている原稿は完成稿として扱わない。「状態」を合わせる。
+  // 本人が付けた状態（残す・済 など）は触らず、「未」と「要確認」だけ切り替える。
+  var stateCol = xDraftCol_('状態');
+  var states = sh.getRange(2, stateCol, lastRow - 1, 1).getValues();
+  var changed = false;
+  for (var si = 0; si < states.length; si++) {
+    var st = String(states[si][0]).trim();
+    var hasAsk = /【要確認/.test(String(bodies[si][0] || ''));
+    if (st === '未' && hasAsk) { states[si][0] = '要確認'; changed = true; }
+    else if (st === '要確認' && !hasAsk) { states[si][0] = '未'; changed = true; }
+  }
+  if (changed) sh.getRange(2, stateCol, states.length, 1).setValues(states);
   sh.getRange(2, checkCol, results.length, 1).setBackground(null);
   ngRows.forEach(function (r) { sh.getRange(r, checkCol).setBackground('#fdeceb'); });
 
@@ -93,6 +119,7 @@ function xCheckDrafts() {
     : '全部OKでした。そのまま使えます。';
   if (quotedCount > 2) msg += ' / カギカッコ始まりが' + quotedCount + '本あります（目安は2本まで）';
   if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
+  if (promoRows.length > 1) msg += ' / 誘導の入った投稿が' + promoRows.length + '本あります（1本まで）';
 
   Logger.log(msg);
   xToast_(msg);
