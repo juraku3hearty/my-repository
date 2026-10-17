@@ -25,7 +25,8 @@ var X_SHEETS = {
   STRATEGY: 'X_戦略',
   PATTERN: 'X_型カタログ',
   WEEKPLAN: 'X_週の傾向',
-  REACTION: 'X_反応ログ'
+  REACTION: 'X_反応ログ',
+  ANALYTICS: 'X_反応データ'
 };
 
 /**

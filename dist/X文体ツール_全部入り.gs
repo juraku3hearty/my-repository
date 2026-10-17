@@ -38,7 +38,8 @@ var X_SHEETS = {
   STRATEGY: 'X_戦略',
   PATTERN: 'X_型カタログ',
   WEEKPLAN: 'X_週の傾向',
-  REACTION: 'X_反応ログ'
+  REACTION: 'X_反応ログ',
+  ANALYTICS: 'X_反応データ'
 };
 
 /**
@@ -1251,8 +1252,9 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
     var idx = from + i;
     var slot = plan[idx];
     if (slot) {
-      var line = '・' + (idx + 1) + '本目（' + slot.date + '）: 本文=' + slot.cat;
-      if (slot.closeCat !== slot.cat) line += ' / 締め=' + slot.closeCat;
+      var line = '・' + (idx + 1) + '本目（' + slot.date + '）: ' + (slot.len || '長文');
+      if (slot.cat) line += ' / 本文=' + slot.cat;
+      if (slot.closeCat && slot.closeCat !== slot.cat) line += ' / 締め=' + slot.closeCat;
       var layer = xLayerOf_(slot.cat);
       if (layer) line += ' / 読者の温度=' + layer;
       if (slot.memo) line += ' / メモ=' + slot.memo;
@@ -1303,6 +1305,16 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
   }
   parts.push('・カギカッコで誰かの台詞や心の声を置いて始める形は、全' + total + '本のうち最大2本までです。');
   parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
+  parts.push('');
+
+  parts.push('');
+  parts.push('## 長文と短文');
+  parts.push('・長文 … じっくり書く。背景・具体例・そこから言えることまで入れる');
+  parts.push('・短文 … 110〜150字。長文で書いた論点をひとつだけ切り出す。');
+  parts.push('  　　　 結論を1つに絞り、具体例は1つだけ。説明を足さない。');
+  parts.push('  　　　 内容を薄めるのではなく、範囲を狭めてください。');
+  parts.push('・短文は、同じ週の長文と素材を共有して構いません。');
+  parts.push('  同じ材料を違う角度で切り直すほうが、新しい素材を薄く広げるより濃くなります。');
   parts.push('');
 
   var lenHint = xLengthHint_();
@@ -1522,6 +1534,10 @@ function onOpen() {
       .addSeparator()
       .addItem('今週の傾向シートを作る（紫微斗数）', 'xSetupWeekPlan')
       .addItem('反応ログのシートを作る', 'xSetupReactionLog')
+      .addSeparator()
+      .addItem('アナリティクス: 貼り付けシートを作る', 'xSetupAnalyticsSheet')
+      .addItem('アナリティクス: 取り込む（返信を一次情報に）', 'xImportAnalytics')
+      .addItem('アナリティクス: 状況を見る', 'xAnalyticsSummary')
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')
@@ -2242,7 +2258,7 @@ function xPatternsText_() {
  */
 function xSetupWeekPlan() {
   var sh = xSheet_(X_SHEETS.WEEKPLAN,
-    ['日付', '本文の分類', '締めの分類', '投稿時刻', '回る人数', 'メモ']);
+    ['日付', '長さ', '本文の分類', '締めの分類', '投稿時刻', '回る人数', 'メモ']);
 
   if (sh.getLastRow() > 1) {
     sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
@@ -2256,30 +2272,40 @@ function xSetupWeekPlan() {
   for (var i = 0; i < 7; i++) {
     var d = new Date(base.getTime());
     d.setDate(base.getDate() + i);
+    // 週2本を長文にする。間隔があくように3日目と6日目へ。
+    var len = (i === 2 || i === 5) ? '長文' : '短文';
     rows.push([
       Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd') +
         '（' + wdays[d.getDay()] + '）',
-      '', '', '', '', ''
+      len, '', '', '', '', ''
     ]);
   }
-  sh.getRange(2, 1, rows.length, 6).setValues(rows);
+  sh.getRange(2, 1, rows.length, 7).setValues(rows);
+
+  // 長さをプルダウンにする
+  var lenRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['長文', '短文'], true).setAllowInvalid(true).build();
+  sh.getRange(2, 2, rows.length, 1).setDataValidation(lenRule);
 
   // 分類をプルダウンにする
   var names = X_CATEGORIES.map(function (c) { return c.name; });
   var rule = SpreadsheetApp.newDataValidation()
     .requireValueInList(names, true).setAllowInvalid(true).build();
-  sh.getRange(2, 2, rows.length, 2).setDataValidation(rule);
+  sh.getRange(2, 3, rows.length, 2).setDataValidation(rule);
 
   // 分類の意味を右側に添えておく
-  var legend = [['', '', '', '', '', '']];
-  legend.push(['── 分類 ──', '中身', '宮', '', '', '']);
+  var legend = [['', '', '', '', '', '', '']];
+  legend.push(['── 分類 ──', '中身', '宮', '', '', '', '']);
   X_CATEGORIES.forEach(function (c) {
-    legend.push([c.name, c.desc, c.palace, '', '', '']);
+    legend.push([c.name, c.desc, c.palace, '', '', '', '']);
   });
-  sh.getRange(rows.length + 2, 1, legend.length, 6).setValues(legend);
+  legend.push(['', '', '', '', '', '', '']);
+  legend.push(['── 長さ ──', '長文=じっくり書く / 短文=長文の論点をひとつ切り出す', '', '', '', '', '']);
+  sh.getRange(rows.length + 2, 1, legend.length, 7).setValues(legend);
   sh.setColumnWidth(1, 150);
-  sh.setColumnWidth(2, 120);
+  sh.setColumnWidth(2, 80);
   sh.setColumnWidth(3, 120);
+  sh.setColumnWidth(4, 120);
 
   xToast_('X_週の傾向 を作りました。本文の分類を埋めてください（締めは空でもOK）。');
 }
@@ -2292,20 +2318,22 @@ function xReadWeekPlan_() {
   var sh = xBook_().getSheetByName(X_SHEETS.WEEKPLAN);
   if (!sh || sh.getLastRow() < 2) return [];
 
-  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();
   var out = [];
   for (var i = 0; i < values.length; i++) {
     var date = String(values[i][0]).trim();
-    var cat = String(values[i][1]).trim();
     if (!date || date.indexOf('──') >= 0) break;   // 凡例に入ったら終わり
-    if (!cat) continue;                             // 分類が空の日は飛ばす
+    var len = String(values[i][1]).trim();
+    var cat = String(values[i][2]).trim();
+    if (!cat && !len) continue;                     // 何も指定がない日は飛ばす
     out.push({
       date: date,
+      len: len || '長文',
       cat: cat,
-      closeCat: String(values[i][2]).trim() || cat,
-      time: String(values[i][3]).trim(),
-      people: String(values[i][4]).trim(),
-      memo: String(values[i][5]).trim()
+      closeCat: String(values[i][3]).trim() || cat,
+      time: String(values[i][4]).trim(),
+      people: String(values[i][5]).trim(),
+      memo: String(values[i][6]).trim()
     });
   }
   return out;
@@ -2325,7 +2353,8 @@ function xWeekPlanText_() {
   if (!plan.length) return '';
 
   var lines = plan.map(function (p, i) {
-    var parts = [(i + 1) + '本目（' + p.date + '）: 本文=' + p.cat];
+    var parts = [(i + 1) + '本目（' + p.date + '）: ' + (p.len || '長文') +
+                 (p.cat ? ' / 本文=' + p.cat : '')];
     if (p.closeCat !== p.cat) parts.push('締め=' + p.closeCat);
     var layer = xLayerOf_(p.cat);
     if (layer) parts.push('読者の温度=' + layer);
@@ -2550,4 +2579,171 @@ function xToHalf_(s) {
   return String(s).replace(/[０-９]/g, function (c) {
     return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
   });
+}
+
+// ============================================================
+// 21_XAnalytics.js
+// ============================================================
+
+/**
+ * 21_XAnalytics.js
+ * アナリティクスCSVの取り込み
+ *
+ * 狙いは2つ。
+ *
+ * 1) 自分の返信を一次情報として拾う
+ *    普段のやり取りで書いている返信は、投稿用に整えていない素の言葉。
+ *    相手の文脈に反応して書いているので、自分では思いつかない角度が入る。
+ *    毎日書いているので、追加の手間なしで素材が溜まる。
+ *
+ * 2) 反応の数字を貯める
+ *    型ごとの当たり外れを見るのは、母数が溜まってから。
+ *    それまでは貯めるだけ。
+ *
+ * ※CSVの「ポスト本文」は約150字で切られている。
+ *   投稿の特定には使えるが、本文の長さの判断には使えない。
+ */
+
+/** CSVの列名（Xのアナリティクスの書き出し） */
+var X_CSV_COLS = {
+  id: 'ポストID', date: '日付', body: 'ポスト本文', link: 'ポストのリンク',
+  imp: 'インプレッション数', like: 'いいね', eng: 'エンゲージメント',
+  bookmark: 'ブックマーク', share: '共有された回数', follow: '新しいフォロー',
+  reply: '返信', repost: 'リポスト', profile: 'プロフィールへのアクセス数'
+};
+
+/** これ以上の長さの返信を、一次情報として拾う（相槌を除くため） */
+var X_REPLY_MIN_LEN = 60;
+
+/**
+ * 取り込み用のシートを作る。ここにCSVを貼ってもらう。
+ */
+function xSetupAnalyticsSheet() {
+  var sh = xSheet_(X_SHEETS.ANALYTICS, []);
+  if (sh.getLastRow() === 0) {
+    var head = ['ポストID', '日付', 'ポスト本文', 'ポストのリンク', 'インプレッション数',
+      'いいね', 'エンゲージメント', 'ブックマーク', '共有された回数', '新しいフォロー',
+      '返信', 'リポスト', 'プロフィールへのアクセス数', '詳細のクリック数',
+      'URLのクリック数', 'ハッシュタグのクリック数', 'パーマリンクのクリック数', '除外'];
+    sh.getRange(1, 1, 1, head.length).setValues([head])
+      .setFontWeight('bold').setBackground('#1f3a5f').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  sh.setColumnWidth(3, 480);
+
+  xToast_('X_反応データ を作りました。アナリティクスのCSVを A1 から貼り付けてください。' +
+          '（見出し行ごと貼ってOK。R列「除外」は、互助会で伸びた回に印をつける欄です）');
+}
+
+/**
+ * 貼り付けたCSVを処理する。
+ * ・自分の返信 → X_一次情報 へ
+ * ・投稿の数字 → そのまま蓄積（集計は母数が溜まってから）
+ */
+function xImportAnalytics() {
+  var sh = xBook_().getSheetByName(X_SHEETS.ANALYTICS);
+  if (!sh || sh.getLastRow() < 2) {
+    xToast_('X_反応データ にCSVが貼られていません。');
+    return;
+  }
+
+  var values = sh.getDataRange().getValues();
+  var head = values[0].map(function (v) { return String(v).trim(); });
+  var ci = {};
+  Object.keys(X_CSV_COLS).forEach(function (k) { ci[k] = head.indexOf(X_CSV_COLS[k]); });
+
+  if (ci.body < 0) {
+    throw new Error('「ポスト本文」の列が見つかりません。見出し行ごと貼り付けてください。');
+  }
+
+  var factSh = xSheet_(X_SHEETS.FACT, ['記録日', 'ジャンル', '質問', '回答', '使用回数']);
+  var known = xAnsweredQuestions_();
+
+  var posts = 0, replies = 0, added = 0;
+
+  for (var r = 1; r < values.length; r++) {
+    var body = String(values[r][ci.body] || '').trim();
+    if (!body) continue;
+
+    var isReply = body.charAt(0) === '@';
+    if (isReply) replies++; else posts++;
+    if (!isReply) continue;
+
+    // 相手のIDを外し、短い相槌は捨てる
+    var text = body.replace(/^(@\w+\s*)+/, '').trim();
+    text = text.replace(/\s*https:\/\/t\.co\/\S+/g, '').trim();
+    if (text.length < X_REPLY_MIN_LEN) continue;
+
+    var key = 'Xでの返信: ' + text.slice(0, 30);
+    if (known.indexOf(key) >= 0) continue;
+
+    var date = values[r][ci.date] ? String(values[r][ci.date]) : '';
+    factSh.appendRow([date || fmtDate_(new Date()), 'Xでの返信', key, text, 0]);
+    known.push(key);
+    added++;
+  }
+
+  factSh.setColumnWidth(4, 480);
+  if (factSh.getLastRow() > 1) {
+    factSh.getRange(2, 4, factSh.getLastRow() - 1, 1).setWrap(true);
+  }
+
+  var msg = '投稿' + posts + '件 / 返信' + replies + '件を読みました。' +
+            'うち' + added + '件の返信を一次情報に追加しました。';
+  Logger.log(msg);
+  xToast_(msg);
+  return added;
+}
+
+/**
+ * 反応の状況をざっと見る（集計の判断材料）。
+ * 「除外」に印のある行は外す。
+ */
+function xAnalyticsSummary() {
+  var sh = xBook_().getSheetByName(X_SHEETS.ANALYTICS);
+  if (!sh || sh.getLastRow() < 2) { xToast_('X_反応データ が空です。'); return; }
+
+  var values = sh.getDataRange().getValues();
+  var head = values[0].map(function (v) { return String(v).trim(); });
+  var ci = {};
+  Object.keys(X_CSV_COLS).forEach(function (k) { ci[k] = head.indexOf(X_CSV_COLS[k]); });
+  var exCol = head.indexOf('除外');
+
+  function n(row, idx) {
+    if (idx < 0) return 0;
+    var v = String(row[idx] || '0').replace(/,/g, '');
+    var x = parseInt(v, 10);
+    return isNaN(x) ? 0 : x;
+  }
+
+  var rows = [];
+  for (var r = 1; r < values.length; r++) {
+    var body = String(values[r][ci.body] || '').trim();
+    if (!body || body.charAt(0) === '@') continue;           // 自分の投稿だけ
+    if (exCol >= 0 && String(values[r][exCol] || '').trim()) continue;  // 除外済み
+    rows.push(values[r]);
+  }
+  if (!rows.length) { xToast_('対象の投稿がありません。'); return; }
+
+  var imps = rows.map(function (x) { return n(x, ci.imp); }).sort(function (a, b) { return a - b; });
+  var med = imps[Math.floor(imps.length / 2)];
+  var repSum = rows.reduce(function (s, x) { return s + n(x, ci.reply); }, 0);
+  var folSum = rows.reduce(function (s, x) { return s + n(x, ci.follow); }, 0);
+
+  Logger.log('--- 自分の投稿（除外を抜いた分） ---');
+  Logger.log('件数: ' + rows.length);
+  Logger.log('インプレッション中央値: ' + med + ' / 最大: ' + imps[imps.length - 1]);
+  Logger.log('返信の合計: ' + repSum + ' / 新しいフォローの合計: ' + folSum);
+
+  Logger.log('\n--- 返信が多い順 ---');
+  rows.sort(function (a, b) { return n(b, ci.reply) - n(a, ci.reply); });
+  rows.slice(0, 10).forEach(function (x) {
+    Logger.log('返信' + n(x, ci.reply) + ' 表示' + n(x, ci.imp) +
+      ' フォロー' + n(x, ci.follow) + ' | ' + String(x[ci.body]).slice(0, 44));
+  });
+
+  if (rows.length < 30) {
+    Logger.log('\n※まだ ' + rows.length + '件です。型ごとの比較は、30件を超えてからにしてください。');
+  }
+  xToast_(rows.length + '件を集計しました。ログを見てください。');
 }

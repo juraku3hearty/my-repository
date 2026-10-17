@@ -292,8 +292,9 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
     var idx = from + i;
     var slot = plan[idx];
     if (slot) {
-      var line = '・' + (idx + 1) + '本目（' + slot.date + '）: 本文=' + slot.cat;
-      if (slot.closeCat !== slot.cat) line += ' / 締め=' + slot.closeCat;
+      var line = '・' + (idx + 1) + '本目（' + slot.date + '）: ' + (slot.len || '長文');
+      if (slot.cat) line += ' / 本文=' + slot.cat;
+      if (slot.closeCat && slot.closeCat !== slot.cat) line += ' / 締め=' + slot.closeCat;
       var layer = xLayerOf_(slot.cat);
       if (layer) line += ' / 読者の温度=' + layer;
       if (slot.memo) line += ' / メモ=' + slot.memo;
@@ -344,6 +345,16 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
   }
   parts.push('・カギカッコで誰かの台詞や心の声を置いて始める形は、全' + total + '本のうち最大2本までです。');
   parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
+  parts.push('');
+
+  parts.push('');
+  parts.push('## 長文と短文');
+  parts.push('・長文 … じっくり書く。背景・具体例・そこから言えることまで入れる');
+  parts.push('・短文 … 110〜150字。長文で書いた論点をひとつだけ切り出す。');
+  parts.push('  　　　 結論を1つに絞り、具体例は1つだけ。説明を足さない。');
+  parts.push('  　　　 内容を薄めるのではなく、範囲を狭めてください。');
+  parts.push('・短文は、同じ週の長文と素材を共有して構いません。');
+  parts.push('  同じ材料を違う角度で切り直すほうが、新しい素材を薄く広げるより濃くなります。');
   parts.push('');
 
   var lenHint = xLengthHint_();

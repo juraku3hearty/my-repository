@@ -11,7 +11,7 @@
  */
 function xSetupWeekPlan() {
   var sh = xSheet_(X_SHEETS.WEEKPLAN,
-    ['日付', '本文の分類', '締めの分類', '投稿時刻', '回る人数', 'メモ']);
+    ['日付', '長さ', '本文の分類', '締めの分類', '投稿時刻', '回る人数', 'メモ']);
 
   if (sh.getLastRow() > 1) {
     sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
@@ -25,30 +25,40 @@ function xSetupWeekPlan() {
   for (var i = 0; i < 7; i++) {
     var d = new Date(base.getTime());
     d.setDate(base.getDate() + i);
+    // 週2本を長文にする。間隔があくように3日目と6日目へ。
+    var len = (i === 2 || i === 5) ? '長文' : '短文';
     rows.push([
       Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd') +
         '（' + wdays[d.getDay()] + '）',
-      '', '', '', '', ''
+      len, '', '', '', '', ''
     ]);
   }
-  sh.getRange(2, 1, rows.length, 6).setValues(rows);
+  sh.getRange(2, 1, rows.length, 7).setValues(rows);
+
+  // 長さをプルダウンにする
+  var lenRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['長文', '短文'], true).setAllowInvalid(true).build();
+  sh.getRange(2, 2, rows.length, 1).setDataValidation(lenRule);
 
   // 分類をプルダウンにする
   var names = X_CATEGORIES.map(function (c) { return c.name; });
   var rule = SpreadsheetApp.newDataValidation()
     .requireValueInList(names, true).setAllowInvalid(true).build();
-  sh.getRange(2, 2, rows.length, 2).setDataValidation(rule);
+  sh.getRange(2, 3, rows.length, 2).setDataValidation(rule);
 
   // 分類の意味を右側に添えておく
-  var legend = [['', '', '', '', '', '']];
-  legend.push(['── 分類 ──', '中身', '宮', '', '', '']);
+  var legend = [['', '', '', '', '', '', '']];
+  legend.push(['── 分類 ──', '中身', '宮', '', '', '', '']);
   X_CATEGORIES.forEach(function (c) {
-    legend.push([c.name, c.desc, c.palace, '', '', '']);
+    legend.push([c.name, c.desc, c.palace, '', '', '', '']);
   });
-  sh.getRange(rows.length + 2, 1, legend.length, 6).setValues(legend);
+  legend.push(['', '', '', '', '', '', '']);
+  legend.push(['── 長さ ──', '長文=じっくり書く / 短文=長文の論点をひとつ切り出す', '', '', '', '', '']);
+  sh.getRange(rows.length + 2, 1, legend.length, 7).setValues(legend);
   sh.setColumnWidth(1, 150);
-  sh.setColumnWidth(2, 120);
+  sh.setColumnWidth(2, 80);
   sh.setColumnWidth(3, 120);
+  sh.setColumnWidth(4, 120);
 
   xToast_('X_週の傾向 を作りました。本文の分類を埋めてください（締めは空でもOK）。');
 }
@@ -61,20 +71,22 @@ function xReadWeekPlan_() {
   var sh = xBook_().getSheetByName(X_SHEETS.WEEKPLAN);
   if (!sh || sh.getLastRow() < 2) return [];
 
-  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();
   var out = [];
   for (var i = 0; i < values.length; i++) {
     var date = String(values[i][0]).trim();
-    var cat = String(values[i][1]).trim();
     if (!date || date.indexOf('──') >= 0) break;   // 凡例に入ったら終わり
-    if (!cat) continue;                             // 分類が空の日は飛ばす
+    var len = String(values[i][1]).trim();
+    var cat = String(values[i][2]).trim();
+    if (!cat && !len) continue;                     // 何も指定がない日は飛ばす
     out.push({
       date: date,
+      len: len || '長文',
       cat: cat,
-      closeCat: String(values[i][2]).trim() || cat,
-      time: String(values[i][3]).trim(),
-      people: String(values[i][4]).trim(),
-      memo: String(values[i][5]).trim()
+      closeCat: String(values[i][3]).trim() || cat,
+      time: String(values[i][4]).trim(),
+      people: String(values[i][5]).trim(),
+      memo: String(values[i][6]).trim()
     });
   }
   return out;
@@ -94,7 +106,8 @@ function xWeekPlanText_() {
   if (!plan.length) return '';
 
   var lines = plan.map(function (p, i) {
-    var parts = [(i + 1) + '本目（' + p.date + '）: 本文=' + p.cat];
+    var parts = [(i + 1) + '本目（' + p.date + '）: ' + (p.len || '長文') +
+                 (p.cat ? ' / 本文=' + p.cat : '')];
     if (p.closeCat !== p.cat) parts.push('締め=' + p.closeCat);
     var layer = xLayerOf_(p.cat);
     if (layer) parts.push('読者の温度=' + layer);
