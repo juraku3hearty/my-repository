@@ -45,11 +45,17 @@ function xGeneratePosts() {
  */
 function xGenerate_(themesText, count) {
   var setting = xReadSetting_();
+  var strategy = xReadStrategy_();
   var concept = setting['これからのコンセプト'] || '';
-  if (!concept) throw new Error('X_設定の「これからのコンセプト」が空です。ここが無いと内容が決まりません。');
+  if (!strategy && !concept) {
+    throw new Error('発信の軸がありません。X_設定の「戦略シート名」にヒアリング・戦略シートの名前を入れるか、' +
+      '「これからのコンセプト」を書いてください。');
+  }
 
   var rules = xReadRules_();
-  var samples = xPickSamples_(3);
+  var samples = xReadSamples_(3);
+  if (!samples.length) samples = xPickSamples_(3);
+  var facts = xReadFacts_(40);
 
   var system = [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
@@ -58,6 +64,9 @@ function xGenerate_(themesText, count) {
     '- 「文体ルール」の禁止語は、絶対に使わないでください。',
     '  これは過去にこの書き手が自分で消した語です。1つでも混ざると、本人の文ではなくなります。',
     '- 一般的によくあるSNS文章術の型に寄せないでください。この書き手の型に寄せてください。',
+    '- 一次情報が与えられている場合、それを必ず使ってください。',
+    '  数字・固有名詞・実際にあった出来事は、一次情報にあるものだけを書いてください。',
+    '  それらしい具体例を作らないでください。',
     '- 内容は「これからのコンセプト」を軸に作ってください。',
     '  文体ルールの「よく書くテーマ」「繰り返している主張」は、この書き手が',
     '  これまで積み上げてきたものです。コンセプトと矛盾しない限り、活かしてください。',
@@ -70,9 +79,16 @@ function xGenerate_(themesText, count) {
   ].join('\n');
 
   var parts = [];
-  parts.push('# これからのコンセプト');
-  parts.push(concept);
-  parts.push('');
+  if (strategy) {
+    parts.push('# 発信設計書（この書き手の戦略。ここが土台）');
+    parts.push(strategy);
+    parts.push('');
+  }
+  if (concept) {
+    parts.push('# これからのコンセプト（補足）');
+    parts.push(concept);
+    parts.push('');
+  }
 
   if (setting['アカウント紹介']) {
     parts.push('# アカウント紹介');
@@ -103,6 +119,14 @@ function xGenerate_(themesText, count) {
     parts.push('');
   }
 
+  if (facts) {
+    parts.push('# あなたの一次情報（実際にあったこと・数字・言われた言葉）');
+    parts.push('ここに無いことを、推測で書かないでください。');
+    parts.push('具体を書くときは、必ずこの中から取ってください。');
+    parts.push(facts);
+    parts.push('');
+  }
+
   parts.push('# 依頼');
   if (String(themesText || '').trim()) {
     parts.push('次のテーマで、' + count + '本の投稿を書いてください。');
@@ -114,9 +138,19 @@ function xGenerate_(themesText, count) {
     parts.push('「雛形にあったテーマ」で、まだ十分に書けていないものがあれば、それも候補にしてください。');
   }
   parts.push('');
+  parts.push('# ターゲット層の配分');
+  parts.push('発信設計書にターゲットが層（潜在層／準顕在層／顕在層／明確層）で分かれている場合、');
+  parts.push('次の順で1本ずつ割り当ててください。');
+  xLayerPlan_(count).forEach(function (layer, i) {
+    parts.push('  ' + (i + 1) + '本目: ' + layer);
+  });
+  parts.push('各層の「ペイン」「反応するキーワード」「抱かせる感情」が設計書にあれば、');
+  parts.push('その層の投稿に必ず反映してください。層の指定が設計書に無ければ、この配分は無視して構いません。');
+  parts.push('');
   parts.push('--- 出力形式 ---');
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ",');
+  parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
   parts.push('  "本文": "そのまま投稿できる完成文。改行もそのまま",');
   parts.push('  "冒頭3行": "プレビューに出る最初の3行だけを抜き出したもの",');
   parts.push('  "狙い": "この投稿で何を伝えるか（1行）",');
@@ -159,12 +193,13 @@ function xPickSamples_(n) {
 /** 投稿案をシートに書き出す */
 function xWriteDrafts_(posts) {
   var sh = xSheet_(X_SHEETS.DRAFT,
-    ['作成日時', 'テーマ', '本文', '冒頭3行', '狙い', '自己チェック', '投稿予定日', '状態']);
+    ['作成日時', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '自己チェック', '投稿予定日', '状態']);
 
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
   var rows = posts.map(function (p) {
     return [
       now,
+      p['ターゲット層'] || '',
       p['テーマ'] || '',
       p['本文'] || '',
       p['冒頭3行'] || '',
@@ -177,8 +212,8 @@ function xWriteDrafts_(posts) {
 
   if (!rows.length) return;
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  sh.setColumnWidth(3, 520);
-  sh.getRange(2, 3, sh.getLastRow() - 1, 1).setWrap(true);
+  sh.setColumnWidth(4, 520);
+  sh.getRange(2, 4, sh.getLastRow() - 1, 1).setWrap(true);
 }
 
 

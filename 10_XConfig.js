@@ -18,7 +18,11 @@ var X_SHEETS = {
   RULE: 'X_文体ルール',
   BATCH: 'X_抽出ログ',
   DRAFT: 'X_投稿案',
-  WEEK: 'X_投稿案_週形式'
+  WEEK: 'X_投稿案_週形式',
+  FACT: 'X_一次情報',
+  SAMPLE: 'X_文体サンプル',
+  QSTOCK: 'X_未回答の質問',
+  STRATEGY: 'X_戦略'
 };
 
 /** 使うモデル。文体の再現が目的なので安いモデルに落とさない。 */
