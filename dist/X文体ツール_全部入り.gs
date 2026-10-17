@@ -35,8 +35,25 @@ var X_SHEETS = {
   FACT: 'X_一次情報',
   SAMPLE: 'X_文体サンプル',
   QSTOCK: 'X_未回答の質問',
-  STRATEGY: 'X_戦略'
+  STRATEGY: 'X_戦略',
+  PATTERN: 'X_型カタログ',
+  WEEKPLAN: 'X_週の傾向'
 };
+
+/**
+ * 投稿の分類（紫微斗数の宮と対応）。
+ * 本人が毎週、星を見て各日に割り当てる。
+ */
+var X_CATEGORIES = [
+  { name: '拡散',       desc: '広く届けたい・外に出す',          palace: '遷移宮', layer: '潜在層' },
+  { name: '共感',       desc: '気持ちに寄り添う・「わかる」',    palace: '福徳宮', layer: '潜在層' },
+  { name: '人脈',       desc: 'つながり・DM誘導・相談どうぞ',    palace: '僕役宮', layer: '明確層' },
+  { name: '助け',       desc: '差し出す・「一緒に考えます」',    palace: '子女宮', layer: '顕在層' },
+  { name: '成果',       desc: '結果・数字・売上',                palace: '財帛宮', layer: '顕在層' },
+  { name: '専門',       desc: '仕事の知識・ノウハウ',            palace: '官禄宮', layer: '準顕在層' },
+  { name: '自分の言葉', desc: '自分語り・実感・経歴',            palace: '命宮',   layer: '準顕在層' },
+  { name: '仕組み化',   desc: '「仕組みになる」「長く効く」',    palace: '田宅宮', layer: '顕在層' }
+];
 
 /** 使うモデル。文体の再現が目的なので安いモデルに落とさない。 */
 var X_MODEL = 'claude-opus-5-5';
@@ -981,6 +998,8 @@ function xGenerate_(themesText, count) {
   var facts = xReadFacts_(40);
   var factSheets = xReadFactSheets_();
   var sampleSheets = xReadSampleSheets_();
+  var patterns = xPatternsText_();
+  var weekPlan = xWeekPlanText_();
 
   var system = [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
@@ -992,6 +1011,15 @@ function xGenerate_(themesText, count) {
     '- 一次情報が与えられている場合、それを必ず使ってください。',
     '  数字・固有名詞・実際にあった出来事は、一次情報にあるものだけを書いてください。',
     '  それらしい具体例を作らないでください。',
+    '- 年齢・時期・頻度・回数は、一次情報に書かれている表現をそのまま使ってください。',
+    '  言い換えたり、辻褄が合うように調整したりしないでください。',
+    '  例：「14歳で」とあれば「14歳で」。「30代の頃」などに変えない。',
+    '  元の表現が不自然に見えても、直さずにそのまま使ってください。',
+    '  書かれていない頻度（「年に1回」など）を足さないでください。',
+    '- 新しいほうの投稿例を手本にしてください。',
+    '  古い投稿は外部ライターの原稿がもとになっており、いまの軸とは違います。',
+    '- 投稿例（文体の手本）に書かれている出来事や数字は、事実とは限りません。',
+    '  外部ライターが作った話が混ざっています。文体だけを見て、事実は拾わないでください。',
     '- 内容は「これからのコンセプト」を軸に作ってください。',
     '  文体ルールの「よく書くテーマ」「繰り返している主張」は、この書き手が',
     '  これまで積み上げてきたものです。コンセプトと矛盾しない限り、活かしてください。',
@@ -1045,7 +1073,11 @@ function xGenerate_(themesText, count) {
   }
 
   if (sampleSheets) {
-    parts.push('# 完成した投稿（文体の手本。この書き方に寄せる）');
+    parts.push('# 完成した投稿（文体の手本）');
+    parts.push('⚠️ ここは「書き方」だけを見てください。');
+    parts.push('この中には、外部ライターが作った事実でない話が混ざっています。');
+    parts.push('ここに書かれている出来事・数字・エピソードは、一切使わないでください。');
+    parts.push('事実は、下の「経歴・インタビュー」と「一次情報」からだけ取ってください。');
     parts.push(sampleSheets);
     parts.push('');
   }
@@ -1075,13 +1107,28 @@ function xGenerate_(themesText, count) {
     parts.push('これまで繰り返し書いてきたテーマを、新しい角度で書き直すのも有効です。');
     parts.push('「雛形にあったテーマ」で、まだ十分に書けていないものがあれば、それも候補にしてください。');
   }
+  if (patterns) {
+    parts.push('# 構成の型（この書き手が実際に使っている骨組み）');
+    parts.push('7本すべてを同じ型で書かないでください。');
+    parts.push('内容を変えても骨組みが同じだと、読む側には前と同じものに見えます。');
+    parts.push('1本ごとに違う型を使い、使った型名を出力に書いてください。');
+    parts.push(patterns);
+    parts.push('');
+  }
+
   parts.push('');
   parts.push('# ターゲット層の配分');
   parts.push('発信設計書にターゲットが層（潜在層／準顕在層／顕在層／明確層）で分かれている場合、');
   parts.push('次の順で1本ずつ割り当ててください。');
-  xLayerPlan_(count).forEach(function (layer, i) {
-    parts.push('  ' + (i + 1) + '本目: ' + layer);
-  });
+  if (weekPlan) {
+    parts.push('※この週は、本人が各日の分類を決めています。こちらに従ってください。');
+    parts.push(weekPlan);
+    parts.push('「締め」の分類が本文と違う日は、最後の一文だけをその分類に寄せてください。');
+  } else {
+    xLayerPlan_(count).forEach(function (layer, i) {
+      parts.push('  ' + (i + 1) + '本目: ' + layer);
+    });
+  }
   parts.push('各層の「ペイン」「反応するキーワード」「抱かせる感情」が設計書にあれば、');
   parts.push('その層の投稿に必ず反映してください。層の指定が設計書に無ければ、この配分は無視して構いません。');
   parts.push('');
@@ -1089,6 +1136,9 @@ function xGenerate_(themesText, count) {
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ",');
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
+  parts.push('  "使った型": "構成の型の型名。型カタログが無ければ空",');
+  parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
+  parts.push('  "使った事実": "本文で触れた事実と、その出どころ（インタビュー・年表・一次情報のどれか）",');
   parts.push('  "本文": "そのまま投稿できる完成文。改行もそのまま",');
   parts.push('  "冒頭3行": "プレビューに出る最初の3行だけを抜き出したもの",');
   parts.push('  "狙い": "この投稿で何を伝えるか（1行）",');
@@ -1131,17 +1181,20 @@ function xPickSamples_(n) {
 /** 投稿案をシートに書き出す */
 function xWriteDrafts_(posts) {
   var sh = xSheet_(X_SHEETS.DRAFT,
-    ['作成日時', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '自己チェック', '投稿予定日', '状態']);
+    ['作成日時', '分類', '使った型', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '使った事実', '自己チェック', '投稿予定日', '状態']);
 
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
   var rows = posts.map(function (p) {
     return [
       now,
+      p['分類'] || '',
+      p['使った型'] || '',
       p['ターゲット層'] || '',
       p['テーマ'] || '',
       p['本文'] || '',
       p['冒頭3行'] || '',
       p['狙い'] || '',
+      p['使った事実'] || '',
       p['使った禁止語チェック'] || '',
       '',
       '未'
@@ -1150,8 +1203,10 @@ function xWriteDrafts_(posts) {
 
   if (!rows.length) return;
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  sh.setColumnWidth(4, 520);
-  sh.getRange(2, 4, sh.getLastRow() - 1, 1).setWrap(true);
+  sh.setColumnWidth(6, 520);
+  sh.setColumnWidth(9, 300);
+  sh.getRange(2, 6, sh.getLastRow() - 1, 1).setWrap(true);
+  sh.getRange(2, 9, sh.getLastRow() - 1, 1).setWrap(true);
 }
 
 
@@ -1184,6 +1239,8 @@ function xWriteWeekBlock_(posts) {
   var base = new Date();
   base.setDate(base.getDate() + 1);
 
+  var plan = xReadWeekPlan_();
+
   var headRow = [startLabel];
   var dateRow = [dateLabel];
   var textRow = [tmplLabel];
@@ -1193,8 +1250,10 @@ function xWriteWeekBlock_(posts) {
     var d = new Date(base.getTime());
     d.setDate(base.getDate() + i);
     var ymd = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
-    headRow.push(wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）');
-    dateRow.push(ymd);
+    var slot = plan[i];
+    headRow.push(wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）' +
+                 (slot && slot.cat ? ' ' + slot.cat : ''));
+    dateRow.push(ymd + (slot && slot.time ? ' ' + slot.time : ''));
     textRow.push(posts[i]['本文'] || '');
     fixRow.push('');
   }
@@ -1241,6 +1300,9 @@ function onOpen() {
       .addItem('② 質問リストを取り込む', 'xImportQuestionSheet')
       .addItem('② メインシートの回答を取り込む', 'xImportMainAnswers')
       .addItem('③ 文体を抽出する（完了まで数回押す）', 'xExtractStyle')
+      .addItem('③ 構成の型を取り出す', 'xExtractPatterns')
+      .addSeparator()
+      .addItem('今週の傾向シートを作る（紫微斗数）', 'xSetupWeekPlan')
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')
@@ -1709,4 +1771,303 @@ function xLayerPlan_(count) {
   var out = [];
   for (var i = 0; i < count; i++) out.push(base[i % base.length]);
   return out;
+}
+
+// ============================================================
+// 18_XPattern.js
+// ============================================================
+
+/**
+ * 18_XPattern.js
+ * 型カタログ
+ *
+ * 過去の投稿から「構成の型」を複数取り出す。
+ *
+ * 文体ルールだけだと、同じ骨組みの投稿が並んでしまう。
+ * 内容を変えても形が同じだと、読む側には「前と同じ」に見える。
+ * そこで型を複数持たせ、週の中で散らす。
+ */
+
+/** 型を何種類取り出すか */
+var X_PATTERN_COUNT = 8;
+
+/** 分析に使う投稿の本数 */
+var X_PATTERN_SAMPLES = 24;
+
+/**
+ * 過去の投稿から型を取り出して X_型カタログ に書く。
+ */
+function xExtractPatterns() {
+  var posts = xPickPatternSamples_(X_PATTERN_SAMPLES);
+  if (posts.length < 5) {
+    throw new Error('分析できる投稿が足りません（' + posts.length + '本）。先に xPreviewLog で読み取りを確認してください。');
+  }
+
+  var items = posts.map(function (t, i) {
+    return '--- 投稿' + (i + 1) + ' ---\n' + t;
+  }).join('\n\n');
+
+  var catList = X_CATEGORIES.map(function (c) {
+    return '・' + c.name + '（' + c.desc + '）';
+  }).join('\n');
+
+  var system = [
+    'あなたは日本語の文章構成を分析する専門家です。',
+    '与えられるのは、同じ書き手の名前で出された投稿です。',
+    '',
+    '注意：この中には、外部ライターが作った事実でない内容が混ざっています。',
+    '内容の真偽は見ないでください。見るのは骨組みだけです。',
+    '',
+    '目的は「構成の型」を複数取り出すことです。',
+    'この書き手が無意識に使い分けている骨組みを、違いが分かる形で分けてください。',
+    '',
+    '守ること:',
+    '・似た型をまとめないでください。違いが出るように分けてください',
+    '・一般的な文章構成の教科書を書かないでください。この投稿群にある型だけを書いてください',
+    '・先に出てくる投稿ほど新しく、いまの発信の軸に近いものです。',
+    '  古い投稿にしか無い型より、新しい投稿にある型を優先して拾ってください',
+    '・骨組みは「何行目に何を置くか」ではなく「どういう順で読者を動かすか」で書いてください',
+    '',
+    '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
+  ].join('\n');
+
+  var user = [
+    '以下の投稿から、構成の型を' + X_PATTERN_COUNT + '種類に分けてください。',
+    '',
+    items,
+    '',
+    '--- 投稿の分類（この型がどれに向くかを選ぶ） ---',
+    catList,
+    '',
+    '--- 出力形式 ---',
+    '{"patterns":[{',
+    '  "型名": "10字以内。この型を一言で",',
+    '  "骨組み": ["順に3〜6段階。各20字以内"],',
+    '  "向いている分類": ["上の分類から1〜3つ"],',
+    '  "冒頭の作り方": "1行目をどう始めるか。20字以内",',
+    '  "締め方": "最後の一文をどう置くか。20字以内",',
+    '  "この型が効く理由": "30字以内"',
+    '}]}'
+  ].join('\n');
+
+  var json = xParseJson_(xClaude_({
+    system: system, userText: user, maxTokens: 12000, effort: 'high'
+  }));
+
+  xWritePatterns_(json.patterns || []);
+  xToast_((json.patterns || []).length + '種類の型を X_型カタログ に書き出しました。');
+  return (json.patterns || []).length;
+}
+
+/**
+ * 分析用の投稿を拾う。
+ *
+ * 【重要】新しい投稿を優先する。
+ * 古い投稿は外部ライターの雛形がもとになっており、その型を学ぶと
+ * うまくいかなかった形を再生産してしまう。
+ * 直近で手応えのあった投稿のほうが、いまの軸に近い。
+ */
+function xPickPatternSamples_(n) {
+  var out = [];
+  var seen = {};
+
+  function add(t) {
+    t = String(t || '').trim();
+    if (t.length < 150) return;
+    var key = t.slice(0, 60);
+    if (seen[key]) return;
+    seen[key] = true;
+    out.push(t);
+  }
+
+  // 1. サンプル投稿・固定ポスト（今週分を足してもらう場所。最優先）
+  xReadSamples_(8).forEach(add);
+
+  var rows;
+  try { rows = xReadLog_(); } catch (e) { rows = []; }
+  var texts = rows.map(function (r) {
+    return String(r['実投稿'] || r['雛形'] || '').trim();
+  }).filter(function (t) { return t.length >= 150; });
+
+  // 2. 過去ログの直近ぶん（新しい順）
+  for (var i = texts.length - 1; i >= 0 && out.length < n - 4; i--) add(texts[i]);
+
+  // 3. 残り枠で、古いほうからも少しだけ（型の幅を見るため）
+  var step = Math.max(1, Math.floor(texts.length / 4));
+  for (var j = 0; j < texts.length && out.length < n; j += step) add(texts[j]);
+
+  return out.slice(0, n);
+}
+
+/** 型カタログをシートに書く（手で直せる形） */
+function xWritePatterns_(patterns) {
+  var sh = xSheet_(X_SHEETS.PATTERN,
+    ['型名', '骨組み', '向いている分類', '冒頭の作り方', '締め方', '効く理由', '使わない']);
+  if (sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  }
+  if (!patterns.length) return;
+
+  var rows = patterns.map(function (p) {
+    return [
+      p['型名'] || '',
+      (p['骨組み'] || []).join('\n↓\n'),
+      (p['向いている分類'] || []).join('、'),
+      p['冒頭の作り方'] || '',
+      p['締め方'] || '',
+      p['この型が効く理由'] || '',
+      ''
+    ];
+  });
+  sh.getRange(2, 1, rows.length, 7).setValues(rows);
+  sh.setColumnWidth(2, 260);
+  sh.setColumnWidth(6, 240);
+  sh.getRange(2, 1, rows.length, 7).setWrap(true).setVerticalAlignment('top');
+}
+
+/**
+ * 型カタログを読む。「使わない」に何か書いてある行は除く。
+ */
+function xReadPatterns_() {
+  var sh = xBook_().getSheetByName(X_SHEETS.PATTERN);
+  if (!sh || sh.getLastRow() < 2) return [];
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();
+  return values
+    .filter(function (r) { return String(r[0]).trim() && !String(r[6]).trim(); })
+    .map(function (r) {
+      return {
+        name: String(r[0]).trim(),
+        frame: String(r[1]).trim(),
+        cats: String(r[2]).trim(),
+        open: String(r[3]).trim(),
+        close: String(r[4]).trim(),
+        why: String(r[5]).trim()
+      };
+    });
+}
+
+/** 生成プロンプト用のテキストにする */
+function xPatternsText_() {
+  var list = xReadPatterns_();
+  if (!list.length) return '';
+  return list.map(function (p, i) {
+    return [
+      '【型' + (i + 1) + '：' + p.name + '】',
+      '骨組み: ' + p.frame.replace(/\n/g, ' '),
+      '向く分類: ' + p.cats,
+      '冒頭: ' + p.open,
+      '締め: ' + p.close
+    ].join('\n');
+  }).join('\n\n');
+}
+
+// ============================================================
+// 19_XWeek.js
+// ============================================================
+
+/**
+ * 19_XWeek.js
+ * 週の傾向（紫微斗数で決めた、その日に向く投稿の種類）
+ *
+ * 計算はしない。本人が星を見て決めた結論だけを受け取る。
+ * 本文の分類と締めの分類を分けて持つ（同じ内容でも締めで宮が変わるため）。
+ */
+
+/**
+ * X_週の傾向 シートを作る（翌日から7日分の枠を用意する）。
+ */
+function xSetupWeekPlan() {
+  var sh = xSheet_(X_SHEETS.WEEKPLAN,
+    ['日付', '本文の分類', '締めの分類', '投稿時刻', '回る人数', 'メモ']);
+
+  if (sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  }
+
+  var wdays = ['日', '月', '火', '水', '木', '金', '土'];
+  var base = new Date();
+  base.setDate(base.getDate() + 1);
+
+  var rows = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(base.getTime());
+    d.setDate(base.getDate() + i);
+    rows.push([
+      Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd') +
+        '（' + wdays[d.getDay()] + '）',
+      '', '', '', '', ''
+    ]);
+  }
+  sh.getRange(2, 1, rows.length, 6).setValues(rows);
+
+  // 分類をプルダウンにする
+  var names = X_CATEGORIES.map(function (c) { return c.name; });
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(names, true).setAllowInvalid(true).build();
+  sh.getRange(2, 2, rows.length, 2).setDataValidation(rule);
+
+  // 分類の意味を右側に添えておく
+  var legend = [['', '', '', '', '', '']];
+  legend.push(['── 分類 ──', '中身', '宮', '', '', '']);
+  X_CATEGORIES.forEach(function (c) {
+    legend.push([c.name, c.desc, c.palace, '', '', '']);
+  });
+  sh.getRange(rows.length + 2, 1, legend.length, 6).setValues(legend);
+  sh.setColumnWidth(1, 150);
+  sh.setColumnWidth(2, 120);
+  sh.setColumnWidth(3, 120);
+
+  xToast_('X_週の傾向 を作りました。本文の分類を埋めてください（締めは空でもOK）。');
+}
+
+/**
+ * 週の傾向を読む。
+ * @return {Array<{date,cat,closeCat,time,people,memo}>}
+ */
+function xReadWeekPlan_() {
+  var sh = xBook_().getSheetByName(X_SHEETS.WEEKPLAN);
+  if (!sh || sh.getLastRow() < 2) return [];
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues();
+  var out = [];
+  for (var i = 0; i < values.length; i++) {
+    var date = String(values[i][0]).trim();
+    var cat = String(values[i][1]).trim();
+    if (!date || date.indexOf('──') >= 0) break;   // 凡例に入ったら終わり
+    if (!cat) continue;                             // 分類が空の日は飛ばす
+    out.push({
+      date: date,
+      cat: cat,
+      closeCat: String(values[i][2]).trim() || cat,
+      time: String(values[i][3]).trim(),
+      people: String(values[i][4]).trim(),
+      memo: String(values[i][5]).trim()
+    });
+  }
+  return out;
+}
+
+/** 分類名から、対応する読者の温度を引く */
+function xLayerOf_(catName) {
+  for (var i = 0; i < X_CATEGORIES.length; i++) {
+    if (X_CATEGORIES[i].name === catName) return X_CATEGORIES[i].layer;
+  }
+  return '';
+}
+
+/** 生成プロンプト用のテキストにする */
+function xWeekPlanText_() {
+  var plan = xReadWeekPlan_();
+  if (!plan.length) return '';
+
+  var lines = plan.map(function (p, i) {
+    var parts = [(i + 1) + '本目（' + p.date + '）: 本文=' + p.cat];
+    if (p.closeCat !== p.cat) parts.push('締め=' + p.closeCat);
+    var layer = xLayerOf_(p.cat);
+    if (layer) parts.push('読者の温度=' + layer);
+    if (p.memo) parts.push('メモ=' + p.memo);
+    return '  ' + parts.join(' / ');
+  });
+  return lines.join('\n');
 }

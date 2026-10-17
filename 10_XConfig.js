@@ -22,8 +22,25 @@ var X_SHEETS = {
   FACT: 'X_一次情報',
   SAMPLE: 'X_文体サンプル',
   QSTOCK: 'X_未回答の質問',
-  STRATEGY: 'X_戦略'
+  STRATEGY: 'X_戦略',
+  PATTERN: 'X_型カタログ',
+  WEEKPLAN: 'X_週の傾向'
 };
+
+/**
+ * 投稿の分類（紫微斗数の宮と対応）。
+ * 本人が毎週、星を見て各日に割り当てる。
+ */
+var X_CATEGORIES = [
+  { name: '拡散',       desc: '広く届けたい・外に出す',          palace: '遷移宮', layer: '潜在層' },
+  { name: '共感',       desc: '気持ちに寄り添う・「わかる」',    palace: '福徳宮', layer: '潜在層' },
+  { name: '人脈',       desc: 'つながり・DM誘導・相談どうぞ',    palace: '僕役宮', layer: '明確層' },
+  { name: '助け',       desc: '差し出す・「一緒に考えます」',    palace: '子女宮', layer: '顕在層' },
+  { name: '成果',       desc: '結果・数字・売上',                palace: '財帛宮', layer: '顕在層' },
+  { name: '専門',       desc: '仕事の知識・ノウハウ',            palace: '官禄宮', layer: '準顕在層' },
+  { name: '自分の言葉', desc: '自分語り・実感・経歴',            palace: '命宮',   layer: '準顕在層' },
+  { name: '仕組み化',   desc: '「仕組みになる」「長く効く」',    palace: '田宅宮', layer: '顕在層' }
+];
 
 /** 使うモデル。文体の再現が目的なので安いモデルに落とさない。 */
 var X_MODEL = 'claude-opus-5-5';

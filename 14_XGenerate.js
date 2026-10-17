@@ -58,6 +58,8 @@ function xGenerate_(themesText, count) {
   var facts = xReadFacts_(40);
   var factSheets = xReadFactSheets_();
   var sampleSheets = xReadSampleSheets_();
+  var patterns = xPatternsText_();
+  var weekPlan = xWeekPlanText_();
 
   var system = [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
@@ -69,6 +71,15 @@ function xGenerate_(themesText, count) {
     '- 一次情報が与えられている場合、それを必ず使ってください。',
     '  数字・固有名詞・実際にあった出来事は、一次情報にあるものだけを書いてください。',
     '  それらしい具体例を作らないでください。',
+    '- 年齢・時期・頻度・回数は、一次情報に書かれている表現をそのまま使ってください。',
+    '  言い換えたり、辻褄が合うように調整したりしないでください。',
+    '  例：「14歳で」とあれば「14歳で」。「30代の頃」などに変えない。',
+    '  元の表現が不自然に見えても、直さずにそのまま使ってください。',
+    '  書かれていない頻度（「年に1回」など）を足さないでください。',
+    '- 新しいほうの投稿例を手本にしてください。',
+    '  古い投稿は外部ライターの原稿がもとになっており、いまの軸とは違います。',
+    '- 投稿例（文体の手本）に書かれている出来事や数字は、事実とは限りません。',
+    '  外部ライターが作った話が混ざっています。文体だけを見て、事実は拾わないでください。',
     '- 内容は「これからのコンセプト」を軸に作ってください。',
     '  文体ルールの「よく書くテーマ」「繰り返している主張」は、この書き手が',
     '  これまで積み上げてきたものです。コンセプトと矛盾しない限り、活かしてください。',
@@ -122,7 +133,11 @@ function xGenerate_(themesText, count) {
   }
 
   if (sampleSheets) {
-    parts.push('# 完成した投稿（文体の手本。この書き方に寄せる）');
+    parts.push('# 完成した投稿（文体の手本）');
+    parts.push('⚠️ ここは「書き方」だけを見てください。');
+    parts.push('この中には、外部ライターが作った事実でない話が混ざっています。');
+    parts.push('ここに書かれている出来事・数字・エピソードは、一切使わないでください。');
+    parts.push('事実は、下の「経歴・インタビュー」と「一次情報」からだけ取ってください。');
     parts.push(sampleSheets);
     parts.push('');
   }
@@ -152,13 +167,28 @@ function xGenerate_(themesText, count) {
     parts.push('これまで繰り返し書いてきたテーマを、新しい角度で書き直すのも有効です。');
     parts.push('「雛形にあったテーマ」で、まだ十分に書けていないものがあれば、それも候補にしてください。');
   }
+  if (patterns) {
+    parts.push('# 構成の型（この書き手が実際に使っている骨組み）');
+    parts.push('7本すべてを同じ型で書かないでください。');
+    parts.push('内容を変えても骨組みが同じだと、読む側には前と同じものに見えます。');
+    parts.push('1本ごとに違う型を使い、使った型名を出力に書いてください。');
+    parts.push(patterns);
+    parts.push('');
+  }
+
   parts.push('');
   parts.push('# ターゲット層の配分');
   parts.push('発信設計書にターゲットが層（潜在層／準顕在層／顕在層／明確層）で分かれている場合、');
   parts.push('次の順で1本ずつ割り当ててください。');
-  xLayerPlan_(count).forEach(function (layer, i) {
-    parts.push('  ' + (i + 1) + '本目: ' + layer);
-  });
+  if (weekPlan) {
+    parts.push('※この週は、本人が各日の分類を決めています。こちらに従ってください。');
+    parts.push(weekPlan);
+    parts.push('「締め」の分類が本文と違う日は、最後の一文だけをその分類に寄せてください。');
+  } else {
+    xLayerPlan_(count).forEach(function (layer, i) {
+      parts.push('  ' + (i + 1) + '本目: ' + layer);
+    });
+  }
   parts.push('各層の「ペイン」「反応するキーワード」「抱かせる感情」が設計書にあれば、');
   parts.push('その層の投稿に必ず反映してください。層の指定が設計書に無ければ、この配分は無視して構いません。');
   parts.push('');
@@ -166,6 +196,9 @@ function xGenerate_(themesText, count) {
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ",');
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
+  parts.push('  "使った型": "構成の型の型名。型カタログが無ければ空",');
+  parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
+  parts.push('  "使った事実": "本文で触れた事実と、その出どころ（インタビュー・年表・一次情報のどれか）",');
   parts.push('  "本文": "そのまま投稿できる完成文。改行もそのまま",');
   parts.push('  "冒頭3行": "プレビューに出る最初の3行だけを抜き出したもの",');
   parts.push('  "狙い": "この投稿で何を伝えるか（1行）",');
@@ -208,17 +241,20 @@ function xPickSamples_(n) {
 /** 投稿案をシートに書き出す */
 function xWriteDrafts_(posts) {
   var sh = xSheet_(X_SHEETS.DRAFT,
-    ['作成日時', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '自己チェック', '投稿予定日', '状態']);
+    ['作成日時', '分類', '使った型', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '使った事実', '自己チェック', '投稿予定日', '状態']);
 
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
   var rows = posts.map(function (p) {
     return [
       now,
+      p['分類'] || '',
+      p['使った型'] || '',
       p['ターゲット層'] || '',
       p['テーマ'] || '',
       p['本文'] || '',
       p['冒頭3行'] || '',
       p['狙い'] || '',
+      p['使った事実'] || '',
       p['使った禁止語チェック'] || '',
       '',
       '未'
@@ -227,8 +263,10 @@ function xWriteDrafts_(posts) {
 
   if (!rows.length) return;
   sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  sh.setColumnWidth(4, 520);
-  sh.getRange(2, 4, sh.getLastRow() - 1, 1).setWrap(true);
+  sh.setColumnWidth(6, 520);
+  sh.setColumnWidth(9, 300);
+  sh.getRange(2, 6, sh.getLastRow() - 1, 1).setWrap(true);
+  sh.getRange(2, 9, sh.getLastRow() - 1, 1).setWrap(true);
 }
 
 
@@ -261,6 +299,8 @@ function xWriteWeekBlock_(posts) {
   var base = new Date();
   base.setDate(base.getDate() + 1);
 
+  var plan = xReadWeekPlan_();
+
   var headRow = [startLabel];
   var dateRow = [dateLabel];
   var textRow = [tmplLabel];
@@ -270,8 +310,10 @@ function xWriteWeekBlock_(posts) {
     var d = new Date(base.getTime());
     d.setDate(base.getDate() + i);
     var ymd = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
-    headRow.push(wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）');
-    dateRow.push(ymd);
+    var slot = plan[i];
+    headRow.push(wdays[d.getDay()] + '（' + Utilities.formatDate(d, 'Asia/Tokyo', 'M/d') + '）' +
+                 (slot && slot.cat ? ' ' + slot.cat : ''));
+    dateRow.push(ymd + (slot && slot.time ? ' ' + slot.time : ''));
     textRow.push(posts[i]['本文'] || '');
     fixRow.push('');
   }
