@@ -509,6 +509,11 @@ function xSetup() {
   });
 
   var all = rows.concat([['', '', '']], blockRows, [['', '', '']], textRows);
+
+  // 項目が増えると下の「参考」が残って二重に見えるので、先に消す
+  if (sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, Math.max(sh.getLastColumn(), 3)).clearContent();
+  }
   sh.getRange(2, 1, all.length, 3).setValues(all);
   sh.getRange(2, 2, all.length, 1).setBackground('#fff8e1').setWrap(true);
   sh.setColumnWidth(2, 420);
