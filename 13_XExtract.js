@@ -60,7 +60,31 @@ function xExtractStyle() {
     }
 
     var batch = rows.slice(cursor, cursor + X_BATCH_SIZE);
-    var result = xExtractBatch_(batch, useDiff);
+    var result = null;
+
+    try {
+      result = xExtractBatch_(batch, useDiff);
+    } catch (err1) {
+      Logger.log('バッチ失敗（1回目）: ' + err1.message);
+      // 件数を半分にして再試行する（出力が長すぎたケースの救済）
+      try {
+        var half = batch.slice(0, Math.max(1, Math.ceil(batch.length / 2)));
+        result = xExtractBatch_(half, useDiff);
+        batch = half;
+        Logger.log('半分にして再試行し、成功しました（' + half.length + '件）');
+      } catch (err2) {
+        Logger.log('バッチ失敗（2回目）。この分は飛ばして続けます: ' + err2.message);
+        logSh.appendRow([
+          Math.floor(cursor / X_BATCH_SIZE) + 1,
+          batch[0].row + '〜' + batch[batch.length - 1].row,
+          '',
+          '失敗のため省略 ' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm')
+        ]);
+        cursor += batch.length;
+        p.setProperty(X_PROGRESS_KEY, String(cursor));
+        continue;
+      }
+    }
 
     logSh.appendRow([
       Math.floor(cursor / X_BATCH_SIZE) + 1,
@@ -124,6 +148,12 @@ function xExtractBatch_(batch, useDiff) {
     '    テーマの出し方と構成の型は、それ自体が使える資産なので残します）',
     '',
     '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
+    '',
+    '【出力量の制限】必ず守ってください。超えると読み取れなくなります。',
+    '・各配列は最大15件まで。多いときは、繰り返し出てきたものだけを残す',
+    '・1件は30字以内。語か短い言い回しだけを書く',
+    '・かっこ書きの説明を付けない',
+    '',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n') : [
     'あなたは日本語の文体を分析する専門家です。',
@@ -138,6 +168,12 @@ function xExtractBatch_(batch, useDiff) {
     '2. 構成の型（どういう順で組み立てているか）',
     '',
     '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
+    '',
+    '【出力量の制限】必ず守ってください。超えると読み取れなくなります。',
+    '・各配列は最大15件まで。多いときは、繰り返し出てきたものだけを残す',
+    '・1件は30字以内。語か短い言い回しだけを書く',
+    '・かっこ書きの説明を付けない',
+    '',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
 
@@ -167,7 +203,7 @@ function xExtractBatch_(batch, useDiff) {
     '}'
   ].join('\n');
 
-  var text = xClaude_({ system: system, userText: user, maxTokens: 4000, effort: 'medium' });
+  var text = xClaude_({ system: system, userText: user, maxTokens: 8000, effort: 'medium' });
   return xParseJson_(text);
 }
 
@@ -189,6 +225,8 @@ function xMergeRules_() {
     '- 複数のバッチで繰り返し出てきたものを優先する（1回しか出ていないものは採用しない）',
     '- 似た表現はまとめる',
     '- 一般的な文章術は書かない。観察から読み取れたことだけを書く',
+    '',
+    '【出力量の制限】各配列は最大25件、1件30字以内。かっこ書きの説明を付けない。',
     '',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
@@ -219,7 +257,7 @@ function xMergeRules_() {
   ].join('\n');
 
   var merged = xParseJson_(xClaude_({
-    system: system, userText: user, maxTokens: 6000, effort: 'high'
+    system: system, userText: user, maxTokens: 16000, effort: 'high'
   }));
 
   xWriteRules_(merged);

@@ -29,7 +29,7 @@ var X_SHEETS = {
 var X_MODEL = 'claude-opus-5-5';
 
 /** 1回のAPI呼び出しで渡す過去ログの件数。GASの実行時間に合わせて小さめ。 */
-var X_BATCH_SIZE = 12;
+var X_BATCH_SIZE = 8;
 
 function xConfig_() {
   var p = PropertiesService.getScriptProperties();
