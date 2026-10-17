@@ -116,6 +116,16 @@ var X_DEFAULT_BANNED_EPISODES = [
 ].join('\n');
 
 /**
+ * 題材。7本が業務改善・仕組み化の話に偏らないよう、材料の無い枠はこの順に割り振る。
+ * 「これからやりたい仕事」は本人の希望なので先頭。実績ではなく「こうしたい」「こう考えている」で書く。週1本まで。
+ * 「日常の気づき」は実際の場面が無いと書きにくいので最後。
+ */
+var X_SUBJECTS = ['これからやりたい仕事', '仕事の考え方', '実務の視点', '人柄', '日常の気づき'];
+
+/** 業務改善・仕組み化の話は、週にこの本数まで */
+var X_SYSTEM_TOPIC_MAX = 2;
+
+/**
  * 誘導とみなす言い回し。週に1本までにする（毎回入れない）。
  * 「サービス」単体は「サービス残業」などにも当たるので入れない。
  */
@@ -539,7 +549,7 @@ var X_TEXT_ITEMS = [
   ['過去の投稿・経歴を材料にする', '「はい」で過去の投稿本文と経歴・年表を渡す。それ以外は渡さない（今週の返信を優先）', false, 'いいえ'],
   ['返信を読む日数', '直近何日ぶんの返信・引用を材料にするか', false, '7'],
   ['週の役割配分', '「役割:本数」を改行区切りで。目安なので、材料が無い役割は飛ばす', false, X_DEFAULT_ROLES],
-  ['材料が無い枠', '「方向性から作る」…事業の方向性と系統の傾向から考え・問いの叩き台を作る（実体験は入れない）／「空ける」…空けて不足を報告する', false, '方向性から作る'],
+  ['材料が無い枠', '「題材を変えて作る」…考え方・実務・人柄・日常・これから の題材で叩き台を作る（実体験は入れない。方向性シートは軸の確認だけ）／「空ける」…空けて不足を報告する', false, '題材を変えて作る'],
   ['禁止する着地', 'この結論で締めない（改行区切り）。自己チェックでも検出する', false, X_DEFAULT_BANNED_LANDINGS],
   ['使用禁止のエピソード', '今は使わない話（改行区切り）。また使いたくなったら消してください', false, X_DEFAULT_BANNED_EPISODES]
 ];
@@ -1331,14 +1341,19 @@ function xFinishWeek_(ctx, edit, t0) {
   if (edit.replaced) msg += edit.replaced + '本を作り直しました。';
   if (edit.noMaterial && edit.noMaterial.length) {
     msg += edit.noMaterial.map(function (i) { return (i + 1) + '本目'; }).join('・') +
-      'は今週の材料が無かったので、事業の方向性から叩き台を作りました（実体験は入れていません。「編集メモ」参照）。';
+      'は今週の材料が無かったので、題材を変えて考え方・方針として書きました（実績・発言は入れていません。「編集メモ」参照）。';
   }
   if (edit.shortage.length) {
     msg += '【不足】' + edit.shortage.map(function (i) { return (i + 1) + '本目'; }).join('・') +
       'は、残した本と重ならない材料が今週の返信に無かったため空けています。';
   }
   if (edit.skipped) msg += '（' + edit.skipped + '）';
+  var asks = posts.filter(function (p) {
+    var a = String(p['事実確認が必要な箇所'] || '').trim();
+    return String(p['本文'] || '').trim() && a && a !== 'なし';
+  }).length;
   msg += ng ? ('要確認が' + ng + '本あります（「自己チェック」列の赤い行）。') : '自動チェックは全部OKでした。';
+  if (asks) msg += 'あなたへの質問が' + asks + '本ぶんあります（「事実確認が必要な箇所」列）。本文は質問の答えが無くても成り立つように書いてあります。';
   msg += ' X_投稿案_週形式 からコピーできます。';
   Logger.log(msg);
   xToast_(msg);
@@ -1635,6 +1650,19 @@ function xGenSystem_() {
     '- 過去に使った話を無理に引っ張り出さず、今週の返信から考えられることを優先してください。',
     '- 情報が足りない場合、長くするために別の体験談を足さず、短く仕上げてください。',
     '  長文の枠でも、材料が足りなければ短文の長さで構いません。',
+    '- 実際に経験したことは過去形で書いてください。',
+    '  これから大切にしたい仕事の進め方は「こうしたい」「こう考えている」と書いてください。',
+    '  まだ実績が無いこと（これから始める事業・サービス・取り組み）を、',
+    '  すでにやっている・成果が出ているように書かないでください。',
+    '  実績として書いてよいのは、材料（返信・今週あったこと）に書かれていることだけです。',
+    '- 本文に【要確認】や「（ここに実例）」のような穴を残さないでください。原稿は必ず完成させてください。',
+    '  確認済みの事実（材料に書かれていること）だけで書けるなら、それで完成させてください。',
+    '  実例が無い場合は、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+    '  それでも本人に確かめたいことがあれば、本文には書かず「事実確認が必要な箇所」に質問として書いてください。',
+    '- 実績、相談者・お客様・スタッフの発言（セリフ）を創作することは禁止です。',
+    '  カギカッコで誰かの言葉を書いてよいのは、材料にその言葉があるときだけです。',
+    '- 7本全部を業務改善や仕組み化の話にしないでください（多くても2本まで）。',
+    '  仕事の考え方・実務の視点・人柄・日常の気づき・これからやりたい仕事など、題材に幅を持たせてください。',
     '- 毎回サービス紹介や固定ポストへの誘導を入れないでください。',
     '  「固定ポストを見てください」「DMください」「ご相談はこちら」などは基本入れません。',
     '  週の傾向で「人脈」の日だけ、最後の1文で軽く触れる程度なら構いません。',
@@ -1666,9 +1694,11 @@ function xGenContext_(setting, strategy, concept, rules, facts,
   var parts = [];
 
   if (strategy) {
-    parts.push('# ③ 事業の方向性とターゲット');
-    parts.push('誰に向けた発信なのかを判断するために使ってください。');
+    parts.push('# ③ 事業の方向性とターゲット（発信の軸の確認用）');
+    parts.push('誰に向けた発信か、軸から外れていないかを確認するための資料です。');
+    parts.push('ここから毎回投稿テーマを作らないでください。テーマは ② の返信・引用から作ります。');
     parts.push('ここに書かれている文言を、そのまま投稿に流し込まないでください。');
+    parts.push('ここに書かれている事業・サービスの多くは「これからやりたいこと」です。実績として書かないでください。');
     parts.push(strategy);
     parts.push('');
   }
@@ -1703,7 +1733,8 @@ function xGenContext_(setting, strategy, concept, rules, facts,
     parts.push('本人が実際に関心を持ったこと、考えたこと、新しく出てきた疑問を拾ってください。');
     parts.push('過去に使った話を引っ張り出すより、ここから考えられることを優先してください。');
     parts.push('・返信は相手の投稿への反応です。相手の元投稿はここにありません。');
-    parts.push('  何についての発言かが読み取れない場合は、推測で確定せず【要確認：〜】と残してください。');
+    parts.push('  何についての発言かが読み取れない場合は、推測で確定せず、その返信で本人が言っている考えだけを使ってください。');
+    parts.push('  相手の投稿の中身を書く必要があるなら、本文には書かず「事実確認が必要な箇所」で質問してください。');
     parts.push('・本人の発言を、元の意味より強く断定しないでください。');
     parts.push('  「〜だったりします」「〜かもしれません」は、そのまま残してください。');
     if (notes) {
@@ -1778,8 +1809,8 @@ function xGenContext_(setting, strategy, concept, rules, facts,
     parts.push('「もとの返信」は、本人が実際に書いた文です。');
     parts.push('**その返信より強く言い切らないでください。**');
     parts.push('「〜だったりします」を「〜する」に変えない。根拠のない因果を足さない。');
-    parts.push('「要確認」がある企画は、その部分を創作せず、');
-    parts.push('本文の該当箇所に【要確認：〜】と書いて残してください。');
+    parts.push('「要確認」がある企画は、その部分を創作しないでください。');
+    parts.push('分かっていることだけで書くか、考え方として書いて完成させ、確かめたいことは「事実確認が必要な箇所」に質問として書いてください。');
     parts.push(adopted);
     parts.push('');
   }
@@ -1900,7 +1931,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
     var wi = from + w;
     parts.push('・' + (wi + 1) + '本目: ' +
       (spec.quoteOk[wi]
-        ? 'カギカッコ始まりにしてよい'
+        ? 'カギカッコ始まりにしてよい（材料にある本人・相手の言葉だけ。無ければカギカッコで始めない）'
         : 'カギカッコで始めないこと。事実・数字・場面の描写・自分の行動など別の入り方にする'));
   }
   parts.push('');
@@ -1934,7 +1965,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('  "元になった返信・切り口": "どの返信（日付と冒頭）か、または企画シートのどの切り口か。80字以内",');
   parts.push('  "本文": "X投稿文の叩き台。改行もそのまま",');
   parts.push('  "冒頭3行": "最初の3行だけを抜き出したもの",');
-  parts.push('  "事実確認が必要な箇所": "本人に確かめたい箇所を列挙。無ければ「なし」"');
+  parts.push('  "事実確認が必要な箇所": "本人への質問（本文とは別）。本文は質問の答えが無くても成り立つように書く。無ければ「なし」"');
   parts.push('}]}');
   parts.push('※ posts には必ず ' + n + ' 本だけ入れてください。');
 
@@ -1996,12 +2027,14 @@ function xWriteDrafts_(posts, count) {
   var width = Math.max(sh.getLastColumn(), X_DRAFT_HEADERS.length);
   var rows = posts.map(function (p) {
     var body = String(p['本文'] || '');
-    var state = p._state || (!body.trim() ? '空き' : (/【要確認/.test(body) ? '要確認' : '未'));
+    var ask = String(p['事実確認が必要な箇所'] || '').trim();
+    var state = p._state || (!body.trim() ? '空き' :
+      (/【要確認/.test(body) ? '要確認' : (ask && ask !== 'なし' ? '質問あり' : '未')));
     var v = {
       '作成日時': now,
       '枠': p._idx + 1,
       '分類': p['分類'] || '',
-      '役割': p['役割'] || '',
+      '役割': (p['役割'] || '') + (p['題材'] && String(p['役割'] || '').indexOf(p['題材']) < 0 ? '（題材: ' + p['題材'] + '）' : ''),
       '使った型': p['使った型'] || '',
       'ターゲット層': p['ターゲット層'] || '',
       'テーマ': p['テーマ'] || '',
@@ -2084,7 +2117,9 @@ function xWriteWeekBlock_(posts, count) {
     }
     var body = String(posts[i]['本文'] || '');
     // 【要確認】が残っている原稿は完成稿として扱わない。見出しで分かるようにする。
-    var mark = !body.trim() ? '（空き）' : (/【要確認/.test(body) ? '（要確認・未完成）' : '');
+    var ask = String(posts[i]['事実確認が必要な箇所'] || '').trim();
+    var mark = !body.trim() ? '（空き）' : (/【要確認/.test(body) ? '（要確認・未完成）' :
+      (ask && ask !== 'なし' ? '（質問あり）' : ''));
     headRow.push(label + (slot && slot.cat ? ' ' + slot.cat : '') + mark);
     dateRow.push(ymd + (slot && slot.time ? ' ' + slot.time : ''));
     textRow.push(body);
@@ -3201,7 +3236,7 @@ function xCheckDrafts() {
     // 4) 【要確認：…】が残っていないか
     //    元の投稿が分からないときにAIが入れる印。そのまま投稿できない。
     var asks = body.match(/【要確認[^】]*】/g);
-    if (asks) problems.push('埋める必要あり: ' + asks.join('、'));
+    if (asks) problems.push('本文に【要確認】が残っている（質問は別欄に）: ' + asks.join('、'));
 
     // 5) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
     var head = body.split('\n')[0].trim();
@@ -4168,7 +4203,8 @@ function xTrendText_() {
  *      空けたままだと週の予約ができないので、既定では事業の方向性と系統の傾向から
  *      「考え・問い」の叩き台を作って埋める（実体験・セリフ・数字は作らない）。
  *      X_設定「材料が無い枠」を「空ける」にすると、従来どおり空ける。
- *   6. 【要確認】が残った原稿は完成稿として扱わない
+ *   6. 本文に【要確認】を残さない。確かめたいことは本文とは別に質問する
+ *      （残ってしまった原稿は完成稿として扱わない）
  *
  * 流れ
  *   編集（重なりを見つけ、外す枠と、その枠に使う返信を決める）
@@ -4225,6 +4261,7 @@ function xEditWeek_(ctx, posts, keepIdx) {
   if (keepIdx) keepIdx.forEach(function (i) {
     if (byIdx[i]) { byIdx[i]._note = '本人が残すと決めた本'; byIdx[i]._state = '残す'; }
   });
+  xApplyOverclaims_(byIdx, plan.overclaims);
 
   if (!plan.replace.length) return result;
 
@@ -4262,14 +4299,21 @@ function xEditWeek_(ctx, posts, keepIdx) {
 
   // 3) 作り直した分が、まだ重なっていないかを確認する
   if (fresh.length && elapsed() < X_EDIT_CHECK_LIMIT_MS) {
-    var dup = xEditRecheck_(ctx, keepPosts.concat(fresh), fresh.map(function (p) { return p._idx; }));
+    var rc = xEditRecheck_(ctx, keepPosts.concat(fresh), fresh.map(function (p) { return p._idx; }));
+    var dup = rc.drop;
+    var freshByIdx = {};
+    fresh.forEach(function (p) { freshByIdx[p._idx] = p; });
+    xApplyOverclaims_(freshByIdx, rc.overclaims);
     var dropped = fresh.filter(function (p) { return dup.indexOf(p._idx) >= 0; });
     fresh = fresh.filter(function (p) { return dup.indexOf(p._idx) < 0; });
 
     // まだ重なっていた枠は、方向性からもう一度だけ作る（重なった案も「外した案」に足す）
     if (dropped.length && fillByDirection && elapsed() < X_EDIT_REFILL_LIMIT_MS) {
+      var usedSubj = fresh.map(function (p) { return p['題材']; }).filter(Boolean);
       var again = dropped.map(function (p) {
-        return { idx: p._idx, material: X_DIRECTION_MATERIAL, plan: '', claim: '', reason: '' };
+        var subj = X_SUBJECTS.filter(function (x) { return usedSubj.indexOf(x) < 0; })[0] || '仕事の考え方';
+        usedSubj.push(subj);
+        return { idx: p._idx, material: X_DIRECTION_MATERIAL, subject: subj, plan: '', claim: '', reason: '' };
       });
       var second = xRefill_(ctx, again, keepPosts.concat(fresh), rejected.concat(dropped));
       second.forEach(function (p) {
@@ -4392,6 +4436,7 @@ function xEditPlan_(ctx, posts, keepIdx) {
     replace.push({
       idx: idx,
       material: findReply(r['材料']),
+      subject: xNormSubject_(r['題材']),
       plan: String(r['企画'] || ''),
       claim: String(r['主張'] || ''),
       reason: String(r['理由'] || '')
@@ -4418,11 +4463,89 @@ function xEditPlan_(ctx, posts, keepIdx) {
     });
   }
 
+  // 作り直す枠には、残す本と重ならない題材を割り振る（編集者が決めていなければ）
+  xAssignSubjects_(replace, posts);
+
+  var overclaims = xReadOverclaims_(json, toIdx);
+
   if (json['不足']) Logger.log('編集者のメモ（不足）: ' + json['不足']);
   Logger.log('週の編集: 重なり' + groups.length + '組 / 作り直す枠 ' +
     replace.map(function (r) { return (r.idx + 1) + '本目(' + (r.material ? r.material.no : '材料なし') + ')'; }).join('、'));
 
-  return { groups: groups, replace: replace };
+  return { groups: groups, replace: replace, overclaims: overclaims };
+}
+
+/** 「言い過ぎ」を {idx: ['…', …]} にする */
+function xReadOverclaims_(json, toIdx) {
+  var out = {};
+  (json['言い過ぎ'] || []).forEach(function (o) {
+    var i = toIdx(o['本']);
+    if (i < 0) return;
+    var line = '言い過ぎの可能性:「' + String(o['箇所'] || '').slice(0, 60) + '」→ ' + String(o['直し方'] || '');
+    (out[i] = out[i] || []).push(line);
+  });
+  return out;
+}
+
+/** 題材の表記ゆれを X_SUBJECTS に寄せる。当てはまらなければ空 */
+function xNormSubject_(v) {
+  var t = String(v || '').trim();
+  if (!t) return '';
+  for (var i = 0; i < X_SUBJECTS.length; i++) {
+    if (t === X_SUBJECTS[i] || t.indexOf(X_SUBJECTS[i]) >= 0 || X_SUBJECTS[i].indexOf(t) >= 0) return X_SUBJECTS[i];
+  }
+  if (/これから|やりたい|将来/.test(t)) return 'これからやりたい仕事';
+  if (/日常|暮らし/.test(t)) return '日常の気づき';
+  return '';
+}
+
+/**
+ * 作り直す枠に題材を割り振る。
+ * 編集者が決めた題材は尊重し、決まっていない枠にだけ、まだ使っていない題材を順に入れる。
+ * 「これからやりたい仕事」は週1本まで。
+ */
+function xAssignSubjects_(replace, posts) {
+  var used = {};
+  replace.forEach(function (r) { if (r.subject) used[r.subject] = (used[r.subject] || 0) + 1; });
+  posts.forEach(function (p) {
+    if (replace.some(function (r) { return r.idx === p._idx; })) return;
+    var s = xNormSubject_(p['題材']) || xNormSubject_(p['役割']);
+    if (s) used[s] = (used[s] || 0) + 1;
+  });
+
+  var future = 0;
+  replace.forEach(function (r) {
+    if (r.subject === 'これからやりたい仕事' && ++future > 1) { r.subject = ''; used['これからやりたい仕事']--; }
+  });
+
+  replace.forEach(function (r) {
+    // 材料がある枠は、題材を材料に任せる（無理に別の題材をかぶせると材料がゆがむ）
+    if (r.subject || r.material) return;
+    var pick = '';
+    for (var i = 0; i < X_SUBJECTS.length && !pick; i++) {
+      var s = X_SUBJECTS[i];
+      if (!(used[s] > 0)) pick = s;
+    }
+    if (!pick) {
+      pick = X_SUBJECTS.filter(function (s) { return s !== 'これからやりたい仕事'; })
+        .sort(function (a, b) { return (used[a] || 0) - (used[b] || 0); })[0];
+    }
+    r.subject = pick;
+    used[pick] = (used[pick] || 0) + 1;
+  });
+}
+
+/** 「言い過ぎ」を、事実確認が必要な箇所と編集メモに足す */
+function xApplyOverclaims_(byIdx, overclaims) {
+  Object.keys(overclaims || {}).forEach(function (k) {
+    var p = byIdx[k];
+    if (!p) return;
+    var lines = overclaims[k];
+    var cur = String(p['事実確認が必要な箇所'] || '').trim();
+    p['事実確認が必要な箇所'] = (cur && cur !== 'なし' ? cur + '\n' : '') + lines.join('\n');
+    p._note = (p._note ? p._note + ' / ' : '') + '実績の書き方を確認（' + lines.length + '箇所）';
+    p._overclaim = true;
+  });
 }
 
 /** 編集者の指示 */
@@ -4439,6 +4562,18 @@ function xEditSystem_() {
     '・読後感（読み終えたときに残る気持ち）',
     'どれか1つでもはっきり重なっていれば、重なりとして扱ってください。',
     '',
+    '■ 題材の偏り',
+    '・業務改善・仕組み化の話は、週に' + X_SYSTEM_TOPIC_MAX + '本までです。',
+    '  それより多ければ「題材の偏り」として重なりと同じに扱い、良い' + X_SYSTEM_TOPIC_MAX + '本だけ残してください。',
+    '・外した枠には、' + X_SUBJECTS.join('・') + ' のうち、',
+    '  残す本に無い題材を "題材" として割り当ててください。「これからやりたい仕事」は週1本までです。',
+    '',
+    '■ 言い過ぎの確認（文章は直さず、箇所だけ挙げる）',
+    '・まだ実績が確認できないこと（これからの事業・サービス・取り組み）を、',
+    '  すでにやっている・成果が出ているように書いている箇所',
+    '・材料に無い経験や、材料に無い相談者・お客様の発言を書いている箇所',
+    '見つけたら "言い過ぎ" に入れ、直し方（過去形にする／「こうしたい」にする／削る など）を添えてください。',
+    '',
     '■ 残す1本の選び方',
     '・重なったグループからは、最も良い1本だけを残します。',
     '・同じくらいなら、【要確認】が残っていないほう、材料（返信）に忠実なほうを残してください。',
@@ -4451,12 +4586,14 @@ function xEditSystem_() {
     '・新しい材料が無い枠は、"材料": null にしてください。無理に埋めないでください。',
     '・企画は30字以内。主張は1文で、元の返信より強く言い切らないでください。',
     '・割り当てられた役割に合う材料があればそれを選び、無ければ役割は変わって構いません。',
+    '・作り直す枠ごとに "題材" を1つ決めてください。残す本・他の作り直す枠と題材を散らしてください。',
     '・毎回サービス紹介や固定ポストへの誘導に着地する企画にしないでください。',
     '',
     '■ 出力（JSONのみ。説明やコードフェンスは付けない）',
     '{',
     '  "重複": [{"本": [1, 6, 7], "重なり": "テーマ・主張", "残す": 1, "理由": "…"}],',
-    '  "作り直す": [{"本": 6, "材料": "R12", "企画": "…", "主張": "…", "理由": "…"}],',
+    '  "作り直す": [{"本": 6, "材料": "R12", "題材": "人柄", "企画": "…", "主張": "…", "理由": "…"}],',
+    '  "言い過ぎ": [{"本": 3, "箇所": "本文の該当部分", "直し方": "「こうしたい」にする"}],',
     '  "不足": "材料が足りない場合の説明（無ければ空文字）"',
     '}',
     '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことの番号（M1 など）、無ければ null。'
@@ -4495,7 +4632,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
         system: ctx.system,
         userText: ctx.context + '\n' +
           xGenRequest_(s.idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) + '\n' +
-          xDirectionRequest_(keepText, rejectedText),
+          xDirectionRequest_(s.subject, keepText, rejectedText),
         maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
@@ -4509,6 +4646,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
       '[' + s.material.no + '] ' + s.material.text,
       '',
       '### この枠の企画',
+      s.subject ? '題材: ' + s.subject : '',
       '企画: ' + (s.plan || '（材料から考えてください）'),
       s.claim ? '主張: ' + s.claim : '',
       '上の材料1つだけで書いてください。他の返信や過去のエピソードを足さないでください。',
@@ -4545,13 +4683,15 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
     one[0]._idx = slots[i].idx;
     if (slots[i].material.direction) {
       one[0]._fromDirection = true;
-      one[0]._note = '今週の材料なし：事業の方向性と系統の傾向から作った叩き台（実体験は入れていません）';
-      if (!one[0]['元になった返信・切り口']) one[0]['元になった返信・切り口'] = '事業の方向性・系統の傾向';
+      one[0]._note = '今週の材料なし：題材「' + (slots[i].subject || '仕事の考え方') + '」で作った叩き台（実績・発言は入れていません）';
+      one[0]['題材'] = slots[i].subject || '';
+      if (!one[0]['元になった返信・切り口']) one[0]['元になった返信・切り口'] = '題材: ' + (slots[i].subject || '');
       out.push(one[0]);
       continue;
     }
     one[0]._note = '重なりのため作り直し（材料: ' + slots[i].material.no + '）' +
       (slots[i].reason ? ' ' + slots[i].reason : '');
+    if (slots[i].subject) one[0]['題材'] = slots[i].subject;
     if (!one[0]['元になった返信・切り口']) {
       one[0]['元になった返信・切り口'] = '[' + slots[i].material.no + '] ' + slots[i].material.text.slice(0, 60);
     }
@@ -4562,23 +4702,35 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
 
 /**
  * 今週の材料が無い枠の依頼文。
- * 本人の「やりたいこと」（事業の方向性）と、読まれやすい・つながりやすい系統から、
- * 出来事ではなく「考え・問い」の形で書かせる。
+ *
+ * 事業の方向性シートは「軸の確認」だけに使い、そこからテーマは作らない（本人の指示）。
+ * 割り当てた題材で、出来事ではなく考え方・仕事の方針として書かせる。
+ * 本文に【要確認】は残さず完成させ、確かめたいことは別欄の質問にする。
  */
-function xDirectionRequest_(keepText, rejectedText) {
+function xDirectionRequest_(subject, keepText, rejectedText) {
+  var subj = subject || '仕事の考え方';
+  var how = {
+    '仕事の考え方': '仕事をするときに何を大事にしているか・どう判断しているかを、自分の考えとして書く。',
+    '実務の視点': '仕事の進め方で、細かいけれど見落とされやすい点を、自分の見方として書く。',
+    '人柄': 'どんな人がどんな気持ちで仕事をしているかが伝わるように、好きなこと・苦手なこと・こだわりを考えとして書く。',
+    '日常の気づき': '仕事の外で考えたことを、仕事の見方につなげて書く。具体的な場面は材料にあるものだけ。無ければ「最近よく思うこと」として書く。',
+    'これからやりたい仕事': 'これから取り組みたいこと・大切にしたい仕事の進め方を「こうしたい」「こう考えている」で書く。まだ実績は無いので、やっている・成果が出ているようには書かない。'
+  }[subj] || '';
+
   return [
     '',
     '## この枠は、今週の返信に使える材料が無かった枠です',
-    '「③ 事業の方向性とターゲット」と「読まれやすい系統・つながりやすい系統」をもとに、',
-    'この書き手が今、読者に伝えたいこと・問いかけたいことを1本書いてください。',
+    '題材: ' + subj,
+    how,
     '',
     '### 書き方',
-    '・出来事の報告ではなく、考え・見方・問いかけの形にしてください。',
-    '・実体験・出来事・人物・セリフ・数字は作らないでください。',
-    '  経験で裏づけたい箇所は、作らずに【要確認：〜の実例があれば】と残してください。',
-    '・自分の考えとしては言い切って構いません。他人の傾向・一般論は言い切らないでください。',
-    '・つながりやすい系統を優先してください。読者が「自分のことだ」と返信したくなる問いで締めるのも有効です。',
-    '・材料が少ないので、短文の長さで構いません。',
+    '・テーマは「③ 事業の方向性」から作らないでください。③は軸から外れていないかの確認だけに使います。',
+    '・今週の返信・引用に、この題材で使える論点があれば優先してください（同じ週の本と重ならない範囲で）。',
+    '・無ければ、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+    '・実績、相談者・お客様・スタッフの発言は作らないでください。',
+    '・本文に【要確認】や穴を残さず、完成させてください。確かめたいことは「事実確認が必要な箇所」に質問として書いてください。',
+    '・業務改善・仕組み化の話にしないでください。',
+    '・短文の長さで構いません。',
     '',
     '### 次の本とテーマ・主張・読後感を重ねない（同じ週に出す本）',
     keepText || '  （なし）',
@@ -4603,7 +4755,9 @@ function xEditRecheck_(ctx, all, freshIdx) {
   lines.push('作り直した本: ' + freshIdx.map(function (i) { return i + 1; }).join('・') + '本目');
   lines.push('作り直した本が、他の本とまだ重なっていないかだけを確認してください。');
   lines.push('重なっていれば、作り直した本のほうを "外す" に入れてください。作り直しは不要です。');
-  lines.push('{"外す": [6], "理由": "…"}　重なりが無ければ {"外す": []}');
+  lines.push('あわせて、作り直した本に「言い過ぎ」（実績が無いことを実績のように書いている・材料に無い発言を書いている）があれば挙げてください。');
+  lines.push('{"外す": [6], "理由": "…", "言い過ぎ": [{"本": 6, "箇所": "…", "直し方": "…"}]}');
+  lines.push('重なりも言い過ぎも無ければ {"外す": [], "言い過ぎ": []}');
 
   var res = xClaudeBatch_([{
     system: xEditSystem_().split('■ 外した枠の作り直し')[0] + '出力はJSONのみ。',
@@ -4612,16 +4766,17 @@ function xEditRecheck_(ctx, all, freshIdx) {
     effort: 'medium'
   }])[0];
 
-  if (!res || !res.ok) return [];
+  if (!res || !res.ok) return { drop: [], overclaims: {} };
   try {
     var json = xParseJson_(res.text);
     var out = (json['外す'] || []).map(function (n) { return parseInt(n, 10) - 1; })
       .filter(function (i) { return freshIdx.indexOf(i) >= 0; });
-    if (out.length) Logger.log('作り直した分がまだ重なっていたため空けました: ' +
+    if (out.length) Logger.log('作り直した分がまだ重なっていました: ' +
       out.map(function (i) { return (i + 1) + '本目'; }).join('・') + ' ' + (json['理由'] || ''));
-    return out;
+    var toFresh = function (n) { var i = parseInt(n, 10) - 1; return freshIdx.indexOf(i) >= 0 ? i : -1; };
+    return { drop: out, overclaims: xReadOverclaims_(json, toFresh) };
   } catch (e) {
-    return [];
+    return { drop: [], overclaims: {} };
   }
 }
 

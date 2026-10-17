@@ -112,7 +112,7 @@ ok(newRows.every(function (r, i) { return String(r[bodyCol]).indexOf('BODY') ===
 var chk = head.indexOf('自己チェック');
 var flagged = function (k) { var r = newRows.filter(function (x) { return String(x[bodyCol]).indexOf('BODY' + k) === 0; })[0]; return r ? String(r[chk]) : 'なし'; };
 ok(flagged(3).indexOf('使わないエピソード: 入院') >= 0, '「入院」を自己チェックで検出: ' + flagged(3));
-ok(flagged(5).indexOf('埋める必要あり') >= 0, '【要確認】を自己チェックで検出: ' + flagged(5));
+ok(flagged(5).indexOf('本文に【要確認】が残っている') >= 0, '本文に残った【要確認】を自己チェックで検出: ' + flagged(5));
 ok(flagged(6).indexOf('禁止した着地: 仕組み化すれば') >= 0, '禁止着地を自己チェックで検出: ' + flagged(6));
 ok(flagged(1) === 'OK', '問題ない投稿はOK: ' + flagged(1));
 ok(newRows.some(function (r) { return String(r[head.indexOf('事実確認が必要な箇所')]) === '何の数字か'; }), '「事実確認が必要な箇所」列に入っている');
