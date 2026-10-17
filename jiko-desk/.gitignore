@@ -8,3 +8,4 @@ __pycache__/
 *.pyc
 webapp/demo.sqlite3
 webapp/*.sqlite3
+data/jiko_desk.backup-*.sqlite3
