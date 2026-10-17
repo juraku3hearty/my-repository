@@ -247,6 +247,15 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
     parts.push('  1人が言ったことは、1人が言ったこととして書いてください。');
     parts.push('・ここにある他人の視点は、本人が自分では思いつかない角度です。');
     parts.push('  内側の棚卸しだけで書くと既出の繰り返しになるので、積極的に使ってください。');
+    parts.push('');
+    parts.push('【「参考になった他人の投稿」「引用した相手の投稿」の扱い】');
+    parts.push('借りてよいのは、扱っている"論点"だけです。');
+    parts.push('・その投稿の言い回し、構成、たとえ話、事例は使わないでください。');
+    parts.push('・「こういうことが問題になるのか」という問いだけを受け取り、');
+    parts.push('  その問いに対する答えは、必ずこの書き手自身の経験から書いてください。');
+    parts.push('・結果として、元の投稿とは違う結論になって構いません。');
+    parts.push('・発信の軸（発信設計書）からは外れないでください。');
+    parts.push('  論点が軸に合わない場合は、使わずに飛ばしてください。');
     parts.push(reactions);
     parts.push('');
   }
