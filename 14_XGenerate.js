@@ -46,7 +46,14 @@ function xGeneratePosts() {
   var posts = xGenerate_(themes, count);
   xWriteDrafts_(posts);
   xWriteWeekBlock_(posts);
-  xToast_(posts.length + '本できました。X_投稿案_週形式 からそのままコピーできます。');
+
+  // 全文を読まずに済むよう、機械で照合できる分はここで検査する
+  var ng = 0;
+  try { ng = xCheckDrafts() || 0; } catch (e) { Logger.log('チェック失敗: ' + e.message); }
+
+  xToast_(posts.length + '本できました。' +
+    (ng ? ('要確認が' + ng + '本あります（J列の赤い行）。') : '自動チェックは全部OKでした。') +
+    ' X_投稿案_週形式 からコピーできます。');
 }
 
 /** 1回のAPI呼び出しで作る本数。多いと出力が上限に達して切れる。 */

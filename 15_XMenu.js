@@ -25,6 +25,7 @@ function onOpen() {
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')
+      .addItem('　 投稿案を自動チェックする', 'xCheckDrafts')
       .addSeparator()
       .addItem('質問に1つ答える（一次情報を足す）', 'xAskQuestion')
       .addSeparator()
