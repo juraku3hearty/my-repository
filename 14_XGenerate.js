@@ -93,10 +93,11 @@ function xGenerate_(themesText, count) {
   var plan = xReadWeekPlan_();
   var pastThemes = xPastThemes_(40);
   var reactions = xReadReactions_(30);
+  var adopted = xAdoptedIdeas_();
 
   var system = xGenSystem_();
   var context = xGenContext_(setting, strategy, concept, rules,
-                             samples, facts, factSheets, sampleSheets, patterns, reactions);
+                             samples, facts, factSheets, sampleSheets, patterns, reactions, adopted);
 
   var themes = String(themesText || '').trim();
   var all = [];
@@ -169,6 +170,10 @@ function xGenSystem_() {
     '',
     '確かめていないことを本当のように書くのが、この書き手が一番嫌うことです。',
     '',
+    '元になった発言がある場合、その発言より強く言い切らないでください。',
+    '「〜だったりします」「〜かもしれません」という留保は、そのまま残します。',
+    '元の発言に無い因果関係（だから成功する、など）を足さないでください。',
+    '',
     '■ 最重要のルール',
     '',
     '- 「文体ルール」の禁止語は、絶対に使わないでください。',
@@ -191,7 +196,7 @@ function xGenSystem_() {
 
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, samples, facts,
-                      factSheets, sampleSheets, patterns, reactions) {
+                      factSheets, sampleSheets, patterns, reactions, adopted) {
   var parts = [];
 
   if (strategy) {
@@ -242,6 +247,18 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
     parts.push('いちばん新しい出来事なので、過去の棚卸しより読む価値があります。');
     parts.push('7本のうち最低1本は、この出来事を中心に組み立ててください。');
     parts.push(facts);
+    parts.push('');
+  }
+
+  if (adopted) {
+    parts.push('# 今回書く企画（本人が選んだもの）');
+    parts.push('この企画を書いてください。テーマを自分で考える必要はありません。');
+    parts.push('「もとの返信」は、本人が実際に書いた文です。');
+    parts.push('**その返信より強く言い切らないでください。**');
+    parts.push('「〜だったりします」を「〜する」に変えない。根拠のない因果を足さない。');
+    parts.push('「要確認」がある企画は、その部分を創作せず、');
+    parts.push('本文の該当箇所に【要確認：〜】と書いて残してください。');
+    parts.push(adopted);
     parts.push('');
   }
 

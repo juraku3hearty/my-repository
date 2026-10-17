@@ -26,7 +26,8 @@ var X_SHEETS = {
   PATTERN: 'X_型カタログ',
   WEEKPLAN: 'X_週の傾向',
   REACTION: 'X_反応ログ',
-  ANALYTICS: 'X_反応データ'
+  ANALYTICS: 'X_反応データ',
+  IDEA: 'X_企画案'
 };
 
 /**
