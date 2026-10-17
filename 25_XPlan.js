@@ -26,6 +26,7 @@ function xPlanWeek_(ctx) {
 
 /** 企画会議の依頼を作る（改修前後の比較で、まとめて並列に投げられるように分けてある） */
 function xPlanRequest_(ctx) {
+  if (ctx.planMode === X_PLAN_MODE.NEW) return xPlanRequestNew_(ctx);
   var replies = ctx.replyList || [];
   var notes = ctx.noteList || [];
   var count = ctx.count;
@@ -69,6 +70,7 @@ function xPlanRequest_(ctx) {
 
 /** 企画会議の応答を読む。失敗したら null */
 function xPlanParse_(ctx, res) {
+  if (ctx.planMode === X_PLAN_MODE.NEW) return xPlanParseNew_(ctx, res);
   var replies = ctx.replyList || [];
   var notes = ctx.noteList || [];
   var count = ctx.count;
@@ -189,6 +191,7 @@ function xPlanSystem_(count, mode) {
  */
 function xPlanText_(weekPlan, from, n) {
   if (!weekPlan) return '';
+  if (weekPlan[from] && weekPlan[from].newPlan) return xPlanTextNew_(weekPlan, from, n);
   var parts = [];
   parts.push('');
   parts.push('## この回の企画（1週間ぶんを先に決めてあります。変えないでください）');

@@ -48,6 +48,8 @@ function xCheckDrafts() {
   // 報告に出す数は、直近の1回ぶんだけで数える（過去の行まで数えると今週の数に見えてしまう）
   var ngLatest = 0;
   var quotedLatest = 0;
+  var selfEndLatest = 0;
+  var questionEndLatest = 0;
 
   for (var i = 0; i < bodies.length; i++) {
     var body = String(bodies[i][0] || '');
@@ -97,6 +99,9 @@ function xCheckDrafts() {
     if (String(stamps[i][0]) === latestStamp) {
       if (problems.length) ngLatest++;
       if (quoted) quotedLatest++;
+      var last = xLastLine_(body);
+      if (X_SELF_STATEMENT_END.test(last)) selfEndLatest++;
+      if (/[？?]$/.test(last)) questionEndLatest++;
     }
   }
 
@@ -123,6 +128,8 @@ function xCheckDrafts() {
   if (quotedLatest > 2) msg += ' / カギカッコ始まりが' + quotedLatest + '本あります（目安は2本まで）';
   if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
   if (promoRows.length > 1) msg += ' / 誘導の入った投稿が' + promoRows.length + '本あります（1本まで）';
+  if (selfEndLatest > X_WEEK_LIMITS.selfStatement) msg += ' / 自己表明（〜したい・〜と思っています）で締めた投稿が' + selfEndLatest + '本あります（目安は' + X_WEEK_LIMITS.selfStatement + '本まで）';
+  if (questionEndLatest > X_WEEK_LIMITS.question) msg += ' / 問いで締めた投稿が' + questionEndLatest + '本あります（目安は' + X_WEEK_LIMITS.question + '本まで）';
 
   Logger.log(msg);
   xToast_(msg);

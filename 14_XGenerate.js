@@ -150,12 +150,14 @@ function xGenerate_(themesText, count) {
  * @param {number} count 本数
  * @return {Object} ctx
  */
-function xGenCtx_(themesText, count, modeOverride) {
+function xGenCtx_(themesText, count, modeOverride, planOverride) {
   var started = Date.now();
 
   var setting = xReadSetting_();
   // 改修後：文体ルールを区分ごとに分けて渡す／改修前：以前どおり全部を「文体ルール」として渡す
   var mode = xGenMode_(setting, modeOverride);
+  // 材料に合わせる：企画会議が芯・締め方・型・角度・役割を選ぶ／先行割り当て：以前どおり順に配る
+  var planMode = xPlanMode_(setting, planOverride);
   var strategy = xReadStrategy_();
   var concept = setting['これからのコンセプト'] || '';
   if (!strategy && !concept) {
@@ -193,13 +195,17 @@ function xGenCtx_(themesText, count, modeOverride) {
   var reactions = xReadReactions_(30);
   var adopted = xAdoptedIdeas_();
 
-  var system = xGenSystem_(mode);
+  var system = xGenSystem_(mode, planMode);
+  // 材料に合わせる方式では、型カタログ全文を毎回は渡さない（企画会議が選んだ型だけを渡す）
   var context = xGenContext_(setting, strategy, concept, rules,
-                             facts, factSheets, sampleSheets, patterns, reactions, adopted,
-                             replies, notes, planSheets, trend, mode);
+                             facts, factSheets, sampleSheets,
+                             planMode === X_PLAN_MODE.NEW ? '' : patterns,
+                             reactions, adopted, replies, notes, planSheets, trend, mode, planMode);
 
   return {
     mode: mode,
+    planMode: planMode,
+    patternsText: patterns,
     started: started,
     setting: setting,
     system: system,
@@ -222,7 +228,12 @@ function xGenCtx_(themesText, count, modeOverride) {
  */
 function xGenInitial_(ctx) {
   // 書く前に1週間ぶんの企画を決める（同じ主張・同じ材料を2本にしないため）
-  if (ctx.weekPlan === undefined) ctx.weekPlan = xPlanWeek_(ctx);
+  if (ctx.weekPlan === undefined) {
+    ctx.weekPlan = xPlanWeek_(ctx);
+    if (ctx.planMode === X_PLAN_MODE.NEW && ctx.weekPlan) {
+      try { xWritePlanSheet_(ctx, ctx.weekPlan); } catch (e) { Logger.log('企画会議の記録に失敗: ' + e.message); }
+    }
+  }
 
   var g = xGenJobs_(ctx);
   var got = xGenCollect_(ctx, g.jobs, xClaudeBatch_(g.reqs));
@@ -240,6 +251,7 @@ function xGenInitial_(ctx) {
  * @return {Object} { jobs:[{from,n}], reqs:[依頼] }
  */
 function xGenJobs_(ctx) {
+  xGenMarkPlan_(ctx);
   var jobs = [];
   for (var from = 0; from < ctx.count; from += X_GEN_CHUNK) {
     jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, ctx.count - from) });
@@ -247,7 +259,7 @@ function xGenJobs_(ctx) {
   var reqs = jobs.map(function (j) {
     return {
       system: ctx.system,
-      userText: ctx.context + '\n' +
+      userText: ctx.context + xGenFallbackPatterns_(ctx) + '\n' +
         xGenRequest_(j.from, j.n, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
         xPlanText_(ctx.weekPlan, j.from, j.n),
       maxTokens: X_GEN_MAX_TOKENS,
@@ -255,6 +267,29 @@ function xGenJobs_(ctx) {
     };
   });
   return { jobs: jobs, reqs: reqs };
+}
+
+/** 企画会議（材料に合わせる方式）の結果があるかを spec に印す */
+function xGenMarkPlan_(ctx) {
+  ctx.spec.planNew = !!(ctx.planMode === X_PLAN_MODE.NEW && ctx.weekPlan && ctx.weekPlan[0] && ctx.weekPlan[0].newPlan);
+}
+
+/**
+ * 材料に合わせる方式なのに企画会議が失敗したとき（以前の方式で書く）は、
+ * 文脈から外しておいた型カタログを添える。
+ */
+function xGenFallbackPatterns_(ctx) {
+  if (ctx.planMode !== X_PLAN_MODE.NEW || ctx.spec.planNew || !ctx.patternsText) return '';
+  return '\n# ① 外部ライターの企画（テーマ選びと切り口の参考）\n## 構成の型（骨組みだけ）\n' + ctx.patternsText + '\n';
+}
+
+/** 企画会議で決めた芯と読後感を、投稿に写す（シートで見られるように） */
+function xGenCopyPlan_(ctx, p) {
+  var wp = ctx.weekPlan && ctx.weekPlan[p._idx];
+  if (!wp || !wp.newPlan) return;
+  p['芯'] = wp.core;
+  p['読後感'] = wp.feel;
+  if (!p['役割'] && wp.role) p['役割'] = wp.role;
 }
 
 /**
@@ -289,6 +324,7 @@ function xGenCollect_(ctx, jobs, results) {
       p._idx = jobs[i].from + j;
       var wp = weekPlan && weekPlan[p._idx];
       if (wp && wp.subject && !wp.materials.length) p['題材'] = wp.subject;
+      xGenCopyPlan_(ctx, p);
     });
     all = all.concat(got);
 
@@ -304,7 +340,7 @@ function xGenRetryReqs_(ctx, failed) {
   return failed.map(function (idx) {
     return {
       system: ctx.system,
-      userText: ctx.context + '\n' +
+      userText: ctx.context + xGenFallbackPatterns_(ctx) + '\n' +
         xGenRequest_(idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
         xPlanText_(ctx.weekPlan, idx, 1),
       maxTokens: X_GEN_MAX_TOKENS,
@@ -322,7 +358,7 @@ function xGenCollectRetry_(ctx, failed, retry, all) {
       continue;
     }
     var one = xParsePosts_(retry[r].text).slice(0, 1);
-    if (one.length) { one[0]._idx = failed[r]; all.push(one[0]); }
+    if (one.length) { one[0]._idx = failed[r]; xGenCopyPlan_(ctx, one[0]); all.push(one[0]); }
     else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
       String(retry[r].text).slice(0, 200));
   }
@@ -403,8 +439,12 @@ function xPatternNames_() {
 }
 
 /** 生成のシステムプロンプト */
-function xGenSystem_(mode) {
+function xGenSystem_(mode, planMode) {
   var assertRules = mode === X_GEN_MODE.NEW ? xAssertRulesNew_() : xAssertRulesOld_();
+  var noExample = planMode === X_PLAN_MODE.NEW
+    ? ['  実例が無い場合は、企画の芯（主張・問い・観察）に沿って、確認済みのことだけで書いてください。',
+       '  方針の表明（〜したい・〜と思っています）で締めるのは、題材が「これからやりたい仕事」の本だけにしてください。']
+    : ['  実例が無い場合は、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。'];
   return [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
     ''
@@ -428,7 +468,7 @@ function xGenSystem_(mode) {
     '  実績として書いてよいのは、材料（返信・今週あったこと）に書かれていることだけです。',
     '- 本文に【要確認】や「（ここに実例）」のような穴を残さないでください。原稿は必ず完成させてください。',
     '  確認済みの事実（材料に書かれていること）だけで書けるなら、それで完成させてください。',
-    '  実例が無い場合は、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+  ]).concat(noExample).concat([
     '  それでも本人に確かめたいことがあれば、本文には書かず「事実確認が必要な箇所」に質問として書いてください。',
     '- 実績、相談者・お客様・スタッフの発言（セリフ）を創作することは禁止です。',
     '  カギカッコで誰かの言葉を書いてよいのは、材料にその言葉があるときだけです。',
@@ -521,9 +561,10 @@ function xAssertRulesNew_() {
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, facts,
                       factSheets, sampleSheets, patterns, reactions, adopted,
-                      replies, notes, planSheets, trend, mode) {
+                      replies, notes, planSheets, trend, mode, planMode) {
   var parts = [];
   var isNew = mode === X_GEN_MODE.NEW;
+  var planNew = planMode === X_PLAN_MODE.NEW;
 
   if (strategy) {
     parts.push('# ③ 事業の方向性とターゲット（発信の軸の確認用）');
@@ -648,7 +689,12 @@ function xGenContext_(setting, strategy, concept, rules, facts,
   var landings = xSettingLines_(setting, '禁止する着地', X_DEFAULT_BANNED_LANDINGS);
   if (landings.length) {
     parts.push('# この結論で締めない');
-    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    if (planNew) {
+      parts.push('芯が主張・問いの本は、読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+      parts.push('場面・感情・観察の本は、教訓や問いかけを足さず、そのままで構いません。');
+    } else {
+      parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    }
     parts.push('次の言い回しに安易に着地させないでください。');
     landings.forEach(function (e) { parts.push('  × ' + e); });
     parts.push('');
@@ -708,6 +754,8 @@ function xGenContext_(setting, strategy, concept, rules, facts,
 /** その回ぶんの依頼 */
 function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   var parts = [];
+  // 材料に合わせる方式で企画会議の結果があるときは、型・角度・役割・冒頭を先に配らない
+  var planNew = !!(spec && spec.planNew);
   parts.push('# 依頼');
   parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
              n + '本を書いてください。');
@@ -742,7 +790,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   }
   parts.push('');
 
-  if (spec.role && spec.role.length) {
+  if (!planNew && spec.role && spec.role.length) {
     parts.push('## 投稿の役割（目安）');
     parts.push('7本が全部「現場で見落とされている問題の指摘」にならないよう、役割を分けています。');
     parts.push('材料（返信・今週あったこと）にその役割の話が無い場合は、作り話で埋めず、');
@@ -755,25 +803,30 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   }
 
   // 視点の角度
-  parts.push('## 視点の角度（1本ずつ違う角度から書く）');
-  parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
-  parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
-  for (var a = 0; a < n; a++) {
-    var ai = (from + a) % X_ANGLES.length;
-    parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+  if (!planNew) {
+    parts.push('## 視点の角度（1本ずつ違う角度から書く）');
+    parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
+    parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
+    for (var a = 0; a < n; a++) {
+      var ai = (from + a) % X_ANGLES.length;
+      parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+    }
+    parts.push('');
   }
-  parts.push('');
 
   if (pastThemes && pastThemes.length) {
     parts.push('## すでに書いたテーマ（同じ結論に着地しない）');
     parts.push('同じテーマを扱っても構いませんが、下と同じ着地にはしないでください。');
     parts.push('「結局いちばん大事なのは◯◯でした」で終わる形が繰り返されています。');
-    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    parts.push(planNew
+      ? '芯が主張・問いの本は、読み終えたときに、読者が前と違うことを考えている状態にしてください。'
+      : '読み終えたときに、読者が前と違うことを考えている状態にしてください。');
     pastThemes.slice(0, 30).forEach(function (t) { parts.push('  ・' + t); });
     parts.push('');
   }
 
   // 型と冒頭は、全本ぶんを先に割り振ってある（並列に作るので後から避けられない）
+  if (!planNew) {
   parts.push('## 使う型（割り当て済み。変えないでください）');
   var others = [];
   for (var q = 0; q < total; q++) {
@@ -800,6 +853,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
         : 'カギカッコで始めないこと。事実・数字・場面の描写・自分の行動など別の入り方にする'));
   }
   parts.push('');
+  }
 
   parts.push('');
   parts.push('## 長文と短文');
@@ -821,9 +875,9 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ（30字以内）",');
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
-  parts.push('  "使った型": "構成の型の型名",');
+  parts.push(planNew ? '  "使った型": "企画で型を選んだときだけその型名。無ければ「なし」",' : '  "使った型": "構成の型の型名",');
   parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
-  parts.push('  "役割": "割り当てた役割。材料が無くて変えた場合は「〇〇→△△（理由）」",');
+  parts.push(planNew ? '  "役割": "企画の役割",' : '  "役割": "割り当てた役割。材料が無くて変えた場合は「〇〇→△△（理由）」",');
   parts.push('  "投稿の狙い": "30字以内",');
   parts.push('  "元になった返信・切り口": "どの返信（日付と冒頭）か、または企画シートのどの切り口か。80字以内",');
   parts.push('  "本文": "X投稿文の叩き台。改行もそのまま",');
@@ -898,6 +952,8 @@ function xWriteDrafts_(posts, count) {
       '枠': p._idx + 1,
       '分類': p['分類'] || '',
       '役割': (p['役割'] || '') + (p['題材'] && String(p['役割'] || '').indexOf(p['題材']) < 0 ? '（題材: ' + p['題材'] + '）' : ''),
+      '芯': p['芯'] || '',
+      '読後感': p['読後感'] || '',
       '使った型': p['使った型'] || '',
       'ターゲット層': p['ターゲット層'] || '',
       'テーマ': p['テーマ'] || '',

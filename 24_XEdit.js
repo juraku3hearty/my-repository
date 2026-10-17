@@ -190,7 +190,7 @@ function xEditPlan_(ctx, posts, keepIdx) {
   }
 
   var res = xClaudeBatch_([{
-    system: xEditSystem_(ctx.mode),
+    system: xEditSystem_(ctx.mode, ctx.planMode),
     userText: lines.join('\n'),
     maxTokens: 16000,
     effort: 'medium'
@@ -247,6 +247,9 @@ function xEditPlan_(ctx, posts, keepIdx) {
       idx: idx,
       material: findReply(r['材料']),
       subject: xNormSubject_(r['題材']),
+      core: String(r['芯'] || '').trim(),
+      close: String(r['締め方'] || '').trim(),
+      feel: String(r['読後感'] || '').trim(),
       plan: String(r['企画'] || ''),
       claim: String(r['主張'] || ''),
       reason: String(r['理由'] || '')
@@ -359,7 +362,19 @@ function xApplyOverclaims_(byIdx, overclaims) {
 }
 
 /** 編集者の指示 */
-function xEditSystem_(mode) {
+function xEditSystem_(mode, planMode) {
+  // 材料に合わせる方式では、芯の種類と締め方も比べ、作り直す枠の芯・締め方も決める
+  var planNew = planMode === X_PLAN_MODE.NEW;
+  var coreAxis = planNew ? [
+    '・芯の種類と締め方：同じ芯・同じ締め方が多すぎないか。日常・人柄の本を教訓や問いで締めていないか',
+    '・問いで締める本、自己表明（〜したい／〜と思っています）で締める本が、それぞれ週' +
+      X_WEEK_LIMITS.question + '本を超えていれば、重なりとして扱う'
+  ] : [];
+  var coreRefill = planNew ? [
+    '・作り直す枠ごとに "芯"（' + X_CORE_TYPES.map(function (c) { return c.name; }).join('・') + '）、"締め方"、"読後感" も決めてください。',
+    '  場面・感情は、選んだ材料にその場面や気持ちが書かれているときだけ。材料が無い枠は主張・問い・観察から。',
+    '  残す本と、読者に残る気づき・読後感が重ならないようにしてください。'
+  ] : [];
   // 改修後は、言い過ぎの対象に「他人の気持ち・一般論の断定」「本人が言っていない因果・成果」を足す
   var extraOverclaim = mode === X_GEN_MODE.NEW ? [
     '・他人の気持ち・一般論・未確認の成果を断定している箇所',
@@ -376,6 +391,7 @@ function xEditSystem_(mode) {
     '・主張（何を言っているか・どこに着地しているか）',
     '・エピソード（どの出来事・どの人物の話か。同じ人物の話は重なりです）',
     '・読後感（読み終えたときに残る気持ち）',
+  ].concat(coreAxis).concat([
     'どれか1つでもはっきり重なっていれば、重なりとして扱ってください。',
     '1週間に同じ主張は原則1本です。長文と短文で同じ主張を言い直しているものも、重なりです。',
     '',
@@ -407,6 +423,7 @@ function xEditSystem_(mode) {
       : '・企画は30字以内。主張は1文で、元の返信より強く言い切らないでください。',
     '・割り当てられた役割に合う材料があればそれを選び、無ければ役割は変わって構いません。',
     '・作り直す枠ごとに "題材" を1つ決めてください。残す本・他の作り直す枠と題材を散らしてください。',
+  ].concat(coreRefill).concat([
     '・毎回サービス紹介や固定ポストへの誘導に着地する企画にしないでください。',
     '',
     '■ 出力（JSONのみ。説明やコードフェンスは付けない）',
@@ -417,7 +434,7 @@ function xEditSystem_(mode) {
     '  "不足": "材料が足りない場合の説明（無ければ空文字）"',
     '}',
     '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことの番号（M1 など）、無ければ null。'
-  ]).join('\n');
+  ]))).join('\n');
 }
 
 /** 編集者に見せる1本ぶんの要約 */
@@ -426,11 +443,12 @@ function xEditPostText_(p) {
   return [
     '## ' + (p._idx + 1) + '本目' + (p['役割'] ? '（役割: ' + p['役割'] + '）' : ''),
     'テーマ: ' + (p['テーマ'] || ''),
+  ].concat(p['芯'] ? ['芯: ' + p['芯'] + (p['読後感'] ? ' / 読後感: ' + p['読後感'] : '')] : []).concat([
     '狙い: ' + (p['投稿の狙い'] || p['狙い'] || ''),
     '元になった返信・切り口: ' + (p['元になった返信・切り口'] || ''),
     '本文:',
     body || '（空き）'
-  ].join('\n');
+  ]).join('\n');
 }
 
 /**
@@ -452,7 +470,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
         system: ctx.system,
         userText: ctx.context + '\n' +
           xGenRequest_(s.idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) + '\n' +
-          xDirectionRequest_(s.subject, keepText, rejectedText),
+          xDirectionRequest_(s.subject, keepText, rejectedText, ctx.planMode),
         maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
@@ -467,6 +485,10 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
       '',
       '### この枠の企画',
       s.subject ? '題材: ' + s.subject : '',
+      s.core ? '芯: ' + s.core : '',
+      s.close ? '締め方: ' + s.close + (s.core && s.core !== '主張' && s.core !== '問い' ? '（教訓や問いかけを足さない）' : '') : '',
+      s.feel ? '読後感: ' + s.feel : '',
+      s.core ? '冒頭: カギカッコで始めない（材料にある言葉なら可）' : '',
       '企画: ' + (s.plan || '（材料から考えてください）'),
       s.claim ? '主張: ' + s.claim : '',
       '上の材料1つだけで書いてください。他の返信や過去のエピソードを足さないでください。',
@@ -512,6 +534,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
     one[0]._note = '重なりのため作り直し（材料: ' + slots[i].material.no + '）' +
       (slots[i].reason ? ' ' + slots[i].reason : '');
     if (slots[i].subject) one[0]['題材'] = slots[i].subject;
+    if (slots[i].core) { one[0]['芯'] = slots[i].core; one[0]['読後感'] = slots[i].feel || ''; }
     if (!one[0]['元になった返信・切り口']) {
       one[0]['元になった返信・切り口'] = '[' + slots[i].material.no + '] ' + slots[i].material.text.slice(0, 60);
     }
@@ -527,7 +550,8 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
  * 割り当てた題材で、出来事ではなく考え方・仕事の方針として書かせる。
  * 本文に【要確認】は残さず完成させ、確かめたいことは別欄の質問にする。
  */
-function xDirectionRequest_(subject, keepText, rejectedText) {
+function xDirectionRequest_(subject, keepText, rejectedText, planMode) {
+  var planNew = planMode === X_PLAN_MODE.NEW;
   var subj = subject || '仕事の考え方';
   var how = {
     '仕事の考え方': '仕事をするときに何を大事にしているか・どう判断しているかを、自分の考えとして書く。',
@@ -546,7 +570,9 @@ function xDirectionRequest_(subject, keepText, rejectedText) {
     '### 書き方',
     '・テーマは「③ 事業の方向性」から作らないでください。③は軸から外れていないかの確認だけに使います。',
     '・今週の返信・引用に、この題材で使える論点があれば優先してください（同じ週の本と重ならない範囲で）。',
-    '・無ければ、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+    planNew
+      ? '・無ければ、芯を主張・問い・観察から1つ選び、確認済みのことだけで書いてください。方針の表明（〜したい）で締めるのは、題材が「これからやりたい仕事」のときだけです。場面や気持ちの描写は作らないでください。'
+      : '・無ければ、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
     '・実績、相談者・お客様・スタッフの発言は作らないでください。',
     '・本文に【要確認】や穴を残さず、完成させてください。確かめたいことは「事実確認が必要な箇所」に質問として書いてください。',
     '・業務改善・仕組み化の話にしないでください。',
@@ -580,7 +606,7 @@ function xEditRecheck_(ctx, all, freshIdx) {
   lines.push('重なりも言い過ぎも無ければ {"外す": [], "言い過ぎ": []}');
 
   var res = xClaudeBatch_([{
-    system: xEditSystem_(ctx.mode).split('■ 外した枠の作り直し')[0] + '出力はJSONのみ。',
+    system: xEditSystem_(ctx.mode, ctx.planMode).split('■ 外した枠の作り直し')[0] + '出力はJSONのみ。',
     userText: lines.join('\n'),
     maxTokens: 8000,
     effort: 'medium'

@@ -5,7 +5,7 @@ var M = require(path.join(__dirname, 'gasmock.js'));
 global.__toasts = []; global.__logs = []; global.__payloads = [];
 var S = {};
 function add(name, rows) { S[name] = M.makeSheet(name, rows); return S[name]; }
-add('X_設定', [['項目','値','説明'],['戦略シート名','コンセプト','']]);
+add('X_設定', [['項目','値','説明'],['戦略シート名','コンセプト',''],['企画の方式','先行割り当て','']]);
 add('コンセプト', [['ターゲット','中小企業の社長'], ['やりたいこと','交通事故実務デスクを広げたい']]);
 add('X_文体ルール', [['項目','内容','メモ'],['禁止語','矢印','']]);
 add('X_一次情報', [['記録日','ジャンル','質問','回答','使用回数'],

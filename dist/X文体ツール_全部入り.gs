@@ -154,6 +154,37 @@ var X_DEFAULT_AXIS_ROW = ['発信の軸・価値観', '社長語を、現場語�
  */
 var X_GEN_MODE = { NEW: '改修後', OLD: '改修前' };
 
+/**
+ * 企画の方式。X_設定「企画の方式」で切り替える。
+ *   材料に合わせる … 企画会議が材料を見て、芯・締め方・型・角度・役割を1本ずつ選ぶ（既定）
+ *   先行割り当て   … 以前の方式（型・角度・役割を、何本目かの順に先に配る）
+ */
+var X_PLAN_MODE = { NEW: '材料に合わせる', OLD: '先行割り当て' };
+
+/** 企画の方式を決める。override があればそれを使う（比較用） */
+function xPlanMode_(setting, override) {
+  var v = String(override || (setting && setting['企画の方式']) || '').trim();
+  return v === X_PLAN_MODE.OLD ? X_PLAN_MODE.OLD : X_PLAN_MODE.NEW;
+}
+
+/**
+ * 投稿の芯。企画会議が材料を見て1本ずつ選ぶ（材料に合わせる方式のとき）。
+ * 場面・感情は、材料にその場面や気持ちが書かれているときだけ選べる（創作しないため）。
+ */
+var X_CORE_TYPES = [
+  { name: '主張', desc: '書き手が考えていることをはっきり言う', close: '主張で終える' },
+  { name: '場面', desc: '実際にあった1場面を見せる（材料に場面が書かれているときだけ）', close: '場面で止める。教訓や問いを足さない' },
+  { name: '問い', desc: '答えを出さずに問いを置く', close: '問いで終える' },
+  { name: '感情', desc: 'そのとき感じたことをそのまま書く（材料に気持ちが書かれているときだけ）', close: '気持ちのまま終える。教訓を足さない' },
+  { name: '観察', desc: '見たこと・気づいたことを、結論を急がずに書く', close: '見たことで止める。結論を足さない' }
+];
+
+/** 自己表明の締め（〜したい／〜と思っています／〜と考えています）とみなす最後の一文 */
+var X_SELF_STATEMENT_END = /(たい|たいです|たいと思っています|たいと思う|と思っています|と考えています|していきたい|していきます)[。！!]?$/;
+
+/** 週の中で、同じ読後感・問いの締め・自己表明の締め・カギカッコ始まりを何本まで許すか */
+var X_WEEK_LIMITS = { feel: 2, question: 2, selfStatement: 2, quote: 2 };
+
 /** 生成の方式を決める。override があればそれを使う（改修前後の比較用） */
 function xGenMode_(setting, override) {
   var v = String(override || (setting && setting['生成の方式']) || '').trim();
@@ -214,7 +245,7 @@ function xBook_() {
 }
 
 /** X_投稿案 の列。生成と自己チェックで同じものを使う。 */
-var X_DRAFT_HEADERS = ['作成日時', '枠', '分類', '役割', '使った型', 'ターゲット層', 'テーマ',
+var X_DRAFT_HEADERS = ['作成日時', '枠', '分類', '役割', '芯', '読後感', '使った型', 'ターゲット層', 'テーマ',
   '投稿の狙い', '元になった返信・切り口', '本文', '冒頭3行', '事実確認が必要な箇所',
   '編集メモ', '自己チェック', '投稿予定日', '状態'];
 
@@ -594,6 +625,7 @@ var X_TEXT_ITEMS = [
   ['過去の投稿・経歴を材料にする', '「はい」で過去の投稿本文と経歴・年表を渡す。それ以外は渡さない（今週の返信を優先）', false, 'いいえ'],
   ['返信を読む日数', '直近何日ぶんの返信・引用を材料にするか', false, '7'],
   ['週の役割配分', '「役割:本数」を改行区切りで。目安なので、材料が無い役割は飛ばす', false, X_DEFAULT_ROLES],
+  ['企画の方式', '「材料に合わせる」…企画会議が材料を見て、芯（主張・場面・問い・感情・観察）・締め方・型・角度・役割を1本ずつ選ぶ／「先行割り当て」…以前の方式（型・角度・役割を順番に配る）', false, '材料に合わせる'],
   ['生成の方式', '「改修後」…文体ルールを区分（文体／軸・価値観／過去の主張）に分けて渡し、言い切りの基準を整理した方式／「改修前」…以前の方式に戻す', false, '改修後'],
   ['材料が無い枠', '「題材を変えて作る」…考え方・実務・人柄・日常・これから の題材で叩き台を作る（実体験は入れない。方向性シートは軸の確認だけ）／「空ける」…空けて不足を報告する', false, '題材を変えて作る'],
   ['禁止する着地', 'この結論で締めない（改行区切り）。自己チェックでも検出する', false, X_DEFAULT_BANNED_LANDINGS],
@@ -1565,12 +1597,14 @@ function xGenerate_(themesText, count) {
  * @param {number} count 本数
  * @return {Object} ctx
  */
-function xGenCtx_(themesText, count, modeOverride) {
+function xGenCtx_(themesText, count, modeOverride, planOverride) {
   var started = Date.now();
 
   var setting = xReadSetting_();
   // 改修後：文体ルールを区分ごとに分けて渡す／改修前：以前どおり全部を「文体ルール」として渡す
   var mode = xGenMode_(setting, modeOverride);
+  // 材料に合わせる：企画会議が芯・締め方・型・角度・役割を選ぶ／先行割り当て：以前どおり順に配る
+  var planMode = xPlanMode_(setting, planOverride);
   var strategy = xReadStrategy_();
   var concept = setting['これからのコンセプト'] || '';
   if (!strategy && !concept) {
@@ -1608,13 +1642,17 @@ function xGenCtx_(themesText, count, modeOverride) {
   var reactions = xReadReactions_(30);
   var adopted = xAdoptedIdeas_();
 
-  var system = xGenSystem_(mode);
+  var system = xGenSystem_(mode, planMode);
+  // 材料に合わせる方式では、型カタログ全文を毎回は渡さない（企画会議が選んだ型だけを渡す）
   var context = xGenContext_(setting, strategy, concept, rules,
-                             facts, factSheets, sampleSheets, patterns, reactions, adopted,
-                             replies, notes, planSheets, trend, mode);
+                             facts, factSheets, sampleSheets,
+                             planMode === X_PLAN_MODE.NEW ? '' : patterns,
+                             reactions, adopted, replies, notes, planSheets, trend, mode, planMode);
 
   return {
     mode: mode,
+    planMode: planMode,
+    patternsText: patterns,
     started: started,
     setting: setting,
     system: system,
@@ -1637,7 +1675,12 @@ function xGenCtx_(themesText, count, modeOverride) {
  */
 function xGenInitial_(ctx) {
   // 書く前に1週間ぶんの企画を決める（同じ主張・同じ材料を2本にしないため）
-  if (ctx.weekPlan === undefined) ctx.weekPlan = xPlanWeek_(ctx);
+  if (ctx.weekPlan === undefined) {
+    ctx.weekPlan = xPlanWeek_(ctx);
+    if (ctx.planMode === X_PLAN_MODE.NEW && ctx.weekPlan) {
+      try { xWritePlanSheet_(ctx, ctx.weekPlan); } catch (e) { Logger.log('企画会議の記録に失敗: ' + e.message); }
+    }
+  }
 
   var g = xGenJobs_(ctx);
   var got = xGenCollect_(ctx, g.jobs, xClaudeBatch_(g.reqs));
@@ -1655,6 +1698,7 @@ function xGenInitial_(ctx) {
  * @return {Object} { jobs:[{from,n}], reqs:[依頼] }
  */
 function xGenJobs_(ctx) {
+  xGenMarkPlan_(ctx);
   var jobs = [];
   for (var from = 0; from < ctx.count; from += X_GEN_CHUNK) {
     jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, ctx.count - from) });
@@ -1662,7 +1706,7 @@ function xGenJobs_(ctx) {
   var reqs = jobs.map(function (j) {
     return {
       system: ctx.system,
-      userText: ctx.context + '\n' +
+      userText: ctx.context + xGenFallbackPatterns_(ctx) + '\n' +
         xGenRequest_(j.from, j.n, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
         xPlanText_(ctx.weekPlan, j.from, j.n),
       maxTokens: X_GEN_MAX_TOKENS,
@@ -1670,6 +1714,29 @@ function xGenJobs_(ctx) {
     };
   });
   return { jobs: jobs, reqs: reqs };
+}
+
+/** 企画会議（材料に合わせる方式）の結果があるかを spec に印す */
+function xGenMarkPlan_(ctx) {
+  ctx.spec.planNew = !!(ctx.planMode === X_PLAN_MODE.NEW && ctx.weekPlan && ctx.weekPlan[0] && ctx.weekPlan[0].newPlan);
+}
+
+/**
+ * 材料に合わせる方式なのに企画会議が失敗したとき（以前の方式で書く）は、
+ * 文脈から外しておいた型カタログを添える。
+ */
+function xGenFallbackPatterns_(ctx) {
+  if (ctx.planMode !== X_PLAN_MODE.NEW || ctx.spec.planNew || !ctx.patternsText) return '';
+  return '\n# ① 外部ライターの企画（テーマ選びと切り口の参考）\n## 構成の型（骨組みだけ）\n' + ctx.patternsText + '\n';
+}
+
+/** 企画会議で決めた芯と読後感を、投稿に写す（シートで見られるように） */
+function xGenCopyPlan_(ctx, p) {
+  var wp = ctx.weekPlan && ctx.weekPlan[p._idx];
+  if (!wp || !wp.newPlan) return;
+  p['芯'] = wp.core;
+  p['読後感'] = wp.feel;
+  if (!p['役割'] && wp.role) p['役割'] = wp.role;
 }
 
 /**
@@ -1704,6 +1771,7 @@ function xGenCollect_(ctx, jobs, results) {
       p._idx = jobs[i].from + j;
       var wp = weekPlan && weekPlan[p._idx];
       if (wp && wp.subject && !wp.materials.length) p['題材'] = wp.subject;
+      xGenCopyPlan_(ctx, p);
     });
     all = all.concat(got);
 
@@ -1719,7 +1787,7 @@ function xGenRetryReqs_(ctx, failed) {
   return failed.map(function (idx) {
     return {
       system: ctx.system,
-      userText: ctx.context + '\n' +
+      userText: ctx.context + xGenFallbackPatterns_(ctx) + '\n' +
         xGenRequest_(idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
         xPlanText_(ctx.weekPlan, idx, 1),
       maxTokens: X_GEN_MAX_TOKENS,
@@ -1737,7 +1805,7 @@ function xGenCollectRetry_(ctx, failed, retry, all) {
       continue;
     }
     var one = xParsePosts_(retry[r].text).slice(0, 1);
-    if (one.length) { one[0]._idx = failed[r]; all.push(one[0]); }
+    if (one.length) { one[0]._idx = failed[r]; xGenCopyPlan_(ctx, one[0]); all.push(one[0]); }
     else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
       String(retry[r].text).slice(0, 200));
   }
@@ -1818,8 +1886,12 @@ function xPatternNames_() {
 }
 
 /** 生成のシステムプロンプト */
-function xGenSystem_(mode) {
+function xGenSystem_(mode, planMode) {
   var assertRules = mode === X_GEN_MODE.NEW ? xAssertRulesNew_() : xAssertRulesOld_();
+  var noExample = planMode === X_PLAN_MODE.NEW
+    ? ['  実例が無い場合は、企画の芯（主張・問い・観察）に沿って、確認済みのことだけで書いてください。',
+       '  方針の表明（〜したい・〜と思っています）で締めるのは、題材が「これからやりたい仕事」の本だけにしてください。']
+    : ['  実例が無い場合は、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。'];
   return [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
     ''
@@ -1843,7 +1915,7 @@ function xGenSystem_(mode) {
     '  実績として書いてよいのは、材料（返信・今週あったこと）に書かれていることだけです。',
     '- 本文に【要確認】や「（ここに実例）」のような穴を残さないでください。原稿は必ず完成させてください。',
     '  確認済みの事実（材料に書かれていること）だけで書けるなら、それで完成させてください。',
-    '  実例が無い場合は、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+  ]).concat(noExample).concat([
     '  それでも本人に確かめたいことがあれば、本文には書かず「事実確認が必要な箇所」に質問として書いてください。',
     '- 実績、相談者・お客様・スタッフの発言（セリフ）を創作することは禁止です。',
     '  カギカッコで誰かの言葉を書いてよいのは、材料にその言葉があるときだけです。',
@@ -1936,9 +2008,10 @@ function xAssertRulesNew_() {
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, facts,
                       factSheets, sampleSheets, patterns, reactions, adopted,
-                      replies, notes, planSheets, trend, mode) {
+                      replies, notes, planSheets, trend, mode, planMode) {
   var parts = [];
   var isNew = mode === X_GEN_MODE.NEW;
+  var planNew = planMode === X_PLAN_MODE.NEW;
 
   if (strategy) {
     parts.push('# ③ 事業の方向性とターゲット（発信の軸の確認用）');
@@ -2063,7 +2136,12 @@ function xGenContext_(setting, strategy, concept, rules, facts,
   var landings = xSettingLines_(setting, '禁止する着地', X_DEFAULT_BANNED_LANDINGS);
   if (landings.length) {
     parts.push('# この結論で締めない');
-    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    if (planNew) {
+      parts.push('芯が主張・問いの本は、読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+      parts.push('場面・感情・観察の本は、教訓や問いかけを足さず、そのままで構いません。');
+    } else {
+      parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    }
     parts.push('次の言い回しに安易に着地させないでください。');
     landings.forEach(function (e) { parts.push('  × ' + e); });
     parts.push('');
@@ -2123,6 +2201,8 @@ function xGenContext_(setting, strategy, concept, rules, facts,
 /** その回ぶんの依頼 */
 function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   var parts = [];
+  // 材料に合わせる方式で企画会議の結果があるときは、型・角度・役割・冒頭を先に配らない
+  var planNew = !!(spec && spec.planNew);
   parts.push('# 依頼');
   parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
              n + '本を書いてください。');
@@ -2157,7 +2237,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   }
   parts.push('');
 
-  if (spec.role && spec.role.length) {
+  if (!planNew && spec.role && spec.role.length) {
     parts.push('## 投稿の役割（目安）');
     parts.push('7本が全部「現場で見落とされている問題の指摘」にならないよう、役割を分けています。');
     parts.push('材料（返信・今週あったこと）にその役割の話が無い場合は、作り話で埋めず、');
@@ -2170,25 +2250,30 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   }
 
   // 視点の角度
-  parts.push('## 視点の角度（1本ずつ違う角度から書く）');
-  parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
-  parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
-  for (var a = 0; a < n; a++) {
-    var ai = (from + a) % X_ANGLES.length;
-    parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+  if (!planNew) {
+    parts.push('## 視点の角度（1本ずつ違う角度から書く）');
+    parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
+    parts.push('文体をなぞるだけだと、過去に書いたことの焼き直しになります。');
+    for (var a = 0; a < n; a++) {
+      var ai = (from + a) % X_ANGLES.length;
+      parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
+    }
+    parts.push('');
   }
-  parts.push('');
 
   if (pastThemes && pastThemes.length) {
     parts.push('## すでに書いたテーマ（同じ結論に着地しない）');
     parts.push('同じテーマを扱っても構いませんが、下と同じ着地にはしないでください。');
     parts.push('「結局いちばん大事なのは◯◯でした」で終わる形が繰り返されています。');
-    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    parts.push(planNew
+      ? '芯が主張・問いの本は、読み終えたときに、読者が前と違うことを考えている状態にしてください。'
+      : '読み終えたときに、読者が前と違うことを考えている状態にしてください。');
     pastThemes.slice(0, 30).forEach(function (t) { parts.push('  ・' + t); });
     parts.push('');
   }
 
   // 型と冒頭は、全本ぶんを先に割り振ってある（並列に作るので後から避けられない）
+  if (!planNew) {
   parts.push('## 使う型（割り当て済み。変えないでください）');
   var others = [];
   for (var q = 0; q < total; q++) {
@@ -2215,6 +2300,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
         : 'カギカッコで始めないこと。事実・数字・場面の描写・自分の行動など別の入り方にする'));
   }
   parts.push('');
+  }
 
   parts.push('');
   parts.push('## 長文と短文');
@@ -2236,9 +2322,9 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ（30字以内）",');
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
-  parts.push('  "使った型": "構成の型の型名",');
+  parts.push(planNew ? '  "使った型": "企画で型を選んだときだけその型名。無ければ「なし」",' : '  "使った型": "構成の型の型名",');
   parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
-  parts.push('  "役割": "割り当てた役割。材料が無くて変えた場合は「〇〇→△△（理由）」",');
+  parts.push(planNew ? '  "役割": "企画の役割",' : '  "役割": "割り当てた役割。材料が無くて変えた場合は「〇〇→△△（理由）」",');
   parts.push('  "投稿の狙い": "30字以内",');
   parts.push('  "元になった返信・切り口": "どの返信（日付と冒頭）か、または企画シートのどの切り口か。80字以内",');
   parts.push('  "本文": "X投稿文の叩き台。改行もそのまま",');
@@ -2313,6 +2399,8 @@ function xWriteDrafts_(posts, count) {
       '枠': p._idx + 1,
       '分類': p['分類'] || '',
       '役割': (p['役割'] || '') + (p['題材'] && String(p['役割'] || '').indexOf(p['題材']) < 0 ? '（題材: ' + p['題材'] + '）' : ''),
+      '芯': p['芯'] || '',
+      '読後感': p['読後感'] || '',
       '使った型': p['使った型'] || '',
       'ターゲット層': p['ターゲット層'] || '',
       'テーマ': p['テーマ'] || '',
@@ -3480,6 +3568,8 @@ function xCheckDrafts() {
   // 報告に出す数は、直近の1回ぶんだけで数える（過去の行まで数えると今週の数に見えてしまう）
   var ngLatest = 0;
   var quotedLatest = 0;
+  var selfEndLatest = 0;
+  var questionEndLatest = 0;
 
   for (var i = 0; i < bodies.length; i++) {
     var body = String(bodies[i][0] || '');
@@ -3529,6 +3619,9 @@ function xCheckDrafts() {
     if (String(stamps[i][0]) === latestStamp) {
       if (problems.length) ngLatest++;
       if (quoted) quotedLatest++;
+      var last = xLastLine_(body);
+      if (X_SELF_STATEMENT_END.test(last)) selfEndLatest++;
+      if (/[？?]$/.test(last)) questionEndLatest++;
     }
   }
 
@@ -3555,6 +3648,8 @@ function xCheckDrafts() {
   if (quotedLatest > 2) msg += ' / カギカッコ始まりが' + quotedLatest + '本あります（目安は2本まで）';
   if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
   if (promoRows.length > 1) msg += ' / 誘導の入った投稿が' + promoRows.length + '本あります（1本まで）';
+  if (selfEndLatest > X_WEEK_LIMITS.selfStatement) msg += ' / 自己表明（〜したい・〜と思っています）で締めた投稿が' + selfEndLatest + '本あります（目安は' + X_WEEK_LIMITS.selfStatement + '本まで）';
+  if (questionEndLatest > X_WEEK_LIMITS.question) msg += ' / 問いで締めた投稿が' + questionEndLatest + '本あります（目安は' + X_WEEK_LIMITS.question + '本まで）';
 
   Logger.log(msg);
   xToast_(msg);
@@ -4659,7 +4754,7 @@ function xEditPlan_(ctx, posts, keepIdx) {
   }
 
   var res = xClaudeBatch_([{
-    system: xEditSystem_(ctx.mode),
+    system: xEditSystem_(ctx.mode, ctx.planMode),
     userText: lines.join('\n'),
     maxTokens: 16000,
     effort: 'medium'
@@ -4716,6 +4811,9 @@ function xEditPlan_(ctx, posts, keepIdx) {
       idx: idx,
       material: findReply(r['材料']),
       subject: xNormSubject_(r['題材']),
+      core: String(r['芯'] || '').trim(),
+      close: String(r['締め方'] || '').trim(),
+      feel: String(r['読後感'] || '').trim(),
       plan: String(r['企画'] || ''),
       claim: String(r['主張'] || ''),
       reason: String(r['理由'] || '')
@@ -4828,7 +4926,19 @@ function xApplyOverclaims_(byIdx, overclaims) {
 }
 
 /** 編集者の指示 */
-function xEditSystem_(mode) {
+function xEditSystem_(mode, planMode) {
+  // 材料に合わせる方式では、芯の種類と締め方も比べ、作り直す枠の芯・締め方も決める
+  var planNew = planMode === X_PLAN_MODE.NEW;
+  var coreAxis = planNew ? [
+    '・芯の種類と締め方：同じ芯・同じ締め方が多すぎないか。日常・人柄の本を教訓や問いで締めていないか',
+    '・問いで締める本、自己表明（〜したい／〜と思っています）で締める本が、それぞれ週' +
+      X_WEEK_LIMITS.question + '本を超えていれば、重なりとして扱う'
+  ] : [];
+  var coreRefill = planNew ? [
+    '・作り直す枠ごとに "芯"（' + X_CORE_TYPES.map(function (c) { return c.name; }).join('・') + '）、"締め方"、"読後感" も決めてください。',
+    '  場面・感情は、選んだ材料にその場面や気持ちが書かれているときだけ。材料が無い枠は主張・問い・観察から。',
+    '  残す本と、読者に残る気づき・読後感が重ならないようにしてください。'
+  ] : [];
   // 改修後は、言い過ぎの対象に「他人の気持ち・一般論の断定」「本人が言っていない因果・成果」を足す
   var extraOverclaim = mode === X_GEN_MODE.NEW ? [
     '・他人の気持ち・一般論・未確認の成果を断定している箇所',
@@ -4845,6 +4955,7 @@ function xEditSystem_(mode) {
     '・主張（何を言っているか・どこに着地しているか）',
     '・エピソード（どの出来事・どの人物の話か。同じ人物の話は重なりです）',
     '・読後感（読み終えたときに残る気持ち）',
+  ].concat(coreAxis).concat([
     'どれか1つでもはっきり重なっていれば、重なりとして扱ってください。',
     '1週間に同じ主張は原則1本です。長文と短文で同じ主張を言い直しているものも、重なりです。',
     '',
@@ -4876,6 +4987,7 @@ function xEditSystem_(mode) {
       : '・企画は30字以内。主張は1文で、元の返信より強く言い切らないでください。',
     '・割り当てられた役割に合う材料があればそれを選び、無ければ役割は変わって構いません。',
     '・作り直す枠ごとに "題材" を1つ決めてください。残す本・他の作り直す枠と題材を散らしてください。',
+  ].concat(coreRefill).concat([
     '・毎回サービス紹介や固定ポストへの誘導に着地する企画にしないでください。',
     '',
     '■ 出力（JSONのみ。説明やコードフェンスは付けない）',
@@ -4886,7 +4998,7 @@ function xEditSystem_(mode) {
     '  "不足": "材料が足りない場合の説明（無ければ空文字）"',
     '}',
     '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことの番号（M1 など）、無ければ null。'
-  ]).join('\n');
+  ]))).join('\n');
 }
 
 /** 編集者に見せる1本ぶんの要約 */
@@ -4895,11 +5007,12 @@ function xEditPostText_(p) {
   return [
     '## ' + (p._idx + 1) + '本目' + (p['役割'] ? '（役割: ' + p['役割'] + '）' : ''),
     'テーマ: ' + (p['テーマ'] || ''),
+  ].concat(p['芯'] ? ['芯: ' + p['芯'] + (p['読後感'] ? ' / 読後感: ' + p['読後感'] : '')] : []).concat([
     '狙い: ' + (p['投稿の狙い'] || p['狙い'] || ''),
     '元になった返信・切り口: ' + (p['元になった返信・切り口'] || ''),
     '本文:',
     body || '（空き）'
-  ].join('\n');
+  ]).join('\n');
 }
 
 /**
@@ -4921,7 +5034,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
         system: ctx.system,
         userText: ctx.context + '\n' +
           xGenRequest_(s.idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) + '\n' +
-          xDirectionRequest_(s.subject, keepText, rejectedText),
+          xDirectionRequest_(s.subject, keepText, rejectedText, ctx.planMode),
         maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
@@ -4936,6 +5049,10 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
       '',
       '### この枠の企画',
       s.subject ? '題材: ' + s.subject : '',
+      s.core ? '芯: ' + s.core : '',
+      s.close ? '締め方: ' + s.close + (s.core && s.core !== '主張' && s.core !== '問い' ? '（教訓や問いかけを足さない）' : '') : '',
+      s.feel ? '読後感: ' + s.feel : '',
+      s.core ? '冒頭: カギカッコで始めない（材料にある言葉なら可）' : '',
       '企画: ' + (s.plan || '（材料から考えてください）'),
       s.claim ? '主張: ' + s.claim : '',
       '上の材料1つだけで書いてください。他の返信や過去のエピソードを足さないでください。',
@@ -4981,6 +5098,7 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
     one[0]._note = '重なりのため作り直し（材料: ' + slots[i].material.no + '）' +
       (slots[i].reason ? ' ' + slots[i].reason : '');
     if (slots[i].subject) one[0]['題材'] = slots[i].subject;
+    if (slots[i].core) { one[0]['芯'] = slots[i].core; one[0]['読後感'] = slots[i].feel || ''; }
     if (!one[0]['元になった返信・切り口']) {
       one[0]['元になった返信・切り口'] = '[' + slots[i].material.no + '] ' + slots[i].material.text.slice(0, 60);
     }
@@ -4996,7 +5114,8 @@ function xRefill_(ctx, slots, keepPosts, rejected) {
  * 割り当てた題材で、出来事ではなく考え方・仕事の方針として書かせる。
  * 本文に【要確認】は残さず完成させ、確かめたいことは別欄の質問にする。
  */
-function xDirectionRequest_(subject, keepText, rejectedText) {
+function xDirectionRequest_(subject, keepText, rejectedText, planMode) {
+  var planNew = planMode === X_PLAN_MODE.NEW;
   var subj = subject || '仕事の考え方';
   var how = {
     '仕事の考え方': '仕事をするときに何を大事にしているか・どう判断しているかを、自分の考えとして書く。',
@@ -5015,7 +5134,9 @@ function xDirectionRequest_(subject, keepText, rejectedText) {
     '### 書き方',
     '・テーマは「③ 事業の方向性」から作らないでください。③は軸から外れていないかの確認だけに使います。',
     '・今週の返信・引用に、この題材で使える論点があれば優先してください（同じ週の本と重ならない範囲で）。',
-    '・無ければ、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
+    planNew
+      ? '・無ければ、芯を主張・問い・観察から1つ選び、確認済みのことだけで書いてください。方針の表明（〜したい）で締めるのは、題材が「これからやりたい仕事」のときだけです。場面や気持ちの描写は作らないでください。'
+      : '・無ければ、この書き手が今後大切にしたい考え方・仕事の方針として書いてください。',
     '・実績、相談者・お客様・スタッフの発言は作らないでください。',
     '・本文に【要確認】や穴を残さず、完成させてください。確かめたいことは「事実確認が必要な箇所」に質問として書いてください。',
     '・業務改善・仕組み化の話にしないでください。',
@@ -5049,7 +5170,7 @@ function xEditRecheck_(ctx, all, freshIdx) {
   lines.push('重なりも言い過ぎも無ければ {"外す": [], "言い過ぎ": []}');
 
   var res = xClaudeBatch_([{
-    system: xEditSystem_(ctx.mode).split('■ 外した枠の作り直し')[0] + '出力はJSONのみ。',
+    system: xEditSystem_(ctx.mode, ctx.planMode).split('■ 外した枠の作り直し')[0] + '出力はJSONのみ。',
     userText: lines.join('\n'),
     maxTokens: 8000,
     effort: 'medium'
@@ -5197,6 +5318,7 @@ function xPlanWeek_(ctx) {
 
 /** 企画会議の依頼を作る（改修前後の比較で、まとめて並列に投げられるように分けてある） */
 function xPlanRequest_(ctx) {
+  if (ctx.planMode === X_PLAN_MODE.NEW) return xPlanRequestNew_(ctx);
   var replies = ctx.replyList || [];
   var notes = ctx.noteList || [];
   var count = ctx.count;
@@ -5240,6 +5362,7 @@ function xPlanRequest_(ctx) {
 
 /** 企画会議の応答を読む。失敗したら null */
 function xPlanParse_(ctx, res) {
+  if (ctx.planMode === X_PLAN_MODE.NEW) return xPlanParseNew_(ctx, res);
   var replies = ctx.replyList || [];
   var notes = ctx.noteList || [];
   var count = ctx.count;
@@ -5360,6 +5483,7 @@ function xPlanSystem_(count, mode) {
  */
 function xPlanText_(weekPlan, from, n) {
   if (!weekPlan) return '';
+  if (weekPlan[from] && weekPlan[from].newPlan) return xPlanTextNew_(weekPlan, from, n);
   var parts = [];
   parts.push('');
   parts.push('## この回の企画（1週間ぶんを先に決めてあります。変えないでください）');
@@ -5397,78 +5521,227 @@ function xPlanText_(weekPlan, from, n) {
 
 /**
  * 26_XCompare.js
- * 改修前後の比較
+ * 企画の方式の比較（同じ材料で7本ずつ）
  *
- * 同じ材料（返信・今週あったこと・週の傾向・型の割り当て）から、
- * 「改修前」と「改修後」の方式で7本ずつ作り、並べて比べる。
+ * 同じ材料（返信・今週あったこと・週の傾向）から、
+ *   今の方式（先行割り当て：型・角度・役割を順に配る）
+ *   新しい方式（材料に合わせる：企画会議が芯・締め方・型・角度・役割を選ぶ）
+ * で7本ずつ作り、両方とも週の編集まで通してから並べて比べる。
+ * 文体の分離（生成の方式＝改修後）は両方とも同じ。
  *
- * ・投稿案シート・週形式シートには書かない（いつもの投稿案を汚さないため）
- * ・企画と執筆まで（週の編集・作り直しはしない）。編集は今回変えていないので、
- *   執筆までの差だけを見るほうが比べやすい
- * ・機械で数えられる目安と、AIによる比較（どちらが改修後かを伏せて評価）を出す。
- *   最後に判断するのは本人なので、本人が書き込む欄も作る
+ * 週の編集まで通すと、GASの6分制限を超えるので、4段階に分けて自動で続ける。
+ *   1. 企画会議と執筆（2つの方式を同時に）
+ *   2. 今の方式の週の編集
+ *   3. 新しい方式の週の編集
+ *   4. 機械の目安・AIの比較・書き出し
+ * 途中の結果は X_比較作業 シートに置き、時間で動くトリガーで次の段階を呼ぶ。
+ *
+ * 比べたいのは「形式的に違う7本」ではなく「実際に読んで面白いと思える7本」。
+ * なので数値だけでなく、7本の企画そのもの（芯・芯になる一文・材料・採用しなかった材料）も並べる。
+ * 投稿案シート・週形式シートには書かない。
  */
 
 var X_COMPARE_SHEET = 'X_改修比較';
+var X_COMPARE_WORK = 'X_比較作業';
+var X_COMPARE_HANDLER = 'xCompareContinue';
 
-/** AIの比較を始めてよい経過時間（GASの6分制限のため） */
-var X_COMPARE_JUDGE_LIMIT_MS = 4.2 * 60 * 1000;
+/** 比べる2つ */
+var X_COMPARE_SIDES = [
+  { key: 'A', label: '今の方式（先行割り当て）', mode: '改修後', plan: '先行割り当て' },
+  { key: 'B', label: '新しい方式（材料に合わせる）', mode: '改修後', plan: '材料に合わせる' }
+];
+
+var X_COMPARE_STEPS = ['gen', 'editA', 'editB', 'judge'];
+var X_COMPARE_STEP_LABEL = {
+  gen: '1/4 企画会議と執筆（2つの方式を同時に）',
+  editA: '2/4 今の方式の週の編集',
+  editB: '3/4 新しい方式の週の編集',
+  judge: '4/4 機械の目安・AIの比較・書き出し'
+};
 
 /**
- * メニューから呼ぶ。
+ * メニューから呼ぶ。最初の段階をこの場で実行し、残りは自動で続ける。
  */
 function xCompareModes() {
-  var t0 = Date.now();
-  var count = 7;
-
-  var ctxOld = xGenCtx_('', count, X_GEN_MODE.OLD);
-  var ctxNew = xGenCtx_('', count, X_GEN_MODE.NEW);
-  // 経過時間は、比較全体の開始から数える
-  ctxOld.started = ctxNew.started = t0;
-
-  // 1) 企画会議を2つ同時に
-  var plans = xClaudeBatch_([xPlanRequest_(ctxOld), xPlanRequest_(ctxNew)]);
-  ctxOld.weekPlan = xPlanParse_(ctxOld, plans[0]);
-  ctxNew.weekPlan = xPlanParse_(ctxNew, plans[1]);
-
-  // 2) 執筆を、2つの方式ぶんまとめて同時に
-  var gOld = xGenJobs_(ctxOld), gNew = xGenJobs_(ctxNew);
-  var res = xClaudeBatch_(gOld.reqs.concat(gNew.reqs));
-  var cOld = xGenCollect_(ctxOld, gOld.jobs, res.slice(0, gOld.reqs.length));
-  var cNew = xGenCollect_(ctxNew, gNew.jobs, res.slice(gOld.reqs.length));
-
-  // 落ちた枠の作り直しも、まとめて
-  if ((cOld.failed.length || cNew.failed.length) && Date.now() - t0 < X_GEN_TIME_LIMIT_MS) {
-    var rOld = xGenRetryReqs_(ctxOld, cOld.failed), rNew = xGenRetryReqs_(ctxNew, cNew.failed);
-    var rr = xClaudeBatch_(rOld.concat(rNew));
-    xGenCollectRetry_(ctxOld, cOld.failed, rr.slice(0, rOld.length), cOld.all);
-    xGenCollectRetry_(ctxNew, cNew.failed, rr.slice(rOld.length), cNew.all);
-  }
-  var postsOld = xBySlot_(xGenFinish_(ctxOld, cOld.all), count);
-  var postsNew = xBySlot_(xGenFinish_(ctxNew, cNew.all), count);
-
-  // 3) 機械で数える目安
-  var parts = xReadRuleParts_();
-  var mOld = xCompareMetrics_(postsOld, parts.past);
-  var mNew = xCompareMetrics_(postsNew, parts.past);
-
-  // 4) AIによる比較（時間があれば）
-  var judge = null;
-  if (Date.now() - t0 < X_COMPARE_JUDGE_LIMIT_MS) {
-    judge = xCompareJudge_(parts, postsOld, postsNew);
-  } else {
-    Logger.log('時間の都合で、AIによる比較は省きました。');
-  }
-
-  xWriteCompare_(ctxNew, postsOld, postsNew, mOld, mNew, judge);
-
-  var msg = '改修前後を7本ずつ作って並べました（' + Math.round((Date.now() - t0) / 1000) + '秒）。' +
-    X_COMPARE_SHEET + ' を見てください。' + (judge ? '' : '（AIによる比較は時間の都合で省略）');
-  Logger.log(msg);
-  xToast_(msg);
+  xCompareClearTriggers_();
+  xCompareWorkReset_();
+  xCompareWorkSet_('step', 'gen');
+  xCompareWorkSet_('startedAt', String(Date.now()));
+  xCompareStatus_('比較を始めました。' + X_COMPARE_STEP_LABEL.gen + '…（全部で10分ほど。シートを閉じても進みます）');
+  xCompareRunStep_();
 }
 
-/** 本文の最初の一文（1行目） */
+/** トリガーから呼ばれる（名前の末尾に _ を付けない：トリガーから呼べなくなるため） */
+function xCompareContinue() {
+  xCompareClearTriggers_();
+  xCompareRunStep_();
+}
+
+/** いまの段階を実行し、次があれば予約する */
+function xCompareRunStep_() {
+  var step = xCompareWorkGet_('step');
+  if (!step || step === 'done') return;
+  try {
+    if (step === 'gen') xCompareStepGen_();
+    else if (step === 'editA') xCompareStepEdit_('A');
+    else if (step === 'editB') xCompareStepEdit_('B');
+    else if (step === 'judge') xCompareStepJudge_();
+
+    var next = X_COMPARE_STEPS[X_COMPARE_STEPS.indexOf(step) + 1] || 'done';
+    xCompareWorkSet_('step', next);
+    if (next === 'done') {
+      var secs = Math.round((Date.now() - Number(xCompareWorkGet_('startedAt') || Date.now())) / 1000);
+      var msg = '比較が終わりました（' + Math.round(secs / 60) + '分）。' + X_COMPARE_SHEET + ' を見てください。';
+      Logger.log(msg);
+      xToast_(msg);
+      return;
+    }
+    xCompareStatus_('比較中: ' + X_COMPARE_STEP_LABEL[next] + '…（シートを閉じても進みます）');
+    ScriptApp.newTrigger(X_COMPARE_HANDLER).timeBased().after(20 * 1000).create();
+  } catch (e) {
+    xCompareWorkSet_('step', 'done');
+    xCompareStatus_('比較が途中で止まりました（' + (X_COMPARE_STEP_LABEL[step] || step) + '）: ' + e.message +
+      '　もう一度「改修前後を比べる」を押すと最初からやり直します。');
+    Logger.log('比較が止まりました: ' + e.message);
+  }
+}
+
+/** 比較用の材料をそろえる（どの段階でも同じ材料になる） */
+function xCompareCtx_(side) {
+  var ctx = xGenCtx_('', 7, side.mode, side.plan);
+  ctx.started = Date.now();
+  return ctx;
+}
+
+/** 段階1：企画会議と執筆を、2つの方式ぶん同時に */
+function xCompareStepGen_() {
+  var t0 = Date.now();
+  var ctx = {};
+  X_COMPARE_SIDES.forEach(function (s) { ctx[s.key] = xCompareCtx_(s); ctx[s.key].started = t0; });
+
+  // 企画会議（同時）
+  var plans = xClaudeBatch_([xPlanRequest_(ctx.A), xPlanRequest_(ctx.B)]);
+  ctx.A.weekPlan = xPlanParse_(ctx.A, plans[0]);
+  ctx.B.weekPlan = xPlanParse_(ctx.B, plans[1]);
+  if (!ctx.A.planUnused) xCompareUnusedFor_(ctx.A);
+  if (!ctx.B.planUnused) xCompareUnusedFor_(ctx.B);
+
+  // 執筆（同時）
+  var gA = xGenJobs_(ctx.A), gB = xGenJobs_(ctx.B);
+  var res = xClaudeBatch_(gA.reqs.concat(gB.reqs));
+  var cA = xGenCollect_(ctx.A, gA.jobs, res.slice(0, gA.reqs.length));
+  var cB = xGenCollect_(ctx.B, gB.jobs, res.slice(gA.reqs.length));
+  if ((cA.failed.length || cB.failed.length) && Date.now() - t0 < X_GEN_TIME_LIMIT_MS) {
+    var rA = xGenRetryReqs_(ctx.A, cA.failed), rB = xGenRetryReqs_(ctx.B, cB.failed);
+    var rr = xClaudeBatch_(rA.concat(rB));
+    xGenCollectRetry_(ctx.A, cA.failed, rr.slice(0, rA.length), cA.all);
+    xGenCollectRetry_(ctx.B, cB.failed, rr.slice(rA.length), cB.all);
+  }
+
+  [['A', cA], ['B', cB]].forEach(function (x) {
+    var c = ctx[x[0]];
+    var posts = xGenFinish_(c, x[1].all);
+    xCompareWorkSet_(x[0] + '.posts', JSON.stringify(posts));
+    xCompareWorkSet_(x[0] + '.plan', JSON.stringify(c.weekPlan));
+    xCompareWorkSet_(x[0] + '.unused', JSON.stringify(c.planUnused || []));
+    xCompareWorkSet_(x[0] + '.note', c.planNote || '');
+    xCompareWorkSet_(x[0] + '.assign', JSON.stringify({
+      pattern: c.spec.pattern, role: c.spec.role, quoteOk: c.spec.quoteOk,
+      angle: c.spec.pattern.map(function (_, i) { return X_ANGLES[i % X_ANGLES.length]; })
+    }));
+  });
+}
+
+/** 今の方式（先行割り当て）には企画会議の「採用しなかった材料」が無いので、使っていない材料だけ挙げる */
+function xCompareUnusedFor_(ctx) {
+  var used = {};
+  (ctx.weekPlan || []).forEach(function (p) { (p && p.materials || []).forEach(function (m) { used[m.no] = true; }); });
+  ctx.planUnused = (ctx.replyList || []).concat(ctx.noteList || []).filter(function (m) { return !used[m.no]; })
+    .map(function (m) { return { no: m.no, text: m.text, reason: ctx.weekPlan ? '（この方式は理由を出さない）' : '（企画会議が失敗。各回に任せた）' }; });
+}
+
+/** 段階2・3：週の編集 */
+function xCompareStepEdit_(key) {
+  var side = X_COMPARE_SIDES.filter(function (s) { return s.key === key; })[0];
+  var ctx = xCompareCtx_(side);
+  ctx.weekPlan = JSON.parse(xCompareWorkGet_(key + '.plan') || 'null');
+  xGenMarkPlan_(ctx);
+  var posts = JSON.parse(xCompareWorkGet_(key + '.posts') || '[]');
+  var edit = xEditWeek_(ctx, posts, null);
+  xCompareWorkSet_(key + '.edited', JSON.stringify(edit.posts));
+  xCompareWorkSet_(key + '.edit', JSON.stringify({
+    replaced: edit.replaced, shortage: edit.shortage, noMaterial: edit.noMaterial, skipped: edit.skipped
+  }));
+}
+
+/** 段階4：目安・AIの比較・書き出し */
+function xCompareStepJudge_() {
+  var parts = xReadRuleParts_();
+  var ctxB = xCompareCtx_(X_COMPARE_SIDES[1]);
+  var d = {};
+  X_COMPARE_SIDES.forEach(function (s) {
+    var k = s.key;
+    d[k] = {
+      side: s,
+      posts: xBySlot_(JSON.parse(xCompareWorkGet_(k + '.edited') || xCompareWorkGet_(k + '.posts') || '[]'), 7),
+      plan: JSON.parse(xCompareWorkGet_(k + '.plan') || 'null'),
+      unused: JSON.parse(xCompareWorkGet_(k + '.unused') || '[]'),
+      note: xCompareWorkGet_(k + '.note') || '',
+      assign: JSON.parse(xCompareWorkGet_(k + '.assign') || '{}'),
+      edit: JSON.parse(xCompareWorkGet_(k + '.edit') || '{}')
+    };
+    d[k].metrics = xCompareMetrics_(d[k].posts, parts.past);
+  });
+  var judge = xCompareJudge_(parts, d.A.posts, d.B.posts);
+  xWriteCompare_(ctxB, d, judge);
+}
+
+// ---------- 途中の結果の置き場（X_比較作業） ----------
+
+function xCompareWorkSheet_() {
+  var sh = xSheet_(X_COMPARE_WORK, ['項目', '値']);
+  try { sh.hideSheet(); } catch (e) { /* 隠せない環境では隠さない */ }
+  return sh;
+}
+function xCompareWorkReset_() {
+  var sh = xCompareWorkSheet_();
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).clearContent();
+}
+function xCompareWorkGet_(key) {
+  var sh = xCompareWorkSheet_();
+  if (sh.getLastRow() < 2) return '';
+  var v = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
+  for (var i = 0; i < v.length; i++) if (String(v[i][0]) === key) return String(v[i][1]);
+  return '';
+}
+function xCompareWorkSet_(key, value) {
+  var sh = xCompareWorkSheet_();
+  var n = sh.getLastRow() - 1;
+  if (n > 0) {
+    var v = sh.getRange(2, 1, n, 1).getValues();
+    for (var i = 0; i < v.length; i++) {
+      if (String(v[i][0]) === key) { sh.getRange(i + 2, 2).setValue(value); return; }
+    }
+  }
+  sh.getRange(sh.getLastRow() + 1, 1, 1, 2).setValues([[key, value]]);
+}
+
+/** 比較の予約（トリガー）を消す */
+function xCompareClearTriggers_() {
+  try {
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+      if (t.getHandlerFunction() === X_COMPARE_HANDLER) ScriptApp.deleteTrigger(t);
+    });
+  } catch (e) { /* トリガーが使えない環境では何もしない */ }
+}
+
+/** 比較シートの1行目に進み具合を出す */
+function xCompareStatus_(msg) {
+  var sh = xSheet_(X_COMPARE_SHEET, []);
+  if (xCompareWorkGet_('step') === 'gen' && msg.indexOf('始めました') >= 0) sh.clearContents();
+  sh.getRange(1, 1).setValue(msg);
+}
+
 function xFirstLine_(body) {
   var lines = String(body || '').split('\n').map(function (x) { return x.trim(); }).filter(String);
   return lines[0] || '';
@@ -5548,6 +5821,7 @@ function xCompareMetrics_(posts, pastText) {
     '冒頭がカギカッコの本': heads.filter(function (h) { return /^[「『]/.test(h); }).length,
     '書き出し5字が同じ組': sameHead,
     '締めが問いかけ（？）の本': tails.filter(function (t) { return /[？?]$/.test(t); }).length,
+    '締めが自己表明（〜したい・〜と思っています）の本': tails.filter(function (t) { return X_SELF_STATEMENT_END.test(t); }).length,
     '締めに「大切・大事・必要」がある本': tails.filter(function (t) { return /大切|大事|必要/.test(t); }).length,
     '締めどうしが似ている組': simPairs,
     '締めどうしの似ている度合い（平均）': pairN ? Math.round(simSum / pairN * 100) / 100 : 0,
@@ -5569,7 +5843,8 @@ function xCompareMetrics_(posts, pastText) {
 var X_COMPARE_HINTS = {
   '冒頭がカギカッコの本': '少ないほど冒頭がばらけている',
   '書き出し5字が同じ組': '少ないほど冒頭がばらけている',
-  '締めが問いかけ（？）の本': '多すぎると締めがそろう',
+  '締めが問いかけ（？）の本': '多すぎると締めがそろう（目安は週2本まで）',
+  '締めが自己表明（〜したい・〜と思っています）の本': '多すぎると締めがそろう（目安は週2本まで）',
   '締めに「大切・大事・必要」がある本': '多いほど教訓で締めている',
   '締めどうしが似ている組': '少ないほど結論がばらけている',
   '締めどうしの似ている度合い（平均）': '0に近いほど結論がばらけている',
@@ -5587,10 +5862,15 @@ var X_COMPARE_HINTS = {
  * AIによる比較。どちらが改修後かは伏せて、XとYで渡す。
  * @return {Object|null} 改修前/改修後に読み替えた結果
  */
-function xCompareJudge_(parts, postsOld, postsNew) {
-  var swap = Math.random() < 0.5;   // true なら X=改修後
-  var X = swap ? postsNew : postsOld;
-  var Y = swap ? postsOld : postsNew;
+
+/**
+ * AIによる比較。どちらが新しい方式かは伏せて、XとYで渡す。
+ * 7本の芯・読後感の振り分けもAIにさせる（今の方式には企画会議の芯が無いので、同じ物差しで数えるため）。
+ */
+function xCompareJudge_(parts, postsA, postsB) {
+  var swap = Math.random() < 0.5;   // true なら X=新しい方式（B）
+  var X = swap ? postsB : postsA;
+  var Y = swap ? postsA : postsB;
   var list = function (posts) {
     return posts.map(function (p, i) {
       return '## ' + (i + 1) + '本目\n' + (String(p['本文'] || '').trim() || '（空き）');
@@ -5600,15 +5880,17 @@ function xCompareJudge_(parts, postsOld, postsNew) {
   var system = [
     'あなたは、ある書き手のXの投稿案を比べる編集者です。',
     '同じ材料から、2つの方法（X と Y）で7本ずつ作りました。どちらが新しい方法かは伏せています。',
-    '先入観を持たず、次の5つの観点で比べてください。',
+    '先入観を持たず、比べてください。いちばん大事なのは「形式的に違うか」ではなく「実際に読んで面白いか」です。',
     '',
     '1. 文体：下の「文体ルール」に照らして、どちらがこの書き手らしいか',
-    '2. 結論の似通い：7本の結論・読後感が似ていないか。「過去の主張」と同じ結論に寄っていないか',
+    '2. 結論の似通い：7本の結論・読者に残る気づき・読後感が似ていないか。「過去の主張」と同じ結論に寄っていないか',
     '3. 根拠のない断定：他人の気持ち・一般論・未確認の成果を断定している箇所、',
     '   本人が言っていない因果関係や成果を付け加えている箇所を、本文から引用して挙げる',
     '   （本人の経験・本人の考え・本人の方針をはっきり書いているのは、根拠のない断定ではありません）',
-    '4. 冒頭と締め：7本の書き出しと締めに変化があるか',
+    '4. 冒頭と締め：7本の書き出しと締めに変化があるか。日常や人柄の本まで教訓や問いで締めていないか',
     '5. 編集の手間：本人がそのまま使うために直す必要がある箇所の数（1本ごと）',
+    '6. 面白さ：1本ごとに ◎（読んで止まる）／○（悪くない）／△（素通りする）。◎と○は、止まる一文を本文から引用',
+    '7. 芯と読後感：1本ごとに、芯を「主張・場面・問い・感情・観察」から1つ、読後感を一語で',
     '',
     '出力はJSONのみ。説明文やコードフェンスは付けないでください。',
     '{',
@@ -5617,125 +5899,182 @@ function xCompareJudge_(parts, postsOld, postsNew) {
     '  "根拠のない断定": {"X": [{"本": 1, "箇所": "引用", "種類": "他人の気持ち／一般論／未確認の成果／言っていない因果・成果"}], "Y": []},',
     '  "冒頭と締め": {"変化が大きい": "X か Y か 同じ", "理由": "…"},',
     '  "編集の手間": {"X": [0,0,0,0,0,0,0], "Y": [0,0,0,0,0,0,0], "理由": "…"},',
-    '  "総評": "どちらをどう良いと見るか。200字以内"',
+    '  "面白さ": {"X": [{"本": 1, "評価": "◎", "止まる一文": "引用"}], "Y": []},',
+    '  "芯": {"X": ["主張","場面","問い","感情","観察","主張","問い"], "Y": []},',
+    '  "読後感": {"X": ["しみじみ","…"], "Y": []},',
+    '  "総評": "どちらをどう良いと見るか。250字以内"',
     '}'
   ].join('\n');
 
   var user = [
-    '# 文体ルール（この書き手の書き方）',
-    parts.style,
-    '',
-    '# 過去の主張（これまでに何度も言ってきたこと）',
-    parts.past || '（なし）',
-    '',
-    '# X',
-    list(X),
-    '',
-    '# Y',
-    list(Y)
+    '# 文体ルール（この書き手の書き方）', parts.style, '',
+    '# 過去の主張（これまでに何度も言ってきたこと）', parts.past || '（なし）', '',
+    '# X', list(X), '', '# Y', list(Y)
   ].join('\n');
 
-  var res = xClaudeBatch_([{ system: system, userText: user, maxTokens: 16000, effort: 'high' }])[0];
+  var res = xClaudeBatch_([{ system: system, userText: user, maxTokens: 20000, effort: 'high' }])[0];
   if (!res || !res.ok) { Logger.log('AIによる比較に失敗: ' + ((res && res.error) || '不明')); return null; }
-
   var j;
   try { j = xParseJson_(res.text); } catch (e) { Logger.log('AIによる比較を読めませんでした: ' + e.message); return null; }
 
-  // X/Y を 改修前/改修後 に読み替える
+  var label = { A: X_COMPARE_SIDES[0].label, B: X_COMPARE_SIDES[1].label };
   var name = function (v) {
     v = String(v || '').trim();
-    if (v === 'X') return swap ? '改修後' : '改修前';
-    if (v === 'Y') return swap ? '改修前' : '改修後';
+    if (v === 'X') return swap ? label.B : label.A;
+    if (v === 'Y') return swap ? label.A : label.B;
     return v || '—';
   };
   var pick = function (o, k) { return (o || {})[k]; };
-  var asOldNew = function (o) {
-    return { old: pick(o, swap ? 'Y' : 'X'), neu: pick(o, swap ? 'X' : 'Y') };
-  };
-  var conc = j['結論の似通い'] || {};
-  var flags = asOldNew(j['根拠のない断定']);
-  var edits = asOldNew(j['編集の手間']);
+  var ab = function (o) { return { A: pick(o, swap ? 'Y' : 'X'), B: pick(o, swap ? 'X' : 'Y') }; };
   var sum = function (a) { return (a || []).reduce(function (n, x) { return n + (Number(x) || 0); }, 0); };
+  var conc = j['結論の似通い'] || {};
 
   return {
     style: { better: name(pick(j['文体'], 'より良い')), why: String(pick(j['文体'], '理由') || '') },
-    conclusion: {
-      fewer: name(conc['少ない']),
-      old: String(conc[swap ? 'Yの傾向' : 'Xの傾向'] || ''),
-      neu: String(conc[swap ? 'Xの傾向' : 'Yの傾向'] || '')
-    },
-    overclaim: { old: flags.old || [], neu: flags.neu || [] },
+    conclusion: { fewer: name(conc['少ない']), A: String(conc[swap ? 'Yの傾向' : 'Xの傾向'] || ''), B: String(conc[swap ? 'Xの傾向' : 'Yの傾向'] || '') },
+    overclaim: { A: ab(j['根拠のない断定']).A || [], B: ab(j['根拠のない断定']).B || [] },
     openClose: { more: name(pick(j['冒頭と締め'], '変化が大きい')), why: String(pick(j['冒頭と締め'], '理由') || '') },
-    edits: { old: sum(edits.old), neu: sum(edits.neu), why: String(pick(j['編集の手間'], '理由') || '') },
-    summary: String(j['総評'] || '').replace(/\bX\b/g, swap ? '改修後' : '改修前').replace(/\bY\b/g, swap ? '改修前' : '改修後')
+    edits: { A: sum(ab(j['編集の手間']).A), B: sum(ab(j['編集の手間']).B), why: String(pick(j['編集の手間'], '理由') || '') },
+    fun: { A: ab(j['面白さ']).A || [], B: ab(j['面白さ']).B || [] },
+    core: { A: ab(j['芯']).A || [], B: ab(j['芯']).B || [] },
+    feel: { A: ab(j['読後感']).A || [], B: ab(j['読後感']).B || [] },
+    summary: String(j['総評'] || '').replace(/\bX\b/g, swap ? label.B : label.A).replace(/\bY\b/g, swap ? label.A : label.B)
   };
 }
 
+/** 芯・読後感の一覧から、種類の数と最多の重なりを出す */
+function xCountKinds_(list) {
+  var c = {};
+  (list || []).forEach(function (x) { x = String(x || '').trim(); if (x) c[x] = (c[x] || 0) + 1; });
+  var keys = Object.keys(c);
+  var max = keys.reduce(function (m, k) { return Math.max(m, c[k]); }, 0);
+  return { kinds: keys.length, max: max, text: keys.map(function (k) { return k + c[k]; }).join('・'), count: c };
+}
+
+/** 今の方式の1本ぶんの企画（先に配ったもの＋企画会議の材料・主張） */
+function xCompareOldPlanText_(d, i) {
+  var a = d.assign || {};
+  var p = d.plan && d.plan[i];
+  return [
+    '型: ' + ((a.pattern || [])[i] || 'なし'),
+    '角度: ' + ((a.angle || [])[i] || ''),
+    '役割: ' + ((a.role || [])[i] || ''),
+    'カギカッコ: ' + (((a.quoteOk || [])[i]) ? '可' : '不可'),
+    p ? ('材料: ' + ((p.materials || []).map(function (m) { return m.no; }).join('+') || ('題材: ' + (p.subject || ''))) +
+      (p.claim ? '\n主張: ' + p.claim : '') + (p.plan ? '\n企画: ' + p.plan : '')) : '（企画会議なし）'
+  ].join('\n');
+}
+
+/** 新しい方式の1本ぶんの企画 */
+function xCompareNewPlanText_(d, i) {
+  var p = d.plan && d.plan[i];
+  if (!p || !p.newPlan) return '（企画会議が失敗し、今の方式で書いた）';
+  return [
+    '芯: ' + p.core,
+    p.quote ? '芯になる一文: 「' + p.quote + '」' : '',
+    '残るもの: ' + (p.takeaway || 'なし'),
+    '読後感: ' + (p.feel || ''),
+    '締め方: ' + (p.close || ''),
+    '型: ' + (p.pattern || 'なし') + ' / 角度: ' + (p.angle || 'なし') + ' / 役割: ' + (p.role || ''),
+    '材料: ' + ((p.materials || []).map(function (m) { return m.no; }).join('+') || ('題材: ' + (p.subject || ''))),
+    p.plan ? '企画: ' + p.plan : '',
+    p.claim ? '主張: ' + p.claim : '',
+    (p.issues || []).length ? '注意: ' + p.issues.join('／') : ''
+  ].filter(String).join('\n');
+}
+
 /** 比較結果をシートに書く */
-function xWriteCompare_(ctx, postsOld, postsNew, mOld, mNew, judge) {
+function xWriteCompare_(ctx, d, judge) {
   var sh = xSheet_(X_COMPARE_SHEET, []);
   sh.clearContents();
   var W = 7;
   var pad = function (row) { while (row.length < W) row.push(''); return row; };
   var out = [];
+  var A = d.A, B = d.B;
+  var LA = A.side.label, LB = B.side.label;
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
 
-  out.push(pad(['改修前後の比較（' + now + '）']));
-  out.push(pad(['同じ材料（今週の返信・今週あったこと・週の傾向・型の割り当て）から、2つの方式で7本ずつ作りました。週の編集・作り直しはしていません。']));
-  out.push(pad(['改修前＝文体ルールを全部「文体」として渡す／改修後＝文体・軸・過去の主張を分けて渡し、言い切りの基準を整理']));
+  out.push(pad(['企画の方式の比較（' + now + '）']));
+  out.push(pad(['同じ材料（今週の返信・今週あったこと・週の傾向）から、2つの方式で7本ずつ作り、両方とも週の編集まで通しました。文体の分離はどちらも同じです。']));
+  out.push(pad([LA + '＝型・角度・役割を順に配る／' + LB + '＝企画会議が材料を見て、芯・締め方・型・角度・役割を選ぶ']));
   out.push(pad(['']));
 
-  // 1. 本文を並べる
-  out.push(pad(['■ 1. 本文', '長さ・分類', '改修前 1行目', '改修後 1行目', '改修前 本文', '改修後 本文', '']));
-  for (var i = 0; i < postsNew.length; i++) {
+  // 1. 企画
+  out.push(pad(['■ 1. 7本の企画', '長さ・分類', LA, LB]));
+  for (var i = 0; i < 7; i++) {
     var slot = ctx.plan[i];
-    var lab = slot ? ((slot.len || '') + (slot.cat ? '・' + slot.cat : '')) : '';
-    out.push(pad([(i + 1) + '本目', lab,
-      xFirstLine_(postsOld[i]['本文']), xFirstLine_(postsNew[i]['本文']),
-      String(postsOld[i]['本文'] || ''), String(postsNew[i]['本文'] || '')]));
+    out.push(pad([(i + 1) + '本目', slot ? ((slot.len || '') + (slot.cat ? '・' + slot.cat : '')) : '',
+      xCompareOldPlanText_(A, i), xCompareNewPlanText_(B, i)]));
   }
-  out.push(pad(['']));
-  out.push(pad(['■ 締めの一文', '', '改修前', '改修後']));
-  for (var t = 0; t < postsNew.length; t++) {
-    out.push(pad([(t + 1) + '本目', '', xLastLine_(postsOld[t]['本文']), xLastLine_(postsNew[t]['本文'])]));
-  }
+  out.push(pad(['', '', A.note || '', B.note || '']));
   out.push(pad(['']));
 
-  // 2. 目安
-  out.push(pad(['■ 2. 機械で数えた目安', '', '改修前', '改修後', '見方']));
-  Object.keys(mNew).forEach(function (k) {
-    out.push(pad([k, '', mOld[k], mNew[k], X_COMPARE_HINTS[k] || '']));
-  });
+  // 2. 本文
+  out.push(pad(['■ 2. 本文（週の編集のあと）', '', LA + ' 1行目', LB + ' 1行目', LA + ' 本文', LB + ' 本文', '編集メモ（今／新）']));
+  for (var k = 0; k < 7; k++) {
+    var pa = A.posts[k] || {}, pb = B.posts[k] || {};
+    out.push(pad([(k + 1) + '本目', '', xFirstLine_(pa['本文']), xFirstLine_(pb['本文']),
+      String(pa['本文'] || ''), String(pb['本文'] || ''), (pa._note || '') + '\n／\n' + (pb._note || '')]));
+  }
+  out.push(pad(['']));
+  out.push(pad(['■ 締めの一文', '', LA, LB]));
+  for (var t = 0; t < 7; t++) out.push(pad([(t + 1) + '本目', '', xLastLine_((A.posts[t] || {})['本文']), xLastLine_((B.posts[t] || {})['本文'])]));
   out.push(pad(['']));
 
-  // 3. AIの比較
-  out.push(pad(['■ 3. AIによる比較（どちらが改修後かを伏せて評価）', '', '', '', '']));
+  // 3. 採用しなかった材料
+  out.push(pad(['■ 3. 採用しなかった材料', '', LA, LB]));
+  var unusedText = function (u) {
+    return (u || []).map(function (x) { return '[' + x.no + '] ' + x.reason + '\n  ' + String(x.text || '').slice(0, 50); }).join('\n') || '（なし）';
+  };
+  out.push(pad(['', '', unusedText(A.unused), unusedText(B.unused)]));
+  out.push(pad(['']));
+
+  // 4. 機械の目安
+  out.push(pad(['■ 4. 機械で数えた目安', '', LA, LB, '見方']));
+  Object.keys(B.metrics).forEach(function (key) { out.push(pad([key, '', A.metrics[key], B.metrics[key], X_COMPARE_HINTS[key] || ''])); });
+  var ed = function (e) { return '作り直し ' + (e.replaced || 0) + '本' + ((e.shortage || []).length ? '・空き ' + e.shortage.length : '') + (e.skipped ? '（' + e.skipped + '）' : ''); };
+  out.push(pad(['週の編集', '', ed(A.edit), ed(B.edit), '作り直しが多いほど、最初の企画が重なっていた']));
+  out.push(pad(['']));
+
+  // 5. AIの比較
+  out.push(pad(['■ 5. AIによる比較（どちらが新しい方式かを伏せて評価）']));
   if (judge) {
-    out.push(pad(['私らしい文体が保たれているか', 'より良い: ' + judge.style.better, judge.style.why]));
-    out.push(pad(['似た結論に寄る傾向が減ったか', '少ない: ' + judge.conclusion.fewer, '改修前: ' + judge.conclusion.old, '改修後: ' + judge.conclusion.neu]));
-    out.push(pad(['根拠のない断定が増えていないか', '改修前 ' + judge.overclaim.old.length + '箇所／改修後 ' + judge.overclaim.neu.length + '箇所',
-      xFormatClaims_(judge.overclaim.old), xFormatClaims_(judge.overclaim.neu)]));
-    out.push(pad(['冒頭や締めに変化が出たか', '変化が大きい: ' + judge.openClose.more, judge.openClose.why]));
-    out.push(pad(['編集する負担が増えていないか', '直す箇所 改修前 ' + judge.edits.old + '／改修後 ' + judge.edits.neu, judge.edits.why]));
-    out.push(pad(['総評', judge.summary]));
+    var cA = xCountKinds_(judge.core.A), cB = xCountKinds_(judge.core.B);
+    var fA = xCountKinds_(judge.feel.A), fB = xCountKinds_(judge.feel.B);
+    var star = function (list) { return (list || []).filter(function (x) { return x['評価'] === '◎'; }).length; };
+    var funText = function (list) {
+      return (list || []).filter(function (x) { return x['評価'] === '◎' || x['評価'] === '○'; })
+        .map(function (x) { return x['本'] + '本目 ' + x['評価'] + '「' + String(x['止まる一文'] || '').slice(0, 40) + '」'; }).join('\n');
+    };
+    out.push(pad(['観点', '', LA, LB, 'AIの見立て']));
+    out.push(pad(['実際に読んで面白いか（◎の本数）', '', star(judge.fun.A), star(judge.fun.B), '◎＝読んで止まる']));
+    out.push(pad(['止まる一文', '', funText(judge.fun.A), funText(judge.fun.B)]));
+    out.push(pad(['主張ばかりになっていないか（主張の本数）', '', cA.count['主張'] || 0, cB.count['主張'] || 0, '上限は設けていない。材料しだい']));
+    out.push(pad(['芯の内訳（種類の数）', '', cA.text + '（' + cA.kinds + '種類）', cB.text + '（' + cB.kinds + '種類）', '3種類以上は努力目標']));
+    out.push(pad(['読後感の重なり（同じ読後感の最多）', '', fA.text + '（最多' + fA.max + '）', fB.text + '（最多' + fB.max + '）', '目安は同じ読後感が週2本まで']));
+    out.push(pad(['私らしい文体が保たれているか', '', '', '', 'より良い: ' + judge.style.better + '\n' + judge.style.why]));
+    out.push(pad(['似た結論に寄る傾向', '', judge.conclusion.A, judge.conclusion.B, '少ない: ' + judge.conclusion.fewer]));
+    out.push(pad(['根拠のない断定', '', judge.overclaim.A.length + '箇所\n' + xFormatClaims_(judge.overclaim.A), judge.overclaim.B.length + '箇所\n' + xFormatClaims_(judge.overclaim.B)]));
+    out.push(pad(['冒頭や締めの変化', '', '', '', '変化が大きい: ' + judge.openClose.more + '\n' + judge.openClose.why]));
+    out.push(pad(['編集の負担（直す箇所の合計）', '', judge.edits.A, judge.edits.B, judge.edits.why]));
+    out.push(pad(['総評', '', '', '', judge.summary]));
   } else {
-    out.push(pad(['（時間の都合で省略しました。もう一度押すとやり直せます）']));
+    out.push(pad(['（AIによる比較に失敗しました。もう一度押すとやり直せます）']));
   }
   out.push(pad(['']));
 
-  // 4. 本人の判定
-  out.push(pad(['■ 4. あなたの判定（ここに書き込んでください）', '', '改修前', '改修後', 'メモ']));
-  ['私らしい文体が保たれているか', '似た結論に寄る傾向が減ったか', '根拠のない断定が増えていないか',
-   '冒頭や締めに変化が出たか', '私が編集する負担が増えていないか', '「おっ」と思った本の数'].forEach(function (k) {
-    out.push(pad([k, '', '', '', '']));
-  });
+  // 6. 本人の判定
+  out.push(pad(['■ 6. あなたの判定（ここに書き込んでください）', '', LA, LB, 'メモ']));
+  ['実際に読んで面白いと思えた本の数', '私らしい文体が保たれているか', '似た結論に寄る傾向が減ったか', '根拠のない断定が増えていないか',
+   '冒頭や締めに変化が出たか', '私が編集する負担が増えていないか'].forEach(function (key) { out.push(pad([key, '', '', '', ''])); });
 
   sh.getRange(1, 1, out.length, W).setValues(out);
   sh.setColumnWidth(1, 200);
-  sh.setColumnWidth(3, 260);
-  sh.setColumnWidth(4, 260);
-  sh.setColumnWidth(5, 420);
-  sh.setColumnWidth(6, 420);
+  sh.setColumnWidth(3, 320);
+  sh.setColumnWidth(4, 320);
+  sh.setColumnWidth(5, 380);
+  sh.setColumnWidth(6, 380);
+  sh.setColumnWidth(7, 260);
   sh.getRange(1, 1, out.length, W).setWrap(true).setVerticalAlignment('top');
 }
 
@@ -5744,4 +6083,501 @@ function xFormatClaims_(list) {
   return (list || []).map(function (c) {
     return (c['本'] ? c['本'] + '本目 ' : '') + '「' + String(c['箇所'] || '').slice(0, 50) + '」（' + (c['種類'] || '') + '）';
   }).join('\n');
+}
+
+// ===== 27_XPlanCore.js =====
+
+/**
+ * 27_XPlanCore.js
+ * 企画会議（材料に合わせる方式）
+ *
+ * 以前の方式は、型・角度・役割を「何本目か」の順に先に配っていた。
+ * 材料を見ずに配るので、材料と合わない形に押し込まれ、
+ * 日常や人柄の投稿まで教訓や問いかけで締めることになっていた。
+ *
+ * この方式では、企画会議が材料を見てから、1本ずつ次を決める。
+ *   芯（主張・場面・問い・感情・観察）／芯になる一文／読者に残るもの／読後感／締め方
+ *   型・角度（必要なときだけ。「なし」可）／役割（一覧から）
+ *
+ * 目指すのは「形式的に違う7本」ではなく「実際に読んで面白いと思える7本」。
+ * 数をそろえることより、材料の面白さと本人らしさを優先する。
+ *
+ * 守ること
+ *   ・場面・感情は、材料にその場面や気持ちが書かれているときだけ（創作しない）
+ *   ・芯の種類を3種類以上に散らすのは努力目標。足りないときに場面や感情を作らない
+ *   ・主張の本の数に上限は無い（材料しだい）
+ */
+
+/** 企画会議の依頼（材料に合わせる方式） */
+function xPlanRequestNew_(ctx) {
+  return {
+    system: xPlanSystemNew_(ctx.count, ctx.mode),
+    userText: ctx.context + '\n' + xPlanMaterialText_(ctx),
+    maxTokens: 20000,
+    effort: 'high'
+  };
+}
+
+/** 企画会議に渡す材料・枠・選べるもの */
+function xPlanMaterialText_(ctx) {
+  var replies = ctx.replyList || [];
+  var notes = ctx.noteList || [];
+  var count = ctx.count;
+
+  var lines = [];
+  lines.push('# 今週の材料');
+  lines.push('## 返信・引用');
+  lines.push(replies.length ? xFormatReplies_(replies) : '（なし）');
+  lines.push('## 今週あったこと（本人のメモ）');
+  lines.push(notes.length ? notes.map(function (n) { return '- [' + n.no + '] ' + n.text; }).join('\n') : '（なし）');
+  lines.push('');
+
+  lines.push('# 枠（' + count + '本。長さと分類は本人が決めたもの）');
+  for (var i = 0; i < count; i++) {
+    var slot = ctx.plan[i];
+    var line = '・' + (i + 1) + '本目';
+    if (slot) {
+      line += '（' + slot.date + '）: ' + (slot.len || '長文');
+      if (slot.cat) line += ' / 分類=' + slot.cat;
+      if (slot.memo) line += ' / メモ=' + slot.memo;
+    } else {
+      line += ': ' + xLayerPlan_(count)[i];
+    }
+    lines.push(line);
+  }
+  lines.push('');
+
+  lines.push('# 選べるもの（必要なときだけ。合わなければ「なし」）');
+  lines.push('## 型カタログ');
+  var pats = [];
+  try { pats = xReadPatterns_(); } catch (e) { pats = []; }
+  lines.push(pats.length ? pats.map(function (p) {
+    return '・' + p.name + '：' + String(p.frame).replace(/\n/g, ' ') + '（向く分類: ' + p.cats + '）';
+  }).join('\n') : '（なし）');
+  lines.push('## 角度');
+  lines.push(X_ANGLES.map(function (a, k) { return '・' + (k + 1) + '. ' + a; }).join('\n'));
+  lines.push('## 役割');
+  var roles = xSettingLines_(ctx.setting || {}, '週の役割配分', X_DEFAULT_ROLES)
+    .map(function (l) { return l.replace(/\s*[:：]\s*[0-9０-９]+\s*本?$/, '').trim(); });
+  lines.push(roles.map(function (r) { return '・' + r; }).join('\n'));
+  lines.push('');
+
+  if (ctx.pastThemes && ctx.pastThemes.length) {
+    lines.push('# すでに書いたテーマ（同じ結論に戻らない）');
+    ctx.pastThemes.slice(0, 20).forEach(function (t) { lines.push('  ・' + t); });
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/** 企画会議の指示（材料に合わせる方式） */
+function xPlanSystemNew_(count, mode) {
+  var claimRule = mode === X_GEN_MODE.NEW
+    ? '・主張は、元の返信に無い因果関係や成果を足さない（本人の考えははっきり書いてよい）。'
+    : '・主張は、元の返信より強く言い切らない。';
+  return [
+    'あなたは、ある書き手のXアカウントの編集者です。',
+    'これから' + count + '本の投稿を書く前に、1週間ぶんの企画を決めます。文章はまだ書きません。',
+    '目指すのは「形式的に違う' + count + '本」ではなく、「実際に読んで面白いと思える' + count + '本」です。',
+    '数をそろえることより、材料の面白さと、この書き手らしさを優先してください。',
+    '',
+    '■ 1本ごとに決めること',
+    '・材料：返信・引用（R番号）、今週あったこと（M番号）。同じ材料は1本だけ。',
+    '  同じ出来事について書いた返信が複数あれば、1本の材料にまとめる。',
+    '・芯：次から1つ',
+    X_CORE_TYPES.map(function (c) { return '    ' + c.name + '…' + c.desc; }).join('\n'),
+    '・芯になる一文：材料の中から、この本の引っかかりになる本人の言葉や具体を1つ、そのまま抜き出す（材料が無い枠は空）',
+    '・読者に残るもの：気づきを1文。場面・感情・観察の本は「なし」でよい',
+    '・読後感：一語（例：くすっと／しみじみ／ひやっと／背筋が伸びる／もやっと／ほっとする）',
+    '・締め方：芯に合わせる（' + X_CORE_TYPES.map(function (c) { return c.name + '→' + c.close.split('。')[0]; }).join('／') + '）',
+    '・型：型カタログから、材料に合うものがあれば1つ。合わなければ「なし」',
+    '・角度：角度の一覧から、合うものがあれば番号を1つ。合わなければ「なし」',
+    '・役割：役割の一覧から、材料に合うものを1つ',
+    '・冒頭カギカッコ：カギカッコで誰かの言葉から始めるか。材料にその言葉があるときだけ true',
+    '・企画：30字以内',
+    '・主張：芯が主張の本だけ1文。ほかは空でよい',
+    '',
+    '■ 1週間で重ならないようにすること',
+    '・同じ主張・同じ気づき（読者に残るもの）は週1本。言い方が違っても、言っていることが同じなら同じとみなす。',
+    '  （例：「社長の当たり前の判断を言葉にする」と「判断基準を現場に渡す」は同じ気づき）',
+    '・同じ読後感は週' + X_WEEK_LIMITS.feel + '本まで。',
+    '・問いで締める本は週' + X_WEEK_LIMITS.question + '本まで。',
+    '・自己表明（〜したい／〜と思っています）で締める本は週' + X_WEEK_LIMITS.selfStatement + '本まで。',
+    '・カギカッコ始まりは週' + X_WEEK_LIMITS.quote + '本まで。',
+    '・芯の種類は、材料が許すなら3種類以上に散らしてください（努力目標）。',
+    '  種類を増やすために、場面・感情・エピソードを作らないでください。',
+    '・主張の本の数に上限はありません。材料が主張に向いているなら主張で構いません。',
+    '・日常・人柄の本、場面・感情・観察の本は、教訓や問いかけで締める必要はありません。',
+    '・業務改善・仕組み化の話は週' + X_SYSTEM_TOPIC_MAX + '本まで。',
+    '',
+    '■ 材料の扱い',
+    '・事業の方向性シートは軸の確認だけに使います。そこからテーマを作らないでください。',
+    '・発信の軸・価値観は企画の方向性の判断に使います。毎回そこに着地させないでください。',
+    '・「これまでに言ってきた主張」と同じ結論に着地する企画にしないでください。',
+    '・材料が足りない枠は、材料を空にして "題材" を1つ決めてください（' + X_SUBJECTS.join('・') + '）。',
+    '  その枠の芯は、主張・問い・観察から選んでください（場面・感情は選ばない）。',
+    '・方針の表明（〜したい）を芯にするのは、題材が「これからやりたい仕事」の本だけです。',
+    '・実績、相談者・お客様の発言、確認できない数字を前提にしないでください。',
+    claimRule,
+    '',
+    '■ 採用しなかった材料',
+    '・候補の材料のうち、どの本にも使わなかったものは、番号と理由（20字以内）を "使わなかった材料" に入れてください。',
+    '',
+    '■ 出力（JSONのみ。説明やコードフェンスは付けない）',
+    '{"枠": [',
+    '  {"本": 1, "材料": ["R2", "R3"], "題材": "", "芯": "場面", "芯になる一文": "材料からそのまま",',
+    '   "読者に残るもの": "なし", "読後感": "しみじみ", "締め方": "場面で止める", "型": "なし", "角度": "なし",',
+    '   "役割": "人柄や日常の気づき", "冒頭カギカッコ": false, "企画": "30字以内", "主張": ""}',
+    '],',
+    ' "使わなかった材料": [{"材料": "R5", "理由": "R1と同じ論点"}]}',
+    '本の番号は 1 から ' + count + ' まで、すべての枠を入れてください。'
+  ].join('\n');
+}
+
+/**
+ * 企画会議の応答を読む（材料に合わせる方式）。失敗したら null。
+ * 数えられる基準はプログラムで確かめ、超えていればその枠だけ企画をやり直させる（1回まで）。
+ */
+function xPlanParseNew_(ctx, res) {
+  if (!res || !res.ok) {
+    Logger.log('週の企画に失敗（以前の方式で書きます）: ' + ((res && res.error) || '不明'));
+    return null;
+  }
+  var json;
+  try { json = xParseJson_(res.text); } catch (e) {
+    Logger.log('週の企画の返答を読めませんでした（以前の方式で書きます）: ' + e.message);
+    return null;
+  }
+
+  var plan = xPlanFromJson_(ctx, json, null);
+  if (!plan) {
+    Logger.log('週の企画が空でした（以前の方式で書きます）');
+    return null;
+  }
+
+  // 数えられる基準を確かめ、超えた枠だけやり直す（時間があれば1回）
+  var v = xPlanCheck_(ctx, plan);
+  if (v.length && Date.now() - ctx.started < X_PLAN_FIX_LIMIT_MS) {
+    var fixed = xPlanFix_(ctx, plan, v, json);
+    if (fixed) {
+      plan = fixed;
+      v = xPlanCheck_(ctx, plan);
+    }
+  }
+  plan.forEach(function (p) { p.issues = []; });
+  v.forEach(function (x) { if (plan[x.idx]) plan[x.idx].issues.push(x.reason); });
+
+  xPlanFinishUnused_(ctx, plan);
+  Logger.log('週の企画（材料に合わせる）: ' + plan.map(function (p, i) {
+    return (i + 1) + '本目=' + p.core + '/' + (p.materials.length ? p.materials.map(function (m) { return m.no; }).join('+') : '題材:' + p.subject) +
+      '/' + (p.feel || '');
+  }).join(' / ') + (v.length ? '（残った注意 ' + v.length + '件）' : ''));
+  return plan;
+}
+
+/** 企画のやり直しを始めてよい経過時間 */
+var X_PLAN_FIX_LIMIT_MS = 1.8 * 60 * 1000;
+
+/**
+ * JSON を枠ごとの企画にする。
+ * @param {Object} base やり直しのとき、元の企画（やり直さない枠はこれを残す）
+ */
+function xPlanFromJson_(ctx, json, base) {
+  var replies = ctx.replyList || [];
+  var notes = ctx.noteList || [];
+  var count = ctx.count;
+  var find = function (key) {
+    var k = String(key || '').trim();
+    var m = k.match(/^([RM])\s*(\d+)$/i);
+    if (!m) return null;
+    var list = m[1].toUpperCase() === 'R' ? replies : notes;
+    return list.filter(function (x) { return x.no === m[1].toUpperCase() + m[2]; })[0] || null;
+  };
+  var pats = [];
+  try { pats = xReadPatterns_(); } catch (e) { pats = []; }
+  var patNames = pats.map(function (p) { return p.name; });
+  var cores = X_CORE_TYPES.map(function (c) { return c.name; });
+
+  var out = [];
+  for (var j = 0; j < count; j++) out.push(base ? base[j] : null);
+  var dropped = [];
+
+  // やり直しのときは、やり直さない枠の材料を「使用済み」にしておく
+  var usedMaterial = {};
+  var redo = {};
+  (json['枠'] || []).forEach(function (f) { var i = parseInt(f['本'], 10) - 1; if (i >= 0) redo[i] = true; });
+  if (base) out.forEach(function (p, i) { if (p && !redo[i]) p.materials.forEach(function (m) { usedMaterial[m.no] = true; }); });
+
+  (json['枠'] || []).forEach(function (f) {
+    var idx = parseInt(f['本'], 10) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= count) return;
+    if (!base && out[idx]) return;
+    var mats = [];
+    (f['材料'] || []).forEach(function (k) {
+      var m = find(k);
+      if (!m) return;
+      if (usedMaterial[m.no]) { dropped.push({ no: m.no, reason: '別の枠と重なったため外した' }); return; }
+      usedMaterial[m.no] = true;
+      mats.push(m);
+    });
+    var core = String(f['芯'] || '').trim();
+    if (cores.indexOf(core) < 0) core = mats.length ? '主張' : '観察';
+    var pat = String(f['型'] || '').trim();
+    var ang = parseInt(String(f['角度'] || '').replace(/[^0-9]/g, ''), 10);
+    out[idx] = {
+      newPlan: true,
+      materials: mats,
+      subject: xNormSubject_(f['題材']),
+      core: core,
+      quote: String(f['芯になる一文'] || '').trim(),
+      takeaway: String(f['読者に残るもの'] || '').trim(),
+      feel: String(f['読後感'] || '').trim(),
+      close: String(f['締め方'] || '').trim(),
+      pattern: patNames.indexOf(pat) >= 0 ? pat : '',
+      angle: (ang >= 1 && ang <= X_ANGLES.length) ? ang : 0,
+      role: String(f['役割'] || '').trim(),
+      quoteStart: f['冒頭カギカッコ'] === true || String(f['冒頭カギカッコ']).toLowerCase() === 'true',
+      plan: String(f['企画'] || ''),
+      claim: String(f['主張'] || '')
+    };
+  });
+
+  if (!out.some(Boolean)) return null;
+
+  // 企画が無い枠は、題材だけ決めて観察で埋める
+  var pseudo = [];
+  out.forEach(function (p, i) {
+    if (!p) out[i] = p = { newPlan: true, materials: [], subject: '', core: '観察', quote: '', takeaway: '', feel: '', close: '', pattern: '', angle: 0, role: '', quoteStart: false, plan: '', claim: '' };
+    if (!p.materials.length && !p.subject) pseudo.push({ idx: i, material: null, subject: '' });
+  });
+  if (pseudo.length) {
+    var usedPosts = out.map(function (p, i) { return { _idx: i, '題材': p.subject }; }).filter(function (p) { return p['題材']; });
+    xAssignSubjects_(pseudo, usedPosts);
+    pseudo.forEach(function (r) { out[r.idx].subject = r.subject; });
+  }
+
+  out.unusedFromModel = (json['使わなかった材料'] || []).map(function (u) {
+    return { no: String(u['材料'] || '').trim(), reason: String(u['理由'] || '').trim() };
+  }).filter(function (u) { return u.no; });
+  out.droppedByCode = dropped;
+  return out;
+}
+
+/**
+ * 数えられる基準を確かめる。超えた枠を返す（後ろの枠から外す）。
+ * カギカッコ始まりの超過は、やり直さずにプログラムで外す。
+ * @return {Array<Object>} [{idx, reason}]
+ */
+function xPlanCheck_(ctx, plan) {
+  var v = [];
+  var add = function (i, r) { v.push({ idx: i, reason: r }); };
+
+  // 材料に無い場面・感情
+  plan.forEach(function (p, i) {
+    if ((p.core === '場面' || p.core === '感情') && !p.materials.length) {
+      add(i, '材料が無いのに芯が' + p.core + '（場面・感情は材料にあるときだけ）');
+    } else if ((p.core === '場面' || p.core === '感情') && !xQuoteInMaterial_(p.quote, p.materials)) {
+      add(i, '芯になる一文が材料に見当たらない（' + p.core + 'は材料にある場面・気持ちだけ）');
+    }
+  });
+
+  // 同じ気づき・同じ主張
+  var said = [];
+  plan.forEach(function (p, i) {
+    var t = [p.takeaway, p.claim].filter(function (x) { return x && x !== 'なし'; }).join(' ');
+    if (!t) return;
+    for (var k = 0; k < said.length; k++) {
+      if (xBigramSim_(t, said[k].t) >= 0.45) { add(i, (said[k].i + 1) + '本目と同じ気づき・主張'); return; }
+    }
+    said.push({ i: i, t: t });
+  });
+
+  // 週の上限
+  var countUp = function (test, limit, label) {
+    var n = 0;
+    plan.forEach(function (p, i) { if (test(p) && ++n > limit) add(i, label + 'が週' + limit + '本を超えた'); });
+  };
+  var feels = {};
+  plan.forEach(function (p, i) {
+    var f = String(p.feel || '').trim();
+    if (!f) return;
+    feels[f] = (feels[f] || 0) + 1;
+    if (feels[f] > X_WEEK_LIMITS.feel) add(i, '読後感「' + f + '」が週' + X_WEEK_LIMITS.feel + '本を超えた');
+  });
+  countUp(function (p) { return p.core === '問い' || /問い/.test(p.close); }, X_WEEK_LIMITS.question, '問いで締める本');
+  countUp(function (p) { return /自己表明|したい|思って|方針/.test(p.close); }, X_WEEK_LIMITS.selfStatement, '自己表明で締める本');
+
+  // カギカッコ始まり：材料の無い枠は外し、超えた分も外す（やり直さない）
+  var q = 0;
+  plan.forEach(function (p) {
+    if (p.quoteStart && (!p.materials.length || ++q > X_WEEK_LIMITS.quote)) p.quoteStart = false;
+  });
+
+  // 同じ枠の重複は1つにする
+  var seen = {};
+  return v.filter(function (x) { var k = x.idx + ':' + x.reason; if (seen[k]) return false; seen[k] = true; return true; });
+}
+
+/** 芯になる一文が、材料の中にあるか（言い回しの小さな違いは許す） */
+function xQuoteInMaterial_(quote, mats) {
+  var norm = function (t) { return String(t || '').replace(/[\s、。！？!?「」『』（）()・…〜~ー\-]/g, ''); };
+  var q = norm(quote);
+  if (q.length < 4) return false;
+  var src = norm((mats || []).map(function (m) { return m.text; }).join(''));
+  if (src.indexOf(q) >= 0) return true;
+  var hit = 0, total = 0;
+  for (var i = 0; i < q.length - 1; i++) { total++; if (src.indexOf(q.substr(i, 2)) >= 0) hit++; }
+  return total > 0 && hit / total >= 0.8;
+}
+
+/** 基準を超えた枠だけ、企画をやり直させる（1回） */
+function xPlanFix_(ctx, plan, violations, firstJson) {
+  var idxs = [];
+  violations.forEach(function (x) { if (idxs.indexOf(x.idx) < 0) idxs.push(x.idx); });
+
+  var lines = [];
+  lines.push('# いまの企画');
+  plan.forEach(function (p, i) {
+    lines.push('・' + (i + 1) + '本目: 芯=' + p.core + ' / 材料=' + (p.materials.map(function (m) { return m.no; }).join('+') || 'なし（題材:' + p.subject + '）') +
+      ' / 読者に残るもの=' + (p.takeaway || 'なし') + ' / 読後感=' + p.feel + ' / 締め方=' + p.close + ' / 企画=' + p.plan);
+  });
+  lines.push('');
+  lines.push('# 基準に合わなかったところ');
+  violations.forEach(function (x) { lines.push('・' + (x.idx + 1) + '本目: ' + x.reason); });
+  lines.push('');
+  lines.push('# 依頼');
+  lines.push('次の枠だけ、企画をやり直してください: ' + idxs.map(function (i) { return (i + 1) + '本目'; }).join('・'));
+  lines.push('ほかの枠は変えません。ほかの枠が使っている材料は使わないでください。');
+  lines.push('材料が足りずに直せない場合は、芯を主張・問い・観察にして材料を空にし、題材を決めてください。場面や感情を作らないでください。');
+  lines.push('出力の形は同じです（"枠" にはやり直した枠だけを入れる）。');
+
+  var r = xClaudeBatch_([{
+    system: xPlanSystemNew_(ctx.count, ctx.mode),
+    userText: ctx.context + '\n' + xPlanMaterialText_(ctx) + '\n' + lines.join('\n'),
+    maxTokens: 12000,
+    effort: 'medium'
+  }])[0];
+  if (!r || !r.ok) return null;
+  var json;
+  try { json = xParseJson_(r.text); } catch (e) { return null; }
+
+  // やり直しを頼んだ枠だけ差し替える
+  json['枠'] = (json['枠'] || []).filter(function (f) { return idxs.indexOf(parseInt(f['本'], 10) - 1) >= 0; });
+  if (!json['枠'].length) return null;
+  var merged = xPlanFromJson_(ctx, json, plan);
+  if (!merged) return null;
+  merged.unusedFromModel = (plan.unusedFromModel || []).concat(merged.unusedFromModel || []);
+  merged.droppedByCode = (plan.droppedByCode || []).concat(merged.droppedByCode || []);
+  Logger.log('企画のやり直し: ' + idxs.map(function (i) { return (i + 1) + '本目'; }).join('・'));
+  return merged;
+}
+
+/**
+ * 採用しなかった材料をまとめる。
+ * 企画会議が挙げたもの＋プログラムが外したもの＋どこにも出てこなかったもの。
+ */
+function xPlanFinishUnused_(ctx, plan) {
+  var used = {};
+  plan.forEach(function (p) { p.materials.forEach(function (m) { used[m.no] = true; }); });
+  var all = (ctx.replyList || []).concat(ctx.noteList || []);
+  var reasons = {};
+  (plan.droppedByCode || []).forEach(function (u) { if (!used[u.no]) reasons[u.no] = u.reason; });
+  (plan.unusedFromModel || []).forEach(function (u) { if (!used[u.no] && u.reason) reasons[u.no] = u.reason; });
+  ctx.planUnused = all.filter(function (m) { return !used[m.no]; }).map(function (m) {
+    return { no: m.no, text: m.text, reason: reasons[m.no] || '（企画会議で言及なし）' };
+  });
+  var kinds = {};
+  plan.forEach(function (p) { kinds[p.core] = true; });
+  ctx.planNote = Object.keys(kinds).length < 3
+    ? '芯の種類は' + Object.keys(kinds).length + '種類（努力目標の3種類に届かず。材料の都合）'
+    : '芯の種類は' + Object.keys(kinds).length + '種類';
+}
+
+/**
+ * 執筆の依頼に添える「この回の企画」（材料に合わせる方式）。
+ * 先に配っていた型・角度・役割の代わりに、企画会議が決めた中身を渡す。
+ */
+function xPlanTextNew_(weekPlan, from, n) {
+  var pats = [];
+  try { pats = xReadPatterns_(); } catch (e) { pats = []; }
+  var coreOf = function (name) { return X_CORE_TYPES.filter(function (c) { return c.name === name; })[0] || X_CORE_TYPES[0]; };
+
+  var parts = [];
+  parts.push('');
+  parts.push('## この回の企画（1週間ぶんを先に決めてあります。変えないでください）');
+  for (var i = from; i < from + n; i++) {
+    var p = weekPlan[i];
+    if (!p) continue;
+    var c = coreOf(p.core);
+    parts.push('### ' + (i + 1) + '本目');
+    parts.push('芯: ' + c.name + '（' + c.desc + '）');
+    if (p.quote) parts.push('芯になる一文: 「' + p.quote + '」（材料からそのまま。言い換えずに使ってよい）');
+    parts.push('読者に残るもの: ' + (p.takeaway || 'なし'));
+    if (p.feel) parts.push('読後感: ' + p.feel);
+    parts.push('締め方: ' + (p.close || c.close) + '。' + (c.name === '主張' || c.name === '問い' ? '' : '教訓や問いかけを足さない。'));
+    if (p.plan) parts.push('企画: ' + p.plan);
+    if (p.claim) parts.push('主張: ' + p.claim);
+    if (p.role) parts.push('役割: ' + p.role);
+    if (p.pattern) {
+      var pt = pats.filter(function (x) { return x.name === p.pattern; })[0];
+      if (pt) parts.push('型: ' + pt.name + '（骨組み: ' + String(pt.frame).replace(/\n/g, ' ') + '／冒頭: ' + pt.open + '）。締めは型ではなく上の締め方に合わせる');
+    }
+    if (p.angle) parts.push('角度: ' + X_ANGLES[p.angle - 1]);
+    parts.push('冒頭: ' + (p.quoteStart
+      ? 'カギカッコ始まりにしてよい（材料にある本人・相手の言葉だけ）'
+      : 'カギカッコで始めない'));
+    if (p.materials.length) {
+      parts.push('使う材料（これだけを使う）:');
+      p.materials.forEach(function (m) { parts.push('  [' + m.no + '] ' + m.text); });
+    } else {
+      parts.push('題材: ' + (p.subject || '仕事の考え方'));
+      parts.push('今週の材料はこの枠にはありません。芯に沿って、確認済みのことだけで書いてください。');
+      parts.push('方針の表明（〜したい・〜と思っています）で締めるのは、題材が「これからやりたい仕事」のときだけです。');
+      parts.push('実績、相談者・お客様の発言、場面や気持ちの描写は作らないでください。');
+    }
+  }
+
+  var others = [];
+  weekPlan.forEach(function (p, i) {
+    if (!p || (i >= from && i < from + n)) return;
+    var used = p.materials.map(function (m) { return m.no; }).join('・');
+    others.push('  ・' + (i + 1) + '本目: 芯=' + p.core + ' / 残るもの=' + (p.takeaway || 'なし') +
+      (p.claim ? ' / 主張=' + p.claim : '') + ' / 読後感=' + (p.feel || '') + (used ? '（材料 ' + used + '）' : ''));
+  });
+  if (others.length) {
+    parts.push('');
+    parts.push('## 同じ週の他の本（この気づき・主張・読後感と重ねない。この材料を使わない）');
+    parts = parts.concat(others);
+  }
+  return parts.join('\n');
+}
+
+/**
+ * 企画会議の結果をシートに残す（X_企画会議）。毎回上書き。
+ * 採用しなかった材料と、その理由も見られるようにする。
+ */
+function xWritePlanSheet_(ctx, plan) {
+  if (!plan) return;
+  var sh = xSheet_('X_企画会議', []);
+  sh.clearContents();
+  var W = 11;
+  var pad = function (r) { while (r.length < W) r.push(''); return r; };
+  var out = [];
+  out.push(pad(['企画会議（' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm') + '）', ctx.planNote || '']));
+  out.push(pad(['枠', '芯', '材料', '芯になる一文', '読者に残るもの', '読後感', '締め方', '型', '角度', '役割', '企画・主張・注意']));
+  plan.forEach(function (p, i) {
+    out.push(pad([i + 1, p.core,
+      p.materials.map(function (m) { return m.no; }).join('+') || ('題材: ' + p.subject),
+      p.quote, p.takeaway || 'なし', p.feel, p.close, p.pattern || 'なし', p.angle ? String(p.angle) : 'なし', p.role,
+      [p.plan, p.claim ? '主張: ' + p.claim : '', (p.issues || []).length ? '注意: ' + p.issues.join('／') : ''].filter(String).join('\n')]));
+  });
+  out.push(pad(['']));
+  out.push(pad(['採用しなかった材料', '番号', '理由', '材料']));
+  (ctx.planUnused || []).forEach(function (u) { out.push(pad(['', u.no, u.reason, u.text])); });
+  if (!(ctx.planUnused || []).length) out.push(pad(['', '（なし）']));
+  sh.getRange(1, 1, out.length, W).setValues(out);
+  sh.getRange(1, 1, out.length, W).setWrap(true).setVerticalAlignment('top');
+  sh.setColumnWidth(4, 260);
+  sh.setColumnWidth(11, 300);
 }

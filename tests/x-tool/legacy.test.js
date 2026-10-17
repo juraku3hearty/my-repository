@@ -82,12 +82,13 @@ function run(src, extraSetting, prepare) {
 function ok(c, l) { console.log((c ? '✅ ' : '❌ ') + l); if (!c) process.exitCode = 1; }
 
 var before = run(BEFORE);
-var legacy = run(AFTER, [['生成の方式', '改修前', '']]);
+var OLD_ALL = [['生成の方式', '改修前', ''], ['企画の方式', '先行割り当て', '']];
+var legacy = run(AFTER, OLD_ALL);
 ok(before.payloads.length > 5, '改修前の実行で、企画・執筆・編集・作り直しの依頼が出ている（' + before.payloads.length + '件）');
 ok(legacy.payloads.length === before.payloads.length, '依頼の件数が同じ（' + legacy.payloads.length + '件）');
 var diffAt = -1;
 for (var i = 0; i < before.payloads.length; i++) { if (before.payloads[i] !== legacy.payloads[i]) { diffAt = i; break; } }
-ok(diffAt < 0, '「改修前」の方式は、改修前とすべての依頼が1文字も違わない' + (diffAt >= 0 ? '（' + (diffAt + 1) + '件目が違う）' : ''));
+ok(diffAt < 0, '「生成の方式＝改修前」「企画の方式＝先行割り当て」は、改修前（9e6e678）とすべての依頼が1文字も違わない' + (diffAt >= 0 ? '（' + (diffAt + 1) + '件目が違う）' : ''));
 if (diffAt >= 0) {
   var a = before.payloads[diffAt], b = legacy.payloads[diffAt], j = 0;
   while (j < a.length && a[j] === b[j]) j++;
@@ -98,7 +99,7 @@ if (diffAt >= 0) {
 
 // ============ 改修後（既定）の中身 ============
 var setupFn = function (sb) { sb.xSetupRuleKinds_(); };
-var neu = run(AFTER, null, setupFn);
+var neu = run(AFTER, [['企画の方式', '先行割り当て', '']], setupFn);
 var gen = function (r) { return r.payloads.filter(function (p) { return /全7本のうち、1本目から2本目/.test(p) && !/1週間ぶんの企画/.test(p); })[0]; };
 var plan = function (r) { return r.payloads.filter(function (p) { return /1週間ぶんの企画を決めます/.test(p); })[0]; };
 var editor = function (r) { return r.payloads.filter(function (p) { return /編集者です/.test(p) && /# 今週の7本/.test(p); })[0]; };
@@ -170,7 +171,21 @@ ok(k2('禁止語') === '文体' && k2('繰り返している主張') === '過去
 ok(d2.some(function (r) { return r && r[0] === '発信の軸・価値観' && /子どもとの時間を削らない働き方/.test(r[1]) && r[3] === '軸・価値観'; }), '抽出し直しても、本人が書いた軸の行は消えない');
 
 console.log('--- 5. 区分を付けたあとに「改修前」に戻しても、改修前と同じ ---');
-var legacy2 = run(AFTER, [['生成の方式', '改修前', '']], setupFn);
+var legacy2 = run(AFTER, OLD_ALL, setupFn);
 var diff2 = -1;
 for (var q = 0; q < before.payloads.length; q++) { if (before.payloads[q] !== legacy2.payloads[q]) { diff2 = q; break; } }
 ok(diff2 < 0 && legacy2.payloads.length === before.payloads.length, '区分列と軸の行があっても、「改修前」の依頼は改修前と1文字も違わない');
+
+console.log('--- 6. 「企画の方式＝先行割り当て」は、前回の改修（0a45f75）と同じ ---');
+var PREV = fs.readFileSync(path.join(__dirname, 'fixtures', 'dist_before_0a45f75.gs'), 'utf8');
+var prev = run(PREV, null, setupFn);
+var now = run(AFTER, [['企画の方式', '先行割り当て', '']], setupFn);
+var d3 = -1;
+for (var w = 0; w < prev.payloads.length; w++) { if (prev.payloads[w] !== now.payloads[w]) { d3 = w; break; } }
+ok(d3 < 0 && prev.payloads.length === now.payloads.length, '「企画の方式＝先行割り当て」は、前回の改修後（0a45f75）とすべての依頼が1文字も違わない（' + now.payloads.length + '件）');
+if (d3 >= 0) {
+  var a3 = prev.payloads[d3], b3 = now.payloads[d3], j3 = 0;
+  while (j3 < a3.length && a3[j3] === b3[j3]) j3++;
+  console.log('   前回: …' + a3.slice(Math.max(0, j3 - 80), j3 + 120).replace(/\n/g, '⏎'));
+  console.log('   今回: …' + b3.slice(Math.max(0, j3 - 80), j3 + 120).replace(/\n/g, '⏎'));
+}
