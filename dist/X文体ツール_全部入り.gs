@@ -315,7 +315,7 @@ function xClaudeResult_(code, text) {
   if (json.stop_reason === 'max_tokens') {
     Logger.log('警告: max_tokens に達しました。出力が途中で切れている可能性があります。');
   }
-  return { ok: true, text: out };
+  return { ok: true, text: out, stopReason: json.stop_reason || '' };
 }
 
 /** 429 / 5xx は待って再試行する */
@@ -346,6 +346,78 @@ function xParseJson_(text) {
   } catch (e) {
     throw new Error('AIの返答をJSONとして読めませんでした。先頭200字: ' + s.slice(0, 200));
   }
+}
+
+/**
+ * 応答から投稿の配列を取り出す。
+ *
+ * max_tokens に達して途中で切れた場合、全体をJSONとして読むことはできないが、
+ * 最後の1本を除けば完成している。全部捨てずに、読める分だけ拾う。
+ *
+ * @param {string} text 応答テキスト
+ * @return {Array<Object>}
+ */
+function xParsePosts_(text) {
+  try {
+    var o = xParseJson_(text);
+    if (o && o.posts && o.posts.length) return o.posts;
+  } catch (e) {
+    // 下で1本ずつ拾い直す
+  }
+  return xSalvagePosts_(text);
+}
+
+/** 括弧の対応が取れている部分だけを1本ずつ拾う */
+function xSalvagePosts_(text) {
+  var s = String(text || '');
+  var out = [];
+  var i = 0;
+
+  while (i < s.length) {
+    if (s.charAt(i) !== '{') { i++; continue; }
+
+    var end = xMatchBrace_(s, i);
+    if (end < 0) { i++; continue; }  // ここは切れている。内側を探す
+
+    var chunk = s.slice(i, end + 1);
+    var obj = null;
+    try { obj = JSON.parse(chunk); } catch (e) { obj = null; }
+
+    if (obj && obj.posts && obj.posts.length) {
+      out = out.concat(obj.posts);
+    } else if (obj && obj['本文']) {
+      out.push(obj);
+    }
+
+    i = (obj ? end + 1 : i + 1);
+  }
+
+  // 同じ本文を二重に拾わないようにする
+  var seen = {};
+  return out.filter(function (p) {
+    var key = String(p['本文'] || '').slice(0, 40);
+    if (!key || seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+}
+
+/** s[from] の「{」に対応する「}」の位置。無ければ -1（文字列の中の括弧は数えない） */
+function xMatchBrace_(s, from) {
+  var depth = 0, inStr = false, esc = false;
+  for (var i = from; i < s.length; i++) {
+    var c = s.charAt(i);
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
 }
 
 // ===== 12_XMap.js =====
@@ -1167,8 +1239,22 @@ function xGeneratePosts() {
   xToast_(msg);
 }
 
-/** 1回のAPI呼び出しで作る本数。多いと出力が上限に達して切れる。 */
-var X_GEN_CHUNK = 3;
+/**
+ * 1回のAPI呼び出しで作る本数。
+ *
+ * 多いと出力が max_tokens に達して途中で切れる。
+ * 並列に投げるので、細かく分けても全体の時間は増えない。
+ */
+var X_GEN_CHUNK = 2;
+
+/**
+ * 1回の出力の上限。
+ *
+ * Opus 5.5 は thinking を切れず、その分も max_tokens に入る。
+ * effort: high だと考える分だけで1万トークンを超えることがあるため、
+ * 本文ぶんを確保するには多めに取る必要がある。
+ */
+var X_GEN_MAX_TOKENS = 32000;
 
 /** 生成全体の時間の上限（GASの6分制限に対する安全マージン） */
 var X_GEN_TIME_LIMIT_MS = 4.8 * 60 * 1000;
@@ -1223,7 +1309,7 @@ function xGenerate_(themesText, count) {
     return {
       system: system,
       userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes),
-      maxTokens: 16000,
+      maxTokens: X_GEN_MAX_TOKENS,
       effort: 'high'
     };
   }));
@@ -1234,10 +1320,14 @@ function xGenerate_(themesText, count) {
   for (var i = 0; i < jobs.length; i++) {
     var got = [];
     if (results[i] && results[i].ok) {
-      try {
-        got = xParseJson_(results[i].text).posts || [];
-      } catch (e) {
-        Logger.log((jobs[i].from + 1) + '本目からの読み取りに失敗: ' + e.message);
+      got = xParsePosts_(results[i].text);
+      if (results[i].stopReason === 'max_tokens') {
+        Logger.log((jobs[i].from + 1) + '本目から: 出力が上限で切れました。読めた分は ' +
+          got.length + '/' + jobs[i].n + '本です。');
+      }
+      if (!got.length) {
+        Logger.log((jobs[i].from + 1) + '本目からの読み取りに失敗（先頭200字）: ' +
+          String(results[i].text).slice(0, 200));
       }
     } else {
       Logger.log((jobs[i].from + 1) + '本目からの生成に失敗: ' +
@@ -1258,7 +1348,7 @@ function xGenerate_(themesText, count) {
       return {
         system: system,
         userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes),
-        maxTokens: 12000,
+        maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
     }));
@@ -1269,11 +1359,10 @@ function xGenerate_(themesText, count) {
           ((retry[r] && retry[r].error) || '不明'));
         continue;
       }
-      try {
-        all = all.concat(xParseJson_(retry[r].text).posts || []);
-      } catch (e2) {
-        Logger.log((failed[r] + 1) + '本目を飛ばしました: ' + e2.message);
-      }
+      var one = xParsePosts_(retry[r].text);
+      if (one.length) all = all.concat(one);
+      else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
+        String(retry[r].text).slice(0, 200));
     }
   }
 
@@ -2717,7 +2806,12 @@ function xCheckDrafts() {
     var unknownNums = xUnknownNumbers_(body, known);
     if (unknownNums.length) problems.push('出どころ未確認の数字: ' + unknownNums.join('、'));
 
-    // 3) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
+    // 3) 【要確認：…】が残っていないか
+    //    元の投稿が分からないときにAIが入れる印。そのまま投稿できない。
+    var asks = body.match(/【要確認[^】]*】/g);
+    if (asks) problems.push('埋める必要あり: ' + asks.join('、'));
+
+    // 4) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
     var head = body.split('\n')[0].trim();
     var quoted = /^[「『]/.test(head);
 

@@ -124,7 +124,7 @@ function xClaudeResult_(code, text) {
   if (json.stop_reason === 'max_tokens') {
     Logger.log('警告: max_tokens に達しました。出力が途中で切れている可能性があります。');
   }
-  return { ok: true, text: out };
+  return { ok: true, text: out, stopReason: json.stop_reason || '' };
 }
 
 /** 429 / 5xx は待って再試行する */
@@ -155,4 +155,76 @@ function xParseJson_(text) {
   } catch (e) {
     throw new Error('AIの返答をJSONとして読めませんでした。先頭200字: ' + s.slice(0, 200));
   }
+}
+
+/**
+ * 応答から投稿の配列を取り出す。
+ *
+ * max_tokens に達して途中で切れた場合、全体をJSONとして読むことはできないが、
+ * 最後の1本を除けば完成している。全部捨てずに、読める分だけ拾う。
+ *
+ * @param {string} text 応答テキスト
+ * @return {Array<Object>}
+ */
+function xParsePosts_(text) {
+  try {
+    var o = xParseJson_(text);
+    if (o && o.posts && o.posts.length) return o.posts;
+  } catch (e) {
+    // 下で1本ずつ拾い直す
+  }
+  return xSalvagePosts_(text);
+}
+
+/** 括弧の対応が取れている部分だけを1本ずつ拾う */
+function xSalvagePosts_(text) {
+  var s = String(text || '');
+  var out = [];
+  var i = 0;
+
+  while (i < s.length) {
+    if (s.charAt(i) !== '{') { i++; continue; }
+
+    var end = xMatchBrace_(s, i);
+    if (end < 0) { i++; continue; }  // ここは切れている。内側を探す
+
+    var chunk = s.slice(i, end + 1);
+    var obj = null;
+    try { obj = JSON.parse(chunk); } catch (e) { obj = null; }
+
+    if (obj && obj.posts && obj.posts.length) {
+      out = out.concat(obj.posts);
+    } else if (obj && obj['本文']) {
+      out.push(obj);
+    }
+
+    i = (obj ? end + 1 : i + 1);
+  }
+
+  // 同じ本文を二重に拾わないようにする
+  var seen = {};
+  return out.filter(function (p) {
+    var key = String(p['本文'] || '').slice(0, 40);
+    if (!key || seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+}
+
+/** s[from] の「{」に対応する「}」の位置。無ければ -1（文字列の中の括弧は数えない） */
+function xMatchBrace_(s, from) {
+  var depth = 0, inStr = false, esc = false;
+  for (var i = from; i < s.length; i++) {
+    var c = s.charAt(i);
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
 }

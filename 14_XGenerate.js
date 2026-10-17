@@ -72,8 +72,22 @@ function xGeneratePosts() {
   xToast_(msg);
 }
 
-/** 1回のAPI呼び出しで作る本数。多いと出力が上限に達して切れる。 */
-var X_GEN_CHUNK = 3;
+/**
+ * 1回のAPI呼び出しで作る本数。
+ *
+ * 多いと出力が max_tokens に達して途中で切れる。
+ * 並列に投げるので、細かく分けても全体の時間は増えない。
+ */
+var X_GEN_CHUNK = 2;
+
+/**
+ * 1回の出力の上限。
+ *
+ * Opus 5.5 は thinking を切れず、その分も max_tokens に入る。
+ * effort: high だと考える分だけで1万トークンを超えることがあるため、
+ * 本文ぶんを確保するには多めに取る必要がある。
+ */
+var X_GEN_MAX_TOKENS = 32000;
 
 /** 生成全体の時間の上限（GASの6分制限に対する安全マージン） */
 var X_GEN_TIME_LIMIT_MS = 4.8 * 60 * 1000;
@@ -128,7 +142,7 @@ function xGenerate_(themesText, count) {
     return {
       system: system,
       userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes),
-      maxTokens: 16000,
+      maxTokens: X_GEN_MAX_TOKENS,
       effort: 'high'
     };
   }));
@@ -139,10 +153,14 @@ function xGenerate_(themesText, count) {
   for (var i = 0; i < jobs.length; i++) {
     var got = [];
     if (results[i] && results[i].ok) {
-      try {
-        got = xParseJson_(results[i].text).posts || [];
-      } catch (e) {
-        Logger.log((jobs[i].from + 1) + '本目からの読み取りに失敗: ' + e.message);
+      got = xParsePosts_(results[i].text);
+      if (results[i].stopReason === 'max_tokens') {
+        Logger.log((jobs[i].from + 1) + '本目から: 出力が上限で切れました。読めた分は ' +
+          got.length + '/' + jobs[i].n + '本です。');
+      }
+      if (!got.length) {
+        Logger.log((jobs[i].from + 1) + '本目からの読み取りに失敗（先頭200字）: ' +
+          String(results[i].text).slice(0, 200));
       }
     } else {
       Logger.log((jobs[i].from + 1) + '本目からの生成に失敗: ' +
@@ -163,7 +181,7 @@ function xGenerate_(themesText, count) {
       return {
         system: system,
         userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes),
-        maxTokens: 12000,
+        maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
     }));
@@ -174,11 +192,10 @@ function xGenerate_(themesText, count) {
           ((retry[r] && retry[r].error) || '不明'));
         continue;
       }
-      try {
-        all = all.concat(xParseJson_(retry[r].text).posts || []);
-      } catch (e2) {
-        Logger.log((failed[r] + 1) + '本目を飛ばしました: ' + e2.message);
-      }
+      var one = xParsePosts_(retry[r].text);
+      if (one.length) all = all.concat(one);
+      else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
+        String(retry[r].text).slice(0, 200));
     }
   }
 

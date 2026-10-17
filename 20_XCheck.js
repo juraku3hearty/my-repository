@@ -45,7 +45,12 @@ function xCheckDrafts() {
     var unknownNums = xUnknownNumbers_(body, known);
     if (unknownNums.length) problems.push('出どころ未確認の数字: ' + unknownNums.join('、'));
 
-    // 3) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
+    // 3) 【要確認：…】が残っていないか
+    //    元の投稿が分からないときにAIが入れる印。そのまま投稿できない。
+    var asks = body.match(/【要確認[^】]*】/g);
+    if (asks) problems.push('埋める必要あり: ' + asks.join('、'));
+
+    // 4) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
     var head = body.split('\n')[0].trim();
     var quoted = /^[「『]/.test(head);
 
