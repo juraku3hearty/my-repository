@@ -13,6 +13,7 @@ function onOpen() {
       .addItem('① 設定シートを作る / 更新する', 'xSetup')
       .addItem('　 過去ログを読めるか確認する', 'xPreviewLog')
       .addItem('　 戦略シートを読めるか確認する', 'xPreviewStrategy')
+      .addItem('　 A列のラベルを数える', 'xPreviewLabels')
       .addSeparator()
       .addItem('② 質問リストを取り込む', 'xImportQuestionSheet')
       .addItem('② メインシートの回答を取り込む', 'xImportMainAnswers')

@@ -17,8 +17,21 @@ var X_TIME_LIMIT_MS = 4.5 * 60 * 1000; // GASの6分制限に対する安全マ�
  */
 function xExtractStyle() {
   var started = Date.now();
-  var rows = xReadLog_();
-  if (!rows.length) throw new Error('過去ログが読めませんでした。X_設定を確認してください。');
+  var all = xReadLog_();
+  if (!all.length) throw new Error('過去ログが読めませんでした。X_設定を確認してください。');
+
+  // 雛形と実投稿が両方そろっている行だけが「書き換えの差分」になる。
+  // 修正欄がまばらなので、十分な数が無ければ差分抽出はあきらめ、
+  // 投稿文そのものから文体を読む方式に切り替える。
+  var pairs = all.filter(function (r) {
+    return String(r['雛形'] || '').trim() && String(r['実投稿'] || '').trim();
+  });
+  var useDiff = pairs.length >= 5;
+  var rows = useDiff ? pairs : all;
+
+  Logger.log(useDiff
+    ? ('差分あり ' + pairs.length + '件で抽出します（全' + all.length + '件中）')
+    : ('書き換えの差分が ' + pairs.length + '件しかないため、投稿文そのものから文体を読みます（全' + all.length + '件）'));
 
   var logSh = xSheet_(X_SHEETS.BATCH,
     ['バッチ', '対象行', '抽出結果(JSON)', '実行日時']);
@@ -47,7 +60,7 @@ function xExtractStyle() {
     }
 
     var batch = rows.slice(cursor, cursor + X_BATCH_SIZE);
-    var result = xExtractBatch_(batch);
+    var result = xExtractBatch_(batch, useDiff);
 
     logSh.appendRow([
       Math.floor(cursor / X_BATCH_SIZE) + 1,
@@ -73,19 +86,29 @@ function xResetExtract() {
   xToast_('進捗をリセットしました。次回は最初から実行します。');
 }
 
-/** 1バッチ分を抽出する */
-function xExtractBatch_(batch) {
+/**
+ * 1バッチ分を抽出する。
+ * @param {Array} batch
+ * @param {boolean} useDiff 雛形と実投稿の差分が取れるか
+ */
+function xExtractBatch_(batch, useDiff) {
   var items = batch.map(function (r, i) {
+    if (useDiff) {
+      return [
+        '--- ' + (i + 1) + ' (行' + r.row + ') ---',
+        '【雛形】',
+        String(r['雛形'] || '(なし)'),
+        '【実投稿】',
+        String(r['実投稿'] || '(なし)')
+      ].join('\n');
+    }
     return [
       '--- ' + (i + 1) + ' (行' + r.row + ') ---',
-      '【雛形】',
-      String(r['雛形'] || '(なし)'),
-      '【実投稿】',
-      String(r['実投稿'] || '(なし)')
+      String(r['実投稿'] || r['雛形'] || '')
     ].join('\n');
   }).join('\n\n');
 
-  var system = [
+  var system = useDiff ? [
     'あなたは日本語の文体を分析する専門家です。',
     '与えられるのは、外部ライターが書いた「雛形」と、本人が書き直した「実投稿」の対です。',
     '',
@@ -102,17 +125,33 @@ function xExtractBatch_(batch) {
     '',
     '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
+  ].join('\n') : [
+    'あなたは日本語の文体を分析する専門家です。',
+    '与えられるのは、ある書き手が実際に出した投稿です。',
+    '',
+    '目的は、この書き手の文体を再現できるルールを取り出すことです。',
+    'この書き手が使っていない種類の語（一般的なSNS文章によく出るが、ここには出てこない語）に',
+    '気づいたら、それも「使わない語」として記録してください。',
+    '',
+    '文体に加えて、次の2つも記録してください。',
+    '1. 扱っているテーマと、繰り返し出てくる主張',
+    '2. 構成の型（どういう順で組み立てているか）',
+    '',
+    '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
+    '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
 
   var user = [
-    '以下の対を分析し、JSONで返してください。',
+    useDiff ? '以下の対を分析し、JSONで返してください。' : '以下の投稿を分析し、JSONで返してください。',
     '',
     items,
     '',
     '--- 出力形式 ---',
     '{',
-    '  "消した語": ["雛形にあったが実投稿で消された語・言い回し"],',
-    '  "足した語": ["雛形になく実投稿で足された語・言い回し"],',
+    (useDiff ? '  "消した語": ["雛形にあったが実投稿で消された語・言い回し"],'
+             : '  "消した語": ["この書き手が使っていない、不自然になる語"],'),
+    (useDiff ? '  "足した語": ["雛形になく実投稿で足された語・言い回し"],'
+             : '  "足した語": ["この書き手が特徴的に使う語"],'),
     '  "文の長さ": "1文の長さの傾向を一言で",',
     '  "改行": "改行と空行の入れ方の傾向を一言で",',
     '  "語尾": ["よく使われている語尾"],',

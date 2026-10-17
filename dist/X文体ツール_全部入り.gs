@@ -353,15 +353,17 @@ function xReadLog_() {
     : xReadBlocks_(sh, map);
 }
 
+/** これ以上の長さの値が入っていたら「本文の行」とみなす */
+var X_CONTENT_MIN_LEN = 80;
+
 /**
  * ブロック（縦）レイアウトを読む。
  *
- * A列にラベル（日付／投稿日／投稿文／修正欄…）が縦に繰り返し、
- * B〜H列が1週間分（1列＝1日＝1投稿）。
- * 1ブロック（＝1週間）から、列の数だけレコードを取り出す。
+ * A列にラベル、B〜H列が1週間分（1列＝1日＝1投稿）。
  *
- * ラベルが空の行は、直前のラベルの続きとして同じ列に足す
- * （長文が複数行に分かれていても取りこぼさない）。
+ * 実際のシートではブロックによってラベルが食い違っている
+ * （本文の行が「投稿文」だったり「日付」だったりする）。
+ * そのためラベルだけに頼らず、「値が長文ならそれは本文」と判定する。
  */
 function xReadBlocks_(sh, map) {
   var labelCol = xColNum_(map['▼ラベル列'] || 'A');
@@ -382,14 +384,8 @@ function xReadBlocks_(sh, map) {
   var values = sh.getRange(1, 1, lastRow, lastCol).getValues();
   var width = colTo - colFrom + 1;
 
-  var known = {};
-  known[startLabel] = '見出し';
-  known[tmplLabel]  = '雛形';
-  known[postLabel]  = '実投稿';
-  known[dateLabel]  = '投稿日';
-
   var rows = [];
-  var cur = null;      // { row, 見出し:[], 投稿日:[], 雛形:[], 実投稿:[] }
+  var cur = null;
   var curField = null;
 
   function newBlock(r) {
@@ -401,13 +397,31 @@ function xReadBlocks_(sh, map) {
     return o;
   }
 
-  function put(block, field, r) {
+  /** その行の値セルを配列で返す */
+  function cellsOf(r) {
+    var out = [];
     for (var i = 0; i < width; i++) {
       var raw = values[r][colFrom - 1 + i];
-      var v = (raw === null || raw === undefined) ? '' : String(raw).trim();
-      if (!v) continue;
-      block[field][i] = block[field][i] ? (block[field][i] + '\n' + v) : v;
+      out.push((raw === null || raw === undefined) ? '' : String(raw).trim());
     }
+    return out;
+  }
+
+  function maxLenOf(cells) {
+    var m = 0;
+    cells.forEach(function (v) { if (v.length > m) m = v.length; });
+    return m;
+  }
+
+  function put(block, field, cells) {
+    for (var i = 0; i < width; i++) {
+      if (!cells[i]) continue;
+      block[field][i] = block[field][i] ? (block[field][i] + '\n' + cells[i]) : cells[i];
+    }
+  }
+
+  function filled(block, field) {
+    return block[field].some(function (v) { return String(v).trim(); });
   }
 
   function flush() {
@@ -415,7 +429,7 @@ function xReadBlocks_(sh, map) {
     for (var i = 0; i < width; i++) {
       var t = String(cur['雛形'][i] || '').trim();
       var p = String(cur['実投稿'][i] || '').trim();
-      if (!t && !p) continue;   // その曜日は空
+      if (!t && !p) continue;
       rows.push({
         row: cur.row,
         col: colFrom + i,
@@ -432,27 +446,84 @@ function xReadBlocks_(sh, map) {
 
   for (var r = 0; r < lastRow; r++) {
     var label = String(values[r][labelCol - 1] || '').trim();
+    var cells = cellsOf(r);
+    var maxLen = maxLenOf(cells);
+    var hasValue = maxLen > 0;
 
     if (label && ignore.indexOf(label) >= 0) { curField = null; continue; }
 
-    if (label && known[label]) {
-      if (known[label] === '見出し') {
-        flush();
-        cur = newBlock(r);
-      } else if (!cur) {
-        cur = newBlock(r);
-      }
-      curField = known[label];
-      put(cur, curField, r);
+    // ラベルが無い行は、直前のラベルの続きとして同じ列に足す
+    if (!label) {
+      if (cur && curField && hasValue) put(cur, curField, cells);
       continue;
     }
 
-    if (!label && cur && curField) { put(cur, curField, r); continue; }
+    var isLongRow = maxLen >= X_CONTENT_MIN_LEN;
+    var field = null;
+    var boundary = false;
 
-    if (label && !known[label]) { curField = null; }
+    if (label === tmplLabel)      field = '雛形';
+    else if (label === postLabel) field = '実投稿';
+    else if (label === dateLabel) field = isLongRow ? null : '投稿日';
+    else if (label === startLabel) {
+      // 「日付」でも中身が長文なら、ラベルの付け間違い。本文として扱う
+      if (isLongRow) field = null;
+      else { boundary = true; field = '見出し'; }
+    } else {
+      // 想定外のラベル。長文なら本文、そうでなければ読み飛ばす
+      if (!isLongRow) { curField = null; continue; }
+      field = null;
+    }
+
+    // ラベルから決まらなかった長文行は、雛形→実投稿の順に入れる
+    if (field === null) {
+      if (!cur) cur = newBlock(r);
+      field = filled(cur, '雛形') ? '実投稿' : '雛形';
+    }
+
+    if (boundary) { flush(); cur = newBlock(r); }
+    if (!cur) cur = newBlock(r);
+
+    // 同じ項目が二度出てきたら、そこから次のブロック
+    if (!boundary && filled(cur, field)) { flush(); cur = newBlock(r); }
+
+    curField = field;
+    if (hasValue) put(cur, field, cells);
   }
   flush();
   return rows;
+}
+
+/**
+ * A列にどんなラベルが並んでいるかを一覧にする（診断用）。
+ */
+function xPreviewLabels() {
+  var map = xReadSetting_();
+  var sh = xBook_().getSheetByName(map['対象シート名']);
+  if (!sh) throw new Error('対象シートが見つかりません。');
+
+  var labelCol = xColNum_(map['▼ラベル列'] || 'A');
+  var colFrom  = xColNum_(map['▼値の開始列'] || 'B');
+  var colTo    = Math.min(xColNum_(map['▼値の終了列'] || 'H'), sh.getLastColumn());
+  var values = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+
+  var counts = {};
+  for (var r = 0; r < values.length; r++) {
+    var label = String(values[r][labelCol - 1] || '').trim();
+    if (!label) continue;
+    var maxLen = 0;
+    for (var c = colFrom - 1; c < colTo; c++) {
+      var v = String(values[r][c] || '').trim();
+      if (v.length > maxLen) maxLen = v.length;
+    }
+    var key = label + (maxLen >= X_CONTENT_MIN_LEN ? '（長文あり）' : '');
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  Logger.log('--- A列のラベル別件数 ---');
+  Object.keys(counts).forEach(function (k) { Logger.log(k + ' : ' + counts[k] + '行'); });
+  xToast_('ラベル一覧をログに出しました。');
+  return counts;
 }
 
 /** 表（横）レイアウトを読む */
@@ -519,8 +590,21 @@ var X_TIME_LIMIT_MS = 4.5 * 60 * 1000; // GASの6分制限に対する安全マ�
  */
 function xExtractStyle() {
   var started = Date.now();
-  var rows = xReadLog_();
-  if (!rows.length) throw new Error('過去ログが読めませんでした。X_設定を確認してください。');
+  var all = xReadLog_();
+  if (!all.length) throw new Error('過去ログが読めませんでした。X_設定を確認してください。');
+
+  // 雛形と実投稿が両方そろっている行だけが「書き換えの差分」になる。
+  // 修正欄がまばらなので、十分な数が無ければ差分抽出はあきらめ、
+  // 投稿文そのものから文体を読む方式に切り替える。
+  var pairs = all.filter(function (r) {
+    return String(r['雛形'] || '').trim() && String(r['実投稿'] || '').trim();
+  });
+  var useDiff = pairs.length >= 5;
+  var rows = useDiff ? pairs : all;
+
+  Logger.log(useDiff
+    ? ('差分あり ' + pairs.length + '件で抽出します（全' + all.length + '件中）')
+    : ('書き換えの差分が ' + pairs.length + '件しかないため、投稿文そのものから文体を読みます（全' + all.length + '件）'));
 
   var logSh = xSheet_(X_SHEETS.BATCH,
     ['バッチ', '対象行', '抽出結果(JSON)', '実行日時']);
@@ -549,7 +633,7 @@ function xExtractStyle() {
     }
 
     var batch = rows.slice(cursor, cursor + X_BATCH_SIZE);
-    var result = xExtractBatch_(batch);
+    var result = xExtractBatch_(batch, useDiff);
 
     logSh.appendRow([
       Math.floor(cursor / X_BATCH_SIZE) + 1,
@@ -575,19 +659,29 @@ function xResetExtract() {
   xToast_('進捗をリセットしました。次回は最初から実行します。');
 }
 
-/** 1バッチ分を抽出する */
-function xExtractBatch_(batch) {
+/**
+ * 1バッチ分を抽出する。
+ * @param {Array} batch
+ * @param {boolean} useDiff 雛形と実投稿の差分が取れるか
+ */
+function xExtractBatch_(batch, useDiff) {
   var items = batch.map(function (r, i) {
+    if (useDiff) {
+      return [
+        '--- ' + (i + 1) + ' (行' + r.row + ') ---',
+        '【雛形】',
+        String(r['雛形'] || '(なし)'),
+        '【実投稿】',
+        String(r['実投稿'] || '(なし)')
+      ].join('\n');
+    }
     return [
       '--- ' + (i + 1) + ' (行' + r.row + ') ---',
-      '【雛形】',
-      String(r['雛形'] || '(なし)'),
-      '【実投稿】',
-      String(r['実投稿'] || '(なし)')
+      String(r['実投稿'] || r['雛形'] || '')
     ].join('\n');
   }).join('\n\n');
 
-  var system = [
+  var system = useDiff ? [
     'あなたは日本語の文体を分析する専門家です。',
     '与えられるのは、外部ライターが書いた「雛形」と、本人が書き直した「実投稿」の対です。',
     '',
@@ -604,17 +698,33 @@ function xExtractBatch_(batch) {
     '',
     '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
+  ].join('\n') : [
+    'あなたは日本語の文体を分析する専門家です。',
+    '与えられるのは、ある書き手が実際に出した投稿です。',
+    '',
+    '目的は、この書き手の文体を再現できるルールを取り出すことです。',
+    'この書き手が使っていない種類の語（一般的なSNS文章によく出るが、ここには出てこない語）に',
+    '気づいたら、それも「使わない語」として記録してください。',
+    '',
+    '文体に加えて、次の2つも記録してください。',
+    '1. 扱っているテーマと、繰り返し出てくる主張',
+    '2. 構成の型（どういう順で組み立てているか）',
+    '',
+    '推測で一般的な文章術を書かないでください。与えられた実例から読み取れることだけを書いてください。',
+    '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
 
   var user = [
-    '以下の対を分析し、JSONで返してください。',
+    useDiff ? '以下の対を分析し、JSONで返してください。' : '以下の投稿を分析し、JSONで返してください。',
     '',
     items,
     '',
     '--- 出力形式 ---',
     '{',
-    '  "消した語": ["雛形にあったが実投稿で消された語・言い回し"],',
-    '  "足した語": ["雛形になく実投稿で足された語・言い回し"],',
+    (useDiff ? '  "消した語": ["雛形にあったが実投稿で消された語・言い回し"],'
+             : '  "消した語": ["この書き手が使っていない、不自然になる語"],'),
+    (useDiff ? '  "足した語": ["雛形になく実投稿で足された語・言い回し"],'
+             : '  "足した語": ["この書き手が特徴的に使う語"],'),
     '  "文の長さ": "1文の長さの傾向を一言で",',
     '  "改行": "改行と空行の入れ方の傾向を一言で",',
     '  "語尾": ["よく使われている語尾"],',
@@ -1088,6 +1198,7 @@ function onOpen() {
       .addItem('① 設定シートを作る / 更新する', 'xSetup')
       .addItem('　 過去ログを読めるか確認する', 'xPreviewLog')
       .addItem('　 戦略シートを読めるか確認する', 'xPreviewStrategy')
+      .addItem('　 A列のラベルを数える', 'xPreviewLabels')
       .addSeparator()
       .addItem('② 質問リストを取り込む', 'xImportQuestionSheet')
       .addItem('② メインシートの回答を取り込む', 'xImportMainAnswers')
