@@ -56,6 +56,8 @@ function xGenerate_(themesText, count) {
   var samples = xReadSamples_(3);
   if (!samples.length) samples = xPickSamples_(3);
   var facts = xReadFacts_(40);
+  var factSheets = xReadFactSheets_();
+  var sampleSheets = xReadSampleSheets_();
 
   var system = [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
@@ -116,6 +118,19 @@ function xGenerate_(themesText, count) {
       parts.push('--- 例' + (i + 1) + ' ---');
       parts.push(s);
     });
+    parts.push('');
+  }
+
+  if (sampleSheets) {
+    parts.push('# 完成した投稿（文体の手本。この書き方に寄せる）');
+    parts.push(sampleSheets);
+    parts.push('');
+  }
+
+  if (factSheets) {
+    parts.push('# 経歴・インタビュー（一次情報の出どころ）');
+    parts.push('ここに書かれている事実・数字・出来事だけを使ってください。');
+    parts.push(factSheets);
     parts.push('');
   }
 
