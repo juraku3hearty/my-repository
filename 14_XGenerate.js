@@ -346,6 +346,13 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
   parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
   parts.push('');
 
+  var lenHint = xLengthHint_();
+  if (lenHint) {
+    parts.push('## 長さ');
+    parts.push(lenHint);
+    parts.push('');
+  }
+
   parts.push('--- 出力形式 ---');
   parts.push('{"posts":[{');
   parts.push('  "テーマ": "この投稿のテーマ（30字以内）",');
@@ -516,4 +523,14 @@ function xSaveThisWeekNote_(note) {
     0
   ]);
   sh.getRange(sh.getLastRow(), 4).setWrap(true);
+}
+
+
+/** X_設定 の「1本の文字数の目安」を読む。空なら指定なし。 */
+function xLengthHint_() {
+  var v = String(xReadSetting_()['1本の文字数の目安'] || '').trim();
+  var n = parseInt(v.replace(/[^0-9]/g, ''), 10);
+  if (!n || isNaN(n)) return '';
+  return '本文は ' + n + '字前後にしてください（±2割まで）。' +
+         '短くするために内容を削るのではなく、言い回しを詰めてください。';
 }
