@@ -29,6 +29,18 @@ function xGeneratePosts() {
     if (r2.getSelectedButton() !== ui.Button.OK) return;
     var n = parseInt(r2.getResponseText(), 10);
     if (!isNaN(n) && n > 0 && n <= 14) count = n;
+
+    // 今週あったことを1行だけ。ここが新しい視点のいちばんの素になる。
+    var r3 = ui.prompt(
+      '今週あったこと（1行でOK・空でも進みます）',
+      '相談で言われた言葉、詰まったこと、作ったもの、現場で見たこと。\n' +
+      'ひとつだけ、短く。きれいに書かなくて大丈夫です。\n' +
+      '例：「スタッフに聞かれた回数を数えたら1日12回だった」',
+      ui.ButtonSet.OK_CANCEL);
+    if (r3.getSelectedButton() === ui.Button.OK) {
+      var note = String(r3.getResponseText() || '').trim();
+      if (note) xSaveThisWeekNote_(note);
+    }
   }
 
   var posts = xGenerate_(themes, count);
@@ -219,6 +231,9 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
 
   if (facts) {
     parts.push('# 追加の一次情報');
+    parts.push('「今週あったこと」が含まれている場合、それを最優先で使ってください。');
+    parts.push('いちばん新しい出来事なので、過去の棚卸しより読む価値があります。');
+    parts.push('7本のうち最低1本は、この出来事を中心に組み立ててください。');
     parts.push(facts);
     parts.push('');
   }
@@ -468,4 +483,21 @@ function xPastThemes_(limit) {
     }
   }
   return out;
+}
+
+
+/**
+ * 「今週あったこと」を一次情報として保存する。
+ * アンケートを別途送るような手間を増やさず、生成のついでに1行だけ溜める。
+ */
+function xSaveThisWeekNote_(note) {
+  var sh = xSheet_(X_SHEETS.FACT, ['記録日', 'ジャンル', '質問', '回答', '使用回数']);
+  sh.appendRow([
+    Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd'),
+    '今週あったこと',
+    '今週あったこと（' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'M/d') + '）',
+    note,
+    0
+  ]);
+  sh.getRange(sh.getLastRow(), 4).setWrap(true);
 }
