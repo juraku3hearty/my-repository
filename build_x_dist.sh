@@ -19,7 +19,7 @@ cat > "$out" <<'HDR'
 HDR
 for f in 10_XConfig.js 11_XClaude.js 12_XMap.js 13_XExtract.js 14_XGenerate.js \
          15_XMenu.js 16_XFact.js 17_XStrategy.js 18_XPattern.js 19_XWeek.js \
-         20_XCheck.js 21_XAnalytics.js 22_XMining.js 23_XTrend.js 24_XEdit.js; do
+         20_XCheck.js 21_XAnalytics.js 22_XMining.js 23_XTrend.js 24_XEdit.js 25_XPlan.js; do
   printf '\n// ===== %s =====\n\n' "$f" >> "$out"
   cat "$f" >> "$out"
 done

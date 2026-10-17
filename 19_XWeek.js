@@ -56,7 +56,7 @@ function xSetupWeekPlan() {
     legend.push([c.name, c.desc, c.palace, '', '', '', '']);
   });
   legend.push(['', '', '', '', '', '', '']);
-  legend.push(['── 長さ ──', '長文=じっくり書く / 短文=長文の論点をひとつ切り出す', '', '', '', '', '']);
+  legend.push(['── 長さ ──', '長文=じっくり書く / 短文=1つの主張を短く（長文の言い直しはしない）', '', '', '', '', '']);
   sh.getRange(rows.length + 2, 1, legend.length, 7).setValues(legend);
   sh.setColumnWidth(1, 150);
   sh.setColumnWidth(2, 80);

@@ -222,6 +222,10 @@ function xGenInitial_(ctx) {
   var system = ctx.system, context = ctx.context, themes = ctx.themes, count = ctx.count;
   var spec = ctx.spec, plan = ctx.plan, pastThemes = ctx.pastThemes;
 
+  // 書く前に1週間ぶんの企画を決める（同じ主張・同じ材料を2本にしないため）
+  if (ctx.weekPlan === undefined) ctx.weekPlan = xPlanWeek_(ctx);
+  var weekPlan = ctx.weekPlan;
+
   var jobs = [];
   for (var from = 0; from < count; from += X_GEN_CHUNK) {
     jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, count - from) });
@@ -230,7 +234,8 @@ function xGenInitial_(ctx) {
   var results = xClaudeBatch_(jobs.map(function (j) {
     return {
       system: system,
-      userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes),
+      userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes) +
+        xPlanText_(weekPlan, j.from, j.n),
       maxTokens: X_GEN_MAX_TOKENS,
       effort: 'high'
     };
@@ -258,7 +263,11 @@ function xGenInitial_(ctx) {
 
     // 多く返ってきた分は捨てる（割り当てた本数を超えると7本の配分が崩れる）
     if (got.length > jobs[i].n) got = got.slice(0, jobs[i].n);
-    got.forEach(function (p, j) { p._idx = jobs[i].from + j; });
+    got.forEach(function (p, j) {
+      p._idx = jobs[i].from + j;
+      var wp = weekPlan && weekPlan[p._idx];
+      if (wp && wp.subject && !wp.materials.length) p['題材'] = wp.subject;
+    });
     all = all.concat(got);
 
     // 足りない分（束ごと落ちた・途中で切れた）は、1本ずつやり直す。
@@ -271,7 +280,8 @@ function xGenInitial_(ctx) {
     var retry = xClaudeBatch_(failed.map(function (idx) {
       return {
         system: system,
-        userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes),
+        userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes) +
+          xPlanText_(weekPlan, idx, 1),
         maxTokens: X_GEN_MAX_TOKENS,
         effort: 'high'
       };
@@ -388,6 +398,8 @@ function xGenSystem_() {
     '',
     '- 作るのは完成品ではなく、本人が手を入れる前提の叩き台です。',
     '- 1投稿につき原則1テーマ。複数の過去エピソードを1本に混ぜないでください。',
+    '- 1週間に同じ主張は原則1本です。長文と短文で同じ主張を言い直さないでください。',
+    '  同じ週の他の本が言っていることを、言い方を変えて繰り返さないでください。',
     '- 毎回「仕組み化が大事」「社長の仕事を減らそう」という結論に着地させないでください。',
     '  7本のうち、仕組み化を結論にする投稿は多くても2本までにしてください。',
     '- 本人が実際に経験していない話、言われていないセリフ、確認できない数字は創作しないでください。',
@@ -684,11 +696,9 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('## 長文と短文');
   parts.push('・長文 … じっくり書く。背景・具体例・そこから言えることまで入れる');
   parts.push('  　　　 ただし材料が足りなければ短くてよい。別の体験談を足して長くしない。');
-  parts.push('・短文 … 110〜150字。長文で書いた論点をひとつだけ切り出す。');
-  parts.push('  　　　 結論を1つに絞り、具体例は1つだけ。説明を足さない。');
-  parts.push('  　　　 内容を薄めるのではなく、範囲を狭めてください。');
-  parts.push('・短文は、同じ週の長文と素材を共有して構いません。');
-  parts.push('  同じ材料を違う角度で切り直すほうが、新しい素材を薄く広げるより濃くなります。');
+  parts.push('・短文 … 110〜150字。1つの主張を、1つの具体例で短く書く。説明を足さない。');
+  parts.push('  　　　 長文の論点の切り出しや、長文の言い直しではありません。短文も、それぞれ別の主張にしてください。');
+  parts.push('・長文と短文で同じ主張・同じ材料を使わないでください（1週間に同じ主張は原則1本）。');
   parts.push('');
 
   var lenHint = xLengthHint_();
