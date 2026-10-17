@@ -135,3 +135,36 @@ function xLayerPlan_(count) {
   for (var i = 0; i < count; i++) out.push(base[i % base.length]);
   return out;
 }
+
+
+/**
+ * サンプル投稿・固定ポストのシートから、投稿を1本ずつ取り出す。
+ *
+ * xReadSampleSheets_() はシートを丸ごと1つのテキストにするが、
+ * 型の分析には「1本ずつ」の形が要る。
+ * セル単位で読み、十分な長さのものを1投稿として扱う。
+ *
+ * @param {number} minLen これ以上の長さを投稿とみなす
+ * @return {Array<string>} 新しいほうが先（シートの下にあるものを先頭に）
+ */
+function xReadSampleSheetPosts_(minLen) {
+  minLen = minLen || 150;
+  var names = xResolveSheetNames_('文体サンプルシート名', X_SAMPLESHEET_DEFAULTS);
+  var ss = xBook_();
+  var out = [];
+
+  names.forEach(function (name) {
+    var sh = ss.getSheetByName(name);
+    if (!sh || sh.getLastRow() === 0) return;
+    var values = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+
+    // 下の行ほど新しいとみなして、後ろから拾う
+    for (var r = values.length - 1; r >= 0; r--) {
+      for (var c = 0; c < values[r].length; c++) {
+        var v = String(values[r][c] === null || values[r][c] === undefined ? '' : values[r][c]).trim();
+        if (v.length >= minLen) out.push(v);
+      }
+    }
+  });
+  return out;
+}

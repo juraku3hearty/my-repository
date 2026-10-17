@@ -13,7 +13,7 @@
 var X_PATTERN_COUNT = 8;
 
 /** 分析に使う投稿の本数 */
-var X_PATTERN_SAMPLES = 24;
+var X_PATTERN_SAMPLES = 20;
 
 /**
  * 過去の投稿から型を取り出して X_型カタログ に書く。
@@ -44,6 +44,8 @@ function xExtractPatterns() {
     '',
     '守ること:',
     '・似た型をまとめないでください。違いが出るように分けてください',
+    '・この書き手が「使わない」と決めているものを、型の説明に入れないでください。',
+    '  使わないもの（後述の禁止リスト）に当たる書き方は、型として採用しないでください。',
     '・一般的な文章構成の教科書を書かないでください。この投稿群にある型だけを書いてください',
     '・先に出てくる投稿ほど新しく、いまの発信の軸に近いものです。',
     '  古い投稿にしか無い型より、新しい投稿にある型を優先して拾ってください',
@@ -52,9 +54,13 @@ function xExtractPatterns() {
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
   ].join('\n');
 
+  var rules = '';
+  try { rules = xReadRules_(); } catch (e) { rules = ''; }
+
   var user = [
     '以下の投稿から、構成の型を' + X_PATTERN_COUNT + '種類に分けてください。',
     '',
+    (rules ? ('--- この書き手の禁止リスト（これに当たる書き方は型にしない） ---\n' + rules + '\n') : ''),
     items,
     '',
     '--- 投稿の分類（この型がどれに向くかを選ぶ） ---',
@@ -101,8 +107,12 @@ function xPickPatternSamples_(n) {
     out.push(t);
   }
 
-  // 1. サンプル投稿・固定ポスト（今週分を足してもらう場所。最優先）
-  xReadSamples_(8).forEach(add);
+  // 1. サンプル投稿・固定ポストのシート（今週分を足してもらう場所。最優先）
+  //    ここが一番新しく、実際に手応えのあった投稿が入る。
+  xReadSampleSheetPosts_(150).slice(0, 10).forEach(add);
+
+  // 2. 取り込み済みの文体サンプルシートがあれば、それも
+  xReadSamples_(4).forEach(add);
 
   var rows;
   try { rows = xReadLog_(); } catch (e) { rows = []; }
@@ -110,10 +120,10 @@ function xPickPatternSamples_(n) {
     return String(r['実投稿'] || r['雛形'] || '').trim();
   }).filter(function (t) { return t.length >= 150; });
 
-  // 2. 過去ログの直近ぶん（新しい順）
+  // 3. 過去ログの直近ぶん（新しい順）
   for (var i = texts.length - 1; i >= 0 && out.length < n - 4; i--) add(texts[i]);
 
-  // 3. 残り枠で、古いほうからも少しだけ（型の幅を見るため）
+  // 4. 残り枠で、古いほうからも少しだけ（型の幅を見るため）
   var step = Math.max(1, Math.floor(texts.length / 4));
   for (var j = 0; j < texts.length && out.length < n; j += step) add(texts[j]);
 
