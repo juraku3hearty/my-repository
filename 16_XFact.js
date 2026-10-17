@@ -308,3 +308,27 @@ function xReadSamples_(n) {
   rows.sort(function (a, b) { return b.length - a.length; });
   return rows.slice(0, n || 3);
 }
+
+/**
+ * 「今週あったこと」のメモを読む（直近14日ぶん、新しい順に最大3件）。
+ * 過去の棚卸しより新しい出来事のほうが、新しい視点の素になる。
+ */
+function xReadThisWeekNotes_() {
+  var sh = xBook_().getSheetByName(X_SHEETS.FACT);
+  if (!sh || sh.getLastRow() < 2) return '';
+
+  var limit = new Date();
+  limit.setDate(limit.getDate() - 14);
+  limit.setHours(0, 0, 0, 0);
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
+  var rows = values.filter(function (r) {
+    if (String(r[1]).trim() !== '今週あったこと' || !String(r[3]).trim()) return false;
+    var d = xParseDate_(r[0]);
+    return !d || d >= limit;
+  });
+
+  return rows.slice(-3).reverse().map(function (r) {
+    return '- ' + String(r[3]).trim();
+  }).join('\n');
+}

@@ -23,10 +23,17 @@ function xCheckDrafts() {
 
   var banned = xBannedWords_();
   var known = xKnownFactsText_();
+  var setting = xReadSetting_();
+  var landings = xSettingLines_(setting, '禁止する着地', X_DEFAULT_BANNED_LANDINGS);
+  var episodes = xSettingLines_(setting, '使用禁止のエピソード', X_DEFAULT_BANNED_EPISODES);
 
-  // 列順: 作成日時,分類,使った型,ターゲット層,テーマ,本文,冒頭3行,狙い,使った事実,自己チェック,投稿予定日,状態
   var lastRow = sh.getLastRow();
-  var bodies = sh.getRange(2, 6, lastRow - 1, 1).getValues();
+  var bodyCol = xDraftCol_('本文');
+  var checkCol = xDraftCol_('自己チェック');
+  var bodies = sh.getRange(2, bodyCol, lastRow - 1, 1).getValues();
+  var stamps = sh.getRange(2, xDraftCol_('作成日時'), lastRow - 1, 1).getValues();
+  var latestStamp = String(stamps[stamps.length - 1][0]);
+  var systemCount = 0;
 
   var results = [];
   var ngRows = [];
@@ -45,12 +52,24 @@ function xCheckDrafts() {
     var unknownNums = xUnknownNumbers_(body, known);
     if (unknownNums.length) problems.push('出どころ未確認の数字: ' + unknownNums.join('、'));
 
-    // 3) 【要確認：…】が残っていないか
+    // 3) 禁止した着地・使わないと決めたエピソード
+    var land = landings.filter(function (w) { return body.indexOf(w) >= 0; });
+    if (land.length) problems.push('禁止した着地: ' + land.join('、'));
+    var epi = episodes.filter(function (w) { return body.indexOf(w) >= 0; });
+    if (epi.length) problems.push('使わないエピソード: ' + epi.join('、'));
+
+    // 締めが「仕組み」の投稿を数える（今回の生成分だけ。週で2本まで）
+    if (String(stamps[i][0]) === latestStamp) {
+      var tail = body.trim().split('\n').slice(-3).join('');
+      if (tail.indexOf('仕組み') >= 0) systemCount++;
+    }
+
+    // 4) 【要確認：…】が残っていないか
     //    元の投稿が分からないときにAIが入れる印。そのまま投稿できない。
     var asks = body.match(/【要確認[^】]*】/g);
     if (asks) problems.push('埋める必要あり: ' + asks.join('、'));
 
-    // 4) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
+    // 5) 冒頭がカギカッコで始まっていないか（週で2本までの確認用）
     var head = body.split('\n')[0].trim();
     var quoted = /^[「『]/.test(head);
 
@@ -61,18 +80,19 @@ function xCheckDrafts() {
     if (problems.length) ngRows.push(i + 2);
   }
 
-  sh.getRange(2, 10, results.length, 1).setValues(results);
-  sh.getRange(2, 10, results.length, 1).setBackground(null);
-  ngRows.forEach(function (r) { sh.getRange(r, 10).setBackground('#fdeceb'); });
+  sh.getRange(2, checkCol, results.length, 1).setValues(results);
+  sh.getRange(2, checkCol, results.length, 1).setBackground(null);
+  ngRows.forEach(function (r) { sh.getRange(r, checkCol).setBackground('#fdeceb'); });
 
   var quotedCount = results.filter(function (r) {
     return String(r[0]).indexOf('冒頭カギカッコ') >= 0;
   }).length;
 
   var msg = ngRows.length
-    ? (ngRows.length + '本に要確認があります。J列（自己チェック）の赤い行だけ見てください。')
+    ? (ngRows.length + '本に要確認があります。「自己チェック」列の赤い行だけ見てください。')
     : '全部OKでした。そのまま使えます。';
   if (quotedCount > 2) msg += ' / カギカッコ始まりが' + quotedCount + '本あります（目安は2本まで）';
+  if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
 
   Logger.log(msg);
   xToast_(msg);

@@ -66,7 +66,7 @@ function xGeneratePosts() {
   var secs = Math.round((Date.now() - t0) / 1000);
   var msg = posts.length + '本できました（' + secs + '秒）。' +
     (posts.length < count ? '（' + count + '本のうち' + (count - posts.length) + '本は作れませんでした）' : '') +
-    (ng ? ('要確認が' + ng + '本あります（J列の赤い行）。') : '自動チェックは全部OKでした。') +
+    (ng ? ('要確認が' + ng + '本あります（「自己チェック」列の赤い行）。') : '自動チェックは全部OKでした。') +
     ' X_投稿案_週形式 からコピーできます。';
   Logger.log(msg);
   xToast_(msg);
@@ -95,8 +95,13 @@ var X_GEN_TIME_LIMIT_MS = 4.8 * 60 * 1000;
 /**
  * 生成の本体。
  *
- * 7本を1回で出すと出力が上限に達して切れるので、3本ずつに分けて呼ぶ。
- * 分けると冒頭が被りやすくなるため、前の回で使った1行目を次の回に渡す。
+ * 材料は3つ（本人の指定）。
+ *   ① 外部ライターの企画シート … テーマ選びと切り口の作り方だけを参考にする
+ *   ② 直近1週間の返信・引用   … 本人が実際に関心を持ったこと。いちばんの材料
+ *   ③ 事業の方向性シート       … 誰に向けた発信かの判断に使う
+ * 過去の投稿本文と経歴は、既定では渡さない（焼き直しの原因になるため）。
+ *
+ * 出力が上限で切れないよう2本ずつに分け、全部を並列で投げる。
  *
  * @param {string} themesText テーマ（空なら提案させる）
  * @param {number} count 本数
@@ -114,11 +119,25 @@ function xGenerate_(themesText, count) {
   }
 
   var rules = xReadRules_();
-  var samples = xReadSamples_(2);
-  if (!samples.length) samples = xPickSamples_(2);
-  var facts = xReadFacts_(40);
-  var factSheets = xReadFactSheets_();
-  var sampleSheets = xReadSampleSheets_();
+
+  // ② 直近の返信・引用。これが主材料。
+  var days = parseInt(setting['返信を読む日数'], 10);
+  var replies = xReadRecentReplies_(isNaN(days) || days <= 0 ? 7 : days);
+  var notes = xReadThisWeekNotes_();
+
+  // ① 外部ライターの企画シート（テーマ選び・切り口の参考）
+  var planNames = String(setting['企画シート名'] || '').split(/[,、]/)
+    .map(function (x) { return x.trim(); }).filter(String);
+  var planSheets = planNames.length ? xReadSheetsAsText_(planNames, 15000) : '';
+
+  // 過去の投稿本文と経歴・年表は、既定では渡さない。
+  // 手本があると、文体だけでなく中身（出来事・結論）まで引っぱられて焼き直しになる。
+  // 文体は X_文体ルール に取り出してあるので、それだけで書かせる。
+  var usePast = String(setting['過去の投稿・経歴を材料にする'] || '').trim() === 'はい';
+  var sampleSheets = usePast ? xReadSampleSheets_() : '';
+  var factSheets = usePast ? xReadFactSheets_() : '';
+  var facts = usePast ? xReadFacts_(40) : '';
+
   var patterns = xPatternsText_();
   var plan = xReadWeekPlan_();
   var pastThemes = xPastThemes_(40);
@@ -127,10 +146,11 @@ function xGenerate_(themesText, count) {
 
   var system = xGenSystem_();
   var context = xGenContext_(setting, strategy, concept, rules,
-                             samples, facts, factSheets, sampleSheets, patterns, reactions, adopted);
+                             facts, factSheets, sampleSheets, patterns, reactions, adopted,
+                             replies, notes, planSheets);
 
   var themes = String(themesText || '').trim();
-  var spec = xGenSpec_(count);
+  var spec = xGenSpec_(count, setting);
 
   // 3本ずつの束に分けて、全部まとめて並列で投げる
   var jobs = [];
@@ -167,12 +187,14 @@ function xGenerate_(themesText, count) {
         ((results[i] && results[i].error) || '不明'));
     }
 
-    if (got.length) {
-      all = all.concat(got);
-    } else {
-      // 束ごと落ちた分は、1本ずつに割ってやり直す
-      for (var k = 0; k < jobs[i].n; k++) failed.push(jobs[i].from + k);
-    }
+    // 多く返ってきた分は捨てる（割り当てた本数を超えると7本の配分が崩れる）
+    if (got.length > jobs[i].n) got = got.slice(0, jobs[i].n);
+    got.forEach(function (p, j) { p._idx = jobs[i].from + j; });
+    all = all.concat(got);
+
+    // 足りない分（束ごと落ちた・途中で切れた）は、1本ずつやり直す。
+    // 切れた場合に残るのは前のほうなので、欠けているのは後ろの番号。
+    for (var k = got.length; k < jobs[i].n; k++) failed.push(jobs[i].from + k);
   }
 
   // 落ちた分だけ、1本ずつ・これも並列で作り直す
@@ -192,12 +214,15 @@ function xGenerate_(themesText, count) {
           ((retry[r] && retry[r].error) || '不明'));
         continue;
       }
-      var one = xParsePosts_(retry[r].text);
-      if (one.length) all = all.concat(one);
+      var one = xParsePosts_(retry[r].text).slice(0, 1);
+      if (one.length) { one[0]._idx = failed[r]; all = all.concat(one); }
       else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
         String(retry[r].text).slice(0, 200));
     }
   }
+
+  // やり直した分が後ろに付くので、割り当てた番号順（＝曜日順）に戻す
+  all.sort(function (a, b) { return a._idx - b._idx; });
 
   Logger.log('生成 ' + all.length + '/' + count + '本 … ' +
     Math.round((Date.now() - started) / 1000) + '秒');
@@ -213,8 +238,9 @@ function xGenerate_(themesText, count) {
  * @param {number} count 本数
  * @return {Object} { pattern: Array<string>, quoteOk: Array<boolean> }
  */
-function xGenSpec_(count) {
+function xGenSpec_(count, setting) {
   var names = xPatternNames_();
+  var roles = xRoleOrder_(count, setting || {});
   var pattern = [];
   var quoteOk = [];
 
@@ -225,7 +251,39 @@ function xGenSpec_(count) {
     pattern.push(names.length ? names[i % names.length] : '');
     quoteOk.push(quoteSlots.indexOf(i) >= 0);
   }
-  return { pattern: pattern, quoteOk: quoteOk };
+  return { pattern: pattern, quoteOk: quoteOk, role: roles };
+}
+
+/**
+ * 週の役割配分を、本数ぶんの並びに展開する。
+ * 同じ役割が続かないように、1種類ずつ順に取っていく。
+ *
+ *   仕事:2 / 見落とし:2 / 失敗:1 / すれ違い:1 / 日常:1
+ *   → 仕事, 見落とし, 失敗, すれ違い, 日常, 仕事, 見落とし
+ */
+function xRoleOrder_(count, setting) {
+  var lines = xSettingLines_(setting, '週の役割配分', X_DEFAULT_ROLES);
+  var buckets = [];
+  lines.forEach(function (line) {
+    var m = line.match(/^(.+?)\s*[:：]\s*([0-9０-９]+)\s*本?$/);
+    var name = m ? m[1].trim() : line.trim();
+    var n = m ? parseInt(m[2].replace(/[０-９]/g, function (d) {
+      return String.fromCharCode(d.charCodeAt(0) - 0xFEE0);
+    }), 10) : 1;
+    if (name && n > 0) buckets.push({ name: name, left: n });
+  });
+  if (!buckets.length) return [];
+
+  var out = [];
+  while (out.length < count) {
+    var took = false;
+    for (var i = 0; i < buckets.length && out.length < count; i++) {
+      if (buckets[i].left > 0) { out.push(buckets[i].name); buckets[i].left--; took = true; }
+    }
+    // 配分の合計より本数が多ければ、最初から繰り返す
+    if (!took) buckets.forEach(function (b) { b.left = 1; });
+  }
+  return out;
 }
 
 /** 型カタログの型名を並べる（「使わない」に印が付いた型は外す） */
@@ -257,6 +315,17 @@ function xGenSystem_() {
     '「〜だったりします」「〜かもしれません」という留保は、そのまま残します。',
     '元の発言に無い因果関係（だから成功する、など）を足さないでください。',
     '',
+    '■ 投稿作成のルール（本人の指定）',
+    '',
+    '- 作るのは完成品ではなく、本人が手を入れる前提の叩き台です。',
+    '- 1投稿につき原則1テーマ。複数の過去エピソードを1本に混ぜないでください。',
+    '- 毎回「仕組み化が大事」「社長の仕事を減らそう」という結論に着地させないでください。',
+    '  7本のうち、仕組み化を結論にする投稿は多くても2本までにしてください。',
+    '- 本人が実際に経験していない話、言われていないセリフ、確認できない数字は創作しないでください。',
+    '- 過去に使った話を無理に引っ張り出さず、今週の返信から考えられることを優先してください。',
+    '- 情報が足りない場合、長くするために別の体験談を足さず、短く仕上げてください。',
+    '  長文の枠でも、材料が足りなければ短文の長さで構いません。',
+    '',
     '■ 最重要のルール',
     '',
     '- 「文体ルール」の禁止語は、絶対に使わないでください。',
@@ -278,12 +347,15 @@ function xGenSystem_() {
 }
 
 /** 毎回共通で渡す材料 */
-function xGenContext_(setting, strategy, concept, rules, samples, facts,
-                      factSheets, sampleSheets, patterns, reactions, adopted) {
+function xGenContext_(setting, strategy, concept, rules, facts,
+                      factSheets, sampleSheets, patterns, reactions, adopted,
+                      replies, notes, planSheets) {
   var parts = [];
 
   if (strategy) {
-    parts.push('# 発信設計書（この書き手の戦略。ここが土台）');
+    parts.push('# ③ 事業の方向性とターゲット');
+    parts.push('誰に向けた発信なのかを判断するために使ってください。');
+    parts.push('ここに書かれている文言を、そのまま投稿に流し込まないでください。');
     parts.push(strategy);
     parts.push('');
   }
@@ -302,9 +374,34 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
   parts.push(rules);
   parts.push('');
 
-  if (patterns) {
-    parts.push('# 構成の型（この書き手が実際に使っている骨組み）');
-    parts.push(patterns);
+  if (replies || notes) {
+    parts.push('# ② 直近の返信・引用（いちばんの材料）');
+    parts.push('本人が実際に関心を持ったこと、考えたこと、新しく出てきた疑問を拾ってください。');
+    parts.push('過去に使った話を引っ張り出すより、ここから考えられることを優先してください。');
+    parts.push('・返信は相手の投稿への反応です。相手の元投稿はここにありません。');
+    parts.push('  何についての発言かが読み取れない場合は、推測で確定せず【要確認：〜】と残してください。');
+    parts.push('・本人の発言を、元の意味より強く断定しないでください。');
+    parts.push('  「〜だったりします」「〜かもしれません」は、そのまま残してください。');
+    if (notes) {
+      parts.push('');
+      parts.push('## 今週あったこと（本人が書いたメモ）');
+      parts.push('7本のうち最低1本は、この出来事を中心に組み立ててください。');
+      parts.push(notes);
+    }
+    if (replies) {
+      parts.push('');
+      parts.push('## 返信・引用');
+      parts.push(replies);
+    }
+    parts.push('');
+  }
+
+  if (planSheets || patterns) {
+    parts.push('# ① 外部ライターの企画（テーマ選びと切り口の参考）');
+    parts.push('テーマの選び方、切り口の作り方だけを参考にしてください。');
+    parts.push('内容をそのまま言い換えて再利用しないでください。出来事・数字・セリフは使いません。');
+    if (planSheets) { parts.push(''); parts.push(planSheets); }
+    if (patterns) { parts.push(''); parts.push('## 構成の型（骨組みだけ）'); parts.push(patterns); }
     parts.push('');
   }
 
@@ -318,7 +415,7 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
   }
 
   if (factSheets) {
-    parts.push('# 経歴・インタビュー（一次情報の出どころ）');
+    parts.push('# 経歴・インタビュー（設定で「はい」のときだけ渡している）');
     parts.push('ここに書かれている事実・数字・出来事だけを使ってください。');
     parts.push(factSheets);
     parts.push('');
@@ -330,6 +427,24 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
     parts.push('いちばん新しい出来事なので、過去の棚卸しより読む価値があります。');
     parts.push('7本のうち最低1本は、この出来事を中心に組み立ててください。');
     parts.push(facts);
+    parts.push('');
+  }
+
+  var landings = xSettingLines_(setting, '禁止する着地', X_DEFAULT_BANNED_LANDINGS);
+  if (landings.length) {
+    parts.push('# この結論で締めない');
+    parts.push('読み終えたときに、読者が前と違うことを考えている状態にしてください。');
+    parts.push('次の言い回しに安易に着地させないでください。');
+    landings.forEach(function (e) { parts.push('  × ' + e); });
+    parts.push('');
+  }
+
+  var episodes = xSettingLines_(setting, '使用禁止のエピソード', X_DEFAULT_BANNED_EPISODES);
+  if (episodes.length) {
+    parts.push('# 今回は使わないエピソード');
+    parts.push('過去の投稿で何度も使った話です。一次情報に書かれていても、今回は使わないでください。');
+    parts.push('触れるだけ・たとえに出すだけも不可です。');
+    episodes.forEach(function (e) { parts.push('  × ' + e); });
     parts.push('');
   }
 
@@ -382,7 +497,6 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
     parts.push(themes);
   } else {
     parts.push('テーマはあなたが決めてください。似たテーマを並べず、角度を変えてください。');
-    parts.push('これまで繰り返し書いてきたテーマを、新しい角度で書き直すのも有効です。');
   }
   parts.push('');
 
@@ -408,6 +522,18 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   }
   parts.push('');
 
+  if (spec.role && spec.role.length) {
+    parts.push('## 投稿の役割（目安）');
+    parts.push('7本が全部「現場で見落とされている問題の指摘」にならないよう、役割を分けています。');
+    parts.push('材料（返信・今週あったこと）にその役割の話が無い場合は、作り話で埋めず、');
+    parts.push('材料のある別の役割に変えてください。変えた場合は「役割」欄にそう書いてください。');
+    for (var ri = 0; ri < n; ri++) {
+      var role = spec.role[from + ri];
+      if (role) parts.push('・' + (from + ri + 1) + '本目の役割: ' + role);
+    }
+    parts.push('');
+  }
+
   // 視点の角度
   parts.push('## 視点の角度（1本ずつ違う角度から書く）');
   parts.push('素材が同じでも、どの向きから見るかで結論が変わります。');
@@ -416,13 +542,6 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
     var ai = (from + a) % X_ANGLES.length;
     parts.push('・' + (from + a + 1) + '本目の角度: ' + X_ANGLES[ai]);
   }
-  parts.push('');
-
-  parts.push('## まだ結びついていない2つを結ぶ');
-  parts.push('一次情報の中から、これまで同じ投稿で語られていない2つの出来事を選び、');
-  parts.push('その2つを結びつけて1つの話にしてください。');
-  parts.push('（例：別々の現場で起きたことを並べて、共通する構造を見せる）');
-  parts.push('すでに何度も一緒に語られている組み合わせは避けてください。');
   parts.push('');
 
   if (pastThemes && pastThemes.length) {
@@ -465,6 +584,7 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('');
   parts.push('## 長文と短文');
   parts.push('・長文 … じっくり書く。背景・具体例・そこから言えることまで入れる');
+  parts.push('  　　　 ただし材料が足りなければ短くてよい。別の体験談を足して長くしない。');
   parts.push('・短文 … 110〜150字。長文で書いた論点をひとつだけ切り出す。');
   parts.push('  　　　 結論を1つに絞り、具体例は1つだけ。説明を足さない。');
   parts.push('  　　　 内容を薄めるのではなく、範囲を狭めてください。');
@@ -485,11 +605,12 @@ function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   parts.push('  "ターゲット層": "潜在層／準顕在層／顕在層／明確層 のどれか",');
   parts.push('  "使った型": "構成の型の型名",');
   parts.push('  "分類": "拡散／共感／人脈／助け／成果／専門／自分の言葉／仕組み化 のどれか",');
-  parts.push('  "本文": "そのまま投稿できる完成文。改行もそのまま",');
+  parts.push('  "役割": "割り当てた役割。材料が無くて変えた場合は「〇〇→△△（理由）」",');
+  parts.push('  "投稿の狙い": "30字以内",');
+  parts.push('  "元になった返信・切り口": "どの返信（日付と冒頭）か、または企画シートのどの切り口か。80字以内",');
+  parts.push('  "本文": "X投稿文の叩き台。改行もそのまま",');
   parts.push('  "冒頭3行": "最初の3行だけを抜き出したもの",');
-  parts.push('  "狙い": "30字以内",');
-  parts.push('  "使った事実": "本文で触れた事実の出どころ。60字以内",');
-  parts.push('  "使った禁止語チェック": "20字以内"');
+  parts.push('  "事実確認が必要な箇所": "本人に確かめたい箇所を列挙。無ければ「なし」"');
   parts.push('}]}');
   parts.push('※ posts には必ず ' + n + ' 本だけ入れてください。');
 
@@ -521,31 +642,40 @@ function xPickSamples_(n) {
 /** 投稿案をシートに書き出す */
 function xWriteDrafts_(posts) {
   var sh = xSheet_(X_SHEETS.DRAFT, X_DRAFT_HEADERS);
+  if (!posts.length) return;
 
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
+  var width = Math.max(sh.getLastColumn(), X_DRAFT_HEADERS.length);
   var rows = posts.map(function (p) {
-    return [
-      now,
-      p['分類'] || '',
-      p['使った型'] || '',
-      p['ターゲット層'] || '',
-      p['テーマ'] || '',
-      p['本文'] || '',
-      p['冒頭3行'] || '',
-      p['狙い'] || '',
-      p['使った事実'] || '',
-      p['使った禁止語チェック'] || '',
-      '',
-      '未'
-    ];
+    var v = {
+      '作成日時': now,
+      '分類': p['分類'] || '',
+      '役割': p['役割'] || '',
+      '使った型': p['使った型'] || '',
+      'ターゲット層': p['ターゲット層'] || '',
+      'テーマ': p['テーマ'] || '',
+      '投稿の狙い': p['投稿の狙い'] || p['狙い'] || '',
+      '元になった返信・切り口': p['元になった返信・切り口'] || p['使った事実'] || '',
+      '本文': p['本文'] || '',
+      '冒頭3行': p['冒頭3行'] || '',
+      '事実確認が必要な箇所': p['事実確認が必要な箇所'] || '',
+      '自己チェック': '',
+      '投稿予定日': '',
+      '状態': '未'
+    };
+    var row = X_DRAFT_HEADERS.map(function (h) { return v[h]; });
+    while (row.length < width) row.push('');   // 手で足した列のぶん
+    return row;
   });
 
-  if (!rows.length) return;
-  sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
-  sh.setColumnWidth(6, 520);
-  sh.setColumnWidth(9, 300);
-  sh.getRange(2, 6, sh.getLastRow() - 1, 1).setWrap(true);
-  sh.getRange(2, 9, sh.getLastRow() - 1, 1).setWrap(true);
+  var start = sh.getLastRow() + 1;
+  sh.getRange(start, 1, rows.length, width).setValues(rows);
+
+  ['本文', '元になった返信・切り口', '事実確認が必要な箇所'].forEach(function (h) {
+    var c = xDraftCol_(h);
+    sh.setColumnWidth(c, h === '本文' ? 520 : 300);
+    sh.getRange(2, c, sh.getLastRow() - 1, 1).setWrap(true);
+  });
 }
 
 
@@ -631,8 +761,8 @@ function xPastThemes_(limit) {
   var out = [];
   var sh = xBook_().getSheetByName(X_SHEETS.DRAFT);
   if (sh && sh.getLastRow() > 1) {
-    // 列順: 作成日時, 分類, 使った型, ターゲット層, テーマ, ...
-    var values = sh.getRange(2, 5, sh.getLastRow() - 1, 1).getValues();
+    xRepairHeaders_(sh, X_DRAFT_HEADERS);
+    var values = sh.getRange(2, xDraftCol_('テーマ'), sh.getLastRow() - 1, 1).getValues();
     for (var i = values.length - 1; i >= 0 && out.length < limit; i--) {
       var t = String(values[i][0]).trim();
       if (t && out.indexOf(t) < 0) out.push(t);

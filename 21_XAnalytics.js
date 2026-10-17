@@ -79,19 +79,22 @@ function xImportAnalytics() {
     if (!body) continue;
 
     var isReply = body.charAt(0) === '@';
+    // CSVには引用ポストの印が無い。末尾が t.co のリンクで終わる自分の投稿を、引用とみなす（推定）
+    var isQuote = !isReply && /https:\/\/t\.co\/\S+\s*$/.test(body);
     if (isReply) replies++; else posts++;
-    if (!isReply) continue;
+    if (!isReply && !isQuote) continue;
 
-    // 相手のIDを外し、短い相槌は捨てる
+    // 相手のIDとリンクを外し、短い相槌は捨てる
     var text = body.replace(/^(@\w+\s*)+/, '').trim();
     text = text.replace(/\s*https:\/\/t\.co\/\S+/g, '').trim();
     if (text.length < X_REPLY_MIN_LEN) continue;
 
-    var key = 'Xでの返信: ' + text.slice(0, 30);
+    var genre = isReply ? 'Xでの返信' : 'Xでの引用（推定）';
+    var key = genre + ': ' + text.slice(0, 30);
     if (known.indexOf(key) >= 0) continue;
 
     var date = values[r][ci.date] ? String(values[r][ci.date]) : '';
-    factSh.appendRow([date || fmtDate_(new Date()), 'Xでの返信', key, text, 0]);
+    factSh.appendRow([date || Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd'), genre, key, text, 0]);
     known.push(key);
     added++;
   }
@@ -102,7 +105,7 @@ function xImportAnalytics() {
   }
 
   var msg = '投稿' + posts + '件 / 返信' + replies + '件を読みました。' +
-            'うち' + added + '件の返信を一次情報に追加しました。';
+            'うち' + added + '件の返信・引用を一次情報に追加しました。';
   Logger.log(msg);
   xToast_(msg);
   return added;
@@ -159,4 +162,55 @@ function xAnalyticsSummary() {
     Logger.log('\n※まだ ' + rows.length + '件です。型ごとの比較は、30件を超えてからにしてください。');
   }
   xToast_(rows.length + '件を集計しました。ログを見てください。');
+}
+
+
+/**
+ * 直近の返信・引用を読む。投稿案の主な材料。
+ *
+ * 「直近」は今日からではなく、取り込んだデータのいちばん新しい日から数える。
+ * CSVを書き出した日と生成する日がずれても、最新の1週間を拾えるようにするため。
+ *
+ * @param {number} days 何日ぶん
+ * @return {string}
+ */
+function xReadRecentReplies_(days) {
+  var sh = xBook_().getSheetByName(X_SHEETS.FACT);
+  if (!sh || sh.getLastRow() < 2) return '';
+
+  var values = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues();
+  var rows = values.filter(function (r) {
+    return /^Xでの(返信|引用)/.test(String(r[1])) && String(r[3]).trim();
+  });
+  if (!rows.length) return '';
+
+  var dated = rows.map(function (r) { return { d: xParseDate_(r[0]), r: r }; });
+  var latest = null;
+  dated.forEach(function (x) { if (x.d && (!latest || x.d > latest)) latest = x.d; });
+
+  var picked;
+  if (latest) {
+    var from = new Date(latest.getTime() - ((days || 7) - 1) * 24 * 3600 * 1000);
+    from.setHours(0, 0, 0, 0);
+    picked = dated.filter(function (x) { return x.d && x.d >= from; });
+  } else {
+    // 日付が読めない場合は、シートの下（新しい側）から拾う
+    picked = dated.slice(-20);
+  }
+
+  picked.sort(function (a, b) { return (b.d || 0) - (a.d || 0); });
+  return picked.map(function (x) {
+    var d = x.d ? Utilities.formatDate(x.d, 'Asia/Tokyo', 'M/d') : '';
+    return '- [' + d + '・' + String(x.r[1]).replace(/^Xでの/, '') + '] ' + String(x.r[3]).trim();
+  }).join('\n');
+}
+
+/** 「2026-10-17」「2026/10/17 9:00」「2026年10月17日」などを Date にする。読めなければ null */
+function xParseDate_(v) {
+  if (v instanceof Date && !isNaN(v.getTime())) return v;
+  var s = String(v || '').trim();
+  var m = s.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
 }
