@@ -422,8 +422,7 @@ function xPickSamples_(n) {
 
 /** 投稿案をシートに書き出す */
 function xWriteDrafts_(posts) {
-  var sh = xSheet_(X_SHEETS.DRAFT,
-    ['作成日時', '分類', '使った型', 'ターゲット層', 'テーマ', '本文', '冒頭3行', '狙い', '使った事実', '自己チェック', '投稿予定日', '状態']);
+  var sh = xSheet_(X_SHEETS.DRAFT, X_DRAFT_HEADERS);
 
   var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
   var rows = posts.map(function (p) {

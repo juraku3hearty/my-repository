@@ -87,17 +87,88 @@ function xBook_() {
   return SpreadsheetApp.openById(id);
 }
 
-/** シートを取得（無ければ作る） */
+/** X_投稿案 の列。生成と自己チェックで同じものを使う。 */
+var X_DRAFT_HEADERS = ['作成日時', '分類', '使った型', 'ターゲット層', 'テーマ', '本文',
+  '冒頭3行', '狙い', '使った事実', '自己チェック', '投稿予定日', '状態'];
+
+/** シートを取得（無ければ作る）。見出しが古い場合は列を並べ替えて直す。 */
 function xSheet_(name, headers) {
   var ss = xBook_();
   var sh = ss.getSheetByName(name);
   if (!sh) {
     sh = ss.insertSheet(name);
     if (headers && headers.length) {
-      sh.getRange(1, 1, 1, headers.length).setValues([headers])
-        .setFontWeight('bold').setBackground('#1f3a5f').setFontColor('#ffffff');
+      xWriteHeaderRow_(sh, headers);
       sh.setFrozenRows(1);
     }
+    return sh;
   }
+  if (headers && headers.length) xRepairHeaders_(sh, headers);
   return sh;
+}
+
+/** 見出し行を書いて体裁を整える */
+function xWriteHeaderRow_(sh, headers) {
+  sh.getRange(1, 1, 1, headers.length).setValues([headers])
+    .setFontWeight('bold').setBackground('#1f3a5f').setFontColor('#ffffff');
+}
+
+/**
+ * 既にあるシートの見出しが期待と違う場合に、中身を壊さず列を並べ替える。
+ *
+ * ツールを更新して列が増えたとき、古い行は前の列順で入っている。
+ * 見出し名で対応を取り直すので、データがずれたまま検査されるのを防げる。
+ * 手で足した見出し（期待に無い名前）は後ろに残す。
+ *
+ * @param {Sheet} sh
+ * @param {Array<string>} headers 期待する見出し
+ */
+function xRepairHeaders_(sh, headers) {
+  var width = Math.max(sh.getLastColumn(), headers.length);
+  var current = sh.getRange(1, 1, 1, width).getValues()[0].map(function (v) {
+    return String(v == null ? '' : v).trim();
+  });
+
+  // 既に正しければ何もしない
+  var same = true;
+  for (var i = 0; i < headers.length; i++) {
+    if (current[i] !== headers[i]) { same = false; break; }
+  }
+  if (same) return;
+
+  // 見出しが空のシート（取り込み用など）は触らない
+  var hasAnyHeader = current.some(function (v) { return v !== ''; });
+  if (!hasAnyHeader) {
+    xWriteHeaderRow_(sh, headers);
+    sh.setFrozenRows(1);
+    return;
+  }
+
+  // 期待に無い見出し（手で足した列）は末尾に回す
+  var extras = [];
+  for (var c = 0; c < current.length; c++) {
+    if (current[c] && headers.indexOf(current[c]) < 0) extras.push(current[c]);
+  }
+  var target = headers.concat(extras);
+
+  // 旧見出し名 → 旧列番号（0始まり）
+  var srcOf = {};
+  for (var c2 = 0; c2 < current.length; c2++) {
+    if (current[c2] && !(current[c2] in srcOf)) srcOf[current[c2]] = c2;
+  }
+
+  var lastRow = sh.getLastRow();
+  var body = lastRow > 1 ? sh.getRange(2, 1, lastRow - 1, width).getValues() : [];
+  var moved = body.map(function (row) {
+    return target.map(function (h) {
+      var src = srcOf[h];
+      return src === undefined ? '' : row[src];
+    });
+  });
+
+  // clearContents にしているのは入力規則（ドロップダウン）を残すため
+  sh.clearContents();
+  xWriteHeaderRow_(sh, target);
+  sh.setFrozenRows(1);
+  if (moved.length) sh.getRange(2, 1, moved.length, target.length).setValues(moved);
 }

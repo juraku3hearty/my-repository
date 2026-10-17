@@ -18,6 +18,8 @@ function xCheckDrafts() {
     xToast_('X_投稿案 がありません。先に投稿案を作ってください。');
     return;
   }
+  // 古い列順のまま検査すると別の列を本文と見なしてしまうので、先に直す
+  xRepairHeaders_(sh, X_DRAFT_HEADERS);
 
   var banned = xBannedWords_();
   var known = xKnownFactsText_();
