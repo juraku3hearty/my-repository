@@ -194,6 +194,8 @@ function xRepairHeaders_(sh, headers) {
  * GASからClaude APIを呼ぶ（UrlFetchApp。GASはSDKが使えないので素のHTTP）
  */
 
+var X_API_URL = 'https://api.anthropic.com/v1/messages';
+
 /**
  * Messages API を1回呼ぶ。
  * @param {Object} opt { system, userText, maxTokens, effort }
@@ -203,6 +205,63 @@ function xClaude_(opt) {
   var key = xConfig_().apiKey;
   if (!key) throw new Error('スクリプトプロパティ ANTHROPIC_API_KEY が未設定です。');
 
+  var res = xFetchWithRetry_(X_API_URL, xClaudeParams_(opt, key));
+  var r = xClaudeResult_(res.getResponseCode(), res.getContentText());
+  if (!r.ok) throw new Error(r.error);
+  return r.text;
+}
+
+/**
+ * Messages API を「同時に」何回も呼ぶ。
+ *
+ * 1本ずつ順番に待つと、1回1〜2分 × 回数ぶんかかって6分制限に当たる。
+ * UrlFetchApp.fetchAll は並列に投げるので、全体が「いちばん遅い1回」で終わる。
+ *
+ * @param {Array<Object>} reqs xClaude_ と同じ形の配列
+ * @return {Array<Object>} 各要素 {ok:true, text} または {ok:false, error}
+ */
+function xClaudeBatch_(reqs) {
+  var key = xConfig_().apiKey;
+  if (!key) throw new Error('スクリプトプロパティ ANTHROPIC_API_KEY が未設定です。');
+  if (!reqs || !reqs.length) return [];
+
+  var out = reqs.map(function () { return null; });
+  var pending = reqs.map(function (_, i) { return i; });
+  var waits = [2000, 4000, 8000, 16000];
+
+  for (var attempt = 0; attempt <= waits.length && pending.length; attempt++) {
+    var params = pending.map(function (i) { return xClaudeParams_(reqs[i], key); });
+
+    var res;
+    try {
+      res = UrlFetchApp.fetchAll(params);
+    } catch (e) {
+      // 通信そのものが落ちた場合は、待って全部を投げ直す
+      if (attempt < waits.length) { Utilities.sleep(waits[attempt]); continue; }
+      pending.forEach(function (i) { out[i] = { ok: false, error: e.message }; });
+      return out;
+    }
+
+    var retry = [];
+    for (var k = 0; k < pending.length; k++) {
+      var idx = pending[k];
+      var code = res[k].getResponseCode();
+      if (code === 429 || code >= 500) { retry.push(idx); continue; }
+      out[idx] = xClaudeResult_(code, res[k].getContentText());
+    }
+
+    pending = retry;
+    if (pending.length && attempt < waits.length) Utilities.sleep(waits[attempt]);
+  }
+
+  pending.forEach(function (i) {
+    out[i] = { ok: false, error: 'APIが混み合っています（429/5xx）。しばらく待ってやり直してください。' };
+  });
+  return out;
+}
+
+/** fetch / fetchAll に渡すパラメータを作る */
+function xClaudeParams_(opt, key) {
   var body = {
     model: X_MODEL,
     max_tokens: opt.maxTokens || 8000,
@@ -213,7 +272,8 @@ function xClaude_(opt) {
   };
   if (opt.system) body.system = opt.system;
 
-  var res = xFetchWithRetry_('https://api.anthropic.com/v1/messages', {
+  return {
+    url: X_API_URL,
     method: 'post',
     contentType: 'application/json',
     headers: {
@@ -222,20 +282,28 @@ function xClaude_(opt) {
     },
     payload: JSON.stringify(body),
     muteHttpExceptions: true
-  });
+  };
+}
 
-  var code = res.getResponseCode();
-  var text = res.getContentText();
-
+/** 応答を {ok, text} / {ok, error} に直す */
+function xClaudeResult_(code, text) {
   if (code !== 200) {
-    throw new Error('Claude API エラー (' + code + '): ' + text.slice(0, 500));
+    return { ok: false, error: 'Claude API エラー (' + code + '): ' + String(text).slice(0, 500) };
   }
 
-  var json = JSON.parse(text);
+  var json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    return { ok: false, error: '応答をJSONとして読めませんでした: ' + String(text).slice(0, 200) };
+  }
 
   if (json.stop_reason === 'refusal') {
-    throw new Error('リクエストが拒否されました: ' +
-      ((json.stop_details && json.stop_details.explanation) || ''));
+    return {
+      ok: false,
+      error: 'リクエストが拒否されました: ' +
+        ((json.stop_details && json.stop_details.explanation) || '')
+    };
   }
 
   // thinking ブロックは既定で空。text ブロックだけ拾う。
@@ -247,7 +315,7 @@ function xClaude_(opt) {
   if (json.stop_reason === 'max_tokens') {
     Logger.log('警告: max_tokens に達しました。出力が途中で切れている可能性があります。');
   }
-  return out;
+  return { ok: true, text: out };
 }
 
 /** 429 / 5xx は待って再試行する */
@@ -327,7 +395,9 @@ var X_TEXT_ITEMS = [
   ['アカウント紹介', 'プロフィール文など。読者像の判断に使います', false],
   ['投稿の方向性', '業者さんのシートに分類があればそれを貼る（改行区切り）', false],
   ['扱わないこと', '書かないテーマがあれば（改行区切り）', false],
-  ['1本の文字数の目安', '空なら指定なし。長さを変えたいときだけ数字を入れる（例: 500）', false]
+  ['1本の文字数の目安', '空なら指定なし。長さを変えたいときだけ数字を入れる（例: 500）', false],
+  ['今週あったこと', 'スクリプトエディタから実行するとき用。相談で言われた言葉・詰まったこと・作ったものを1行', false],
+  ['今週のテーマ', 'スクリプトエディタから実行するとき用。テーマがあれば（改行区切り）', false]
 ];
 
 /**
@@ -1068,6 +1138,18 @@ function xGeneratePosts() {
     }
   }
 
+  if (!ui) {
+    // スクリプトエディタから実行した場合はダイアログが出せないので、X_設定から読む
+    var st = xReadSetting_();
+    themes = String(st['今週のテーマ'] || '').trim();
+    var note2 = String(st['今週あったこと'] || '').trim();
+    if (note2) xSaveThisWeekNote_(note2);
+    Logger.log('ダイアログなしで実行しています。テーマ=' + (themes || '（なし）') +
+      ' / 今週あったこと=' + (note2 || '（なし）') +
+      '　→ X_設定の「今週あったこと」「今週のテーマ」を使います。');
+  }
+
+  var t0 = Date.now();
   var posts = xGenerate_(themes, count);
   xWriteDrafts_(posts);
   xWriteWeekBlock_(posts);
@@ -1076,9 +1158,13 @@ function xGeneratePosts() {
   var ng = 0;
   try { ng = xCheckDrafts() || 0; } catch (e) { Logger.log('チェック失敗: ' + e.message); }
 
-  xToast_(posts.length + '本できました。' +
+  var secs = Math.round((Date.now() - t0) / 1000);
+  var msg = posts.length + '本できました（' + secs + '秒）。' +
+    (posts.length < count ? '（' + count + '本のうち' + (count - posts.length) + '本は作れませんでした）' : '') +
     (ng ? ('要確認が' + ng + '本あります（J列の赤い行）。') : '自動チェックは全部OKでした。') +
-    ' X_投稿案_週形式 からコピーできます。');
+    ' X_投稿案_週形式 からコピーできます。';
+  Logger.log(msg);
+  xToast_(msg);
 }
 
 /** 1回のAPI呼び出しで作る本数。多いと出力が上限に達して切れる。 */
@@ -1125,57 +1211,107 @@ function xGenerate_(themesText, count) {
                              samples, facts, factSheets, sampleSheets, patterns, reactions, adopted);
 
   var themes = String(themesText || '').trim();
-  var all = [];
-  var usedOpenings = [];
-  var usedPatterns = [];
+  var spec = xGenSpec_(count);
 
+  // 3本ずつの束に分けて、全部まとめて並列で投げる
+  var jobs = [];
   for (var from = 0; from < count; from += X_GEN_CHUNK) {
-    if (Date.now() - started > X_GEN_TIME_LIMIT_MS) {
-      Logger.log('時間切れのため ' + all.length + ' 本で打ち切りました。');
-      break;
-    }
-
-    var n = Math.min(X_GEN_CHUNK, count - from);
-    var req = xGenRequest_(from, n, count, themes, plan, usedOpenings, usedPatterns, pastThemes);
-
-    var posts;
-    try {
-      posts = xParseJson_(xClaude_({
-        system: system,
-        userText: context + '\n' + req,
-        maxTokens: 16000,
-        effort: 'high'
-      })).posts || [];
-    } catch (err) {
-      Logger.log((from + 1) + '本目からの生成に失敗しました: ' + err.message);
-      // 1本ずつに落として作り直す
-      posts = [];
-      for (var k = 0; k < n; k++) {
-        if (Date.now() - started > X_GEN_TIME_LIMIT_MS) break;
-        try {
-          var one = xParseJson_(xClaude_({
-            system: system,
-            userText: context + '\n' +
-              xGenRequest_(from + k, 1, count, themes, plan, usedOpenings, usedPatterns, pastThemes),
-            maxTokens: 12000,
-            effort: 'high'
-          })).posts || [];
-          posts = posts.concat(one);
-        } catch (err2) {
-          Logger.log((from + k + 1) + '本目を飛ばしました: ' + err2.message);
-        }
-      }
-    }
-
-    posts.forEach(function (p) {
-      all.push(p);
-      var head = String(p['冒頭3行'] || p['本文'] || '').split('\n')[0].trim();
-      if (head) usedOpenings.push(head);
-      if (p['使った型']) usedPatterns.push(String(p['使った型']));
-    });
+    jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, count - from) });
   }
 
+  var results = xClaudeBatch_(jobs.map(function (j) {
+    return {
+      system: system,
+      userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes),
+      maxTokens: 16000,
+      effort: 'high'
+    };
+  }));
+
+  var all = [];
+  var failed = [];
+
+  for (var i = 0; i < jobs.length; i++) {
+    var got = [];
+    if (results[i] && results[i].ok) {
+      try {
+        got = xParseJson_(results[i].text).posts || [];
+      } catch (e) {
+        Logger.log((jobs[i].from + 1) + '本目からの読み取りに失敗: ' + e.message);
+      }
+    } else {
+      Logger.log((jobs[i].from + 1) + '本目からの生成に失敗: ' +
+        ((results[i] && results[i].error) || '不明'));
+    }
+
+    if (got.length) {
+      all = all.concat(got);
+    } else {
+      // 束ごと落ちた分は、1本ずつに割ってやり直す
+      for (var k = 0; k < jobs[i].n; k++) failed.push(jobs[i].from + k);
+    }
+  }
+
+  // 落ちた分だけ、1本ずつ・これも並列で作り直す
+  if (failed.length && Date.now() - started < X_GEN_TIME_LIMIT_MS) {
+    var retry = xClaudeBatch_(failed.map(function (idx) {
+      return {
+        system: system,
+        userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes),
+        maxTokens: 12000,
+        effort: 'high'
+      };
+    }));
+
+    for (var r = 0; r < retry.length; r++) {
+      if (!retry[r] || !retry[r].ok) {
+        Logger.log((failed[r] + 1) + '本目を飛ばしました: ' +
+          ((retry[r] && retry[r].error) || '不明'));
+        continue;
+      }
+      try {
+        all = all.concat(xParseJson_(retry[r].text).posts || []);
+      } catch (e2) {
+        Logger.log((failed[r] + 1) + '本目を飛ばしました: ' + e2.message);
+      }
+    }
+  }
+
+  Logger.log('生成 ' + all.length + '/' + count + '本 … ' +
+    Math.round((Date.now() - started) / 1000) + '秒');
   return all;
+}
+
+/**
+ * 本ごとの「使う型」と「カギカッコで始めてよいか」を先に決める。
+ *
+ * 並列に投げると、前の回で何を使ったかを見て避けることができない。
+ * なので避けるのではなく、最初に割り振ってしまう。
+ *
+ * @param {number} count 本数
+ * @return {Object} { pattern: Array<string>, quoteOk: Array<boolean> }
+ */
+function xGenSpec_(count) {
+  var names = xPatternNames_();
+  var pattern = [];
+  var quoteOk = [];
+
+  // カギカッコ始まりは週に2本まで。間を空けて割り当てる。
+  var quoteSlots = count >= 5 ? [1, Math.floor(count / 2) + 1] : [1];
+
+  for (var i = 0; i < count; i++) {
+    pattern.push(names.length ? names[i % names.length] : '');
+    quoteOk.push(quoteSlots.indexOf(i) >= 0);
+  }
+  return { pattern: pattern, quoteOk: quoteOk };
+}
+
+/** 型カタログの型名を並べる（「使わない」に印が付いた型は外す） */
+function xPatternNames_() {
+  var list;
+  try { list = xReadPatterns_(); } catch (e) { return []; }
+  return (list || []).map(function (p) { return String(p.name || '').trim(); })
+    .filter(function (s) { return s; });
 }
 
 /** 生成のシステムプロンプト */
@@ -1313,7 +1449,7 @@ function xGenContext_(setting, strategy, concept, rules, samples, facts,
 }
 
 /** その回ぶんの依頼 */
-function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, pastThemes) {
+function xGenRequest_(from, n, total, themes, plan, spec, pastThemes) {
   var parts = [];
   parts.push('# 依頼');
   parts.push('全' + total + '本のうち、' + (from + 1) + '本目から' + (from + n) + '本目までの ' +
@@ -1376,17 +1512,32 @@ function xGenRequest_(from, n, total, themes, plan, usedOpenings, usedPatterns, 
     parts.push('');
   }
 
-  // 冒頭と型の重複を避ける
-  parts.push('## 重複を避ける');
-  if (usedOpenings.length) {
-    parts.push('すでに書いた投稿の1行目です。**これと同じ形で始めないでください。**');
-    usedOpenings.forEach(function (h) { parts.push('  × ' + h); });
+  // 型と冒頭は、全本ぶんを先に割り振ってある（並列に作るので後から避けられない）
+  parts.push('## 使う型（割り当て済み。変えないでください）');
+  var others = [];
+  for (var q = 0; q < total; q++) {
+    var name = spec.pattern[q];
+    if (!name) continue;
+    if (q >= from && q < from + n) {
+      parts.push('・' + (q + 1) + '本目の型: ' + name);
+    } else if (others.indexOf(name) < 0) {
+      others.push(name);
+    }
   }
-  if (usedPatterns.length) {
-    parts.push('すでに使った型です。別の型を使ってください: ' + usedPatterns.join('、'));
+  if (others.length) {
+    parts.push('他の本で使う型なので、この回では使わないでください: ' + others.join('、'));
   }
-  parts.push('・カギカッコで誰かの台詞や心の声を置いて始める形は、全' + total + '本のうち最大2本までです。');
-  parts.push('・残りは、事実・数字・場面の描写・自分の行動など、別の入り方にしてください。');
+  parts.push('');
+
+  parts.push('## 冒頭の入り方');
+  parts.push('カギカッコで誰かの台詞や心の声を置いて始める形は、週に2本までに決めています。');
+  for (var w = 0; w < n; w++) {
+    var wi = from + w;
+    parts.push('・' + (wi + 1) + '本目: ' +
+      (spec.quoteOk[wi]
+        ? 'カギカッコ始まりにしてよい'
+        : 'カギカッコで始めないこと。事実・数字・場面の描写・自分の行動など別の入り方にする'));
+  }
   parts.push('');
 
   parts.push('');
