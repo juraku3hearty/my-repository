@@ -158,6 +158,7 @@ function xGenCtx_(themesText, count) {
   var days = parseInt(setting['返信を読む日数'], 10);
   var replyList = xRecentReplyList_(isNaN(days) || days <= 0 ? 7 : days);
   var replies = xFormatReplies_(replyList);
+  var noteList = xThisWeekNoteList_();
   var notes = xReadThisWeekNotes_();
 
   // ① 外部ライターの企画シート（テーマ選び・切り口の参考）
@@ -197,6 +198,7 @@ function xGenCtx_(themesText, count) {
     plan: plan,
     pastThemes: pastThemes,
     replyList: replyList,
+    noteList: noteList,
     notes: notes
   };
 }

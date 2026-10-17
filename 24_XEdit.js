@@ -173,7 +173,10 @@ function xEditPlan_(ctx, posts, keepIdx) {
   var findReply = function (key) {
     var k = String(key || '').trim();
     if (!k || k === 'null' || k === 'なし') return null;
-    if (/^メモ|今週あったこと/.test(k)) return ctx.notes ? { no: 'メモ', text: ctx.notes } : null;
+    var mm = k.match(/M\s*(\d+)/i);
+    if (mm) return (ctx.noteList || []).filter(function (n) { return n.no === 'M' + mm[1]; })[0] || null;
+    // 番号なしで「メモ」とだけ返ってきた場合は、1件目を使う
+    if (/^メモ|今週あったこと/.test(k)) return (ctx.noteList || [])[0] || null;
     var m = k.match(/R\s*(\d+)/i);
     if (!m) return null;
     return replies.filter(function (r) { return r.no === 'R' + m[1]; })[0] || null;
@@ -258,7 +261,7 @@ function xEditSystem_() {
     '・今週の返信・引用の中から、まだどの本にも使われていない材料を選んでください。',
     '  「元になった返信・切り口」に書かれている材料は、使用済みです。',
     '  使用済みの材料と同じ論点の返信も、選ばないでください。',
-    '・1つの材料は1つの枠にだけ使ってください。',
+    '・1つの材料は1つの枠にだけ使ってください。今週あったこと（M番号）も1件ずつ別の材料です。',
     '・新しい材料が無い枠は、"材料": null にしてください。無理に埋めないでください。',
     '・企画は30字以内。主張は1文で、元の返信より強く言い切らないでください。',
     '・割り当てられた役割に合う材料があればそれを選び、無ければ役割は変わって構いません。',
@@ -270,7 +273,7 @@ function xEditSystem_() {
     '  "作り直す": [{"本": 6, "材料": "R12", "企画": "…", "主張": "…", "理由": "…"}],',
     '  "不足": "材料が足りない場合の説明（無ければ空文字）"',
     '}',
-    '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことなら "メモ"、無ければ null。'
+    '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことの番号（M1 など）、無ければ null。'
   ].join('\n');
 }
 
@@ -420,6 +423,19 @@ function xRegenerateDrafts() {
     if (r.getSelectedButton() !== ui.Button.OK) return;
     var typed = xParseNumbers_(r.getResponseText(), batch.length);
     if (typed.length) keep = typed;
+
+    // 材料が足りないことが多いので、ここでも今週あったことを聞く
+    var r2 = ui.prompt(
+      '今週あったこと（材料が足りないとき用・空でも進みます）',
+      '作り直す枠の材料になります。1行に1つ、いくつでも。\n' +
+      '相談で言われた言葉、詰まったこと、作ったもの、現場で見たこと。\n' +
+      '空のままだと、今週の返信の中から選びます。',
+      ui.ButtonSet.OK_CANCEL);
+    if (r2.getSelectedButton() === ui.Button.OK) {
+      String(r2.getResponseText() || '').split(/\r?\n/)
+        .map(function (x) { return x.trim(); }).filter(String)
+        .forEach(function (note) { xSaveThisWeekNote_(note); });
+    }
   }
 
   if (!keep.length) {

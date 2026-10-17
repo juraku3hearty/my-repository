@@ -15,11 +15,12 @@ add('X_一次情報', [['記録日','ジャンル','質問','回答','使用回�
 ]);
 var book = M.makeBook(S);
 var UI_ANSWER = null;
+var MEMO_ANSWER = '';
 global.SpreadsheetApp = {
   getUi: function () {
     if (UI_ANSWER === null) throw new Error('no ui');
     return { ButtonSet: { OK_CANCEL: 1 }, Button: { OK: 'OK' },
-      prompt: function () { return { getSelectedButton: function () { return 'OK'; }, getResponseText: function () { return UI_ANSWER; } }; } };
+      prompt: function (title) { var a = /今週あったこと/.test(title) ? MEMO_ANSWER : UI_ANSWER; return { getSelectedButton: function () { return 'OK'; }, getResponseText: function () { return a; } }; } };
   },
   getActive: function () { return book; }, getActiveSpreadsheet: function () { return book; }, openById: function () { return book; }
 };
@@ -32,7 +33,7 @@ global.Utilities = { sleep: function () {}, formatDate: function (d, tz, f) { va
 var THEMES = { 1:'判断基準と任せる範囲', 2:'言葉を飲み込む・叔母', 3:'叔母の店', 4:'採用の質問', 5:'言葉を飲み込む', 6:'任せる範囲の線引き', 7:'判断基準の共有' };
 var EDITOR_AUTO = { '重複': [{ '本': [1,6,7], '重なり': 'テーマ・主張', '残す': 1 }, { '本': [2,3,5], '重なり': 'エピソード（叔母）', '残す': 2 }],
   '作り直す': [{ '本': 6, '材料': 'R2', '企画': '数字を毎朝見る' }, { '本': 7, '材料': null }, { '本': 3, '材料': 'R1', '企画': '道具と会話の量' }, { '本': 5, '材料': 'R3', '企画': '採用の質問' }], '不足': '7本目に使える材料なし' };
-var EDITOR_FIXED = { '重複': [], '作り直す': [{ '本': 3, '材料': 'R1' }, { '本': 5, '材料': 'R2' }, { '本': 6, '材料': 'R3' }, { '本': 7, '材料': 'メモ' }] };
+var EDITOR_FIXED = { '重複': [], '作り直す': [{ '本': 3, '材料': 'R1' }, { '本': 5, '材料': 'M2' }, { '本': 6, '材料': 'R3' }, { '本': 7, '材料': 'M1' }] };
 var RECHECK = { '外す': [5], '理由': '4本目と同じ採用の話' };
 var mode = 'auto';
 var ON_EDITOR = null;
@@ -45,7 +46,7 @@ global.UrlFetchApp = { fetchAll: function (reqs) { return reqs.map(function (q) 
   else if (/この枠は作り直しです/.test(u)) {
     refillReqs.push(u);
     var m = u.match(/全\d+本のうち、(\d+)本目から/); var k = +m[1];
-    var mat = (u.match(/\[(R\d+|メモ)\] /) || [])[1];
+    var mat = (u.match(/### この枠で使う材料\n\[(R\d+|M\d+)\] /) || [])[1];
     out = { posts: [{ 'テーマ': 'NEW' + k, '本文': 'NEWBODY' + k + ' from ' + mat, '冒頭3行': 'N', '投稿の狙い': 'x', '元になった返信・切り口': '[' + mat + ']', '事実確認が必要な箇所': 'なし' }] };
   } else {
     var mm = u.match(/(\d+)本目から(\d+)本目までの/); var posts = [];
@@ -57,7 +58,7 @@ global.UrlFetchApp = { fetchAll: function (reqs) { return reqs.map(function (q) 
   return { getResponseCode: function () { return 200; }, getContentText: function () { return resp; } };
 }); } };
 
-eval(fs.readFileSync(require('path').join(__dirname, '..', '..', 'dist', 'X文体ツール_全部入り.gs'), 'utf8') + '\n;global.__G = xGeneratePosts; global.__R = xRegenerateDrafts; global.xGenCtx_ = xGenCtx_; global.xEditWeek_ = xEditWeek_;');
+eval(fs.readFileSync(require('path').join(__dirname, '..', '..', 'dist', 'X文体ツール_全部入り.gs'), 'utf8') + '\n;global.__G = xGeneratePosts; global.__R = xRegenerateDrafts; global.xGenCtx_ = xGenCtx_; global.xEditWeek_ = xEditWeek_; global.xCheckDrafts = xCheckDrafts; global.X_DRAFT_HEADERS = X_DRAFT_HEADERS;');
 function ok(c, l) { console.log((c ? '✅ ' : '❌ ') + l); if (!c) process.exitCode = 1; }
 function batchRows() {
   var d = S['X_投稿案']._d, h = d[0];
@@ -95,8 +96,8 @@ ok(/\[R1・/.test(gen), '返信に R番号が振られて生成に渡ってい�
 
 console.log('===== B: 1・2・4を残して作り直す（本人指定） =====');
 mode = 'fixed'; refillReqs = []; __payloads = []; RECHECK = { '外す': [] };
-// 今週あったことのメモがある場合（「メモ」を材料に指定できる）
-S['X_一次情報'].appendRow([new Date(), '今週あったこと', '今週あったこと', 'MEMO_TEXT スタッフに聞かれた回数を数えたら1日12回だった', 0]);
+// 今週あったことを、作り直しのダイアログで2行入れる
+MEMO_ANSWER = 'MEMO_ONE スタッフに聞かれた回数を数えたら1日12回だった\nMEMO_TWO 見積もりの説明で、初めて「わからない」と言われた';
 var w = Date.now(); while (Date.now() - w < 1100) {}  // 作成日時（秒）を分ける
 UI_ANSWER = '1、２，4';
 var before = batchRows();
@@ -107,9 +108,14 @@ ok(b2.rows.length === 7, '新しい1回ぶんとして7枠書かれている');
 ok(body(1) === orig[1] && body(2) === orig[2] && body(4) === orig[4], '1・2・4本目は本文そのまま');
 ok(cell(1, '状態') === '残す' && cell(4, '状態') === '残す', '残した本の状態は「残す」');
 ok(cell(2, '状態') === '残す', '【要確認】があっても本人が残した本は「残す」のまま（本人の印を上書きしない）');
-ok(body(3).indexOf('NEWBODY3 from R1') === 0 && body(5).indexOf('NEWBODY5 from R2') === 0 && body(6).indexOf('NEWBODY6 from R3') === 0 && body(7).indexOf('NEWBODY7 from メモ') === 0, '3・5・6・7本目は指定の材料から作り直し（7本目は今週あったこと）');
-var r7 = refillReqs.filter(function (u) { return /\[メモ\]/.test(u); })[0] || '';
-ok(/MEMO_TEXT/.test(r7), '7本目の作り直しに、今週あったことの本文が渡っている');
+ok(body(3).indexOf('NEWBODY3 from R1') === 0 && body(5).indexOf('NEWBODY5 from M') === 0 && body(6).indexOf('NEWBODY6 from R3') === 0 && body(7).indexOf('NEWBODY7 from M') === 0, '3・5・6・7本目は指定の材料から作り直し（5・7本目は今週あったこと）');
+var memoRows = S['X_一次情報']._d.filter(function (r) { return r && r[1] === '今週あったこと'; });
+ok(memoRows.length === 2, 'ダイアログの2行が、今週あったこととして2件保存された（' + memoRows.length + '件）');
+var r5 = refillReqs.filter(function (u) { return /全7本のうち、5本目から/.test(u); })[0] || '';
+var r7 = refillReqs.filter(function (u) { return /全7本のうち、7本目から/.test(u); })[0] || '';
+var memoOf = function (u) { var m = u.match(/### この枠で使う材料\n\[M\d\] (MEMO_\w+)/); return m ? m[1] : ''; };
+ok(memoOf(r5) && memoOf(r7) && memoOf(r5) !== memoOf(r7), '5本目と7本目に、別々のメモが1件ずつ渡っている（' + memoOf(r5) + ' / ' + memoOf(r7) + '）');
+ok(r5.indexOf(memoOf(r7)) < 0 || /今週あったこと（本人が書いたメモ）/.test(r5), '材料欄には自分のメモ1件だけ');
 var edReq = __payloads.filter(function (p) { return /本人が残すと決めた本: 1・2・4本目/.test(p); });
 ok(edReq.length === 1 && /作り直す枠: 3・5・6・7本目/.test(edReq[0]), '編集者に「残す本」「作り直す枠」を伝えている');
 ok(/本人が残すと決めた本/.test(cell(1, '編集メモ')), '1本目の編集メモ: ' + cell(1, '編集メモ'));
@@ -141,3 +147,17 @@ ok(refillReqs.length === refillBefore, '作り直しのAPIは呼んでいない'
 ok(eD.posts.length === 7 && eD.shortage.length === 0, '7本とも残っている（消していない）');
 ok(/作り直し未実施/.test(eD.posts[5]._note || '') && /作り直し未実施/.test(eD.posts[6]._note || ''), '重なった本に「作り直し未実施」の印');
 ok(/時間の都合で作り直していません/.test(eD.skipped), '報告: ' + eD.skipped);
+
+console.log('===== E: 自己チェックの報告は、直近の1回ぶんだけを数える =====');
+S['X_投稿案'] = M.makeSheet('X_投稿案', [X_DRAFT_HEADERS.slice()]);
+var hh = X_DRAFT_HEADERS;
+function draftRow(stamp, slot, body) { var r = hh.map(function () { return ''; }); r[hh.indexOf('作成日時')] = stamp; r[hh.indexOf('枠')] = slot; r[hh.indexOf('本文')] = body; r[hh.indexOf('状態')] = '未'; return r; }
+for (var oi = 1; oi <= 8; oi++) S['X_投稿案'].appendRow(draftRow('2026-10-10 10:00:00', oi, '「古い要確認」【要確認：昔の】'));
+S['X_投稿案'].appendRow(draftRow('2026-10-17 23:05:00', 1, '今週の1本目'));
+S['X_投稿案'].appendRow(draftRow('2026-10-17 23:05:00', 2, '「今週の2本目」【要確認：年齢】'));
+S['X_投稿案'].appendRow(draftRow('2026-10-17 23:05:00', 3, '今週の3本目'));
+book._s = S; __toasts = [];
+var ngE = xCheckDrafts();
+var tE = __toasts[__toasts.length - 1];
+ok(ngE === 1, '今回の分の要確認は1本 → ' + ngE);
+ok(/今回の分のうち1本に要確認/.test(tE) && !/カギカッコ始まりが/.test(tE), '報告に過去の8本が混ざっていない: ' + tE);

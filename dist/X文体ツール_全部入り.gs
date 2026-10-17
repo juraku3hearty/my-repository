@@ -1403,6 +1403,7 @@ function xGenCtx_(themesText, count) {
   var days = parseInt(setting['返信を読む日数'], 10);
   var replyList = xRecentReplyList_(isNaN(days) || days <= 0 ? 7 : days);
   var replies = xFormatReplies_(replyList);
+  var noteList = xThisWeekNoteList_();
   var notes = xReadThisWeekNotes_();
 
   // ① 外部ライターの企画シート（テーマ選び・切り口の参考）
@@ -1442,6 +1443,7 @@ function xGenCtx_(themesText, count) {
     plan: plan,
     pastThemes: pastThemes,
     replyList: replyList,
+    noteList: noteList,
     notes: notes
   };
 }
@@ -2510,12 +2512,23 @@ function xReadSamples_(n) {
 }
 
 /**
- * 「今週あったこと」のメモを読む（直近14日ぶん、新しい順に最大3件）。
+ * 「今週あったこと」のメモを読む（直近14日ぶん、新しい順に最大10件）。
  * 過去の棚卸しより新しい出来事のほうが、新しい視点の素になる。
  */
 function xReadThisWeekNotes_() {
+  return xThisWeekNoteList_().map(function (n) {
+    return '- [' + n.no + '] ' + n.text;
+  }).join('\n');
+}
+
+/**
+ * 「今週あったこと」を M1, M2 … の番号つきで返す。
+ * 週の編集で、1件ずつ別の枠の材料に割り当てられるようにするため。
+ * @return {Array<Object>} [{ no:'M1', text }]
+ */
+function xThisWeekNoteList_() {
   var sh = xBook_().getSheetByName(X_SHEETS.FACT);
-  if (!sh || sh.getLastRow() < 2) return '';
+  if (!sh || sh.getLastRow() < 2) return [];
 
   var limit = new Date();
   limit.setDate(limit.getDate() - 14);
@@ -2528,9 +2541,9 @@ function xReadThisWeekNotes_() {
     return !d || d >= limit;
   });
 
-  return rows.slice(-3).reverse().map(function (r) {
-    return '- ' + String(r[3]).trim();
-  }).join('\n');
+  return rows.slice(-10).reverse().map(function (r, i) {
+    return { no: 'M' + (i + 1), text: String(r[3]).trim() };
+  });
 }
 
 // ===== 17_XStrategy.js =====
@@ -3145,6 +3158,9 @@ function xCheckDrafts() {
 
   var results = [];
   var ngRows = [];
+  // 報告に出す数は、直近の1回ぶんだけで数える（過去の行まで数えると今週の数に見えてしまう）
+  var ngLatest = 0;
+  var quotedLatest = 0;
 
   for (var i = 0; i < bodies.length; i++) {
     var body = String(bodies[i][0] || '');
@@ -3191,6 +3207,10 @@ function xCheckDrafts() {
 
     results.push([text]);
     if (problems.length) ngRows.push(i + 2);
+    if (String(stamps[i][0]) === latestStamp) {
+      if (problems.length) ngLatest++;
+      if (quoted) quotedLatest++;
+    }
   }
 
   sh.getRange(2, checkCol, results.length, 1).setValues(results);
@@ -3210,20 +3230,16 @@ function xCheckDrafts() {
   sh.getRange(2, checkCol, results.length, 1).setBackground(null);
   ngRows.forEach(function (r) { sh.getRange(r, checkCol).setBackground('#fdeceb'); });
 
-  var quotedCount = results.filter(function (r) {
-    return String(r[0]).indexOf('冒頭カギカッコ') >= 0;
-  }).length;
-
-  var msg = ngRows.length
-    ? (ngRows.length + '本に要確認があります。「自己チェック」列の赤い行だけ見てください。')
-    : '全部OKでした。そのまま使えます。';
-  if (quotedCount > 2) msg += ' / カギカッコ始まりが' + quotedCount + '本あります（目安は2本まで）';
+  var msg = ngLatest
+    ? ('今回の分のうち' + ngLatest + '本に要確認があります。「自己チェック」列の赤い行だけ見てください。')
+    : '今回の分は全部OKでした。';
+  if (quotedLatest > 2) msg += ' / カギカッコ始まりが' + quotedLatest + '本あります（目安は2本まで）';
   if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
   if (promoRows.length > 1) msg += ' / 誘導の入った投稿が' + promoRows.length + '本あります（1本まで）';
 
   Logger.log(msg);
   xToast_(msg);
-  return ngRows.length;
+  return ngLatest;
 }
 
 /** 文体ルールの禁止語を配列で取り出す */
@@ -4307,7 +4323,10 @@ function xEditPlan_(ctx, posts, keepIdx) {
   var findReply = function (key) {
     var k = String(key || '').trim();
     if (!k || k === 'null' || k === 'なし') return null;
-    if (/^メモ|今週あったこと/.test(k)) return ctx.notes ? { no: 'メモ', text: ctx.notes } : null;
+    var mm = k.match(/M\s*(\d+)/i);
+    if (mm) return (ctx.noteList || []).filter(function (n) { return n.no === 'M' + mm[1]; })[0] || null;
+    // 番号なしで「メモ」とだけ返ってきた場合は、1件目を使う
+    if (/^メモ|今週あったこと/.test(k)) return (ctx.noteList || [])[0] || null;
     var m = k.match(/R\s*(\d+)/i);
     if (!m) return null;
     return replies.filter(function (r) { return r.no === 'R' + m[1]; })[0] || null;
@@ -4392,7 +4411,7 @@ function xEditSystem_() {
     '・今週の返信・引用の中から、まだどの本にも使われていない材料を選んでください。',
     '  「元になった返信・切り口」に書かれている材料は、使用済みです。',
     '  使用済みの材料と同じ論点の返信も、選ばないでください。',
-    '・1つの材料は1つの枠にだけ使ってください。',
+    '・1つの材料は1つの枠にだけ使ってください。今週あったこと（M番号）も1件ずつ別の材料です。',
     '・新しい材料が無い枠は、"材料": null にしてください。無理に埋めないでください。',
     '・企画は30字以内。主張は1文で、元の返信より強く言い切らないでください。',
     '・割り当てられた役割に合う材料があればそれを選び、無ければ役割は変わって構いません。',
@@ -4404,7 +4423,7 @@ function xEditSystem_() {
     '  "作り直す": [{"本": 6, "材料": "R12", "企画": "…", "主張": "…", "理由": "…"}],',
     '  "不足": "材料が足りない場合の説明（無ければ空文字）"',
     '}',
-    '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことなら "メモ"、無ければ null。'
+    '本の番号は 1 から数えます。材料は返信の番号（R1 など）か、今週あったことの番号（M1 など）、無ければ null。'
   ].join('\n');
 }
 
@@ -4554,6 +4573,19 @@ function xRegenerateDrafts() {
     if (r.getSelectedButton() !== ui.Button.OK) return;
     var typed = xParseNumbers_(r.getResponseText(), batch.length);
     if (typed.length) keep = typed;
+
+    // 材料が足りないことが多いので、ここでも今週あったことを聞く
+    var r2 = ui.prompt(
+      '今週あったこと（材料が足りないとき用・空でも進みます）',
+      '作り直す枠の材料になります。1行に1つ、いくつでも。\n' +
+      '相談で言われた言葉、詰まったこと、作ったもの、現場で見たこと。\n' +
+      '空のままだと、今週の返信の中から選びます。',
+      ui.ButtonSet.OK_CANCEL);
+    if (r2.getSelectedButton() === ui.Button.OK) {
+      String(r2.getResponseText() || '').split(/\r?\n/)
+        .map(function (x) { return x.trim(); }).filter(String)
+        .forEach(function (note) { xSaveThisWeekNote_(note); });
+    }
   }
 
   if (!keep.length) {

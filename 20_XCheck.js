@@ -45,6 +45,9 @@ function xCheckDrafts() {
 
   var results = [];
   var ngRows = [];
+  // 報告に出す数は、直近の1回ぶんだけで数える（過去の行まで数えると今週の数に見えてしまう）
+  var ngLatest = 0;
+  var quotedLatest = 0;
 
   for (var i = 0; i < bodies.length; i++) {
     var body = String(bodies[i][0] || '');
@@ -91,6 +94,10 @@ function xCheckDrafts() {
 
     results.push([text]);
     if (problems.length) ngRows.push(i + 2);
+    if (String(stamps[i][0]) === latestStamp) {
+      if (problems.length) ngLatest++;
+      if (quoted) quotedLatest++;
+    }
   }
 
   sh.getRange(2, checkCol, results.length, 1).setValues(results);
@@ -110,20 +117,16 @@ function xCheckDrafts() {
   sh.getRange(2, checkCol, results.length, 1).setBackground(null);
   ngRows.forEach(function (r) { sh.getRange(r, checkCol).setBackground('#fdeceb'); });
 
-  var quotedCount = results.filter(function (r) {
-    return String(r[0]).indexOf('冒頭カギカッコ') >= 0;
-  }).length;
-
-  var msg = ngRows.length
-    ? (ngRows.length + '本に要確認があります。「自己チェック」列の赤い行だけ見てください。')
-    : '全部OKでした。そのまま使えます。';
-  if (quotedCount > 2) msg += ' / カギカッコ始まりが' + quotedCount + '本あります（目安は2本まで）';
+  var msg = ngLatest
+    ? ('今回の分のうち' + ngLatest + '本に要確認があります。「自己チェック」列の赤い行だけ見てください。')
+    : '今回の分は全部OKでした。';
+  if (quotedLatest > 2) msg += ' / カギカッコ始まりが' + quotedLatest + '本あります（目安は2本まで）';
   if (systemCount > 2) msg += ' / 「仕組み」で締めた投稿が' + systemCount + '本あります（2本まで）';
   if (promoRows.length > 1) msg += ' / 誘導の入った投稿が' + promoRows.length + '本あります（1本まで）';
 
   Logger.log(msg);
   xToast_(msg);
-  return ngRows.length;
+  return ngLatest;
 }
 
 /** 文体ルールの禁止語を配列で取り出す */

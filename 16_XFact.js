@@ -310,12 +310,23 @@ function xReadSamples_(n) {
 }
 
 /**
- * 「今週あったこと」のメモを読む（直近14日ぶん、新しい順に最大3件）。
+ * 「今週あったこと」のメモを読む（直近14日ぶん、新しい順に最大10件）。
  * 過去の棚卸しより新しい出来事のほうが、新しい視点の素になる。
  */
 function xReadThisWeekNotes_() {
+  return xThisWeekNoteList_().map(function (n) {
+    return '- [' + n.no + '] ' + n.text;
+  }).join('\n');
+}
+
+/**
+ * 「今週あったこと」を M1, M2 … の番号つきで返す。
+ * 週の編集で、1件ずつ別の枠の材料に割り当てられるようにするため。
+ * @return {Array<Object>} [{ no:'M1', text }]
+ */
+function xThisWeekNoteList_() {
   var sh = xBook_().getSheetByName(X_SHEETS.FACT);
-  if (!sh || sh.getLastRow() < 2) return '';
+  if (!sh || sh.getLastRow() < 2) return [];
 
   var limit = new Date();
   limit.setDate(limit.getDate() - 14);
@@ -328,7 +339,7 @@ function xReadThisWeekNotes_() {
     return !d || d >= limit;
   });
 
-  return rows.slice(-3).reverse().map(function (r) {
-    return '- ' + String(r[3]).trim();
-  }).join('\n');
+  return rows.slice(-10).reverse().map(function (r, i) {
+    return { no: 'M' + (i + 1), text: String(r[3]).trim() };
+  });
 }
