@@ -17,6 +17,8 @@ function onOpen() {
       .addItem('　 抽出をやり直す', 'xResetExtract')
       .addSeparator()
       .addItem('③ 今週の投稿案を作る', 'xGeneratePosts')
+      .addSeparator()
+      .addItem('使わなかった雛形を一覧にする', 'xListUnusedTemplates')
       .addToUi();
   } catch (e) {
     // バインドされていない環境では何もしない
