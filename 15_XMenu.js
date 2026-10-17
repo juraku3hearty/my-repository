@@ -34,6 +34,7 @@ function onOpen() {
       .addSeparator()
       .addItem('④ 今週の投稿案を作る', 'xGeneratePosts')
       .addItem('④ 選んだ本を残して、残りを作り直す', 'xRegenerateDrafts')
+      .addItem('　 改修前後を比べる（同じ材料で7本ずつ）', 'xCompareModes')
       .addItem('　 投稿案を自動チェックする', 'xCheckDrafts')
       .addSeparator()
       .addItem('質問に1つ答える（一次情報を足す）', 'xAskQuestion')

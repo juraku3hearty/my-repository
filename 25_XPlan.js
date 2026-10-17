@@ -21,6 +21,11 @@
  * @return {Array<Object>|null} 枠ごとの企画 [{ materials:[{no,text}], subject, plan, claim }]
  */
 function xPlanWeek_(ctx) {
+  return xPlanParse_(ctx, xClaudeBatch_([xPlanRequest_(ctx)])[0]);
+}
+
+/** 企画会議の依頼を作る（改修前後の比較で、まとめて並列に投げられるように分けてある） */
+function xPlanRequest_(ctx) {
   var replies = ctx.replyList || [];
   var notes = ctx.noteList || [];
   var count = ctx.count;
@@ -54,12 +59,19 @@ function xPlanWeek_(ctx) {
     lines.push('');
   }
 
-  var res = xClaudeBatch_([{
-    system: xPlanSystem_(count),
+  return {
+    system: xPlanSystem_(count, ctx.mode),
     userText: ctx.context + '\n' + lines.join('\n'),
     maxTokens: 16000,
     effort: 'medium'
-  }])[0];
+  };
+}
+
+/** 企画会議の応答を読む。失敗したら null */
+function xPlanParse_(ctx, res) {
+  var replies = ctx.replyList || [];
+  var notes = ctx.noteList || [];
+  var count = ctx.count;
 
   if (!res || !res.ok) {
     Logger.log('週の企画に失敗（各回に任せます）: ' + ((res && res.error) || '不明'));
@@ -128,7 +140,10 @@ function xPlanWeek_(ctx) {
 }
 
 /** 企画会議の指示 */
-function xPlanSystem_(count) {
+function xPlanSystem_(count, mode) {
+  var claimRule = mode === X_GEN_MODE.NEW
+    ? '・1本につき1つ。1文で。元の返信に無い因果関係や成果を足さないでください（本人の考えははっきり書いてよい）。'
+    : '・1本につき1つ。1文で。元の返信より強く言い切らないでください。';
   return [
     'あなたは、ある書き手のXアカウントの編集者です。',
     'これから' + count + '本の投稿を書く前に、1週間ぶんの企画を決めます。文章はまだ書きません。',
@@ -153,7 +168,7 @@ function xPlanSystem_(count) {
     '・役割の目安と分類は参考です。材料に合わなければ変えて構いません。',
     '',
     '■ 主張',
-    '・1本につき1つ。1文で。元の返信より強く言い切らないでください。',
+    claimRule,
     '・実績や相談者の発言を前提にした主張にしないでください。',
     '',
     '■ 出力（JSONのみ。説明やコードフェンスは付けない）',

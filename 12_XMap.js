@@ -50,6 +50,7 @@ var X_TEXT_ITEMS = [
   ['過去の投稿・経歴を材料にする', '「はい」で過去の投稿本文と経歴・年表を渡す。それ以外は渡さない（今週の返信を優先）', false, 'いいえ'],
   ['返信を読む日数', '直近何日ぶんの返信・引用を材料にするか', false, '7'],
   ['週の役割配分', '「役割:本数」を改行区切りで。目安なので、材料が無い役割は飛ばす', false, X_DEFAULT_ROLES],
+  ['生成の方式', '「改修後」…文体ルールを区分（文体／軸・価値観／過去の主張）に分けて渡し、言い切りの基準を整理した方式／「改修前」…以前の方式に戻す', false, '改修後'],
   ['材料が無い枠', '「題材を変えて作る」…考え方・実務・人柄・日常・これから の題材で叩き台を作る（実体験は入れない。方向性シートは軸の確認だけ）／「空ける」…空けて不足を報告する', false, '題材を変えて作る'],
   ['禁止する着地', 'この結論で締めない（改行区切り）。自己チェックでも検出する', false, X_DEFAULT_BANNED_LANDINGS],
   ['使用禁止のエピソード', '今は使わない話（改行区切り）。また使いたくなったら消してください', false, X_DEFAULT_BANNED_EPISODES]
@@ -110,6 +111,9 @@ function xSetup() {
   if (headers.length) info.push(['1行目の内容', headers.join(' / '), '']);
   if (targetName) info.push(['A列の先頭20件', xColumnPeek_(targetName, 1, 20).join(' / '), '']);
   sh.getRange(all.length + 3, 1, info.length, 3).setValues(info);
+
+  // 文体ルールの「区分」列を用意する（既にある行は消さず、区分が空の行だけ埋める）
+  try { xSetupRuleKinds_(); } catch (e) { Logger.log('文体ルールの区分を用意できませんでした: ' + e.message); }
 
   Logger.log('X_設定を作成/更新しました: ' + ss.getUrl());
   xToast_('X_設定シートを作りました。値を確認してください。');

@@ -267,6 +267,10 @@ function xMergeRules_() {
 /** 文体ルールをシートに書く（手で直せる形） */
 function xWriteRules_(rule) {
   var sh = xSheet_(X_SHEETS.RULE, ['項目', '内容', 'メモ（手で直してください）']);
+
+  // 抽出し直しても、本人が付けた区分と「軸・価値観」の行は消さない
+  var keep = xRuleKindsBefore_(sh);
+
   if (sh.getLastRow() > 1) {
     sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
   }
@@ -278,8 +282,112 @@ function xWriteRules_(rule) {
   });
 
   sh.getRange(2, 1, rows.length, 3).setValues(rows);
+
+  if (keep.hasKindColumn) {
+    var kinds = rows.map(function (r) { return [keep.kinds[r[0]] || xDefaultRuleKind_(r[0])]; });
+    sh.getRange(2, 4, kinds.length, 1).setValues(kinds);
+    if (keep.axisRows.length) {
+      sh.getRange(rows.length + 2, 1, keep.axisRows.length, 4).setValues(keep.axisRows);
+    }
+  }
   sh.setColumnWidth(2, 520);
   sh.getRange(2, 2, rows.length, 1).setWrap(true);
+}
+
+/** 区分が空の項目に付ける既定の区分 */
+function xDefaultRuleKind_(key) {
+  return X_RULE_KIND_DEFAULTS[String(key || '').trim()] || X_RULE_KIND.STYLE;
+}
+
+/** 書き直す前に、区分と「軸・価値観」の行を控えておく */
+function xRuleKindsBefore_(sh) {
+  var out = { hasKindColumn: false, kinds: {}, axisRows: [] };
+  if (sh.getLastRow() < 1 || sh.getLastColumn() < 4) return out;
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  if (String(head[3]).trim() !== '区分') return out;
+  out.hasKindColumn = true;
+  if (sh.getLastRow() < 2) return out;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues().forEach(function (r) {
+    var k = String(r[0]).trim();
+    var kind = String(r[3]).trim();
+    if (!k) return;
+    if (kind === X_RULE_KIND.AXIS) out.axisRows.push(r.slice(0, 4));
+    else if (kind) out.kinds[k] = kind;
+  });
+  return out;
+}
+
+/**
+ * X_文体ルール に「区分」列を用意する。
+ * 既にある行は消さず、区分が空の行だけ既定値で埋める。
+ * 「軸・価値観」の行が1つも無ければ、本人が挙げた「社長語を、現場語に」を1行足す。
+ */
+function xSetupRuleKinds_() {
+  var sh = xBook_().getSheetByName(X_SHEETS.RULE);
+  if (!sh || sh.getLastRow() < 2) return;
+  xRepairHeaders_(sh, X_RULE_HEADERS);
+
+  var n = sh.getLastRow() - 1;
+  var values = sh.getRange(2, 1, n, 4).getValues();
+  var hasAxis = false;
+  var changed = false;
+  values.forEach(function (r) {
+    if (!String(r[0]).trim()) return;
+    var kind = String(r[3]).trim();
+    if (kind === X_RULE_KIND.AXIS) hasAxis = true;
+    if (!kind) { r[3] = xDefaultRuleKind_(r[0]); changed = true; }
+  });
+  if (changed) sh.getRange(2, 1, n, 4).setValues(values);
+  if (!hasAxis) {
+    sh.getRange(sh.getLastRow() + 1, 1, 1, 4).setValues([X_DEFAULT_AXIS_ROW.slice()]);
+  }
+
+  try {
+    var rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList([X_RULE_KIND.STYLE, X_RULE_KIND.AXIS, X_RULE_KIND.PAST, X_RULE_KIND.OFF], true)
+      .setAllowInvalid(false).build();
+    sh.getRange(2, 4, sh.getLastRow() - 1, 1).setDataValidation(rule);
+  } catch (e) { /* 入力規則が使えない環境では付けない */ }
+  sh.setColumnWidth(4, 160);
+}
+
+/**
+ * 文体ルールを区分ごとに読む（改修後の方式で使う）。
+ * 文体の行は、改修前と同じ書式（【項目】内容（補足）メモ）のまま渡す。文体の再現を変えないため。
+ * @return {Object} { style, axis, past } それぞれ文字列
+ */
+function xReadRuleParts_() {
+  var sh = xBook_().getSheetByName(X_SHEETS.RULE);
+  if (!sh || sh.getLastRow() < 2) {
+    throw new Error('X_文体ルール がありません。先に「抽出を実行」してください。');
+  }
+  var width = Math.max(sh.getLastColumn(), 3);
+  var values = sh.getRange(1, 1, sh.getLastRow(), width).getValues();
+  var hasKind = String(values[0][3] || '').trim() === '区分';
+  var out = { style: [], axis: [], past: [] };
+
+  for (var r = 1; r < values.length; r++) {
+    var k = String(values[r][0]).trim();
+    var v = String(values[r][1]).trim();
+    var memo = String(values[r][2]).trim();
+    if (!k) continue;
+    var kind = (hasKind && String(values[r][3] || '').trim()) || xDefaultRuleKind_(k);
+
+    if (kind === X_RULE_KIND.OFF) continue;
+    if (kind === X_RULE_KIND.AXIS) {
+      // 軸の行は、内容だけを1行ずつ（項目名やメモの説明は要らない）
+      String(v).split(/\r?\n/).map(function (x) { return x.trim(); }).filter(String)
+        .forEach(function (x) { out.axis.push('・' + x); });
+      continue;
+    }
+    var block = ['【' + k + '】'];
+    if (v) block.push(v);
+    if (memo) block.push('（補足）' + memo);
+    block.push('');
+    if (kind === X_RULE_KIND.PAST) out.past = out.past.concat(block);
+    else out.style = out.style.concat(block);
+  }
+  return { style: out.style.join('\n'), axis: out.axis.join('\n'), past: out.past.join('\n') };
 }
 
 /** 文体ルールをシートから読む（手で直した内容が反映される） */
@@ -295,6 +403,8 @@ function xReadRules_() {
     var v = String(values[r][1]).trim();
     var memo = String(values[r][2]).trim();
     if (!k) continue;
+    // 「軸・価値観」の行は改修で足したもの。改修前の方式（と型の抽出）には混ぜない
+    if (String(values[r][3] || '').trim() === X_RULE_KIND.AXIS) continue;
     lines.push('【' + k + '】');
     if (v) lines.push(v);
     if (memo) lines.push('（補足）' + memo);

@@ -150,10 +150,12 @@ function xGenerate_(themesText, count) {
  * @param {number} count 本数
  * @return {Object} ctx
  */
-function xGenCtx_(themesText, count) {
+function xGenCtx_(themesText, count, modeOverride) {
   var started = Date.now();
 
   var setting = xReadSetting_();
+  // 改修後：文体ルールを区分ごとに分けて渡す／改修前：以前どおり全部を「文体ルール」として渡す
+  var mode = xGenMode_(setting, modeOverride);
   var strategy = xReadStrategy_();
   var concept = setting['これからのコンセプト'] || '';
   if (!strategy && !concept) {
@@ -161,7 +163,7 @@ function xGenCtx_(themesText, count) {
       '「これからのコンセプト」を書いてください。');
   }
 
-  var rules = xReadRules_();
+  var rules = mode === X_GEN_MODE.NEW ? xReadRuleParts_() : xReadRules_();
 
   // ② 直近の返信・引用。これが主材料。
   var days = parseInt(setting['返信を読む日数'], 10);
@@ -191,12 +193,13 @@ function xGenCtx_(themesText, count) {
   var reactions = xReadReactions_(30);
   var adopted = xAdoptedIdeas_();
 
-  var system = xGenSystem_();
+  var system = xGenSystem_(mode);
   var context = xGenContext_(setting, strategy, concept, rules,
                              facts, factSheets, sampleSheets, patterns, reactions, adopted,
-                             replies, notes, planSheets, trend);
+                             replies, notes, planSheets, trend, mode);
 
   return {
+    mode: mode,
     started: started,
     setting: setting,
     system: system,
@@ -218,29 +221,48 @@ function xGenCtx_(themesText, count) {
  * @return {Array<Object>} _idx（0始まりの枠番号）つきの投稿
  */
 function xGenInitial_(ctx) {
-  var started = ctx.started;
-  var system = ctx.system, context = ctx.context, themes = ctx.themes, count = ctx.count;
-  var spec = ctx.spec, plan = ctx.plan, pastThemes = ctx.pastThemes;
-
   // 書く前に1週間ぶんの企画を決める（同じ主張・同じ材料を2本にしないため）
   if (ctx.weekPlan === undefined) ctx.weekPlan = xPlanWeek_(ctx);
-  var weekPlan = ctx.weekPlan;
 
-  var jobs = [];
-  for (var from = 0; from < count; from += X_GEN_CHUNK) {
-    jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, count - from) });
+  var g = xGenJobs_(ctx);
+  var got = xGenCollect_(ctx, g.jobs, xClaudeBatch_(g.reqs));
+
+  // 落ちた分だけ、1本ずつ・これも並列で作り直す
+  if (got.failed.length && Date.now() - ctx.started < X_GEN_TIME_LIMIT_MS) {
+    xGenCollectRetry_(ctx, got.failed, xClaudeBatch_(xGenRetryReqs_(ctx, got.failed)), got.all);
   }
+  return xGenFinish_(ctx, got.all);
+}
 
-  var results = xClaudeBatch_(jobs.map(function (j) {
+/**
+ * 最初の生成の依頼を作る（2本ずつの束）。
+ * 改修前後の比較で、2つの方式の依頼をまとめて並列に投げられるように分けてある。
+ * @return {Object} { jobs:[{from,n}], reqs:[依頼] }
+ */
+function xGenJobs_(ctx) {
+  var jobs = [];
+  for (var from = 0; from < ctx.count; from += X_GEN_CHUNK) {
+    jobs.push({ from: from, n: Math.min(X_GEN_CHUNK, ctx.count - from) });
+  }
+  var reqs = jobs.map(function (j) {
     return {
-      system: system,
-      userText: context + '\n' + xGenRequest_(j.from, j.n, count, themes, plan, spec, pastThemes) +
-        xPlanText_(weekPlan, j.from, j.n),
+      system: ctx.system,
+      userText: ctx.context + '\n' +
+        xGenRequest_(j.from, j.n, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
+        xPlanText_(ctx.weekPlan, j.from, j.n),
       maxTokens: X_GEN_MAX_TOKENS,
       effort: 'high'
     };
-  }));
+  });
+  return { jobs: jobs, reqs: reqs };
+}
 
+/**
+ * 束ごとの応答から投稿を取り出す。
+ * @return {Object} { all:[投稿], failed:[作り直す枠] }
+ */
+function xGenCollect_(ctx, jobs, results) {
+  var weekPlan = ctx.weekPlan;
   var all = [];
   var failed = [];
 
@@ -274,37 +296,44 @@ function xGenInitial_(ctx) {
     // 切れた場合に残るのは前のほうなので、欠けているのは後ろの番号。
     for (var k = got.length; k < jobs[i].n; k++) failed.push(jobs[i].from + k);
   }
+  return { all: all, failed: failed };
+}
 
-  // 落ちた分だけ、1本ずつ・これも並列で作り直す
-  if (failed.length && Date.now() - started < X_GEN_TIME_LIMIT_MS) {
-    var retry = xClaudeBatch_(failed.map(function (idx) {
-      return {
-        system: system,
-        userText: context + '\n' + xGenRequest_(idx, 1, count, themes, plan, spec, pastThemes) +
-          xPlanText_(weekPlan, idx, 1),
-        maxTokens: X_GEN_MAX_TOKENS,
-        effort: 'high'
-      };
-    }));
+/** 落ちた枠を1本ずつ作り直す依頼 */
+function xGenRetryReqs_(ctx, failed) {
+  return failed.map(function (idx) {
+    return {
+      system: ctx.system,
+      userText: ctx.context + '\n' +
+        xGenRequest_(idx, 1, ctx.count, ctx.themes, ctx.plan, ctx.spec, ctx.pastThemes) +
+        xPlanText_(ctx.weekPlan, idx, 1),
+      maxTokens: X_GEN_MAX_TOKENS,
+      effort: 'high'
+    };
+  });
+}
 
-    for (var r = 0; r < retry.length; r++) {
-      if (!retry[r] || !retry[r].ok) {
-        Logger.log((failed[r] + 1) + '本目を飛ばしました: ' +
-          ((retry[r] && retry[r].error) || '不明'));
-        continue;
-      }
-      var one = xParsePosts_(retry[r].text).slice(0, 1);
-      if (one.length) { one[0]._idx = failed[r]; all = all.concat(one); }
-      else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
-        String(retry[r].text).slice(0, 200));
+/** 作り直しの応答を all に足す */
+function xGenCollectRetry_(ctx, failed, retry, all) {
+  for (var r = 0; r < retry.length; r++) {
+    if (!retry[r] || !retry[r].ok) {
+      Logger.log((failed[r] + 1) + '本目を飛ばしました: ' +
+        ((retry[r] && retry[r].error) || '不明'));
+      continue;
     }
+    var one = xParsePosts_(retry[r].text).slice(0, 1);
+    if (one.length) { one[0]._idx = failed[r]; all.push(one[0]); }
+    else Logger.log((failed[r] + 1) + '本目を飛ばしました（読み取り不能）: ' +
+      String(retry[r].text).slice(0, 200));
   }
+}
 
+/** 枠の順に並べ直して返す */
+function xGenFinish_(ctx, all) {
   // やり直した分が後ろに付くので、割り当てた番号順（＝曜日順）に戻す
-  all.sort(function (a, b) { return a._idx - b._idx; });
-
-  Logger.log('生成 ' + all.length + '/' + count + '本 … ' +
-    Math.round((Date.now() - started) / 1000) + '秒');
+  all.sort(function (x, y) { return x._idx - y._idx; });
+  Logger.log('生成 ' + all.length + '/' + ctx.count + '本 … ' +
+    Math.round((Date.now() - ctx.started) / 1000) + '秒');
   return all;
 }
 
@@ -374,26 +403,12 @@ function xPatternNames_() {
 }
 
 /** 生成のシステムプロンプト */
-function xGenSystem_() {
+function xGenSystem_(mode) {
+  var assertRules = mode === X_GEN_MODE.NEW ? xAssertRulesNew_() : xAssertRulesOld_();
   return [
     'あなたは、ある書き手の文体を完全に再現して X の投稿を書く人です。',
-    '',
-    '■ 言い切りの使い分け（この書き手の核になる規則）',
-    '',
-    '言い切っていいのは、この書き手が自分で経験したことだけです。',
-    '  例：「早いのは、今日だけ」「あの冷や汗が怖くて、結局自分で見るしかなかった」',
-    '  自分の経験は、留保をつけずにはっきり言い切ってください。そこがこの書き手の強みです。',
-    '',
-    '他人の傾向・統計・一般論は、言い切らないでください。',
-    '  「9割が」「ほぼ全員」「絶対に」「本質は」「決め手はこれだけ」は使いません。',
-    '  必ず留保をつけてください。「〜な気がします」「たぶん」「〜かもしれません」',
-    '',
-    '確かめていないことを本当のように書くのが、この書き手が一番嫌うことです。',
-    '',
-    '元になった発言がある場合、その発言より強く言い切らないでください。',
-    '「〜だったりします」「〜かもしれません」という留保は、そのまま残します。',
-    '元の発言に無い因果関係（だから成功する、など）を足さないでください。',
-    '',
+    ''
+  ].concat(assertRules).concat([
     '■ 投稿作成のルール（本人の指定）',
     '',
     '- 作るのは完成品ではなく、本人が手を入れる前提の叩き台です。',
@@ -440,14 +455,75 @@ function xGenSystem_() {
     '- 一般的によくあるSNS文章術の型に寄せないでください。この書き手の型に寄せてください。',
     '',
     '出力はJSONのみ。説明文やコードフェンスを付けないでください。'
-  ].join('\n');
+  ]).join('\n');
+}
+
+/** 言い切りの規則（改修前の文面。変えない） */
+function xAssertRulesOld_() {
+  return [
+    '■ 言い切りの使い分け（この書き手の核になる規則）',
+    '',
+    '言い切っていいのは、この書き手が自分で経験したことだけです。',
+    '  例：「早いのは、今日だけ」「あの冷や汗が怖くて、結局自分で見るしかなかった」',
+    '  自分の経験は、留保をつけずにはっきり言い切ってください。そこがこの書き手の強みです。',
+    '',
+    '他人の傾向・統計・一般論は、言い切らないでください。',
+    '  「9割が」「ほぼ全員」「絶対に」「本質は」「決め手はこれだけ」は使いません。',
+    '  必ず留保をつけてください。「〜な気がします」「たぶん」「〜かもしれません」',
+    '',
+    '確かめていないことを本当のように書くのが、この書き手が一番嫌うことです。',
+    '',
+    '元になった発言がある場合、その発言より強く言い切らないでください。',
+    '「〜だったりします」「〜かもしれません」という留保は、そのまま残します。',
+    '元の発言に無い因果関係（だから成功する、など）を足さないでください。',
+    ''
+  ];
+}
+
+/**
+ * 言い切りの基準（改修後）。
+ *
+ * 本人：「強い文章そのものが嫌なのではなく、根拠がないことを言い切るのが苦手」。
+ * 改修前は「言い切ってよいのは経験だけ」「元の発言より強く言い切らない」だったため、
+ * 本人が自分で考えてきたこと・自分の方針まで、留保つきの弱い書き方になっていた。
+ * 根拠の有無で分ける。
+ */
+function xAssertRulesNew_() {
+  return [
+    '■ 言い切りの基準（この書き手の核になる規則）',
+    '',
+    'この書き手は、強い文章が嫌なのではありません。根拠がないことを言い切るのが苦手です。',
+    '根拠があることははっきり書き、根拠がないことは断定しないでください。',
+    '',
+    'はっきり書いてよいもの',
+    '  ・確認済みの経験や実績（材料に書かれていること）',
+    '  ・この書き手が自分で考えてきたこと、自分の方針',
+    '    「私はこう考えている」「私はこうする」と、留保をつけずに書いてください。そこがこの書き手の強みです。',
+    '  例：「早いのは、今日だけ」「あの冷や汗が怖くて、結局自分で見るしかなかった」',
+    '',
+    '断定しないもの（留保をつける：「〜な気がします」「たぶん」「〜かもしれません」）',
+    '  ・他人の気持ち（「社長は〜と思っている」「スタッフは〜が不安」など）',
+    '  ・一般論・傾向・統計（「9割が」「ほぼ全員」「絶対に」「本質は」「決め手はこれだけ」は使いません）',
+    '  ・未確認の成果（「これでうまくいく」「売上が上がる」など）',
+    '',
+    '付け加えないもの',
+    '  ・本人が言っていない因果関係（「だから成功する」など）',
+    '  ・本人が言っていない成果',
+    '',
+    '元になった発言（返信など）がある場合',
+    '  ・その発言に無い因果関係や成果を足さないでください。',
+    '  ・発言の中の留保が、他人の気持ち・一般論・未確認の成果についてのものなら、そのまま残してください。',
+    '  ・本人の考えを控えめに言っているだけの留保（「〜だったりします」など）は、本人の考えとしてはっきり書いて構いません。',
+    ''
+  ];
 }
 
 /** 毎回共通で渡す材料 */
 function xGenContext_(setting, strategy, concept, rules, facts,
                       factSheets, sampleSheets, patterns, reactions, adopted,
-                      replies, notes, planSheets, trend) {
+                      replies, notes, planSheets, trend, mode) {
   var parts = [];
+  var isNew = mode === X_GEN_MODE.NEW;
 
   if (strategy) {
     parts.push('# ③ 事業の方向性とターゲット（発信の軸の確認用）');
@@ -469,9 +545,32 @@ function xGenContext_(setting, strategy, concept, rules, facts,
     parts.push('');
   }
 
-  parts.push('# 文体ルール（過去の書き換え履歴から抽出）');
-  parts.push(rules);
-  parts.push('');
+  if (rules && typeof rules === 'object') {
+    // 改修後：文体（書き方）・軸・過去の主張を分けて渡す
+    parts.push('# 文体ルール（書き方。必ず守る）');
+    parts.push('語尾・改行・言葉遣い・禁止表現など、過去の書き換え履歴から取り出した書き方です。');
+    parts.push(rules.style);
+    parts.push('');
+    if (rules.axis) {
+      parts.push('# 発信の軸・価値観（この書き手が大切にしている考え方）');
+      parts.push('企画の方向性を判断するときに使ってください。');
+      parts.push('軸に沿っていれば十分です。毎回この言葉や結論に着地させる必要はありません。');
+      parts.push(rules.axis);
+      parts.push('');
+    }
+    if (rules.past) {
+      parts.push('# これまでに言ってきた主張・書いてきたテーマ（焼き直し防止）');
+      parts.push('ここは書き方ではなく、過去に書いた中身です。');
+      parts.push('同じ結論に着地しないでください。同じ主張を言い直さないでください。');
+      parts.push('テーマが重なるのは構いませんが、違う結論・違う角度にしてください。');
+      parts.push(rules.past);
+      parts.push('');
+    }
+  } else {
+    parts.push('# 文体ルール（過去の書き換え履歴から抽出）');
+    parts.push(rules);
+    parts.push('');
+  }
 
   if (trend) {
     parts.push('# 読まれやすい系統・つながりやすい系統（過去半年の数字）');
@@ -491,8 +590,13 @@ function xGenContext_(setting, strategy, concept, rules, facts,
     parts.push('・返信は相手の投稿への反応です。相手の元投稿はここにありません。');
     parts.push('  何についての発言かが読み取れない場合は、推測で確定せず、その返信で本人が言っている考えだけを使ってください。');
     parts.push('  相手の投稿の中身を書く必要があるなら、本文には書かず「事実確認が必要な箇所」で質問してください。');
-    parts.push('・本人の発言を、元の意味より強く断定しないでください。');
-    parts.push('  「〜だったりします」「〜かもしれません」は、そのまま残してください。');
+    if (isNew) {
+      parts.push('・本人の発言に無い因果関係や成果を足さないでください。');
+      parts.push('  他人の気持ち・一般論・未確認の成果についての留保はそのまま残し、本人の考えははっきり書いて構いません。');
+    } else {
+      parts.push('・本人の発言を、元の意味より強く断定しないでください。');
+      parts.push('  「〜だったりします」「〜かもしれません」は、そのまま残してください。');
+    }
     if (notes) {
       parts.push('');
       parts.push('## 今週あったこと（本人が書いたメモ）');
@@ -563,8 +667,13 @@ function xGenContext_(setting, strategy, concept, rules, facts,
     parts.push('# 今回書く企画（本人が選んだもの）');
     parts.push('この企画を書いてください。テーマを自分で考える必要はありません。');
     parts.push('「もとの返信」は、本人が実際に書いた文です。');
-    parts.push('**その返信より強く言い切らないでください。**');
-    parts.push('「〜だったりします」を「〜する」に変えない。根拠のない因果を足さない。');
+    if (isNew) {
+      parts.push('**その返信に無い因果関係や成果を足さないでください。**');
+      parts.push('本人の考えははっきり書いて構いませんが、他人の気持ち・一般論・未確認の成果は断定しないでください。');
+    } else {
+      parts.push('**その返信より強く言い切らないでください。**');
+      parts.push('「〜だったりします」を「〜する」に変えない。根拠のない因果を足さない。');
+    }
     parts.push('「要確認」がある企画は、その部分を創作しないでください。');
     parts.push('分かっていることだけで書くか、考え方として書いて完成させ、確かめたいことは「事実確認が必要な箇所」に質問として書いてください。');
     parts.push(adopted);
