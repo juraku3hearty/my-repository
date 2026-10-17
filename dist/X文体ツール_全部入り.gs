@@ -2987,7 +2987,8 @@ function xReadReactions_(limit) {
   return rows.map(function (r) {
     var parts = [];
     var head = '- 【' + (String(r[1]).trim() || '記録') + '】';
-    if (r[0]) head += ' ' + fmtDate_(r[0]);
+    var d = r[0] ? xParseDate_(r[0]) : null;
+    if (d) head += ' ' + Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
     if (r[3]) head += '（' + String(r[3]).trim() + '）';
     parts.push(head);
     parts.push('  ' + String(r[2]).trim().replace(/\n/g, '\n  '));
